@@ -37,6 +37,7 @@ const POST_STATUS = process.env.POST_STATUS || 'draft';
 const NEWSLETTER_SLUG = process.env.NEWSLETTER_SLUG;
 const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS || '14', 10);
 const DRY_RUN = process.env.DRY_RUN === '1';
+const BACKDATE = process.env.BACKDATE === '1';
 const CACHE_FILE = path.join(process.cwd(), '.book-cache.json');
 
 const api = new GhostAdminAPI({
@@ -253,7 +254,7 @@ async function main() {
 
   console.log(`status=${POST_STATUS}`
     + ` newsletter=${NEWSLETTER_SLUG || '(none)'}`
-    + ` maxAge=${MAX_AGE_DAYS}d${DRY_RUN ? ' DRY_RUN' : ''}`);
+    + ` maxAge=${MAX_AGE_DAYS}d${BACKDATE ? ' BACKDATE' : ''}${DRY_RUN ? ' DRY_RUN' : ''}`);
 
   const feed = await parser.parseURL(FEED_URL);
   const done = await importedGuids();
@@ -305,7 +306,9 @@ async function main() {
       feature_image_caption: feature ? caption : undefined,
       status: POST_STATUS,
       tags,
-      published_at: item.isoDate || undefined
+      published_at: BACKDATE ? (item.isoDate || undefined)
+        : (item.isoDate && Date.now() - Date.parse(item.isoDate) < 86400000
+          ? item.isoDate : undefined)
     };
 
     const opts = { source: 'html' };
