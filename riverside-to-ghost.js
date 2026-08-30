@@ -52,6 +52,7 @@ const parser = new Parser({
     item: [
       ['itunes:episode', 'episodeNumber'],
       ['itunes:episodeType', 'episodeType'],
+      ['itunes:duration', 'duration'],
       ['content:encoded', 'contentEncoded']
     ]
   }
@@ -253,19 +254,35 @@ ${cards.join('\n')}
 <!--kg-card-end: html-->`;
 }
 
-function audioPlayer(url) {
-  if (!url) return '';
+function formatDuration(raw) {
+  if (!raw) return '';
+  const parts = raw.split(':').map(Number);
+  if (parts.length === 3) {
+    const [h, m] = parts;
+    return h > 0 ? `${h}h ${m}m` : `${m} min`;
+  }
+  return raw;
+}
+
+function audioPlayer(audioUrl, postUrl, duration) {
+  if (!audioUrl) return '';
+  const dur = formatDuration(duration);
+  const listenLine = postUrl
+    ? `<p><a href="${postUrl}">\u25B6 Listen to this episode</a>${dur ? ` \u00B7 ${dur}` : ''}</p>`
+    : '';
   return `<!--kg-card-begin: html-->
+${listenLine}
 <figure class="kg-card kg-audio-card">
-<audio src="${url}" controls preload="metadata" style="width:100%"></audio>
+<audio src="${audioUrl}" controls preload="metadata" style="width:100%"></audio>
 </figure>
 <!--kg-card-end: html-->`;
 }
 
-async function buildHtml(item) {
+async function buildHtml(item, postUrl) {
   const raw = item.contentEncoded || item.content || item.description || '';
   const { html, isbns } = extractIsbns(raw);
-  return [audioPlayer(item.enclosure && item.enclosure.url),
+  const audioUrl = item.enclosure && item.enclosure.url;
+  return [audioPlayer(audioUrl, postUrl, item.duration),
     html, await booksSection(isbns)].filter(Boolean).join('\n');
 }
 
@@ -350,39 +367,42 @@ async function main() {
       console.log(`  credit for ${guest}: ${caption ? `"${caption}"` : 'not found in credits.json'}`);
     }
 
-    const postData = {
-      title,
-      html: await buildHtml(item),
-      custom_excerpt: (item.contentSnippet || '')
-        .replace(/\s+/g, ' ').slice(0, 290).trim() || undefined,
-      feature_image: feature || undefined,
-      feature_image_caption: feature ? caption : undefined,
-      tags,
-      published_at: item.isoDate || undefined
-    };
-
     const wantPublish = POST_STATUS === 'published';
     const wantEmail = wantPublish && NEWSLETTER_SLUG;
 
     try {
-      if (wantEmail) {
-        // Two-step: create as draft, then publish with newsletter.
-        // Ghost only sends email when a post transitions draft->published
-        // via PUT with ?newsletter=, not when created as published in one shot.
-        const draft = await api.posts.add(
-          { ...postData, status: 'draft' },
-          { source: 'html' }
-        );
-        await api.posts.edit(
-          { id: draft.id, status: 'published', updated_at: draft.updated_at },
-          { newsletter: NEWSLETTER_SLUG }
-        );
-      } else {
-        await api.posts.add(
-          { ...postData, status: POST_STATUS },
-          { source: 'html' }
-        );
-      }
+      // Step 1: create as draft (HTML without listen link — we need the
+      // post URL first, which Ghost assigns on create).
+      const draft = await api.posts.add(
+        {
+          title,
+          html: await buildHtml(item, null),
+          custom_excerpt: (item.contentSnippet || '')
+            .replace(/\s+/g, ' ').slice(0, 290).trim() || undefined,
+          feature_image: feature || undefined,
+          feature_image_caption: feature ? caption : undefined,
+          tags,
+          status: 'draft',
+          published_at: item.isoDate || undefined
+        },
+        { source: 'html' }
+      );
+
+      // Step 2: rebuild HTML with the listen link now that we have the slug.
+      // draft.url is a preview UUID path; the real URL uses the slug.
+      const postUrl = `${process.env.GHOST_API_URL}/${draft.slug}/`;
+      const finalHtml = await buildHtml(item, postUrl);
+      const editPayload = {
+        id: draft.id,
+        html: finalHtml,
+        status: wantPublish ? 'published' : 'draft',
+        updated_at: draft.updated_at
+      };
+      const editOpts = { source: 'html' };
+      if (wantEmail) editOpts.newsletter = NEWSLETTER_SLUG;
+
+      await api.posts.edit(editPayload, editOpts);
+
       console.log(`${wantPublish ? 'PUBLISHED' : 'created  '}`
         + `         ${title}${guest ? `  [${guest}]` : ''}`
         + `${feature ? '  +headshot' : ''}`
