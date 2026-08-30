@@ -231,7 +231,7 @@ async function booksSection(isbns) {
     const href = `https://bookshop.org/a/${SHOP_ID}/${isbn}`;
     const label = book.title || isbn;
     const by = book.authors.length
-      ? `<br><span style="opacity:.7">${book.authors.join(', ')}</span>` : '';
+      ? `<span style="font-size:.8rem;opacity:.65;display:block;margin-top:.15rem">${book.authors.join(', ')}</span>` : '';
     // Try each cover URL from the sources until one uploads
     let cover = null;
     if (book.cover) {
@@ -243,7 +243,7 @@ async function booksSection(isbns) {
         + `</a>`
       : '';
     cards.push(`<div style="width:110px">${img}`
-      + `<a href="${href}" style="font-size:.85rem;line-height:1.3">${label}</a>`
+      + `<a href="${href}" style="font-size:.95rem;font-weight:600;line-height:1.25">${label}</a>`
       + `${by}</div>`);
   }
   return `<!--kg-card-begin: html-->
@@ -252,6 +252,17 @@ async function booksSection(isbns) {
 ${cards.join('\n')}
 </div>
 <!--kg-card-end: html-->`;
+}
+
+function trimExcerpt(raw) {
+  if (!raw) return '';
+  // Strip leading timestamp lines like "(01:05) ..."
+  const text = raw.replace(/\s+/g, ' ').replace(/^\s*\(\d[\d:]*\)\s*/g, '').trim();
+  if (text.length <= 290) return text;
+  const sliced = text.slice(0, 290);
+  const lastSpace = sliced.lastIndexOf(' ');
+  if (lastSpace === -1) return sliced + '\u2026';
+  return sliced.slice(0, lastSpace).replace(/[.,;:!?\-—\s]+$/, '') + '\u2026';
 }
 
 function formatDuration(raw) {
@@ -268,7 +279,7 @@ function audioPlayer(audioUrl, postUrl, duration) {
   if (!audioUrl) return '';
   const dur = formatDuration(duration);
   const listenLine = postUrl
-    ? `<p><a href="${postUrl}">\u25B6 Listen to this episode</a>${dur ? ` \u00B7 ${dur}` : ''}</p>`
+    ? `<p class="lw-listen"><a href="${postUrl}">\u25B6 Listen to this episode</a>${dur ? ` \u00B7 ${dur}` : ''}</p>`
     : '';
   return `<!--kg-card-begin: html-->
 ${listenLine}
@@ -377,8 +388,7 @@ async function main() {
         {
           title,
           html: await buildHtml(item, null),
-          custom_excerpt: (item.contentSnippet || '')
-            .replace(/\s+/g, ' ').slice(0, 290).trim() || undefined,
+          custom_excerpt: trimExcerpt(item.contentSnippet) || undefined,
           feature_image: feature || undefined,
           feature_image_caption: feature ? caption : undefined,
           tags,
