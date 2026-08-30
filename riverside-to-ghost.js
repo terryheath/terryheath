@@ -194,17 +194,21 @@ async function booksSection(isbns) {
       + `<a href="${href}" style="font-size:.85rem;line-height:1.3">${label}</a>`
       + `${by}</div>`);
   }
-  return `<h3>Books mentioned</h3>
+  return `<!--kg-card-begin: html-->
+<h3>Books mentioned</h3>
 <div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">
 ${cards.join('\n')}
-</div>`;
+</div>
+<!--kg-card-end: html-->`;
 }
 
 function audioPlayer(url) {
-  return url
-    ? `<figure class="kg-card kg-audio-card">`
-      + `<audio src="${url}" controls preload="metadata"></audio></figure>`
-    : '';
+  if (!url) return '';
+  return `<!--kg-card-begin: html-->
+<figure class="kg-card kg-audio-card">
+<audio src="${url}" controls preload="metadata" style="width:100%"></audio>
+</figure>
+<!--kg-card-end: html-->`;
 }
 
 async function buildHtml(item) {
