@@ -11,11 +11,13 @@
  * Optional env:
  *   FEED_URL           default: the Life on Words feed
  *   BOOKSHOP_ID        Bookshop.org affiliate id (94291)
+ *   ISBNDB_KEY         ISBNdb API key; checked first for book metadata
  *   HEADSHOT_DIR       default: ./headshots
  *   POST_STATUS        "draft" or "published"   (default: draft)
  *   NEWSLETTER_SLUG    Ghost newsletter slug to email on publish.
  *                      Omit to publish without sending.
  *   MAX_AGE_DAYS       skip episodes older than this (default: 14)
+ *   BACKDATE           "1" = set published_at to RSS date (suppresses email)
  *   DRY_RUN            "1" = log what would happen, change nothing
  *   INCLUDE_TRAILER    "1" to include the trailer
  *
@@ -32,6 +34,7 @@ const Parser = require('rss-parser');
 const FEED_URL = process.env.FEED_URL
   || 'https://api.riverside.com/hosting/V48At7Hk.rss';
 const SHOP_ID = process.env.BOOKSHOP_ID;
+const ISBNDB_KEY = process.env.ISBNDB_KEY;
 const HEADSHOT_DIR = process.env.HEADSHOT_DIR || './headshots';
 const POST_STATUS = process.env.POST_STATUS || 'draft';
 const NEWSLETTER_SLUG = process.env.NEWSLETTER_SLUG;
@@ -69,6 +72,22 @@ try {
 
 // ---------- books ----------
 
+async function fromIsbnDb(isbn) {
+  if (!ISBNDB_KEY) return null;
+  const res = await fetch(`https://api2.isbndb.com/book/${isbn}`, {
+    headers: { Authorization: ISBNDB_KEY }
+  });
+  if (!res.ok) return null;
+  const d = await res.json();
+  const b = d.book;
+  if (!b) return null;
+  return {
+    title: b.title || null,
+    authors: b.authors || [],
+    cover: b.image || null
+  };
+}
+
 async function fromGoogle(isbn) {
   const res = await fetch(
     `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
@@ -96,18 +115,27 @@ async function fromOpenLibrary(isbn) {
   return {
     title: b.title,
     authors: (b.authors || []).map(a => a.name),
-    cover: `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`
+    cover: `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`
   };
 }
 
 async function lookupBook(isbn) {
   if (cache[isbn]) return cache[isbn];
+  const sources = [fromIsbnDb, fromGoogle, fromOpenLibrary];
   let book = null;
-  try { book = await fromGoogle(isbn); } catch (e) {}
-  if (!book || !book.cover) {
+  for (const src of sources) {
     try {
-      const ol = await fromOpenLibrary(isbn);
-      if (ol) book = book ? { ...book, cover: book.cover || ol.cover } : ol;
+      const result = await src(isbn);
+      if (!result) continue;
+      if (!book) {
+        book = result;
+      } else {
+        if (!book.title && result.title) book.title = result.title;
+        if (!book.authors.length && result.authors.length)
+          book.authors = result.authors;
+        if (!book.cover && result.cover) book.cover = result.cover;
+      }
+      if (book.title && book.cover) break;
     } catch (e) {}
   }
   if (!book) {
@@ -127,7 +155,7 @@ async function uploadRemote(url, name) {
     const res = await fetch(url);
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length < 2000) return null;   // Open Library placeholder
+    if (buf.length < 2000) return null;
     const tmp = path.join(os.tmpdir(), `${name.replace(/[^\w.-]/g, '_')}.jpg`);
     fs.writeFileSync(tmp, buf);
     const img = await api.images.upload({ file: tmp });
@@ -169,11 +197,24 @@ function guestFromTitle(title) {
 }
 
 function extractIsbns(html) {
-  const m = html.match(/BOOKS:\s*([0-9,\s]*)/i);
-  if (!m) return { html, isbns: [] };
-  const isbns = m[1].split(',').map(s => s.trim())
-    .filter(s => /^\d{10,13}$/.test(s));
-  return { html: html.replace(/<p>[^<]*BOOKS:[\s\S]*?<\/p>/i, ''), isbns };
+  // Find the paragraph/block containing "BOOKS:" (case-insensitive),
+  // tolerating inline tags like <code> that Riverside sometimes injects.
+  const blockRe = /<p[^>]*>[\s\S]*?<\/p>/gi;
+  let booksBlock = null;
+  const cleaned = html.replace(blockRe, block => {
+    if (!/books\s*:/i.test(block.replace(/<[^>]*>/g, ''))) return block;
+    booksBlock = block;
+    return '';
+  });
+  if (!booksBlock) return { html, isbns: [] };
+  // Strip all tags, decode entities, extract ISBN runs
+  const text = booksBlock.replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&#?\w+;/g, '');
+  const isbns = [...text.matchAll(/\b(\d{10}|\d{13})\b/g)]
+    .map(m => m[1]);
+  return { html: cleaned, isbns };
 }
 
 async function booksSection(isbns) {
@@ -185,7 +226,11 @@ async function booksSection(isbns) {
     const label = book.title || isbn;
     const by = book.authors.length
       ? `<br><span style="opacity:.7">${book.authors.join(', ')}</span>` : '';
-    const cover = await uploadRemote(book.cover, `cover-${isbn}`);
+    // Try each cover URL from the sources until one uploads
+    let cover = null;
+    if (book.cover) {
+      cover = await uploadRemote(book.cover, `cover-${isbn}`);
+    }
     const img = cover
       ? `<a href="${href}"><img src="${cover}" alt="${label}" `
         + `style="width:110px;height:auto;display:block;margin-bottom:.5rem">`
@@ -297,31 +342,43 @@ async function main() {
     const feature = shotPath ? await uploadLocal(shotPath) : null;
     const caption = (guest && credits[guest]) || undefined;
 
-    const payload = {
+    const postData = {
       title,
       html: await buildHtml(item),
       custom_excerpt: (item.contentSnippet || '')
         .replace(/\s+/g, ' ').slice(0, 290).trim() || undefined,
       feature_image: feature || undefined,
       feature_image_caption: feature ? caption : undefined,
-      status: POST_STATUS,
       tags,
-      published_at: BACKDATE ? (item.isoDate || undefined)
-        : (item.isoDate && Date.now() - Date.parse(item.isoDate) < 86400000
-          ? item.isoDate : undefined)
+      published_at: BACKDATE ? (item.isoDate || undefined) : undefined
     };
 
-    const opts = { source: 'html' };
-    if (POST_STATUS === 'published' && NEWSLETTER_SLUG) {
-      opts.newsletter = NEWSLETTER_SLUG;
-    }
+    const wantPublish = POST_STATUS === 'published';
+    const wantEmail = wantPublish && NEWSLETTER_SLUG;
 
     try {
-      await api.posts.add(payload, opts);
-      console.log(`${POST_STATUS === 'published' ? 'PUBLISHED' : 'created  '}`
+      if (wantEmail) {
+        // Two-step: create as draft, then publish with newsletter.
+        // Ghost only sends email when a post transitions draft->published
+        // via PUT with ?newsletter=, not when created as published in one shot.
+        const draft = await api.posts.add(
+          { ...postData, status: 'draft' },
+          { source: 'html' }
+        );
+        await api.posts.edit(
+          { id: draft.id, status: 'published', updated_at: draft.updated_at },
+          { newsletter: NEWSLETTER_SLUG }
+        );
+      } else {
+        await api.posts.add(
+          { ...postData, status: POST_STATUS },
+          { source: 'html' }
+        );
+      }
+      console.log(`${wantPublish ? 'PUBLISHED' : 'created  '}`
         + `         ${title}${guest ? `  [${guest}]` : ''}`
         + `${feature ? '  +headshot' : ''}`
-        + `${opts.newsletter ? '  +emailed' : ''}`);
+        + `${wantEmail ? '  +emailed' : ''}`);
       created++;
     } catch (err) {
       console.error(`FAILED            ${title}\n  ${err.message}`);
