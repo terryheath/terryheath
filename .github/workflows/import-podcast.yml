@@ -1,0 +1,55 @@
+name: Import podcast episodes to Ghost
+
+on:
+  schedule:
+    # Every day at 15:00 UTC (8am PDT / 7am PST).
+    # Episodes drop Sunday 07:00 UTC, so this catches them the same morning.
+    - cron: '0 15 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (log only, change nothing)'
+        type: boolean
+        default: true
+      status:
+        description: 'Post status'
+        type: choice
+        options: [draft, published]
+        default: draft
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @tryghost/admin-api rss-parser
+
+      - name: Restore book cache
+        uses: actions/cache@v4
+        with:
+          path: .book-cache.json
+          key: book-cache-${{ github.run_id }}
+          restore-keys: book-cache-
+
+      - name: Run importer
+        env:
+          GHOST_API_URL: ${{ secrets.GHOST_API_URL }}
+          GHOST_ADMIN_KEY: ${{ secrets.GHOST_ADMIN_KEY }}
+          BOOKSHOP_ID: '94291'
+          HEADSHOT_DIR: ./headshots
+          MAX_AGE_DAYS: '14'
+          # On the schedule these come from repo variables so you can change
+          # them without editing this file. Manual runs use the inputs above.
+          POST_STATUS: >-
+            ${{ github.event.inputs.status || vars.POST_STATUS || 'draft' }}
+          NEWSLETTER_SLUG: ${{ vars.NEWSLETTER_SLUG }}
+          DRY_RUN: >-
+            ${{ github.event.inputs.dry_run == 'true' && '1'
+                || vars.DRY_RUN || '' }}
+        run: node riverside-to-ghost.js
