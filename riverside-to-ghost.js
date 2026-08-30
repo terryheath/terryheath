@@ -17,7 +17,6 @@
  *   NEWSLETTER_SLUG    Ghost newsletter slug to email on publish.
  *                      Omit to publish without sending.
  *   MAX_AGE_DAYS       skip episodes older than this (default: 14)
- *   BACKDATE           "1" = set published_at to RSS date (suppresses email)
  *   DRY_RUN            "1" = log what would happen, change nothing
  *   INCLUDE_TRAILER    "1" to include the trailer
  *
@@ -40,7 +39,6 @@ const POST_STATUS = process.env.POST_STATUS || 'draft';
 const NEWSLETTER_SLUG = process.env.NEWSLETTER_SLUG;
 const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS || '14', 10);
 const DRY_RUN = process.env.DRY_RUN === '1';
-const BACKDATE = process.env.BACKDATE === '1';
 const CACHE_FILE = path.join(process.cwd(), '.book-cache.json');
 
 const api = new GhostAdminAPI({
@@ -65,10 +63,17 @@ const saveCache = () =>
   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
 
 let credits = {};
-try {
-  credits = JSON.parse(
-    fs.readFileSync(path.join(HEADSHOT_DIR, 'credits.json'), 'utf8'));
-} catch (e) {}
+{
+  const creditsPath = path.resolve(HEADSHOT_DIR, 'credits.json');
+  console.log(`credits: loading ${creditsPath}`);
+  try {
+    credits = JSON.parse(fs.readFileSync(creditsPath, 'utf8'));
+    const keys = Object.keys(credits);
+    console.log(`credits: ${keys.length} entries: ${keys.join(', ')}`);
+  } catch (e) {
+    console.warn(`credits: FAILED — ${e.message}`);
+  }
+}
 
 // ---------- books ----------
 
@@ -299,7 +304,7 @@ async function main() {
 
   console.log(`status=${POST_STATUS}`
     + ` newsletter=${NEWSLETTER_SLUG || '(none)'}`
-    + ` maxAge=${MAX_AGE_DAYS}d${BACKDATE ? ' BACKDATE' : ''}${DRY_RUN ? ' DRY_RUN' : ''}`);
+    + ` maxAge=${MAX_AGE_DAYS}d${DRY_RUN ? ' DRY_RUN' : ''}`);
 
   const feed = await parser.parseURL(FEED_URL);
   const done = await importedGuids();
@@ -341,6 +346,9 @@ async function main() {
 
     const feature = shotPath ? await uploadLocal(shotPath) : null;
     const caption = (guest && credits[guest]) || undefined;
+    if (guest && feature) {
+      console.log(`  credit for ${guest}: ${caption ? `"${caption}"` : 'not found in credits.json'}`);
+    }
 
     const postData = {
       title,
@@ -350,7 +358,7 @@ async function main() {
       feature_image: feature || undefined,
       feature_image_caption: feature ? caption : undefined,
       tags,
-      published_at: BACKDATE ? (item.isoDate || undefined) : undefined
+      published_at: item.isoDate || undefined
     };
 
     const wantPublish = POST_STATUS === 'published';
