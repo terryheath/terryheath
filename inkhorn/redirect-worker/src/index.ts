@@ -15,7 +15,7 @@ export default {
       return Response.redirect("https://inkhornjournal.com/submissions", 301);
     }
 
-    // Everything else → inkhornreview.com (preserve path)
-    return Response.redirect(`https://inkhornreview.com${url.pathname}`, 301);
+    // Everything else → inkhornreview.com root
+    return Response.redirect("https://inkhornreview.com/", 301);
   },
 };
