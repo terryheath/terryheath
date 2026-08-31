@@ -1,0 +1,130 @@
+routes:
+
+collections:
+  /winter-2027/:
+    permalink: /winter-2027/{slug}/
+    template: index
+    filter: primary_tag:winter-2027
+    data: tag.winter-2027
+
+  /spring-2027/:
+    permalink: /spring-2027/{slug}/
+    template: index
+    filter: primary_tag:spring-2027
+    data: tag.spring-2027
+
+  /summer-2027/:
+    permalink: /summer-2027/{slug}/
+    template: index
+    filter: primary_tag:summer-2027
+    data: tag.summer-2027
+
+  /autumn-2027/:
+    permalink: /autumn-2027/{slug}/
+    template: index
+    filter: primary_tag:autumn-2027
+    data: tag.autumn-2027
+
+  /winter-2028/:
+    permalink: /winter-2028/{slug}/
+    template: index
+    filter: primary_tag:winter-2028
+    data: tag.winter-2028
+
+  /spring-2028/:
+    permalink: /spring-2028/{slug}/
+    template: index
+    filter: primary_tag:spring-2028
+    data: tag.spring-2028
+
+  /summer-2028/:
+    permalink: /summer-2028/{slug}/
+    template: index
+    filter: primary_tag:summer-2028
+    data: tag.summer-2028
+
+  /autumn-2028/:
+    permalink: /autumn-2028/{slug}/
+    template: index
+    filter: primary_tag:autumn-2028
+    data: tag.autumn-2028
+
+  /winter-2029/:
+    permalink: /winter-2029/{slug}/
+    template: index
+    filter: primary_tag:winter-2029
+    data: tag.winter-2029
+
+  /spring-2029/:
+    permalink: /spring-2029/{slug}/
+    template: index
+    filter: primary_tag:spring-2029
+    data: tag.spring-2029
+
+  /summer-2029/:
+    permalink: /summer-2029/{slug}/
+    template: index
+    filter: primary_tag:summer-2029
+    data: tag.summer-2029
+
+  /autumn-2029/:
+    permalink: /autumn-2029/{slug}/
+    template: index
+    filter: primary_tag:autumn-2029
+    data: tag.autumn-2029
+
+  /winter-2030/:
+    permalink: /winter-2030/{slug}/
+    template: index
+    filter: primary_tag:winter-2030
+    data: tag.winter-2030
+
+  /spring-2030/:
+    permalink: /spring-2030/{slug}/
+    template: index
+    filter: primary_tag:spring-2030
+    data: tag.spring-2030
+
+  /summer-2030/:
+    permalink: /summer-2030/{slug}/
+    template: index
+    filter: primary_tag:summer-2030
+    data: tag.summer-2030
+
+  /autumn-2030/:
+    permalink: /autumn-2030/{slug}/
+    template: index
+    filter: primary_tag:autumn-2030
+    data: tag.autumn-2030
+
+  /winter-2031/:
+    permalink: /winter-2031/{slug}/
+    template: index
+    filter: primary_tag:winter-2031
+    data: tag.winter-2031
+
+  /spring-2031/:
+    permalink: /spring-2031/{slug}/
+    template: index
+    filter: primary_tag:spring-2031
+    data: tag.spring-2031
+
+  /summer-2031/:
+    permalink: /summer-2031/{slug}/
+    template: index
+    filter: primary_tag:summer-2031
+    data: tag.summer-2031
+
+  /autumn-2031/:
+    permalink: /autumn-2031/{slug}/
+    template: index
+    filter: primary_tag:autumn-2031
+    data: tag.autumn-2031
+
+  /:
+    permalink: /{slug}/
+    template: index
+
+taxonomies:
+  tag: /tag/{slug}/
+  author: /author/{slug}/
