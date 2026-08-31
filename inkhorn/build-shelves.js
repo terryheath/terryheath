@@ -137,7 +137,7 @@ async function main() {
 
       if (!ok) problems.push(`${name}: ${isbn} — ${!entry.title ? "no title" : ""}${!entry.title && !entry.cover ? ", " : ""}${!entry.cover ? "no cover" : ""}`);
     }
-    shelves[slug] = books;
+    shelves[slug] = { name, books };
   }
 
   fs.writeFileSync(SHELVES, JSON.stringify(shelves, null, 2) + "\n");

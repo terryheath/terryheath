@@ -48,19 +48,16 @@
   fetch(SHELVES_URL)
     .then(function (r) { return r.json(); })
     .then(function (shelves) {
-      var contributor = null;
-      var slug = null;
+      var entry = null;
       for (var i = 0; i < tags.length; i++) {
-        if (shelves[tags[i]]) { slug = tags[i]; contributor = shelves[slug]; break; }
+        if (shelves[tags[i]]) { entry = shelves[tags[i]]; break; }
       }
-      if (!contributor || !contributor.length) return;
+      if (!entry || !entry.books || !entry.books.length) return;
 
-      var name = slug.replace(/-/g, " ").replace(/\b\w/g, function (c) {
-        return c.toUpperCase();
-      });
+      var name = entry.name;
 
       var cards = "";
-      contributor.forEach(function (book) {
+      entry.books.forEach(function (book) {
         var img = book.cover
           ? '<img src="' + book.cover + '" alt="' + (book.title || "") +
             '" style="width:110px;height:auto;display:block;margin-bottom:.5rem">'
