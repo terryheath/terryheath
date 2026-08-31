@@ -1,125 +1,404 @@
 routes:
+  /autumn-2026/poetry/:
+    controller: channel
+    filter: tag:autumn-2026+tag:poetry
+    order: published_at asc
+  /autumn-2026/fiction/:
+    controller: channel
+    filter: tag:autumn-2026+tag:fiction
+    order: published_at asc
+  /autumn-2026/nonfiction/:
+    controller: channel
+    filter: tag:autumn-2026+tag:nonfiction
+    order: published_at asc
+  /winter-2027/poetry/:
+    controller: channel
+    filter: tag:winter-2027+tag:poetry
+    order: published_at asc
+  /winter-2027/fiction/:
+    controller: channel
+    filter: tag:winter-2027+tag:fiction
+    order: published_at asc
+  /winter-2027/nonfiction/:
+    controller: channel
+    filter: tag:winter-2027+tag:nonfiction
+    order: published_at asc
+  /spring-2027/poetry/:
+    controller: channel
+    filter: tag:spring-2027+tag:poetry
+    order: published_at asc
+  /spring-2027/fiction/:
+    controller: channel
+    filter: tag:spring-2027+tag:fiction
+    order: published_at asc
+  /spring-2027/nonfiction/:
+    controller: channel
+    filter: tag:spring-2027+tag:nonfiction
+    order: published_at asc
+  /summer-2027/poetry/:
+    controller: channel
+    filter: tag:summer-2027+tag:poetry
+    order: published_at asc
+  /summer-2027/fiction/:
+    controller: channel
+    filter: tag:summer-2027+tag:fiction
+    order: published_at asc
+  /summer-2027/nonfiction/:
+    controller: channel
+    filter: tag:summer-2027+tag:nonfiction
+    order: published_at asc
+  /autumn-2027/poetry/:
+    controller: channel
+    filter: tag:autumn-2027+tag:poetry
+    order: published_at asc
+  /autumn-2027/fiction/:
+    controller: channel
+    filter: tag:autumn-2027+tag:fiction
+    order: published_at asc
+  /autumn-2027/nonfiction/:
+    controller: channel
+    filter: tag:autumn-2027+tag:nonfiction
+    order: published_at asc
+  /winter-2028/poetry/:
+    controller: channel
+    filter: tag:winter-2028+tag:poetry
+    order: published_at asc
+  /winter-2028/fiction/:
+    controller: channel
+    filter: tag:winter-2028+tag:fiction
+    order: published_at asc
+  /winter-2028/nonfiction/:
+    controller: channel
+    filter: tag:winter-2028+tag:nonfiction
+    order: published_at asc
+  /spring-2028/poetry/:
+    controller: channel
+    filter: tag:spring-2028+tag:poetry
+    order: published_at asc
+  /spring-2028/fiction/:
+    controller: channel
+    filter: tag:spring-2028+tag:fiction
+    order: published_at asc
+  /spring-2028/nonfiction/:
+    controller: channel
+    filter: tag:spring-2028+tag:nonfiction
+    order: published_at asc
+  /summer-2028/poetry/:
+    controller: channel
+    filter: tag:summer-2028+tag:poetry
+    order: published_at asc
+  /summer-2028/fiction/:
+    controller: channel
+    filter: tag:summer-2028+tag:fiction
+    order: published_at asc
+  /summer-2028/nonfiction/:
+    controller: channel
+    filter: tag:summer-2028+tag:nonfiction
+    order: published_at asc
+  /autumn-2028/poetry/:
+    controller: channel
+    filter: tag:autumn-2028+tag:poetry
+    order: published_at asc
+  /autumn-2028/fiction/:
+    controller: channel
+    filter: tag:autumn-2028+tag:fiction
+    order: published_at asc
+  /autumn-2028/nonfiction/:
+    controller: channel
+    filter: tag:autumn-2028+tag:nonfiction
+    order: published_at asc
+  /winter-2029/poetry/:
+    controller: channel
+    filter: tag:winter-2029+tag:poetry
+    order: published_at asc
+  /winter-2029/fiction/:
+    controller: channel
+    filter: tag:winter-2029+tag:fiction
+    order: published_at asc
+  /winter-2029/nonfiction/:
+    controller: channel
+    filter: tag:winter-2029+tag:nonfiction
+    order: published_at asc
+  /spring-2029/poetry/:
+    controller: channel
+    filter: tag:spring-2029+tag:poetry
+    order: published_at asc
+  /spring-2029/fiction/:
+    controller: channel
+    filter: tag:spring-2029+tag:fiction
+    order: published_at asc
+  /spring-2029/nonfiction/:
+    controller: channel
+    filter: tag:spring-2029+tag:nonfiction
+    order: published_at asc
+  /summer-2029/poetry/:
+    controller: channel
+    filter: tag:summer-2029+tag:poetry
+    order: published_at asc
+  /summer-2029/fiction/:
+    controller: channel
+    filter: tag:summer-2029+tag:fiction
+    order: published_at asc
+  /summer-2029/nonfiction/:
+    controller: channel
+    filter: tag:summer-2029+tag:nonfiction
+    order: published_at asc
+  /autumn-2029/poetry/:
+    controller: channel
+    filter: tag:autumn-2029+tag:poetry
+    order: published_at asc
+  /autumn-2029/fiction/:
+    controller: channel
+    filter: tag:autumn-2029+tag:fiction
+    order: published_at asc
+  /autumn-2029/nonfiction/:
+    controller: channel
+    filter: tag:autumn-2029+tag:nonfiction
+    order: published_at asc
+  /winter-2030/poetry/:
+    controller: channel
+    filter: tag:winter-2030+tag:poetry
+    order: published_at asc
+  /winter-2030/fiction/:
+    controller: channel
+    filter: tag:winter-2030+tag:fiction
+    order: published_at asc
+  /winter-2030/nonfiction/:
+    controller: channel
+    filter: tag:winter-2030+tag:nonfiction
+    order: published_at asc
+  /spring-2030/poetry/:
+    controller: channel
+    filter: tag:spring-2030+tag:poetry
+    order: published_at asc
+  /spring-2030/fiction/:
+    controller: channel
+    filter: tag:spring-2030+tag:fiction
+    order: published_at asc
+  /spring-2030/nonfiction/:
+    controller: channel
+    filter: tag:spring-2030+tag:nonfiction
+    order: published_at asc
+  /summer-2030/poetry/:
+    controller: channel
+    filter: tag:summer-2030+tag:poetry
+    order: published_at asc
+  /summer-2030/fiction/:
+    controller: channel
+    filter: tag:summer-2030+tag:fiction
+    order: published_at asc
+  /summer-2030/nonfiction/:
+    controller: channel
+    filter: tag:summer-2030+tag:nonfiction
+    order: published_at asc
+  /autumn-2030/poetry/:
+    controller: channel
+    filter: tag:autumn-2030+tag:poetry
+    order: published_at asc
+  /autumn-2030/fiction/:
+    controller: channel
+    filter: tag:autumn-2030+tag:fiction
+    order: published_at asc
+  /autumn-2030/nonfiction/:
+    controller: channel
+    filter: tag:autumn-2030+tag:nonfiction
+    order: published_at asc
+  /winter-2031/poetry/:
+    controller: channel
+    filter: tag:winter-2031+tag:poetry
+    order: published_at asc
+  /winter-2031/fiction/:
+    controller: channel
+    filter: tag:winter-2031+tag:fiction
+    order: published_at asc
+  /winter-2031/nonfiction/:
+    controller: channel
+    filter: tag:winter-2031+tag:nonfiction
+    order: published_at asc
+  /spring-2031/poetry/:
+    controller: channel
+    filter: tag:spring-2031+tag:poetry
+    order: published_at asc
+  /spring-2031/fiction/:
+    controller: channel
+    filter: tag:spring-2031+tag:fiction
+    order: published_at asc
+  /spring-2031/nonfiction/:
+    controller: channel
+    filter: tag:spring-2031+tag:nonfiction
+    order: published_at asc
+  /summer-2031/poetry/:
+    controller: channel
+    filter: tag:summer-2031+tag:poetry
+    order: published_at asc
+  /summer-2031/fiction/:
+    controller: channel
+    filter: tag:summer-2031+tag:fiction
+    order: published_at asc
+  /summer-2031/nonfiction/:
+    controller: channel
+    filter: tag:summer-2031+tag:nonfiction
+    order: published_at asc
+  /autumn-2031/poetry/:
+    controller: channel
+    filter: tag:autumn-2031+tag:poetry
+    order: published_at asc
+  /autumn-2031/fiction/:
+    controller: channel
+    filter: tag:autumn-2031+tag:fiction
+    order: published_at asc
+  /autumn-2031/nonfiction/:
+    controller: channel
+    filter: tag:autumn-2031+tag:nonfiction
+    order: published_at asc
 
 collections:
+  /autumn-2026/:
+    permalink: /autumn-2026/{slug}/
+    template: index
+    filter: primary_tag:autumn-2026
+    data: tag.autumn-2026
+    order: published_at asc
+
   /winter-2027/:
     permalink: /winter-2027/{slug}/
     template: index
     filter: primary_tag:winter-2027
     data: tag.winter-2027
+    order: published_at asc
 
   /spring-2027/:
     permalink: /spring-2027/{slug}/
     template: index
     filter: primary_tag:spring-2027
     data: tag.spring-2027
+    order: published_at asc
 
   /summer-2027/:
     permalink: /summer-2027/{slug}/
     template: index
     filter: primary_tag:summer-2027
     data: tag.summer-2027
+    order: published_at asc
 
   /autumn-2027/:
     permalink: /autumn-2027/{slug}/
     template: index
     filter: primary_tag:autumn-2027
     data: tag.autumn-2027
+    order: published_at asc
 
   /winter-2028/:
     permalink: /winter-2028/{slug}/
     template: index
     filter: primary_tag:winter-2028
     data: tag.winter-2028
+    order: published_at asc
 
   /spring-2028/:
     permalink: /spring-2028/{slug}/
     template: index
     filter: primary_tag:spring-2028
     data: tag.spring-2028
+    order: published_at asc
 
   /summer-2028/:
     permalink: /summer-2028/{slug}/
     template: index
     filter: primary_tag:summer-2028
     data: tag.summer-2028
+    order: published_at asc
 
   /autumn-2028/:
     permalink: /autumn-2028/{slug}/
     template: index
     filter: primary_tag:autumn-2028
     data: tag.autumn-2028
+    order: published_at asc
 
   /winter-2029/:
     permalink: /winter-2029/{slug}/
     template: index
     filter: primary_tag:winter-2029
     data: tag.winter-2029
+    order: published_at asc
 
   /spring-2029/:
     permalink: /spring-2029/{slug}/
     template: index
     filter: primary_tag:spring-2029
     data: tag.spring-2029
+    order: published_at asc
 
   /summer-2029/:
     permalink: /summer-2029/{slug}/
     template: index
     filter: primary_tag:summer-2029
     data: tag.summer-2029
+    order: published_at asc
 
   /autumn-2029/:
     permalink: /autumn-2029/{slug}/
     template: index
     filter: primary_tag:autumn-2029
     data: tag.autumn-2029
+    order: published_at asc
 
   /winter-2030/:
     permalink: /winter-2030/{slug}/
     template: index
     filter: primary_tag:winter-2030
     data: tag.winter-2030
+    order: published_at asc
 
   /spring-2030/:
     permalink: /spring-2030/{slug}/
     template: index
     filter: primary_tag:spring-2030
     data: tag.spring-2030
+    order: published_at asc
 
   /summer-2030/:
     permalink: /summer-2030/{slug}/
     template: index
     filter: primary_tag:summer-2030
     data: tag.summer-2030
+    order: published_at asc
 
   /autumn-2030/:
     permalink: /autumn-2030/{slug}/
     template: index
     filter: primary_tag:autumn-2030
     data: tag.autumn-2030
+    order: published_at asc
 
   /winter-2031/:
     permalink: /winter-2031/{slug}/
     template: index
     filter: primary_tag:winter-2031
     data: tag.winter-2031
+    order: published_at asc
 
   /spring-2031/:
     permalink: /spring-2031/{slug}/
     template: index
     filter: primary_tag:spring-2031
     data: tag.spring-2031
+    order: published_at asc
 
   /summer-2031/:
     permalink: /summer-2031/{slug}/
     template: index
     filter: primary_tag:summer-2031
     data: tag.summer-2031
+    order: published_at asc
 
   /autumn-2031/:
     permalink: /autumn-2031/{slug}/
     template: index
     filter: primary_tag:autumn-2031
     data: tag.autumn-2031
+    order: published_at asc
 
   /:
     permalink: /{slug}/
