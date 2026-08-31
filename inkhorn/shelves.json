@@ -27,5 +27,34 @@
         "cover": "https://images.isbndb.com/covers/9873193482882.jpg"
       }
     ]
+  },
+  "gerard-sarnat": {
+    "name": "Gerard Sarnat",
+    "books": [
+      {
+        "isbn": "9780982655603",
+        "title": "Homeless Chronicles From Abraham to Burning Man",
+        "authors": "Gerard Sarnat",
+        "cover": "https://images.isbndb.com/covers/23706803482537.jpg"
+      },
+      {
+        "isbn": "9780982655689",
+        "title": "Disputes",
+        "authors": "Gerard Sarnat",
+        "cover": "https://images.isbndb.com/covers/23707663482537.jpg"
+      },
+      {
+        "isbn": "9780990531111",
+        "title": "17s",
+        "authors": "Gerard Sarnat",
+        "cover": "https://images.isbndb.com/covers/18204513482540.jpg"
+      },
+      {
+        "isbn": "9780990531128",
+        "title": "Melting the Ice King",
+        "authors": "Gerard Sarnat",
+        "cover": "https://images.isbndb.com/covers/18204683482540.jpg"
+      }
+    ]
   }
 }
