@@ -1,0 +1,15 @@
+{
+  "name": "inkhorn-press-redirect",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-31",
+  "routes": [
+    {
+      "pattern": "inkhorn.press/*",
+      "zone_name": "inkhorn.press"
+    },
+    {
+      "pattern": "www.inkhorn.press/*",
+      "zone_name": "inkhorn.press"
+    }
+  ]
+}
