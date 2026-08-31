@@ -3,10 +3,14 @@
   ========================================
 
   What this does:
-    When someone reads a piece on Inkhorn Review, this script checks
-    whether the contributor has any books listed in our data file. If
-    they do, it adds a "Books by [Name]" shelf at the bottom of the
-    article with cover images that link to Bookshop.org.
+    On a post page, if the contributor has books in our data file, this
+    script adds a "Books by [Name]" shelf at the bottom of the article
+    with cover images that link to Bookshop.org.
+
+    On a contributor's tag page (/tag/william-doreski/ etc.), it adds a
+    "Books" shelf between the tag header and the list of pieces. Issue
+    tags (autumn-2026 etc.) and genre tags (poetry, fiction, nonfiction)
+    are ignored — those tag pages show no shelf.
 
   Where the book data comes from:
     A JSON file hosted on GitHub:
@@ -30,63 +34,108 @@
 
 <script>
 (function () {
-  if (!document.body.classList.contains("post-template")) return;
-
   var SHELVES_URL =
     "https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/shelves.json";
   var SHOP = "https://bookshop.org/a/94291/";
-  var SKIP = /^(winter|spring|summer|autumn)-\d{4}$|^(poetry|fiction|nonfiction|hash-)$/;
+  var SKIP = /^(winter|spring|summer|autumn)-\d{4}$|^(poetry|fiction|nonfiction)$/;
 
-  var tags = [];
-  document.body.className.split(/\s+/).forEach(function (cls) {
-    if (cls.indexOf("tag-") !== 0) return;
-    var slug = cls.replace("tag-", "");
-    if (!SKIP.test(slug)) tags.push(slug);
-  });
-  if (!tags.length) return;
+  var isPost = document.body.classList.contains("post-template");
+  var isTag = document.body.classList.contains("tag-template");
+  if (!isPost && !isTag) return;
+
+  var slug = null;
+
+  if (isTag) {
+    // Extract slug from URL: /tag/{slug}/
+    var match = window.location.pathname.match(/^\/tag\/([^/]+)/);
+    if (!match) return;
+    slug = match[1];
+    if (SKIP.test(slug)) return;
+  }
+
+  if (isPost) {
+    // Find contributor from body tag classes, skipping issue and genre tags
+    var tags = [];
+    document.body.className.split(/\s+/).forEach(function (cls) {
+      if (cls.indexOf("tag-") !== 0) return;
+      var s = cls.replace("tag-", "");
+      if (!SKIP.test(s) && s.indexOf("hash-") !== 0) tags.push(s);
+    });
+    if (!tags.length) return;
+    slug = tags[0];
+  }
+
+  if (!slug) return;
+
+  function buildCards(books) {
+    var cards = "";
+    books.forEach(function (book) {
+      var img = book.cover
+        ? '<img src="' + book.cover + '" alt="' + (book.title || "") +
+          '" style="width:110px;height:auto;display:block;margin-bottom:.5rem">'
+        : "";
+      var title = book.title
+        ? '<span style="font-size:.95rem;font-weight:600;line-height:1.25">' +
+          book.title + "</span>"
+        : "";
+      var author = book.authors
+        ? '<span style="font-size:.8rem;opacity:.65;display:block;margin-top:.15rem">' +
+          book.authors + "</span>"
+        : "";
+      cards +=
+        '<a href="' + SHOP + book.isbn +
+        '" style="width:110px;text-decoration:none;color:inherit">' +
+        img + title + author + "</a>";
+    });
+    return cards;
+  }
 
   fetch(SHELVES_URL)
     .then(function (r) { return r.json(); })
     .then(function (shelves) {
       var entry = null;
-      for (var i = 0; i < tags.length; i++) {
-        if (shelves[tags[i]]) { entry = shelves[tags[i]]; break; }
+
+      if (isPost) {
+        // Try each non-skipped tag until we find one with books
+        var tags = [];
+        document.body.className.split(/\s+/).forEach(function (cls) {
+          if (cls.indexOf("tag-") !== 0) return;
+          var s = cls.replace("tag-", "");
+          if (!SKIP.test(s) && s.indexOf("hash-") !== 0) tags.push(s);
+        });
+        for (var i = 0; i < tags.length; i++) {
+          if (shelves[tags[i]]) { entry = shelves[tags[i]]; break; }
+        }
+      } else {
+        entry = shelves[slug] || null;
       }
+
       if (!entry || !entry.books || !entry.books.length) return;
 
-      var name = entry.name;
+      var cards = buildCards(entry.books);
 
-      var cards = "";
-      entry.books.forEach(function (book) {
-        var img = book.cover
-          ? '<img src="' + book.cover + '" alt="' + (book.title || "") +
-            '" style="width:110px;height:auto;display:block;margin-bottom:.5rem">'
-          : "";
-        var title = book.title
-          ? '<a href="' + SHOP + book.isbn +
-            '" style="font-size:.95rem;font-weight:600;line-height:1.25;color:inherit;text-decoration:none">' +
-            book.title + "</a>"
-          : "";
-        var author = book.authors
-          ? '<span style="font-size:.8rem;opacity:.65;display:block;margin-top:.15rem">' +
-            book.authors + "</span>"
-          : "";
-        cards +=
-          '<a href="' + SHOP + book.isbn +
-          '" style="width:110px;text-decoration:none;color:inherit">' +
-          img + title + author + "</a>";
-      });
+      if (isPost) {
+        var html =
+          '<div style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(0,0,0,.1)">' +
+          '<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Books by ' +
+          entry.name + "</h3>" +
+          '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
+          cards +
+          "</div></div>";
+        var content = document.querySelector(".gh-content");
+        if (content) content.insertAdjacentHTML("beforeend", html);
+      }
 
-      var html =
-        '<div style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(0,0,0,.1)">' +
-        '<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Books by ' +
-        name + "</h3>" +
-        '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
-        cards +
-        "</div></div>";
-
-      var content = document.querySelector(".gh-content");
-      if (content) content.insertAdjacentHTML("beforeend", html);
+      if (isTag) {
+        var html =
+          '<section class="gh-inner" style="padding-top:1.5rem;padding-bottom:2rem">' +
+          '<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Books</h3>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
+          cards +
+          "</div></section>";
+        var archive = document.querySelector("section.gh-archive");
+        if (archive) archive.insertAdjacentHTML("afterend", html);
+      }
     })
     .catch(function () {});
 })();
