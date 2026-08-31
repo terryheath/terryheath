@@ -1,0 +1,28 @@
+{
+  "william-doreski": [
+    {
+      "isbn": "9789363540224",
+      "title": "No Vacancy",
+      "authors": "William Doreski",
+      "cover": "https://images.isbndb.com/covers/24555653485521.jpg"
+    },
+    {
+      "isbn": "9781716121234",
+      "title": "Mist in Their Eyes",
+      "authors": "William Doreski",
+      "cover": "https://images.isbndb.com/covers/27971923482798.jpg"
+    },
+    {
+      "isbn": "9781962374989",
+      "title": "Orpheus My Orpheus",
+      "authors": "William Doreski",
+      "cover": "https://covers.openlibrary.org/b/isbn/9781962374989-L.jpg?default=false"
+    },
+    {
+      "isbn": "9781950231997",
+      "title": "Train to Providence",
+      "authors": "William Doreski",
+      "cover": "https://images.isbndb.com/covers/9873193482882.jpg"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+<!--
+  INKHORN REVIEW — CONTRIBUTOR BOOK SHELF
+  ========================================
+
+  What this does:
+    When someone reads a piece on Inkhorn Review, this script checks
+    whether the contributor has any books listed in our data file. If
+    they do, it adds a "Books by [Name]" shelf at the bottom of the
+    article with cover images that link to Bookshop.org.
+
+  Where the book data comes from:
+    A JSON file hosted on GitHub:
+    https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/shelves.json
+
+  How that file is generated:
+    The script inkhorn/build-shelves.js in the terryheath repo reads
+    inkhorn/contributors.json (which you maintain by hand — just a name
+    and a list of ISBNs) and looks up each ISBN to get the title, author,
+    and cover image. Then it writes shelves.json, which you commit and
+    push so it's available at the URL above.
+
+  If the URL ever needs to move:
+    Change the SHELVES_URL variable below to wherever you host the file.
+
+  To add a new contributor's books:
+    1. Add their name and ISBNs to inkhorn/contributors.json
+    2. Run: ISBNDB_KEY=<key> node inkhorn/build-shelves.js
+    3. Commit and push inkhorn/shelves.json
+-->
+
+<script>
+(function () {
+  if (!document.body.classList.contains("post-template")) return;
+
+  var SHELVES_URL =
+    "https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/shelves.json";
+  var SHOP = "https://bookshop.org/a/94291/";
+  var SKIP = /^(winter|spring|summer|autumn)-\d{4}$|^(poetry|fiction|nonfiction|hash-)$/;
+
+  var tags = [];
+  document.body.className.split(/\s+/).forEach(function (cls) {
+    if (cls.indexOf("tag-") !== 0) return;
+    var slug = cls.replace("tag-", "");
+    if (!SKIP.test(slug)) tags.push(slug);
+  });
+  if (!tags.length) return;
+
+  fetch(SHELVES_URL)
+    .then(function (r) { return r.json(); })
+    .then(function (shelves) {
+      var contributor = null;
+      var slug = null;
+      for (var i = 0; i < tags.length; i++) {
+        if (shelves[tags[i]]) { slug = tags[i]; contributor = shelves[slug]; break; }
+      }
+      if (!contributor || !contributor.length) return;
+
+      var name = slug.replace(/-/g, " ").replace(/\b\w/g, function (c) {
+        return c.toUpperCase();
+      });
+
+      var cards = "";
+      contributor.forEach(function (book) {
+        var img = book.cover
+          ? '<img src="' + book.cover + '" alt="' + (book.title || "") +
+            '" style="width:110px;height:auto;display:block;margin-bottom:.5rem">'
+          : "";
+        var title = book.title
+          ? '<a href="' + SHOP + book.isbn +
+            '" style="font-size:.95rem;font-weight:600;line-height:1.25;color:inherit;text-decoration:none">' +
+            book.title + "</a>"
+          : "";
+        var author = book.authors
+          ? '<span style="font-size:.8rem;opacity:.65;display:block;margin-top:.15rem">' +
+            book.authors + "</span>"
+          : "";
+        cards +=
+          '<a href="' + SHOP + book.isbn +
+          '" style="width:110px;text-decoration:none;color:inherit">' +
+          img + title + author + "</a>";
+      });
+
+      var html =
+        '<div style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(0,0,0,.1)">' +
+        '<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Books by ' +
+        name + "</h3>" +
+        '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
+        cards +
+        "</div></div>";
+
+      var content = document.querySelector(".gh-content");
+      if (content) content.insertAdjacentHTML("beforeend", html);
+    })
+    .catch(function () {});
+})();
+</script>

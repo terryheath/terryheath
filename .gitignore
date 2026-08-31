@@ -1,3 +1,4 @@
 node_modules/
 .book-cache.json
 .DS_Store
+inkhorn/.book-cache.json
