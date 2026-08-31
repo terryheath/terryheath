@@ -3,7 +3,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.toLowerCase();
 
-    // Submission-related paths → inkhornjournal.com/submissions
+    // Submission-related paths → inkhornreview.com/submissions
     if (
       path === "/submission" ||
       path === "/submissions" ||
@@ -12,7 +12,7 @@ export default {
       path.startsWith("/apply/journal") ||
       path.startsWith("/apply")
     ) {
-      return Response.redirect("https://inkhornjournal.com/submissions", 301);
+      return Response.redirect("https://inkhornreview.com/submissions", 301);
     }
 
     // Everything else → inkhornreview.com root
