@@ -66,27 +66,44 @@ async function fromOpenLibrary(isbn) {
   };
 }
 
+async function verifyCover(url) {
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { method: "HEAD", redirect: "follow" });
+    if (!res.ok) return null;
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    if (!ct.startsWith("image/")) return null;
+    return url;
+  } catch {
+    return null;
+  }
+}
+
 async function lookupBook(isbn) {
   if (cache[isbn]) return cache[isbn];
   const sources = [fromIsbnDb, fromGoogle, fromOpenLibrary];
   let book = null;
+  const candidateCovers = [];
   for (const src of sources) {
     try {
       const result = await src(isbn);
       if (!result) continue;
       if (!book) {
-        book = result;
+        book = { title: result.title, authors: result.authors, cover: null };
       } else {
         if (!book.title && result.title) book.title = result.title;
         if (!book.authors.length && result.authors.length)
           book.authors = result.authors;
-        if (!book.cover && result.cover) book.cover = result.cover;
       }
-      if (book.title && book.cover) break;
+      if (result.cover) candidateCovers.push(result.cover);
     } catch {}
   }
   if (!book) {
     book = { title: null, authors: [], cover: null };
+  }
+  for (const url of candidateCovers) {
+    const verified = await verifyCover(url);
+    if (verified) { book.cover = verified; break; }
   }
   cache[isbn] = book;
   saveCache();
