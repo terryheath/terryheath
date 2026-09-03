@@ -41,6 +41,16 @@ Inkhorn Review's stack:
 3. Check the output — every ISBN should show `OK` with title, author, and cover.
 4. Commit and push `inkhorn/shelves.json` (and `contributors.json`). The shelf appears automatically on the next page load.
 
+### Rescheduling posts for an issue
+
+Run:
+```
+node inkhorn/reschedule.js <YYYY-MM-DD> <HH:MM>
+```
+Example: `node inkhorn/reschedule.js 2026-11-04 00:00`
+
+Fetches all scheduled posts, sorts them by current published_at order, and spaces them one minute apart from the given start time (UTC). Credentials come from Keychain automatically.
+
 ### Extending routes.yaml with more issues
 
 Inkhorn publishes **6 issues per year** on a bimonthly schedule. Release months are the **odd months only**: September, November, January, March, May, July (i.e. month numbers 9, 11, 1, 3, 5, 7 — wrapping across the calendar year boundary between November and January).
