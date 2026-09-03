@@ -56,5 +56,34 @@
         "cover": "https://images.isbndb.com/covers/18204683482540.jpg"
       }
     ]
+  },
+  "lindaann-loschiavo": {
+    "name": "LindaAnn LoSchiavo",
+    "books": [
+      {
+        "isbn": "9781962374644",
+        "title": "Cancer Courts My Mother",
+        "authors": "Lindaann Loschiavo",
+        "cover": "https://images.isbndb.com/covers/18956503482886.jpg"
+      },
+      {
+        "isbn": "9781958531730",
+        "title": "Always Haunted Hallowe'en Poems",
+        "authors": "Lindaann Loschiavo",
+        "cover": "https://images.isbndb.com/covers/8613153482885.jpg"
+      },
+      {
+        "isbn": "9781915025777",
+        "title": "Apprenticed to the Night",
+        "authors": "Lindaann Loschiavo",
+        "cover": "https://images.isbndb.com/covers/22926263482869.jpg"
+      },
+      {
+        "isbn": "9789357707466",
+        "title": "Felones de Se",
+        "authors": "Lindaann Loschiavo",
+        "cover": "https://images.isbndb.com/covers/22399653485519.jpg"
+      }
+    ]
   }
 }
