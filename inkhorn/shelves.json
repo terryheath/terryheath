@@ -114,5 +114,16 @@
         "cover": "https://images.isbndb.com/covers/5328883482805.jpg"
       }
     ]
+  },
+  "barbara-daniels": {
+    "name": "Barbara Daniels",
+    "books": [
+      {
+        "isbn": "9781950380992",
+        "title": "Talk to the Lioness",
+        "authors": "Barbara Daniels",
+        "cover": "https://images.isbndb.com/covers/11363143482882.jpg"
+      }
+    ]
   }
 }
