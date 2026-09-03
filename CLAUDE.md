@@ -86,7 +86,9 @@ Trigger the GitHub Actions workflow `import-podcast.yml` from the Actions tab, o
 ## Credentials
 
 - **ISBNDB_KEY** — macOS Keychain, service name `isbndb-inkhorn`. Retrieve with `security find-generic-password -s "isbndb-inkhorn" -w`. To store or update: `security add-generic-password -s "isbndb-inkhorn" -a "$USER" -w "KEY_HERE"` (or `security delete-generic-password -s "isbndb-inkhorn"` first if updating).
-- **Ghost Admin API keys** — Per-site, from each site's Settings → Integrations panel in Ghost.
+- **Ghost Admin API key (Inkhorn)** — macOS Keychain, service name `ghost-admin-inkhorn`. Retrieve with `security find-generic-password -s "ghost-admin-inkhorn" -w`.
+- **Ghost Content API key (Inkhorn)** — macOS Keychain, service name `ghost-content-inkhorn`. Retrieve with `security find-generic-password -s "ghost-content-inkhorn" -w`.
+- **Ghost URL (Inkhorn)** — macOS Keychain, service name `ghost-url-inkhorn`. Retrieve with `security find-generic-password -s "ghost-url-inkhorn" -w`. Value: `https://accelerated-basilisk.pikapod.net`.
 - **GitHub Actions secrets** — Configured on the repo's Settings → Secrets page.
 - **Cloudflare** — Wrangler OAuth (run `npx wrangler login` if expired). DNS-only API token in GCP Secret Manager: `whiterabbit-cloudflare-api-token` in project `whiterabbit-prod`.
 
