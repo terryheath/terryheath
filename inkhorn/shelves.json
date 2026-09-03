@@ -85,5 +85,34 @@
         "cover": "https://images.isbndb.com/covers/22399653485519.jpg"
       }
     ]
+  },
+  "rikki-santer": {
+    "name": "Rikki Santer",
+    "books": [
+      {
+        "isbn": "9781962405652",
+        "title": null,
+        "authors": "",
+        "cover": null
+      },
+      {
+        "isbn": "9781957755533",
+        "title": "Shepherd's Hour",
+        "authors": "Rikki Santer",
+        "cover": "https://images.isbndb.com/covers/851183482885.jpg"
+      },
+      {
+        "isbn": "9781594981371",
+        "title": "Zebra Lashes",
+        "authors": "Rikki Santer",
+        "cover": "https://images.isbndb.com/covers/24262263482755.jpg"
+      },
+      {
+        "isbn": "9781733516983",
+        "title": "Resurrection Letter Leonora, Her Tarot, and Me",
+        "authors": "Rikki Santer",
+        "cover": "https://images.isbndb.com/covers/5328883482805.jpg"
+      }
+    ]
   }
 }
