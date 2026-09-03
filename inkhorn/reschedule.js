@@ -11,10 +11,13 @@
  *   node inkhorn/reschedule.js 2026-09-08 00:00
  *   node inkhorn/reschedule.js 2026-09-08 00:00 inkhorn/september-2026.txt
  *
- * Time is UTC. Ghost displays posts newest-first, so the order file lists
- * posts top-to-bottom as they should appear on the issue page. The script
- * assigns times in reverse so the first entry in the file gets the latest
- * publish time and appears at the top.
+ * Time is Pacific (America/Los_Angeles) — PDT in summer, PST in winter.
+ * Ghost admin displays times in Pacific, so enter times as you see them there.
+ *
+ * Ghost displays posts newest-first, so the order file lists posts
+ * top-to-bottom as they should appear on the issue page. The script assigns
+ * times in reverse so the first entry gets the latest publish time and
+ * appears at the top.
  *
  * Without an order file, posts are sorted by their current published_at,
  * preserving the existing display order.
@@ -39,21 +42,40 @@ function getKey(service) {
   }
 }
 
+/** Convert a Pacific local time to a UTC Date. Handles PDT/PST automatically. */
+function pacificToUTC(dateStr, timeStr) {
+  // Probe the UTC offset for America/Los_Angeles on the given date
+  const probe = new Date(`${dateStr}T12:00:00Z`);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    timeZoneName: 'shortOffset',
+  }).formatToParts(probe);
+  const tzPart = (parts.find(p => p.type === 'timeZoneName') || {}).value || 'GMT-7';
+  const match = tzPart.match(/GMT([+-])(\d+)(?::(\d+))?/);
+  const sign = match && match[1] === '+' ? 1 : -1;
+  const offsetMs = sign * (parseInt((match && match[2]) || '7') * 60 + parseInt((match && match[3]) || '0')) * 60000;
+
+  // UTC = Pacific − offset  (offset is negative for PT, so this adds hours)
+  const pacificMs = new Date(`${dateStr}T${timeStr}:00Z`).getTime();
+  return new Date(pacificMs - offsetMs);
+}
+
 const [,, dateArg, timeArg = '00:00', orderFile] = process.argv;
 
 if (!dateArg) {
   console.error('Usage: node inkhorn/reschedule.js <YYYY-MM-DD> [HH:MM] [order-file]');
-  console.error('Example: node inkhorn/reschedule.js 2026-09-08 00:00');
-  console.error('Example: node inkhorn/reschedule.js 2026-09-08 00:00 inkhorn/september-2026.txt');
+  console.error('Time is Pacific (PDT/PST). Example:');
+  console.error('  node inkhorn/reschedule.js 2026-09-08 00:00');
+  console.error('  node inkhorn/reschedule.js 2026-09-08 00:00 inkhorn/september-2026.txt');
   process.exit(1);
 }
 
-const startISO = `${dateArg}T${timeArg}:00.000Z`;
-const start = new Date(startISO);
+const start = pacificToUTC(dateArg, timeArg);
 if (isNaN(start.getTime())) {
-  console.error(`Invalid date/time: ${startISO}`);
+  console.error(`Invalid date/time: ${dateArg} ${timeArg}`);
   process.exit(1);
 }
+console.log(`Start: ${dateArg} ${timeArg} Pacific = ${start.toISOString()} UTC\n`);
 
 let orderedTitles = null;
 if (orderFile) {
@@ -111,23 +133,24 @@ async function main() {
 
     displayOrder = [...listed.map(l => l.post), ...unlisted];
   } else {
-    // No order file: sort by current published_at descending to preserve display order
+    // Preserve existing display order (newest published_at = top of page)
     displayOrder = [...posts].sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
   }
 
   // Ghost shows newest first, so assign times in reverse:
   // displayOrder[0] (top of page) → latest time slot
-  // displayOrder[n-1] (bottom of page) → start time (00:00)
+  // displayOrder[n-1] (bottom of page) → start time
   const n = displayOrder.length;
-  console.log(`Rescheduling ${n} post(s) from ${startISO}, one minute apart:\n`);
-  console.log('  Page order  Publish time (UTC)');
+  console.log(`Rescheduling ${n} post(s), one minute apart:\n`);
+  console.log('  Page pos  Publish time (Pacific)');
 
   for (let i = 0; i < n; i++) {
     const post = displayOrder[i];
-    const slot = n - 1 - i; // reverse: top of page gets highest slot
-    const newTime = new Date(start.getTime() + slot * 60 * 1000).toISOString();
-    await api.posts.edit({ id: post.id, published_at: newTime, updated_at: post.updated_at });
-    console.log(`  ${String(i + 1).padStart(2)} (top→btm)  ${newTime}  ${post.title}`);
+    const slot = n - 1 - i;
+    const utcTime = new Date(start.getTime() + slot * 60000);
+    const ptDisplay = utcTime.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', hour12: false, month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    await api.posts.edit({ id: post.id, published_at: utcTime.toISOString(), updated_at: post.updated_at });
+    console.log(`  ${String(i + 1).padStart(2)} of ${n}     ${ptDisplay}  ${post.title}`);
   }
 
   console.log('\nDone.');
