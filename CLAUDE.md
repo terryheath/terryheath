@@ -41,6 +41,25 @@ Inkhorn Review's stack:
 3. Check the output — every ISBN should show `OK` with title, author, and cover.
 4. Commit and push `inkhorn/shelves.json` (and `contributors.json`). The shelf appears automatically on the next page load.
 
+### Building the issue ebook (.docx for Vellum)
+
+**Prerequisite:** `brew install pandoc` (one-time).
+
+Run:
+```
+INKHORN_CONTENT_API_KEY=$(security find-generic-password -s "ghost-content-inkhorn" -w) \
+  node inkhorn/build-ebook.js <issue-slug>
+```
+Example: `node inkhorn/build-ebook.js september-2026`
+
+Optional flag `--by-genre` groups pieces under Poetry / Fiction / Nonfiction headings instead of web order.
+
+Output lands in `inkhorn/build/` (gitignored):
+- `<issue-slug>.docx` — import into Vellum
+- `<issue-slug>.html` — intermediate; inspect to verify poem line breaks before importing
+
+The script uses the Ghost Content API (`ghost-content-inkhorn` in Keychain) and reads post order from `published_at asc`. It does not use the Ghost author field — bylines come from each post's custom excerpt.
+
 ### Rescheduling posts for an issue
 
 Run:
