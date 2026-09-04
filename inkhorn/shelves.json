@@ -136,5 +136,32 @@
         "cover": "https://images.isbndb.com/covers/19357473482221.jpg"
       }
     ]
+  },
+  "zhu-xiao-di": {
+    "name": "Zhu Xiao Di",
+    "books": []
+  },
+  "james-lewis-huss": {
+    "name": "James Lewis Huss",
+    "books": [
+      {
+        "isbn": "9798864299838",
+        "title": "Out of the Water: The Epic of Moses",
+        "authors": "James Lewis Huss",
+        "cover": "https://images.isbndb.com/covers/17924223488904.jpg"
+      },
+      {
+        "isbn": "9781685960117",
+        "title": "HomiNed",
+        "authors": "James Lewis Huss",
+        "cover": "https://images.isbndb.com/covers/7218653482788.jpg"
+      },
+      {
+        "isbn": "9798868212611",
+        "title": "Book of Pilgrimage Tree of Truth",
+        "authors": "James Lewis Huss",
+        "cover": "https://images.isbndb.com/covers/880373488906.jpg"
+      }
+    ]
   }
 }
