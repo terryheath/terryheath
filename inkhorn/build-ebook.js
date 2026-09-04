@@ -16,16 +16,17 @@
  *   inkhorn/build/<issue-slug>.docx  — import into Vellum
  *   inkhorn/build/<issue-slug>.html  — intermediate; check poem line breaks
  *
- * Requires: pandoc (brew install pandoc)
- * Key:      macOS Keychain, service "ghost-admin-inkhorn"  (id:secret format)
+ * No system prerequisites. Conversion via html-to-docx (npm).
+ * Key: macOS Keychain, service "ghost-admin-inkhorn"  (id:secret format)
  */
 
 'use strict';
 
-const crypto = require('crypto');
-const fs     = require('fs');
-const path   = require('path');
+const crypto     = require('crypto');
+const fs         = require('fs');
+const path       = require('path');
 const { execSync } = require('child_process');
+const HTMLtoDOCX = require('html-to-docx');
 
 // ── Args ──────────────────────────────────────────────────────────────────────
 
@@ -250,12 +251,12 @@ async function main() {
   fs.writeFileSync(htmlOut, html, 'utf8');
   console.log(`HTML → ${htmlOut}`);
 
-  try {
-    execSync(`pandoc "${htmlOut}" -o "${docxOut}" --from=html --to=docx`, { stdio: 'inherit' });
-  } catch {
-    console.error('\npandoc failed. Install with: brew install pandoc');
-    process.exit(1);
-  }
+  const docxBuf = await HTMLtoDOCX(html, null, {
+    table: { row: { cantSplit: true } },
+    footer: false,
+    header: false,
+  });
+  fs.writeFileSync(docxOut, docxBuf);
 
   console.log(`DOCX → ${docxOut}`);
   console.log('\nDone.');

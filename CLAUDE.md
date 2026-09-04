@@ -43,7 +43,7 @@ Inkhorn Review's stack:
 
 ### Building the issue ebook (.docx for Vellum)
 
-**Prerequisite:** `brew install pandoc` (one-time).
+**Prerequisite:** none — conversion uses the `html-to-docx` npm package already installed.
 
 Run:
 ```
