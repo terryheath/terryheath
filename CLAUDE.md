@@ -47,18 +47,22 @@ Inkhorn Review's stack:
 
 Run:
 ```
-INKHORN_CONTENT_API_KEY=$(security find-generic-password -s "ghost-content-inkhorn" -w) \
+INKHORN_ADMIN_API_KEY=$(security find-generic-password -s "ghost-admin-inkhorn" -w) \
   node inkhorn/build-ebook.js <issue-slug>
 ```
 Example: `node inkhorn/build-ebook.js september-2026`
 
-Optional flag `--by-genre` groups pieces under Poetry / Fiction / Nonfiction headings instead of web order.
+Uses the Ghost **Admin** API (not Content API) so it works on scheduled posts before the issue goes live. Prints a warning when any posts are still scheduled so you know it's a pre-release build.
+
+Optional flags:
+- `--by-genre` — groups pieces under Poetry / Fiction / Nonfiction headings instead of web order
+- `--status=published,scheduled` — default; use `--status=published` after release to exclude scheduled posts
 
 Output lands in `inkhorn/build/` (gitignored):
 - `<issue-slug>.docx` — import into Vellum
 - `<issue-slug>.html` — intermediate; inspect to verify poem line breaks before importing
 
-The script uses the Ghost Content API (`ghost-content-inkhorn` in Keychain) and reads post order from `published_at asc`. It does not use the Ghost author field — bylines come from each post's custom excerpt.
+Bylines come from each post's custom excerpt. The Ghost author field is not used (every post is authored by the Inkhorn Review account, not the contributor).
 
 ### Rescheduling posts for an issue
 

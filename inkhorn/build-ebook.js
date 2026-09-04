@@ -1,52 +1,56 @@
 #!/usr/bin/env node
 /**
  * Build a Vellum-ready .docx from an Inkhorn Review Ghost issue.
+ * Uses the Ghost ADMIN API so it works on scheduled (pre-release) posts.
  *
  * Usage:
- *   INKHORN_CONTENT_API_KEY=$(security find-generic-password -s "ghost-content-inkhorn" -w) \
- *     node inkhorn/build-ebook.js <issue-slug> [--by-genre]
+ *   INKHORN_ADMIN_API_KEY=$(security find-generic-password -s "ghost-admin-inkhorn" -w) \
+ *     node inkhorn/build-ebook.js <issue-slug> [--by-genre] [--status=published,scheduled]
  *
  * Examples:
  *   node inkhorn/build-ebook.js september-2026
  *   node inkhorn/build-ebook.js september-2026 --by-genre
+ *   node inkhorn/build-ebook.js september-2026 --status=published
  *
- * Output:
- *   inkhorn/build/<issue-slug>.docx  — import this into Vellum
- *   inkhorn/build/<issue-slug>.html  — intermediate; inspect to verify line breaks
+ * Output (gitignored):
+ *   inkhorn/build/<issue-slug>.docx  — import into Vellum
+ *   inkhorn/build/<issue-slug>.html  — intermediate; check poem line breaks
  *
  * Requires: pandoc (brew install pandoc)
- * API key:  macOS Keychain, service name "ghost-content-inkhorn"
- *           Ghost URL: service name "ghost-url-inkhorn"
+ * Key:      macOS Keychain, service "ghost-admin-inkhorn"  (id:secret format)
  */
 
 'use strict';
 
-const fs   = require('fs');
-const path = require('path');
+const crypto = require('crypto');
+const fs     = require('fs');
+const path   = require('path');
 const { execSync } = require('child_process');
 
 // ── Args ──────────────────────────────────────────────────────────────────────
 
-const rawArgs = process.argv.slice(2);
-const flags   = new Set(rawArgs.filter(a => a.startsWith('--')));
-const args    = rawArgs.filter(a => !a.startsWith('--'));
-const slug    = args[0];
-const byGenre = flags.has('--by-genre');
+const rawArgs  = process.argv.slice(2);
+const flags    = rawArgs.filter(a => a.startsWith('--'));
+const posArgs  = rawArgs.filter(a => !a.startsWith('--'));
+const slug     = posArgs[0];
+const byGenre  = flags.includes('--by-genre');
+const statusFlag = (flags.find(f => f.startsWith('--status=')) || '--status=published,scheduled')
+  .replace('--status=', '');
 
 if (!slug) {
-  console.error('Usage: INKHORN_CONTENT_API_KEY=... node inkhorn/build-ebook.js <issue-slug> [--by-genre]');
+  console.error('Usage: INKHORN_ADMIN_API_KEY=... node inkhorn/build-ebook.js <issue-slug> [--by-genre] [--status=published,scheduled]');
   console.error('');
-  console.error('  INKHORN_CONTENT_API_KEY=$(security find-generic-password -s "ghost-content-inkhorn" -w) \\');
+  console.error('  INKHORN_ADMIN_API_KEY=$(security find-generic-password -s "ghost-admin-inkhorn" -w) \\');
   console.error('    node inkhorn/build-ebook.js september-2026');
   process.exit(1);
 }
 
-// ── Credentials ───────────────────────────────────────────────────────────────
+// ── Credentials & JWT ─────────────────────────────────────────────────────────
 
-const API_KEY = process.env.INKHORN_CONTENT_API_KEY;
-if (!API_KEY) {
-  console.error('INKHORN_CONTENT_API_KEY is not set.');
-  console.error('  export INKHORN_CONTENT_API_KEY=$(security find-generic-password -s "ghost-content-inkhorn" -w)');
+const ADMIN_KEY = process.env.INKHORN_ADMIN_API_KEY;
+if (!ADMIN_KEY || !ADMIN_KEY.includes(':')) {
+  console.error('INKHORN_ADMIN_API_KEY is not set or is not in id:secret format.');
+  console.error('  export INKHORN_ADMIN_API_KEY=$(security find-generic-password -s "ghost-admin-inkhorn" -w)');
   process.exit(1);
 }
 
@@ -63,28 +67,49 @@ function getKeychain(service) {
 
 const GHOST_URL = getKeychain('ghost-url-inkhorn').replace(/\/$/, '');
 
-// ── Ghost Content API ─────────────────────────────────────────────────────────
+/**
+ * Create a short-lived JWT for the Ghost Admin API.
+ * Ghost expects: header.kid = key id, payload.aud = '/admin/'
+ * Secret is a hex string that must be decoded to raw bytes before signing.
+ */
+function makeJWT(adminKey) {
+  const [id, hexSecret] = adminKey.split(':');
+  const header  = Buffer.from(JSON.stringify({ alg: 'HS256', kid: id, typ: 'JWT' })).toString('base64url');
+  const now     = Math.floor(Date.now() / 1000);
+  const payload = Buffer.from(JSON.stringify({ iat: now, exp: now + 300, aud: '/admin/' })).toString('base64url');
+  const sigKey  = Buffer.from(hexSecret, 'hex');
+  const sig     = crypto.createHmac('sha256', sigKey).update(`${header}.${payload}`).digest('base64url');
+  return `${header}.${payload}.${sig}`;
+}
+
+function adminHeaders() {
+  return { Authorization: `Ghost ${makeJWT(ADMIN_KEY)}` };
+}
+
+// ── Admin API fetches ─────────────────────────────────────────────────────────
 
 async function fetchTag(tagSlug) {
-  const url = `${GHOST_URL}/ghost/api/content/tags/slug/${encodeURIComponent(tagSlug)}/?key=${API_KEY}`;
-  const res = await fetch(url);
+  const url = `${GHOST_URL}/ghost/api/admin/tags/slug/${encodeURIComponent(tagSlug)}/`;
+  const res = await fetch(url, { headers: adminHeaders() });
   if (!res.ok) throw new Error(`Failed to fetch tag "${tagSlug}": HTTP ${res.status}`);
   const data = await res.json();
   if (!data.tags || !data.tags[0]) throw new Error(`Tag not found: ${tagSlug}`);
   return data.tags[0];
 }
 
-async function fetchPosts(tagSlug) {
+async function fetchPosts(tagSlug, statuses) {
+  const statusFilter = statuses.length === 1
+    ? `status:${statuses[0]}`
+    : `status:[${statuses.join(',')}]`;
   const params = new URLSearchParams({
-    key:     API_KEY,
-    filter:  `tag:${tagSlug}`,
+    filter:  `tag:${tagSlug}+${statusFilter}`,
     include: 'tags',
     order:   'published_at asc',
     limit:   'all',
     formats: 'html',
   });
-  const url = `${GHOST_URL}/ghost/api/content/posts/?${params}`;
-  const res = await fetch(url);
+  const url = `${GHOST_URL}/ghost/api/admin/posts/?${params}`;
+  const res = await fetch(url, { headers: adminHeaders() });
   if (!res.ok) throw new Error(`Failed to fetch posts: HTTP ${res.status}`);
   const data = await res.json();
   return data.posts || [];
@@ -95,7 +120,7 @@ async function fetchPosts(tagSlug) {
 const GENRE_SLUGS = new Set(['poetry', 'fiction', 'nonfiction']);
 const GENRE_ORDER = ['Poetry', 'Fiction', 'Nonfiction'];
 
-/** Escape plain text for HTML. Never use on post.html — it's already HTML. */
+/** Escape plain text for HTML. Never call on post.html — it's already HTML. */
 function esc(str) {
   return (str || '')
     .replace(/&/g, '&amp;')
@@ -104,10 +129,6 @@ function esc(str) {
     .replace(/"/g, '&quot;');
 }
 
-/**
- * Page break recognised by pandoc when converting HTML → docx.
- * The div is empty so it carries no content — just a break signal.
- */
 function pageBreak() {
   return '<div style="page-break-after: always;"></div>';
 }
@@ -125,9 +146,7 @@ function groupByGenre(posts) {
     if (!groups.has(g)) groups.set(g, []);
     groups.get(g).push(post);
   }
-  for (const [k, v] of groups) {
-    if (v.length === 0) groups.delete(k);
-  }
+  for (const [k, v] of groups) if (v.length === 0) groups.delete(k);
   return groups;
 }
 
@@ -136,15 +155,15 @@ function contentsBlock(posts, byGenre) {
   if (byGenre) {
     for (const [genre, gPosts] of groupByGenre(posts)) {
       lines.push(`<strong>${esc(genre)}</strong><br>`);
-      for (const post of gPosts) {
-        const bl = post.custom_excerpt ? ` \u2014 ${esc(post.custom_excerpt)}` : '';
-        lines.push(`${esc(post.title)}${bl}<br>`);
+      for (const p of gPosts) {
+        const bl = p.custom_excerpt ? ` \u2014 ${esc(p.custom_excerpt)}` : '';
+        lines.push(`${esc(p.title)}${bl}<br>`);
       }
     }
   } else {
-    for (const post of posts) {
-      const bl = post.custom_excerpt ? ` \u2014 ${esc(post.custom_excerpt)}` : '';
-      lines.push(`${esc(post.title)}${bl}<br>`);
+    for (const p of posts) {
+      const bl = p.custom_excerpt ? ` \u2014 ${esc(p.custom_excerpt)}` : '';
+      lines.push(`${esc(p.title)}${bl}<br>`);
     }
   }
   lines.push('</p>');
@@ -152,18 +171,13 @@ function contentsBlock(posts, byGenre) {
 }
 
 /**
- * Render one piece. headingLevel: 1 (default) or 2 (by-genre mode).
- *
- * post.html is Ghost-rendered HTML and is inserted raw — do NOT escape it.
- * <br> tags inside it survive into the docx as line breaks, which is
- * essential for poems.
+ * Render one piece.
+ * post.html is Ghost-rendered HTML — inserted raw to preserve <br> tags.
  */
 function pieceBlock(post, headingLevel) {
   const h = `h${headingLevel}`;
   const parts = [`<${h}>${esc(post.title)}</${h}>`];
-  if (post.custom_excerpt) {
-    parts.push(`<p>${esc(post.custom_excerpt)}</p>`);
-  }
+  if (post.custom_excerpt) parts.push(`<p>${esc(post.custom_excerpt)}</p>`);
   parts.push(post.html || '');
   return parts.join('\n');
 }
@@ -179,24 +193,22 @@ function buildHTML(tag, posts, byGenre) {
 </head>
 <body>`);
 
-  // ── Front matter ────────────────────────────────────────────────────────────
   out.push(`<h1>${esc(tag.name)}</h1>`);
   if (tag.description) out.push(`<p>${esc(tag.description)}</p>`);
   out.push(contentsBlock(posts, byGenre));
   out.push(pageBreak());
 
-  // ── Pieces ──────────────────────────────────────────────────────────────────
   if (byGenre) {
     for (const [genre, gPosts] of groupByGenre(posts)) {
       out.push(`<h1>${esc(genre)}</h1>`);
-      for (const post of gPosts) {
-        out.push(pieceBlock(post, 2));
+      for (const p of gPosts) {
+        out.push(pieceBlock(p, 2));
         out.push(pageBreak());
       }
     }
   } else {
-    for (const post of posts) {
-      out.push(pieceBlock(post, 1));
+    for (const p of posts) {
+      out.push(pieceBlock(p, 1));
       out.push(pageBreak());
     }
   }
@@ -208,14 +220,22 @@ function buildHTML(tag, posts, byGenre) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log(`Building ebook: ${slug}${byGenre ? '  (by genre)' : ''}\n`);
+  const statuses = statusFlag.split(',').map(s => s.trim()).filter(Boolean);
+  console.log(`Building ebook: ${slug}${byGenre ? '  (by genre)' : ''}  [status: ${statuses.join(', ')}]\n`);
 
-  const [tag, posts] = await Promise.all([fetchTag(slug), fetchPosts(slug)]);
+  const [tag, posts] = await Promise.all([fetchTag(slug), fetchPosts(slug, statuses)]);
 
   console.log(`Issue:  ${tag.name}`);
   console.log(`Posts:  ${posts.length}\n`);
+
+  const scheduledCount = posts.filter(p => p.status === 'scheduled').length;
+  if (scheduledCount > 0) {
+    console.log(`⚠  ${scheduledCount} post(s) are still scheduled (not yet published) — this is a pre-release build.\n`);
+  }
+
   posts.forEach((p, i) => {
-    console.log(`  ${String(i + 1).padStart(2)}  [${genreOf(p).padEnd(10)}]  ${p.title}`);
+    const status = p.status === 'scheduled' ? ' [scheduled]' : '';
+    console.log(`  ${String(i + 1).padStart(2)}  [${genreOf(p).padEnd(10)}]  ${p.title}${status}`);
   });
   console.log('');
 
@@ -233,7 +253,7 @@ async function main() {
   try {
     execSync(`pandoc "${htmlOut}" -o "${docxOut}" --from=html --to=docx`, { stdio: 'inherit' });
   } catch {
-    console.error('\npandoc failed. Install it with: brew install pandoc');
+    console.error('\npandoc failed. Install with: brew install pandoc');
     process.exit(1);
   }
 
