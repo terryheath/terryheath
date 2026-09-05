@@ -180,5 +180,22 @@
         "cover": "https://images.isbndb.com/covers/880373488906.jpg"
       }
     ]
+  },
+  "louis-faber": {
+    "name": "Louis Faber",
+    "books": [
+      {
+        "isbn": "9780911051308",
+        "title": "The Right to Depart",
+        "authors": "Louis Faber",
+        "cover": "https://images.isbndb.com/covers/9808603482512.jpg"
+      },
+      {
+        "isbn": "9781632101075",
+        "title": "Free of the Shadow Poems and Stories",
+        "authors": "Lou Faber",
+        "cover": "https://images.isbndb.com/covers/2258243482769.jpg"
+      }
+    ]
   }
 }
