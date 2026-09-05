@@ -87,6 +87,15 @@ async function fetchTag(tagSlug) {
   return data.tags[0];
 }
 
+async function fetchTagById(tagId) {
+  const url = `${GHOST_URL}/ghost/api/admin/tags/${encodeURIComponent(tagId)}/`;
+  const res = await fetch(url, { headers: adminHeaders() });
+  if (!res.ok) throw new Error(`Failed to fetch tag id "${tagId}": HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data.tags || !data.tags[0]) throw new Error(`Tag not found: ${tagId}`);
+  return data.tags[0];
+}
+
 async function fetchPosts(tagSlug, statuses) {
   const statusFilter = statuses.length === 1
     ? `status:${statuses[0]}`
@@ -103,6 +112,38 @@ async function fetchPosts(tagSlug, statuses) {
   if (!res.ok) throw new Error(`Failed to fetch posts: HTTP ${res.status}`);
   const data = await res.json();
   return data.posts || [];
+}
+
+/**
+ * Collect contributor tags from posts and fetch their full data (with description).
+ * Contributor tag is at index 2 — after the issue tag (index 0) and genre tag (index 1).
+ * Returns { tags: Tag[], skipped: string[] } where skipped are names with empty descriptions.
+ */
+async function fetchContributorTags(posts, issueSlug) {
+  const SKIP_SLUGS = new Set([issueSlug, 'poetry', 'fiction', 'nonfiction']);
+  const seen = new Map(); // id → shallow tag from post
+
+  for (const post of posts) {
+    for (const ctag of post.tags || []) {
+      if (!SKIP_SLUGS.has(ctag.slug) && !seen.has(ctag.id)) {
+        seen.set(ctag.id, ctag);
+      }
+    }
+  }
+
+  // Fetch full tag objects (description may not be sideloaded on posts)
+  const full = await Promise.all([...seen.keys()].map(id => fetchTagById(id)));
+
+  const tags    = full.filter(t => t.description && t.description.trim());
+  const skipped = full.filter(t => !t.description || !t.description.trim()).map(t => t.name);
+
+  // Sort alphabetically by last word of name
+  tags.sort((a, b) => {
+    const lastWord = name => name.trim().split(/\s+/).pop().toLowerCase();
+    return lastWord(a.name).localeCompare(lastWord(b.name));
+  });
+
+  return { tags, skipped };
 }
 
 // ── Genre helpers ─────────────────────────────────────────────────────────────
@@ -372,7 +413,7 @@ function prosePostParas(html) {
 
 // ── Document body ─────────────────────────────────────────────────────────────
 
-function buildBodyXml(tag, posts, byGenre) {
+function buildBodyXml(tag, posts, byGenre, contributorTags) {
   const parts = [];
 
   // Front matter — issue title and description, no contents page
@@ -413,6 +454,22 @@ function buildBodyXml(tag, posts, byGenre) {
     for (const post of posts) {
       emitPiece(post, !first);
       first = false;
+    }
+  }
+
+  // Back matter — Contributors
+  if (contributorTags && contributorTags.length > 0) {
+    parts.push(pageBreakParaXml());
+    parts.push(paraXml('Heading1',
+      [{ text: 'Contributors', bold: false, italic: false, sup: false, sub: false }]));
+
+    for (const ctag of contributorTags) {
+      // Run-in bold name followed by the bio in the same Normal paragraph
+      const bio = (ctag.description || '').trim();
+      parts.push(paraXml(null, [
+        { text: ctag.name, bold: true,  italic: false, sup: false, sub: false },
+        { text: ' ' + bio,  bold: false, italic: false, sup: false, sub: false },
+      ]));
     }
   }
 
@@ -494,8 +551,8 @@ function stylesXml() {
 
 // ── docx assembler ────────────────────────────────────────────────────────────
 
-function buildDocx(tag, posts, byGenre) {
-  const bodyXml = buildBodyXml(tag, posts, byGenre);
+function buildDocx(tag, posts, byGenre, contributorTags) {
+  const bodyXml = buildBodyXml(tag, posts, byGenre, contributorTags);
 
   const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
@@ -616,6 +673,16 @@ async function main() {
   console.log(`Issue:  ${tag.name}`);
   console.log(`Posts:  ${posts.length}\n`);
 
+  const { tags: contributorTags, skipped: skippedContributors } =
+    await fetchContributorTags(posts, slug);
+
+  console.log(`Contributors: ${contributorTags.length} with bios`);
+  if (skippedContributors.length) {
+    console.log(`\n⚠  Skipped (no bio in Ghost tag description):`);
+    for (const name of skippedContributors) console.log(`     ${name}`);
+  }
+  console.log('');
+
   const scheduledCount = posts.filter(p => p.status === 'scheduled').length;
   if (scheduledCount > 0) {
     console.log(`⚠  ${scheduledCount} post(s) are still scheduled — this is a pre-release build.\n`);
@@ -632,7 +699,7 @@ async function main() {
   fs.mkdirSync(buildDir, { recursive: true });
 
   const docxOut = path.join(buildDir, `${slug}.docx`);
-  const docxBuf = buildDocx(tag, posts, byGenre);
+  const docxBuf = buildDocx(tag, posts, byGenre, contributorTags);
   fs.writeFileSync(docxOut, docxBuf);
 
   console.log(`DOCX → ${docxOut}`);
