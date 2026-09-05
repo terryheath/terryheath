@@ -245,6 +245,14 @@ collections:
     order: published_at asc
     limit: 999
 
+  /micro/:
+    permalink: /micro/{slug}/
+    template: tag
+    filter: primary_tag:micro
+    data: tag.micro
+    order: published_at desc
+    limit: 999
+
 taxonomies:
   tag: /tag/{slug}/
   author: /author/{slug}/
