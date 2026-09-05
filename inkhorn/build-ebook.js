@@ -221,6 +221,21 @@ function parseInline(html) {
   return runs;
 }
 
+/**
+ * Parse plain-text bio with *asterisk* italic markers into run descriptors.
+ * Asterisks must be balanced; odd-positioned segments are italic.
+ */
+function parseBioAsterisks(text) {
+  const runs = [];
+  const segments = text.split('*');
+  for (let i = 0; i < segments.length; i++) {
+    if (segments[i]) {
+      runs.push({ text: segments[i], bold: false, italic: i % 2 === 1, sup: false, sub: false });
+    }
+  }
+  return runs;
+}
+
 /** Build a <w:r> element from a run descriptor. */
 function runXml(run) {
   if (run.br) return '<w:r><w:br/></w:r>';
@@ -465,11 +480,13 @@ function buildBodyXml(tag, posts, byGenre, contributorTags) {
       [{ text: 'Contributors', bold: false, italic: false, sup: false, sub: false }]));
 
     for (const ctag of contributorTags) {
-      // Run-in bold name followed by the bio in the same Normal paragraph
+      // Run-in bold name followed by the bio in the same Normal paragraph.
+      // Bio may contain *text* markers for italics (used for book titles).
       const bio = (ctag.description || '').trim();
+      const bioRuns = parseBioAsterisks(' ' + bio);
       parts.push(paraXml(null, [
-        { text: ctag.name, bold: true,  italic: false, sup: false, sub: false },
-        { text: ' ' + bio,  bold: false, italic: false, sup: false, sub: false },
+        { text: ctag.name, bold: true, italic: false, sup: false, sub: false },
+        ...bioRuns,
       ]));
     }
   }

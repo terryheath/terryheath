@@ -139,7 +139,31 @@
   },
   "zhu-xiao-di": {
     "name": "Zhu Xiao Di",
-    "books": []
+    "books": [
+      {
+        "isbn": "9781558492165",
+        "title": "Thirty Years in a Red House A Memoir of Childhood and Youth in Communist China",
+        "authors": "Xiao Di Zhu",
+        "cover": "https://images.isbndb.com/covers/24485473482742.jpg"
+      }
+    ]
+  },
+  "e.p.-lande": {
+    "name": "E.P. Lande",
+    "books": [
+      {
+        "isbn": "9788198711687",
+        "title": "Aaron's Odyssey",
+        "authors": "Ep Lande",
+        "cover": "https://images.isbndb.com/covers/3787343485107.jpg"
+      },
+      {
+        "isbn": "9781067278311",
+        "title": "Dancing With Katie",
+        "authors": "E P Lande",
+        "cover": "https://images.isbndb.com/covers/27360183482567.jpg"
+      }
+    ]
   },
   "james-lewis-huss": {
     "name": "James Lewis Huss",
