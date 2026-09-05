@@ -266,6 +266,15 @@ function emptyParaXml(styleId) {
   return `<w:p><w:pPr><w:pStyle w:val="${styleId}"/></w:pPr></w:p>`;
 }
 
+/**
+ * Stanza-break paragraph: Vellum Verse containing a single non-breaking space.
+ * A paragraph with content is not discarded by Vellum, unlike a truly empty one.
+ */
+function stanzaBreakXml() {
+  return paraXml('Vellum Verse',
+    [{ text: '\u00a0', bold: false, italic: false, sup: false, sub: false }]);
+}
+
 /** A standalone page-break paragraph (sits immediately before an h1). */
 function pageBreakParaXml() {
   return '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
@@ -365,8 +374,10 @@ function poetryPostParas(html) {
     } else if (tok.type === 'p') {
       const inner = tok.content.trim();
       if (!inner) {
-        paras.push(emptyParaXml('Vellum Verse'));
+        // Explicit empty <p> from Ghost — stanza break
+        paras.push(stanzaBreakXml());
       } else {
+        const lines = [];
         for (const frag of inner.split(/<br\s*\/?>/i)) {
           // Strip leading newlines/tabs (HTML line-wrap noise) but keep leading spaces
           // (intentional indentation). Strip trailing whitespace. Convert runs of 2+
@@ -374,17 +385,23 @@ function poetryPostParas(html) {
           const line = frag.replace(/^[\n\r\t]+/, '').replace(/[ \t]*$/, '');
           if (!line.trim()) continue;
           const t = line.replace(/ {2,}/g, m => '\u00a0'.repeat(m.length));
-          paras.push(paraXml('Vellum Verse', parseInline(t)));
+          lines.push(paraXml('Vellum Verse', parseInline(t)));
+        }
+        if (lines.length) {
+          paras.push(...lines);
+          // Each <p> in Ghost HTML is one stanza; insert a stanza break after it.
+          // The trailing break on the last stanza is trimmed below.
+          paras.push(stanzaBreakXml());
         }
       }
     }
     // Other block types in poetry: ignored
   }
 
-  // Drop leading / trailing stanza-break placeholders
-  const EMPTY_VERSE = emptyParaXml('Vellum Verse');
-  while (paras.length && paras[0]               === EMPTY_VERSE) paras.shift();
-  while (paras.length && paras[paras.length - 1] === EMPTY_VERSE) paras.pop();
+  // Drop leading / trailing stanza breaks
+  const STANZA_BREAK = stanzaBreakXml();
+  while (paras.length && paras[0]               === STANZA_BREAK) paras.shift();
+  while (paras.length && paras[paras.length - 1] === STANZA_BREAK) paras.pop();
 
   return paras;
 }
