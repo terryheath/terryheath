@@ -72,7 +72,7 @@ const BIOS = {
     'New Yorker LindaAnn LoSchiavo is a member of BFS, HWA, SFPA, etc. 2024 titles: *Always Haunted: Hallowe\'en Poems* + *Apprenticed to the Night* + *Felones de Se: Poems about Suicide*. Accolades: Elgin Award for *A Route Obscure and Lonely*; Chrysalis BREW Project\'s Excellence Award for *Always Haunted: Hallowe\'en Poems*, etc.',
 
   'd-s-maolalai':
-    'DS Maolalai has been described by one editor as "a cosmopolitan poet" and another as "prolific, bordering on incontinent". His work has been nominated fourteen times for BOTN, eleven for the Pushcart and once for the Forward Prize, and released in three collections, most recently *Noble Rot* (Turas Press, 2022).',
+    'D.S. Maolalai has been described by one editor as "a cosmopolitan poet" and another as "prolific, bordering on incontinent". His work has been nominated fourteen times for BOTN, eleven for the Pushcart and once for the Forward Prize, and released in three collections, most recently *Noble Rot* (Turas Press, 2022).',
 
   'jackie-mcclure':
     'Jackie McClure writes poetry and fiction aiming to illuminate the commonplace in our shared landscapes. Recent poetry can be found in Split Rock Review, Wild Roof Journal, Mocking Heart Review, and on her Substack site at Pouring Word Tea. She lives in the northwest corner of Washington State.',
