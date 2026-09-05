@@ -1,0 +1,36 @@
+{{!< default}}
+
+{{!--
+  home.hbs — Inkhorn Review custom home template
+  Extends default.hbs. Renders the page title, then Dawn's featured-post
+  carousel, then the editable Ghost page body.
+
+  Render order: site header (default.hbs) → page title → carousel → page body.
+
+  The carousel is placed here (not in default.hbs {{#is "home"}}) so it
+  can appear between the title and body. default.hbs's featured-posts call
+  has been removed from {{#is "home"}} to avoid a duplicate render.
+
+  Title is rendered explicitly so it appears before the carousel without
+  a second render from the content partial.
+--}}
+
+{{#post}}
+<header class="single-header gh-canvas">
+    <h1 class="single-title">{{title}}</h1>
+</header>
+{{/post}}
+
+{{#if @custom.show_featured_posts}}
+    {{> "featured-posts"}}
+{{/if}}
+
+<main class="site-main">
+    {{#post}}
+    <article class="single {{post_class}}">
+        <div class="single-content gh-content gh-canvas">
+            {{content}}
+        </div>
+    </article>
+    {{/post}}
+</main>

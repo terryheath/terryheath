@@ -44,7 +44,8 @@
 
 <script>
 (function () {
-  var SHELVES_URL  = "https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/shelves.json";
+  var SHELVES_URL       = "https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/shelves.json";
+  var ATTRIBUTIONS_URL  = "https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/attributions.json";
   var GHOST_URL    = "https://inkhornreview.com";
   var CONTENT_KEY  = "c993f3aff0f17b55646a9fa964";
   var SHOP         = "https://bookshop.org/a/94291/";
@@ -104,27 +105,51 @@
 
   // ── TAG PAGE ───────────────────────────────────────────────────────────────
   if (isTag) {
-    var m = window.location.pathname.match(/^\/tag\/([^/]+)/);
-    if (!m) return;
-    var tagSlug = m[1];
-    if (SKIP.test(tagSlug)) return;
+    // ── Contributor tag pages: /tag/{slug}/ ──────────────────────────────────
+    var tagMatch = window.location.pathname.match(/^\/tag\/([^/]+)/);
+    if (tagMatch) {
+      var tagSlug = tagMatch[1];
+      if (SKIP.test(tagSlug)) return;
 
-    fetch(SHELVES_URL)
-      .then(function (r) { return r.json(); })
-      .then(function (shelves) {
-        var entry = shelves[tagSlug];
-        if (!entry || !entry.books || !entry.books.length) return;
-        var html =
-          '<section class="gh-canvas" style="padding-top:1.5rem;padding-bottom:2rem">' +
-          '<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Books</h3>' +
-          '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
-          buildCards(entry.books) +
-          "</div></section>";
-        // Dawn uses section.tag for the tag header; Source used section.gh-archive.
-        var header = document.querySelector("section.tag");
-        if (header) header.insertAdjacentHTML("afterend", html);
-      })
-      .catch(function () {});
+      fetch(SHELVES_URL)
+        .then(function (r) { return r.json(); })
+        .then(function (shelves) {
+          var entry = shelves[tagSlug];
+          if (!entry || !entry.books || !entry.books.length) return;
+          var html =
+            '<section class="gh-canvas" style="padding-top:1.5rem;padding-bottom:2rem">' +
+            '<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Books</h3>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
+            buildCards(entry.books) +
+            "</div></section>";
+          var header = document.querySelector("section.tag");
+          if (header) header.insertAdjacentHTML("afterend", html);
+        })
+        .catch(function () {});
+
+      return;
+    }
+
+    // ── Issue collection pages: /autumn-2026/, /winter-2027/, etc. ──────────
+    var issueMatch = window.location.pathname.match(/^\/([a-z]+-\d{4})\//);
+    if (issueMatch) {
+      var issueSlug = issueMatch[1];
+
+      fetch(ATTRIBUTIONS_URL)
+        .then(function (r) { return r.json(); })
+        .then(function (attributions) {
+          var credit = attributions[issueSlug];
+          if (!credit) return;
+          var tagMedia = document.querySelector(".tag-media");
+          if (tagMedia) {
+            tagMedia.insertAdjacentHTML("afterend",
+              '<p class="tag-image-credit">' + escapeHtml(credit) + "</p>");
+          }
+        })
+        .catch(function () {});
+
+      return;
+    }
 
     return;
   }

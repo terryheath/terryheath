@@ -1,0 +1,258 @@
+routes:
+  /:
+    template: home
+    data: page.home
+
+  /september-2026/poetry/:
+    controller: channel
+    filter: tag:september-2026+tag:poetry
+    order: published_at asc
+  /september-2026/fiction/:
+    controller: channel
+    filter: tag:september-2026+tag:fiction
+    order: published_at asc
+  /september-2026/nonfiction/:
+    controller: channel
+    filter: tag:september-2026+tag:nonfiction
+    order: published_at asc
+  /november-2026/poetry/:
+    controller: channel
+    filter: tag:november-2026+tag:poetry
+    order: published_at asc
+  /november-2026/fiction/:
+    controller: channel
+    filter: tag:november-2026+tag:fiction
+    order: published_at asc
+  /november-2026/nonfiction/:
+    controller: channel
+    filter: tag:november-2026+tag:nonfiction
+    order: published_at asc
+  /january-2027/poetry/:
+    controller: channel
+    filter: tag:january-2027+tag:poetry
+    order: published_at asc
+  /january-2027/fiction/:
+    controller: channel
+    filter: tag:january-2027+tag:fiction
+    order: published_at asc
+  /january-2027/nonfiction/:
+    controller: channel
+    filter: tag:january-2027+tag:nonfiction
+    order: published_at asc
+  /march-2027/poetry/:
+    controller: channel
+    filter: tag:march-2027+tag:poetry
+    order: published_at asc
+  /march-2027/fiction/:
+    controller: channel
+    filter: tag:march-2027+tag:fiction
+    order: published_at asc
+  /march-2027/nonfiction/:
+    controller: channel
+    filter: tag:march-2027+tag:nonfiction
+    order: published_at asc
+  /may-2027/poetry/:
+    controller: channel
+    filter: tag:may-2027+tag:poetry
+    order: published_at asc
+  /may-2027/fiction/:
+    controller: channel
+    filter: tag:may-2027+tag:fiction
+    order: published_at asc
+  /may-2027/nonfiction/:
+    controller: channel
+    filter: tag:may-2027+tag:nonfiction
+    order: published_at asc
+  /july-2027/poetry/:
+    controller: channel
+    filter: tag:july-2027+tag:poetry
+    order: published_at asc
+  /july-2027/fiction/:
+    controller: channel
+    filter: tag:july-2027+tag:fiction
+    order: published_at asc
+  /july-2027/nonfiction/:
+    controller: channel
+    filter: tag:july-2027+tag:nonfiction
+    order: published_at asc
+  /september-2027/poetry/:
+    controller: channel
+    filter: tag:september-2027+tag:poetry
+    order: published_at asc
+  /september-2027/fiction/:
+    controller: channel
+    filter: tag:september-2027+tag:fiction
+    order: published_at asc
+  /september-2027/nonfiction/:
+    controller: channel
+    filter: tag:september-2027+tag:nonfiction
+    order: published_at asc
+  /november-2027/poetry/:
+    controller: channel
+    filter: tag:november-2027+tag:poetry
+    order: published_at asc
+  /november-2027/fiction/:
+    controller: channel
+    filter: tag:november-2027+tag:fiction
+    order: published_at asc
+  /november-2027/nonfiction/:
+    controller: channel
+    filter: tag:november-2027+tag:nonfiction
+    order: published_at asc
+  /january-2028/poetry/:
+    controller: channel
+    filter: tag:january-2028+tag:poetry
+    order: published_at asc
+  /january-2028/fiction/:
+    controller: channel
+    filter: tag:january-2028+tag:fiction
+    order: published_at asc
+  /january-2028/nonfiction/:
+    controller: channel
+    filter: tag:january-2028+tag:nonfiction
+    order: published_at asc
+  /march-2028/poetry/:
+    controller: channel
+    filter: tag:march-2028+tag:poetry
+    order: published_at asc
+  /march-2028/fiction/:
+    controller: channel
+    filter: tag:march-2028+tag:fiction
+    order: published_at asc
+  /march-2028/nonfiction/:
+    controller: channel
+    filter: tag:march-2028+tag:nonfiction
+    order: published_at asc
+  /may-2028/poetry/:
+    controller: channel
+    filter: tag:may-2028+tag:poetry
+    order: published_at asc
+  /may-2028/fiction/:
+    controller: channel
+    filter: tag:may-2028+tag:fiction
+    order: published_at asc
+  /may-2028/nonfiction/:
+    controller: channel
+    filter: tag:may-2028+tag:nonfiction
+    order: published_at asc
+  /july-2028/poetry/:
+    controller: channel
+    filter: tag:july-2028+tag:poetry
+    order: published_at asc
+  /july-2028/fiction/:
+    controller: channel
+    filter: tag:july-2028+tag:fiction
+    order: published_at asc
+  /july-2028/nonfiction/:
+    controller: channel
+    filter: tag:july-2028+tag:nonfiction
+    order: published_at asc
+
+collections:
+  /september-2026/:
+    permalink: /september-2026/{slug}/
+    template: tag
+    filter: primary_tag:september-2026
+    data: tag.september-2026
+    order: published_at asc
+    limit: 999
+
+  /november-2026/:
+    permalink: /november-2026/{slug}/
+    template: tag
+    filter: primary_tag:november-2026
+    data: tag.november-2026
+    order: published_at asc
+    limit: 999
+
+  /january-2027/:
+    permalink: /january-2027/{slug}/
+    template: tag
+    filter: primary_tag:january-2027
+    data: tag.january-2027
+    order: published_at asc
+    limit: 999
+
+  /march-2027/:
+    permalink: /march-2027/{slug}/
+    template: tag
+    filter: primary_tag:march-2027
+    data: tag.march-2027
+    order: published_at asc
+    limit: 999
+
+  /may-2027/:
+    permalink: /may-2027/{slug}/
+    template: tag
+    filter: primary_tag:may-2027
+    data: tag.may-2027
+    order: published_at asc
+    limit: 999
+
+  /july-2027/:
+    permalink: /july-2027/{slug}/
+    template: tag
+    filter: primary_tag:july-2027
+    data: tag.july-2027
+    order: published_at asc
+    limit: 999
+
+  /september-2027/:
+    permalink: /september-2027/{slug}/
+    template: tag
+    filter: primary_tag:september-2027
+    data: tag.september-2027
+    order: published_at asc
+    limit: 999
+
+  /november-2027/:
+    permalink: /november-2027/{slug}/
+    template: tag
+    filter: primary_tag:november-2027
+    data: tag.november-2027
+    order: published_at asc
+    limit: 999
+
+  /january-2028/:
+    permalink: /january-2028/{slug}/
+    template: tag
+    filter: primary_tag:january-2028
+    data: tag.january-2028
+    order: published_at asc
+    limit: 999
+
+  /march-2028/:
+    permalink: /march-2028/{slug}/
+    template: tag
+    filter: primary_tag:march-2028
+    data: tag.march-2028
+    order: published_at asc
+    limit: 999
+
+  /may-2028/:
+    permalink: /may-2028/{slug}/
+    template: tag
+    filter: primary_tag:may-2028
+    data: tag.may-2028
+    order: published_at asc
+    limit: 999
+
+  /july-2028/:
+    permalink: /july-2028/{slug}/
+    template: tag
+    filter: primary_tag:july-2028
+    data: tag.july-2028
+    order: published_at asc
+    limit: 999
+
+  /micro/:
+    permalink: /micro/{slug}/
+    template: tag
+    filter: primary_tag:micro
+    data: tag.micro
+    order: published_at desc
+    limit: 999
+
+taxonomies:
+  tag: /tag/{slug}/
+  author: /author/{slug}/

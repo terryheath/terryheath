@@ -14,7 +14,7 @@ Inkhorn Review's stack:
 ## The sites
 
 - **lifeonwords.com** — Life on Words, a literary podcast. Ghost instance on PikaPods. The podcast import pipeline in this repo feeds it.
-- **inkhornreview.com** — Inkhorn Review, a bimonthly literary journal (6 issues/year, first Tuesday of alternating months: September, November, January, March, May, July). Ghost instance on PikaPods. Routes, contributor shelves, and code injection in this repo support it.
+- **inkhornreview.com** — Inkhorn Review, a quarterly literary journal (4 issues/year: autumn/September, winter/December, spring/March, summer/June). Ghost instance on PikaPods. Routes, contributor shelves, and code injection in this repo support it.
 - **terryheath.com** — Personal site. Still on Ghost Pro, to be ported to PikaPods.
 
 ## What's in here
@@ -22,7 +22,7 @@ Inkhorn Review's stack:
 - **riverside-to-ghost.js** — Converts Riverside podcast recordings into Ghost posts with embedded audio, show notes, and book cards. Run manually after a new episode is edited. Looks up ISBNs via ISBNdb → Google Books → Open Library.
 - **.github/workflows/import-podcast.yml** — GitHub Actions workflow that runs the podcast import pipeline. Triggered manually or on push.
 - **headshots/** — Guest headshot images referenced by podcast posts.
-- **inkhorn/routes.yaml** — Ghost custom routes for Inkhorn Review. Defines month-based collection URLs (`/september-2026/`, `/november-2026/`, `/january-2027/`, etc.) and genre channel routes (poetry, fiction, nonfiction per issue). Uploaded via Ghost Settings → Labs. The backup `inkhorn/routes.yaml.4-season.bak` preserves the original seasonal layout.
+- **inkhorn/routes.yaml** — Ghost custom routes for Inkhorn Review. Defines seasonal collection URLs (`/autumn-2026/`, `/winter-2027/`, `/spring-2027/`, `/summer-2027/`, etc.) and genre channel routes (poetry, fiction, nonfiction per issue). Uploaded via Ghost Settings → Labs. The backup `inkhorn/routes.yaml.bimonthly.bak` preserves the previous bimonthly layout.
 - **inkhorn/contributors.json** — Hand-maintained list of Inkhorn contributors and their book ISBNs. Add entries here to populate the book shelf.
 - **inkhorn/shelves.json** — Generated output of `build-shelves.js`. Served from `raw.githubusercontent.com` and fetched client-side by the book shelf script. Commit and push after regenerating.
 - **inkhorn/build-shelves.js** — Resolves ISBNs in `contributors.json` to titles, authors, and cover images. Writes `shelves.json`. Run with `ISBNDB_KEY` env var.
@@ -76,36 +76,41 @@ Fetches all scheduled posts, sorts them by current published_at order, and space
 
 ### Extending routes.yaml with more issues
 
-Inkhorn publishes **6 issues per year** on a bimonthly schedule. Release months are the **odd months only**: September, November, January, March, May, July (i.e. month numbers 9, 11, 1, 3, 5, 7 — wrapping across the calendar year boundary between November and January).
+Inkhorn publishes **4 issues per year** on a quarterly schedule. Seasons and their release months:
+- **autumn** — September
+- **winter** — December
+- **spring** — March
+- **summer** — June
 
-Issue slugs are `{month}-{year}` in lowercase, where year is the calendar year the issue releases (e.g. `september-2026`, `november-2026`, `january-2027`, `march-2027`).
+Issue slugs are `{season}-{year}` in lowercase, where year is the calendar year the issue releases (e.g. `autumn-2026`, `winter-2027`, `spring-2027`, `summer-2027`). Always use "autumn", never "fall".
 
 For each new issue, add to `routes.yaml`:
 
 1. Three channel routes (in the `routes:` section):
    ```yaml
-   /{month}-{year}/poetry/:
+   /{season}-{year}/poetry/:
      controller: channel
-     filter: tag:{month}-{year}+tag:poetry
+     filter: tag:{season}-{year}+tag:poetry
      order: published_at asc
-   /{month}-{year}/fiction/:
+   /{season}-{year}/fiction/:
      controller: channel
-     filter: tag:{month}-{year}+tag:fiction
+     filter: tag:{season}-{year}+tag:fiction
      order: published_at asc
-   /{month}-{year}/nonfiction/:
+   /{season}-{year}/nonfiction/:
      controller: channel
-     filter: tag:{month}-{year}+tag:nonfiction
+     filter: tag:{season}-{year}+tag:nonfiction
      order: published_at asc
    ```
 
-2. One collection block (in the `collections:` section, before the catch-all `/:`):
+2. One collection block (in the `collections:` section, before `/micro/`):
    ```yaml
-   /{month}-{year}/:
-     permalink: /{month}-{year}/{slug}/
-     template: index
-     filter: primary_tag:{month}-{year}
-     data: tag.{month}-{year}
+   /{season}-{year}/:
+     permalink: /{season}-{year}/{slug}/
+     template: tag
+     filter: primary_tag:{season}-{year}
+     data: tag.{season}-{year}
      order: published_at asc
+     limit: 999
    ```
 
 Never remove existing blocks — those URLs are permanent once any piece publishes under them.
