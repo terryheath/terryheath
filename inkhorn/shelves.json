@@ -128,14 +128,7 @@
   },
   "j.-a.-keefe": {
     "name": "J. A. Keefe",
-    "books": [
-      {
-        "isbn": "9780094709706",
-        "title": "Signals",
-        "authors": "Alan Ross",
-        "cover": "https://images.isbndb.com/covers/19357473482221.jpg"
-      }
-    ]
+    "books": []
   },
   "zhu-xiao-di": {
     "name": "Zhu Xiao Di",
