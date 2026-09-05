@@ -1,4 +1,8 @@
 routes:
+  /:
+    template: home
+    data: page.home
+
   /september-2026/poetry/:
     controller: channel
     filter: tag:september-2026+tag:poetry
@@ -147,91 +151,99 @@ routes:
 collections:
   /september-2026/:
     permalink: /september-2026/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:september-2026
     data: tag.september-2026
     order: published_at asc
+    limit: 999
 
   /november-2026/:
     permalink: /november-2026/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:november-2026
     data: tag.november-2026
     order: published_at asc
+    limit: 999
 
   /january-2027/:
     permalink: /january-2027/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:january-2027
     data: tag.january-2027
     order: published_at asc
+    limit: 999
 
   /march-2027/:
     permalink: /march-2027/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:march-2027
     data: tag.march-2027
     order: published_at asc
+    limit: 999
 
   /may-2027/:
     permalink: /may-2027/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:may-2027
     data: tag.may-2027
     order: published_at asc
+    limit: 999
 
   /july-2027/:
     permalink: /july-2027/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:july-2027
     data: tag.july-2027
     order: published_at asc
+    limit: 999
 
   /september-2027/:
     permalink: /september-2027/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:september-2027
     data: tag.september-2027
     order: published_at asc
+    limit: 999
 
   /november-2027/:
     permalink: /november-2027/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:november-2027
     data: tag.november-2027
     order: published_at asc
+    limit: 999
 
   /january-2028/:
     permalink: /january-2028/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:january-2028
     data: tag.january-2028
     order: published_at asc
+    limit: 999
 
   /march-2028/:
     permalink: /march-2028/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:march-2028
     data: tag.march-2028
     order: published_at asc
+    limit: 999
 
   /may-2028/:
     permalink: /may-2028/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:may-2028
     data: tag.may-2028
     order: published_at asc
+    limit: 999
 
   /july-2028/:
     permalink: /july-2028/{slug}/
-    template: index
+    template: tag
     filter: primary_tag:july-2028
     data: tag.july-2028
     order: published_at asc
-
-  /:
-    permalink: /{slug}/
-    template: index
+    limit: 999
 
 taxonomies:
   tag: /tag/{slug}/

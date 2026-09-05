@@ -1,142 +1,210 @@
 <!--
-  INKHORN REVIEW — CONTRIBUTOR BOOK SHELF
-  ========================================
+  INKHORN REVIEW — CONTRIBUTOR BOOK SHELF + BIO
+  ==============================================
 
-  What this does:
-    On a post page, if the contributor has books in our data file, this
-    script adds a "Books by [Name]" shelf at the bottom of the article
-    with cover images that link to Bookshop.org.
+  POST PAGES
+  ----------
+  1. Links the byline. The custom excerpt ("by Barbara Daniels") is plain
+     text from Ghost. This script wraps the name in an anchor pointing to
+     the contributor's tag page (/tag/{slug}/). Synchronous — no network
+     request needed; the slug comes from the body tag class and the name
+     text is already in the DOM.
 
-    On a contributor's tag page (/tag/william-doreski/ etc.), it adds a
-    "Books" shelf between the tag header and the list of pieces. Issue
-    tags (autumn-2026 etc.) and genre tags (poetry, fiction, nonfiction)
-    are ignored — those tag pages show no shelf.
+  2. Renders a contributor block at the bottom of the article:
+       - contributor name (linked to /tag/{slug}/)
+       - bio (from the tag's Ghost description, HTML-escaped)
+       - "Books by …" shelf (if the contributor has entries in shelves.json)
 
-  Where the book data comes from:
-    A JSON file hosted on GitHub:
-    https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/shelves.json
+     The name/bio come from the Ghost Content API (one GET per page).
+     The books come from shelves.json (one GET per page).
+     Both fetches fire in parallel via Promise.all.
 
-  How that file is generated:
-    The script inkhorn/build-shelves.js in the terryheath repo reads
-    inkhorn/contributors.json (which you maintain by hand — just a name
-    and a list of ISBNs) and looks up each ISBN to get the title, author,
-    and cover image. Then it writes shelves.json, which you commit and
-    push so it's available at the URL above.
+  TAG PAGES (/tag/{slug}/)
+  ------------------------
+  Contributor tag pages get a "Books" shelf inserted after the tag header.
+  Issue and genre tag pages are ignored.
 
-  If the URL ever needs to move:
-    Change the SHELVES_URL variable below to wherever you host the file.
+  NETWORK COST PER POST PAGE
+  --------------------------
+  Existing:  1 request — shelves.json (~8 KB, GitHub raw CDN)
+  New:       2 requests — shelves.json + Content API tag (~400 B)
+  Both fire in parallel; the marginal latency is max(t_shelves, t_api),
+  not the sum. The Content API response is a small JSON object.
 
-  To add a new contributor's books:
-    1. Add their name and ISBNs to inkhorn/contributors.json
+  To add or update contributor books:
+    1. Edit inkhorn/contributors.json
     2. Run: ISBNDB_KEY=<key> node inkhorn/build-shelves.js
     3. Commit and push inkhorn/shelves.json
+
+  To update contributor bios:
+    Edit the tag description in Ghost Admin → Tags. No rebuild required.
+
+  If SHELVES_URL ever moves, update the constant below.
 -->
 
 <script>
 (function () {
-  var SHELVES_URL =
-    "https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/shelves.json";
-  var SHOP = "https://bookshop.org/a/94291/";
-  var SKIP = /^(winter|spring|summer|autumn)-\d{4}$|^(poetry|fiction|nonfiction)$/;
+  var SHELVES_URL  = "https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/shelves.json";
+  var GHOST_URL    = "https://inkhornreview.com";
+  var CONTENT_KEY  = "c993f3aff0f17b55646a9fa964";
+  var SHOP         = "https://bookshop.org/a/94291/";
+
+  // Skip month-year issue slugs (september-2026, november-2026, …) and genre tags.
+  // The original regex only matched seasonal slugs (winter/spring/…) and missed
+  // month-based ones, causing the issue slug to land at tags[0] incorrectly.
+  var SKIP = /^[a-z]+-\d{4}$|^(poetry|fiction|nonfiction)$/;
 
   var isPost = document.body.classList.contains("post-template");
-  var isTag = document.body.classList.contains("tag-template");
+  var isTag  = document.body.classList.contains("tag-template");
   if (!isPost && !isTag) return;
 
-  var slug = null;
-
-  if (isTag) {
-    // Extract slug from URL: /tag/{slug}/
-    var match = window.location.pathname.match(/^\/tag\/([^/]+)/);
-    if (!match) return;
-    slug = match[1];
-    if (SKIP.test(slug)) return;
-  }
-
-  if (isPost) {
-    // Find contributor from body tag classes, skipping issue and genre tags
+  // Collect non-issue, non-genre tag slugs from body classes.
+  // After SKIP fix: tags[0] is the contributor slug.
+  function getContribTags() {
     var tags = [];
     document.body.className.split(/\s+/).forEach(function (cls) {
       if (cls.indexOf("tag-") !== 0) return;
-      var s = cls.replace("tag-", "");
+      var s = cls.slice(4);
       if (!SKIP.test(s) && s.indexOf("hash-") !== 0) tags.push(s);
     });
-    if (!tags.length) return;
-    slug = tags[0];
+    return tags;
   }
 
-  if (!slug) return;
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
 
   function buildCards(books) {
-    var cards = "";
-    books.forEach(function (book) {
+    return books.map(function (book) {
       var img = book.cover
-        ? '<img src="' + book.cover + '" alt="' + (book.title || "") +
-          '" onerror="this.remove()" style="width:110px;height:auto;display:block;margin-bottom:.5rem">'
+        ? '<img src="' + escapeHtml(book.cover) +
+          '" alt="' + escapeHtml(book.title || "") +
+          '" onerror="this.remove()"' +
+          ' style="width:110px;height:auto;display:block;margin-bottom:.5rem">'
         : "";
       var title = book.title
         ? '<span style="font-size:.95rem;font-weight:600;line-height:1.25">' +
-          book.title + "</span>"
+          escapeHtml(book.title) + "</span>"
         : "";
       var author = book.authors
         ? '<span style="font-size:.8rem;opacity:.65;display:block;margin-top:.15rem">' +
-          book.authors + "</span>"
+          escapeHtml(book.authors) + "</span>"
         : "";
-      cards +=
+      return (
         '<a href="' + SHOP + book.isbn +
         '" style="width:110px;text-decoration:none;color:inherit">' +
-        img + title + author + "</a>";
-    });
-    return cards;
+        img + title + author + "</a>"
+      );
+    }).join("");
   }
 
-  fetch(SHELVES_URL)
-    .then(function (r) { return r.json(); })
-    .then(function (shelves) {
-      var entry = null;
+  // ── TAG PAGE ───────────────────────────────────────────────────────────────
+  if (isTag) {
+    var m = window.location.pathname.match(/^\/tag\/([^/]+)/);
+    if (!m) return;
+    var tagSlug = m[1];
+    if (SKIP.test(tagSlug)) return;
 
-      if (isPost) {
-        // Try each non-skipped tag until we find one with books
-        var tags = [];
-        document.body.className.split(/\s+/).forEach(function (cls) {
-          if (cls.indexOf("tag-") !== 0) return;
-          var s = cls.replace("tag-", "");
-          if (!SKIP.test(s) && s.indexOf("hash-") !== 0) tags.push(s);
-        });
-        for (var i = 0; i < tags.length; i++) {
-          if (shelves[tags[i]]) { entry = shelves[tags[i]]; break; }
-        }
-      } else {
-        entry = shelves[slug] || null;
-      }
-
-      if (!entry || !entry.books || !entry.books.length) return;
-
-      var cards = buildCards(entry.books);
-
-      if (isPost) {
+    fetch(SHELVES_URL)
+      .then(function (r) { return r.json(); })
+      .then(function (shelves) {
+        var entry = shelves[tagSlug];
+        if (!entry || !entry.books || !entry.books.length) return;
         var html =
-          '<div style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(0,0,0,.1)">' +
-          '<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Books by ' +
-          entry.name + "</h3>" +
-          '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
-          cards +
-          "</div></div>";
-        var content = document.querySelector(".gh-content");
-        if (content) content.insertAdjacentHTML("beforeend", html);
-      }
-
-      if (isTag) {
-        var html =
-          '<section class="gh-inner" style="padding-top:1.5rem;padding-bottom:2rem">' +
+          '<section class="gh-canvas" style="padding-top:1.5rem;padding-bottom:2rem">' +
           '<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Books</h3>' +
           '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
-          cards +
+          buildCards(entry.books) +
           "</div></section>";
-        var archive = document.querySelector("section.gh-archive");
-        if (archive) archive.insertAdjacentHTML("afterend", html);
-      }
-    })
-    .catch(function () {});
+        // Dawn uses section.tag for the tag header; Source used section.gh-archive.
+        var header = document.querySelector("section.tag");
+        if (header) header.insertAdjacentHTML("afterend", html);
+      })
+      .catch(function () {});
+
+    return;
+  }
+
+  // ── POST PAGE ──────────────────────────────────────────────────────────────
+  var contribTags = getContribTags();
+  if (!contribTags.length) return;
+  var slug = contribTags[0]; // contributor slug — correct after SKIP fix
+
+  // Link the byline synchronously. The name is already in the DOM as plain
+  // text inside .single-excerpt ("by Barbara Daniels"). No request needed.
+  var excerptEl = document.querySelector(".single-excerpt");
+  if (excerptEl) {
+    var raw = excerptEl.textContent.trim();
+    if (/^by\s/.test(raw)) {
+      excerptEl.innerHTML =
+        "by " +
+        '<a href="/tag/' + slug + '/"' +
+        ' style="color:inherit;text-decoration:underline;' +
+        'text-decoration-color:rgba(0,0,0,.25);text-underline-offset:.1em">' +
+        escapeHtml(raw.replace(/^by\s+/, "")) + "</a>";
+    }
+  }
+
+  // Fetch shelves.json (books) and the Content API tag (name + bio) in parallel.
+  var tagApiUrl =
+    GHOST_URL + "/ghost/api/content/tags/slug/" + slug +
+    "/?key=" + CONTENT_KEY + "&fields=name,description";
+
+  Promise.all([
+    fetch(SHELVES_URL).then(function (r) { return r.json(); }),
+    fetch(tagApiUrl).then(function (r) { return r.json(); })
+  ]).then(function (results) {
+    var shelves = results[0];
+    var tagResp = results[1];
+
+    var tagData = (tagResp && tagResp.tags && tagResp.tags[0]) || null;
+
+    // Find books for this contributor (check all non-skipped tags in case
+    // the shelves key differs slightly from the body-class slug).
+    var shelfEntry = null;
+    for (var i = 0; i < contribTags.length; i++) {
+      if (shelves[contribTags[i]]) { shelfEntry = shelves[contribTags[i]]; break; }
+    }
+
+    var hasDesc  = tagData && tagData.description;
+    var hasBooks = shelfEntry && shelfEntry.books && shelfEntry.books.length;
+    if (!hasDesc && !hasBooks) return;
+
+    var name = (tagData && tagData.name) || (shelfEntry && shelfEntry.name) || "";
+
+    var inner = "";
+
+    if (hasDesc) {
+      inner +=
+        '<div style="margin-bottom:' + (hasBooks ? "2rem" : "0") + '">' +
+        '<a href="/tag/' + slug + '/"' +
+        ' style="display:inline-block;font-size:1.05rem;font-weight:700;' +
+        'color:inherit;text-decoration:none;margin-bottom:.6rem">' +
+        escapeHtml(name) + "</a>" +
+        '<p style="margin:0;font-size:1.1rem;line-height:1.65">' +
+        escapeHtml(tagData.description) + "</p>" +
+        "</div>";
+    }
+
+    if (hasBooks) {
+      inner +=
+        '<h3 style="font-size:1rem;font-weight:700;margin:0 0 1rem">' +
+        "Books by " + escapeHtml(name) + "</h3>" +
+        '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
+        buildCards(shelfEntry.books) + "</div>";
+    }
+
+    var html =
+      '<div style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(0,0,0,.1)">' +
+      inner + "</div>";
+
+    var content = document.querySelector(".gh-content");
+    if (content) content.insertAdjacentHTML("beforeend", html);
+  }).catch(function () {});
+
 })();
 </script>
