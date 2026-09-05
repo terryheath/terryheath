@@ -32,6 +32,7 @@ const flags      = rawArgs.filter(a => a.startsWith('--'));
 const posArgs    = rawArgs.filter(a => !a.startsWith('--'));
 const slug       = posArgs[0];
 const byGenre    = flags.includes('--by-genre');
+const biosOnly   = flags.includes('--bios');
 const statusFlag = (flags.find(f => f.startsWith('--status=')) || '--status=published,scheduled')
   .replace('--status=', '');
 
@@ -666,6 +667,34 @@ function showDiagnostic(posts) {
 
 async function main() {
   const statuses = statusFlag.split(',').map(s => s.trim()).filter(Boolean);
+
+  // ── --bios mode: print all contributor bios and exit ──────────────────────
+  if (biosOnly) {
+    const posts = await fetchPosts(slug, statuses);
+    const SKIP_SLUGS = new Set([slug, 'poetry', 'fiction', 'nonfiction']);
+    const seen = new Map();
+    for (const post of posts) {
+      for (const ctag of post.tags || []) {
+        if (!SKIP_SLUGS.has(ctag.slug) && !seen.has(ctag.id)) seen.set(ctag.id, ctag);
+      }
+    }
+    const full = await Promise.all([...seen.keys()].map(id => fetchTagById(id)));
+    full.sort((a, b) => {
+      const last = name => name.trim().split(/\s+/).pop().toLowerCase();
+      return last(a.name).localeCompare(last(b.name));
+    });
+    for (const t of full) {
+      const bio = (t.description || '').trim();
+      console.log('---');
+      console.log(`TAG NAME: ${t.name}`);
+      console.log(`SLUG: ${t.slug}`);
+      console.log(`LENGTH: ${bio.length}`);
+      console.log(`BIO: ${bio || 'EMPTY'}`);
+    }
+    return;
+  }
+
+  // ── Normal ebook build ─────────────────────────────────────────────────────
   console.log(`Building ebook: ${slug}${byGenre ? '  (by genre)' : ''}  [status: ${statuses.join(', ')}]\n`);
 
   const [tag, posts] = await Promise.all([fetchTag(slug), fetchPosts(slug, statuses)]);
