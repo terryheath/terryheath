@@ -183,12 +183,81 @@ async function uploadLocal(filePath) {
   }
 }
 
+function normalizeForMatch(s) {
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // strip accent marks
+    .replace(/[^\w\s]/g, ' ')         // punctuation → space
+    .replace(/\s+/g, ' ')             // collapse whitespace
+    .toLowerCase()
+    .trim();
+}
+
+function isSubsequence(needle, haystack) {
+  let hi = 0;
+  for (const token of needle) {
+    while (hi < haystack.length && haystack[hi] !== token) hi++;
+    if (hi >= haystack.length) return false;
+    hi++;
+  }
+  return true;
+}
+
+const HEADSHOT_EXTS = ['.jpg', '.jpeg', '.png', '.webp'];
+
+// Returns the resolved file path or null.
+// Tries three tiers in order; stops at the first match.
+// Ambiguous matches (multiple files at the same tier) return null.
 function findHeadshot(guest) {
   if (!guest) return null;
-  for (const ext of ['.jpg', '.jpeg', '.png', '.webp']) {
-    const p = path.join(HEADSHOT_DIR, guest + ext);
-    if (fs.existsSync(p)) return p;
+  let entries;
+  try {
+    entries = fs.readdirSync(HEADSHOT_DIR)
+      .filter(f => HEADSHOT_EXTS.includes(path.extname(f).toLowerCase()))
+      .map(f => ({ file: f, stem: path.basename(f, path.extname(f)) }));
+  } catch { return null; }
+
+  // Tier 1: exact stem match
+  const t1 = entries.filter(e => e.stem === guest);
+  if (t1.length === 1) {
+    console.log(`  headshot tier 1 (exact): ${t1[0].file}`);
+    return path.join(HEADSHOT_DIR, t1[0].file);
   }
+  if (t1.length > 1) {
+    console.warn(`  headshot ambiguous (tier 1) for "${guest}": ${t1.map(e => e.file).join(', ')}`);
+    return null;
+  }
+
+  // Tier 2: case-folded, accent-stripped, punctuation-removed
+  const normGuest = normalizeForMatch(guest);
+  const t2 = entries.filter(e => normalizeForMatch(e.stem) === normGuest);
+  if (t2.length === 1) {
+    console.log(`  headshot tier 2 (normalized): ${t2[0].file}`);
+    return path.join(HEADSHOT_DIR, t2[0].file);
+  }
+  if (t2.length > 1) {
+    console.warn(`  headshot ambiguous (tier 2) for "${guest}": ${t2.map(e => e.file).join(', ')}`);
+    return null;
+  }
+
+  // Tier 3: bidirectional token subsequence.
+  // Either all guest tokens appear in the stem (handles middle names in filenames)
+  // or all stem tokens appear in the guest name (handles honorifics in RSS titles).
+  const guestTokens = normGuest.split(' ').filter(Boolean);
+  const t3 = entries.filter(e => {
+    const stemTokens = normalizeForMatch(e.stem).split(' ').filter(Boolean);
+    return isSubsequence(guestTokens, stemTokens)
+        || isSubsequence(stemTokens, guestTokens);
+  });
+  if (t3.length === 1) {
+    console.log(`  headshot tier 3 (token subsequence): ${t3[0].file}`);
+    return path.join(HEADSHOT_DIR, t3[0].file);
+  }
+  if (t3.length > 1) {
+    console.warn(`  headshot ambiguous (tier 3) for "${guest}": ${t3.map(e => e.file).join(', ')}`);
+    return null;
+  }
+
   return null;
 }
 
@@ -363,10 +432,28 @@ async function main() {
     if (guest) tags.push({ name: guest });
 
     const shotPath = findHeadshot(guest);
-    if (guest && !shotPath) console.warn(`  no headshot for ${guest}`);
+    const missingHeadshot = !!guest && !shotPath;
+    const wantPublish = POST_STATUS === 'published';
+    const wantEmail   = wantPublish && NEWSLETTER_SLUG;
+
+    // A missing headshot on a publish run is a hard failure: the newsletter
+    // email cannot be recalled after send. Create as draft instead and mark
+    // the step failed so GitHub sends a failure notification.
+    // On dry runs, report the problem without failing.
+    if (missingHeadshot && wantPublish) {
+      console.warn(`  no headshot for "${guest}" — will create as draft, no newsletter`);
+      if (!DRY_RUN) process.exitCode = 1;
+    } else if (missingHeadshot) {
+      console.warn(`  no headshot for "${guest}"`);
+    }
+
+    // Actual publish/email intent, after applying the downgrade.
+    const actualPublish = wantPublish && !missingHeadshot;
+    const actualEmail   = actualPublish && NEWSLETTER_SLUG;
 
     if (DRY_RUN) {
-      console.log(`WOULD create      ${title}`
+      const label = (missingHeadshot && wantPublish) ? 'WOULD draft (no headshot)' : 'WOULD create             ';
+      console.log(`${label}  ${title}`
         + `${guest ? `  [${guest}]` : ''}`
         + `${shotPath ? '  +headshot' : ''}`);
       created++; continue;
@@ -377,9 +464,6 @@ async function main() {
     if (guest && feature) {
       console.log(`  credit for ${guest}: ${caption ? `"${caption}"` : 'not found in credits.json'}`);
     }
-
-    const wantPublish = POST_STATUS === 'published';
-    const wantEmail = wantPublish && NEWSLETTER_SLUG;
 
     try {
       // Step 1: create as draft (HTML without listen link — we need the
@@ -405,18 +489,20 @@ async function main() {
       const editPayload = {
         id: draft.id,
         html: finalHtml,
-        status: wantPublish ? 'published' : 'draft',
+        status: actualPublish ? 'published' : 'draft',
         updated_at: draft.updated_at
       };
       const editOpts = { source: 'html' };
-      if (wantEmail) editOpts.newsletter = NEWSLETTER_SLUG;
+      if (actualEmail) editOpts.newsletter = NEWSLETTER_SLUG;
 
       await api.posts.edit(editPayload, editOpts);
 
-      console.log(`${wantPublish ? 'PUBLISHED' : 'created  '}`
-        + `         ${title}${guest ? `  [${guest}]` : ''}`
+      const statusLabel = actualPublish    ? 'PUBLISHED          '
+                        : missingHeadshot  ? 'DRAFT (no headshot)'
+                        :                   'created            ';
+      console.log(`${statusLabel}  ${title}${guest ? `  [${guest}]` : ''}`
         + `${feature ? '  +headshot' : ''}`
-        + `${wantEmail ? '  +emailed' : ''}`);
+        + `${actualEmail ? '  +emailed' : ''}`);
       created++;
     } catch (err) {
       console.error(`FAILED            ${title}\n  ${err.message}`);
