@@ -53,7 +53,7 @@
   // Skip month-year issue slugs (september-2026, november-2026, …) and genre tags.
   // The original regex only matched seasonal slugs (winter/spring/…) and missed
   // month-based ones, causing the issue slug to land at tags[0] incorrectly.
-  var SKIP = /^[a-z]+-\d{4}$|^(poetry|fiction|nonfiction)$/;
+  var SKIP = /^[a-z]+-\d{4}$|^(poetry|fiction|nonfiction|micro)$/;
 
   var isPost = document.body.classList.contains("post-template");
   var isTag  = document.body.classList.contains("tag-template");
