@@ -1,0 +1,61 @@
+name: Inkhorn Review — stuck scheduled post check
+
+on:
+  schedule:
+    # 15:17 UTC daily. Catches a 14:00 UTC Sunday scheduled post within the hour.
+    - cron: '17 15 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for overdue scheduled posts
+        env:
+          INKHORN_URL: ${{ secrets.INKHORN_URL }}
+          INKHORN_ADMIN_KEY: ${{ secrets.INKHORN_ADMIN_KEY }}
+        run: |
+          node -e "
+          const crypto = require('crypto');
+          const url = process.env.INKHORN_URL;
+          const adminKey = process.env.INKHORN_ADMIN_KEY;
+
+          if (!url || !adminKey) {
+            console.error('INKHORN_URL and INKHORN_ADMIN_KEY secrets are required');
+            process.exit(1);
+          }
+
+          const [kid, hex] = adminKey.split(':');
+          const now = Math.floor(Date.now() / 1000);
+          const h = Buffer.from(JSON.stringify({alg:'HS256',kid,typ:'JWT'})).toString('base64url');
+          const p = Buffer.from(JSON.stringify({iat:now,exp:now+300,aud:'/admin/'})).toString('base64url');
+          const s = crypto.createHmac('sha256',Buffer.from(hex,'hex')).update(h+'.'+p).digest('base64url');
+          const token = h+'.'+p+'.'+s;
+
+          fetch(url+'/ghost/api/admin/posts/?filter=status:scheduled&fields=id,title,published_at&limit=all', {
+            headers: { Authorization: 'Ghost '+token }
+          })
+          .then(r => {
+            if (!r.ok) throw new Error('API returned '+r.status);
+            return r.json();
+          })
+          .then(data => {
+            const nowMs = Date.now();
+            const overdue = (data.posts || []).filter(p => new Date(p.published_at).getTime() < nowMs);
+            if (!overdue.length) process.exit(0);
+
+            console.error('STUCK SCHEDULED POSTS — Ghost scheduler did not publish:');
+            for (const post of overdue) {
+              const ms = nowMs - new Date(post.published_at).getTime();
+              const label = ms < 3600000
+                ? Math.round(ms/60000)+'m overdue'
+                : (ms/3600000).toFixed(1)+'h overdue';
+              console.error('  '+post.title+' ('+label+', was due '+post.published_at+')');
+            }
+            process.exit(1);
+          })
+          .catch(err => {
+            console.error('Check failed:', err.message);
+            process.exit(1);
+          });
+          "
