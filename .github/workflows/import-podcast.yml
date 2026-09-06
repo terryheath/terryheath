@@ -11,10 +11,13 @@ on:
         type: boolean
         default: true
       status:
-        description: 'Post status'
+        description: 'Post status (blank = use repo variable POST_STATUS)'
         type: choice
-        options: [draft, published]
-        default: draft
+        options:
+          - ''
+          - draft
+          - published
+        default: ''
 
 jobs:
   import:
