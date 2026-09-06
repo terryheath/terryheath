@@ -2,9 +2,8 @@ name: Import podcast episodes to Ghost
 
 on:
   schedule:
-    # Every day at 13:00 UTC (6am PDT / 5am PST).
-    # Episodes drop Sunday 07:00 UTC, so this catches them the same morning.
-    - cron: '0 13 * * *'
+    # Every day at 13:17 UTC (6:17am PDT / 5:17am PST).
+    - cron: '17 13 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
