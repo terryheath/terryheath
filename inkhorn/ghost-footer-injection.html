@@ -231,5 +231,59 @@
     if (content) content.insertAdjacentHTML("beforeend", html);
   }).catch(function () {});
 
+  // ── THEME-BASED RELATED POSTS ──────────────────────────────────────────────
+  // contribTags[0] = contributor slug; [1]+ = theme tags (grief, memory, etc.)
+  // Fetches posts sharing a theme tag, shuffles for variety on each page load,
+  // replaces .related-feed innerHTML. If the query returns nothing the element
+  // is untouched — Handlebars output stands as fallback.
+  var themeSlugs = contribTags.slice(1);
+  if (themeSlugs.length) {
+    var postSlug = window.location.pathname.replace(/\/$/, '').split('/').pop();
+    var relFilter = 'tags:[' + themeSlugs.join(',') + ']+slug:-' + postSlug;
+    var relUrl =
+      GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+      '&filter=' + encodeURIComponent(relFilter) +
+      '&limit=6&fields=title,url,published_at,reading_time';
+
+    fetch(relUrl)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var posts = data && data.posts;
+        if (!posts || !posts.length) return; // nothing matched — leave Handlebars output
+
+        // Fisher-Yates shuffle for a different order on every page load
+        for (var i = posts.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = posts[i]; posts[i] = posts[j]; posts[j] = tmp;
+        }
+
+        var feed = document.querySelector('.related-feed');
+        if (!feed) return;
+
+        feed.innerHTML = posts.slice(0, 4).map(function (post) {
+          var d     = new Date(post.published_at);
+          var day   = String(d.getDate()).padStart(2, '0');
+          var month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+          var mins  = post.reading_time || 1;
+          var rt    = mins === 1 ? '1 min read' : mins + ' min read';
+          return (
+            '<article class="feed">' +
+            '<div class="feed-calendar">' +
+            '<div class="feed-calendar-day">' + day + '</div>' +
+            '<div class="feed-calendar-month">' + month + '</div>' +
+            '</div>' +
+            '<h2 class="feed-title">' + escapeHtml(post.title) + '</h2>' +
+            '<div class="feed-right">' +
+            '<div class="feed-length">' + rt + '</div>' +
+            '</div>' +
+            '<a class="u-permalink" href="' + escapeHtml(post.url) +
+            '" aria-label="' + escapeHtml(post.title) + '"></a>' +
+            '</article>'
+          );
+        }).join('');
+      })
+      .catch(function () {}); // on network error, leave Handlebars output alone
+  }
+
 })();
 </script>
