@@ -74,7 +74,7 @@ node inkhorn/set-og-images.js <issue-slug>
 ```
 Example: `node inkhorn/set-og-images.js autumn-2026`
 
-Sets the `og_image` field on every post tagged with the issue slug to the tag's `feature_image` URL. This makes social/messaging link previews show the issue cover art. The value is stored permanently on each post — future issue runs only touch their own posts and never overwrite earlier ones.
+Sets the `og_image` field on every post tagged with the issue slug to the tag's `feature_image` URL, and also sets the site-level `og_image` setting so the bare domain shows the current issue cover. Post values are stored permanently — future issue runs only touch their own posts and never overwrite earlier ones. The site-level setting is replaced each issue.
 
 **Prerequisite:** the issue tag must have a `feature_image` set in Ghost Admin → Tags before running. If it doesn't, the script exits with an error.
 

@@ -100,6 +100,19 @@ async function main() {
   }
 
   console.log(`\nDone. ${updated} updated, ${skipped} already correct, ${errors} errors.`);
+
+  // 4. Set the site-level og_image so the bare domain uses the current issue cover
+  console.log(`\nUpdating site og_image...`);
+  const sr = await fetch(`${GHOST_URL}/ghost/api/admin/settings/`, {
+    method: 'PUT',
+    headers: headers(),
+    body: JSON.stringify({ settings: [{ key: 'og_image', value: ogImage }] }),
+  });
+  if (!sr.ok) {
+    console.log(`  ERROR updating site og_image: ${sr.status} ${await sr.text()}`);
+  } else {
+    console.log(`  Site og_image → ${ogImage}`);
+  }
 }
 
 main().catch(e => { console.error(e.message || e); process.exit(1); });
