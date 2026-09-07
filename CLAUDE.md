@@ -9,7 +9,7 @@ Scripts and config for Terry Heath's Ghost sites. This is not a web app — it's
 Inkhorn Review's stack:
 - **Publishing** — Ghost at inkhornreview.com (PikaPods). Posts, pages, and routing all managed there.
 - **Submissions** — Duosuma. No submission code lives in this repo.
-- **This repo** — five files only: `inkhorn/routes.yaml`, `inkhorn/contributors.json`, `inkhorn/build-shelves.js`, `inkhorn/shelves.json`, `inkhorn/ghost-footer-injection.html`. Nothing else.
+- **This repo** — `inkhorn/routes.yaml`, `inkhorn/contributors.json`, `inkhorn/build-shelves.js`, `inkhorn/shelves.json`, `inkhorn/ghost-footer-injection.html`, `inkhorn/set-og-images.js`, and issue scripts. Nothing else.
 
 ## The sites
 
@@ -27,6 +27,7 @@ Inkhorn Review's stack:
 - **inkhorn/shelves.json** — Generated output of `build-shelves.js`. Served from `raw.githubusercontent.com` and fetched client-side by the book shelf script. Commit and push after regenerating.
 - **inkhorn/build-shelves.js** — Resolves ISBNs in `contributors.json` to titles, authors, and cover images. Writes `shelves.json`. Run with `ISBNDB_KEY` env var.
 - **inkhorn/ghost-footer-injection.html** — JavaScript block pasted into Ghost's Site Footer code injection for Inkhorn Review. Renders a "Books by [Name]" shelf on contributor post pages.
+- **inkhorn/set-og-images.js** — Sets `og_image` on every post in an issue to the issue tag's cover art. Run once per issue after publishing. See Recurring tasks below.
 
 ## Recurring tasks
 
@@ -63,6 +64,21 @@ Output lands in `inkhorn/build/` (gitignored):
 - `<issue-slug>.html` — intermediate; inspect to verify poem line breaks before importing
 
 Bylines come from each post's custom excerpt. The Ghost author field is not used (every post is authored by the Inkhorn Review account, not the contributor).
+
+### Setting OG images for an issue (social sharing previews)
+
+Run once per issue, after the issue tag's cover art is uploaded in Ghost Admin → Tags:
+
+```
+node inkhorn/set-og-images.js <issue-slug>
+```
+Example: `node inkhorn/set-og-images.js autumn-2026`
+
+Sets the `og_image` field on every post tagged with the issue slug to the tag's `feature_image` URL. This makes social/messaging link previews show the issue cover art. The value is stored permanently on each post — future issue runs only touch their own posts and never overwrite earlier ones.
+
+**Prerequisite:** the issue tag must have a `feature_image` set in Ghost Admin → Tags before running. If it doesn't, the script exits with an error.
+
+Safe to re-run: posts already set to the correct image are skipped.
 
 ### Rescheduling posts for an issue
 
