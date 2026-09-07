@@ -91,9 +91,9 @@
     "books": [
       {
         "isbn": "9781962405652",
-        "title": null,
-        "authors": "",
-        "cover": null
+        "title": "Could Be",
+        "authors": "Rikki Santer",
+        "cover": "https://images.isbndb.com/covers/19266583482886.jpg"
       },
       {
         "isbn": "9781957755533",
@@ -195,6 +195,17 @@
         "title": "Free of the Shadow Poems and Stories",
         "authors": "Lou Faber",
         "cover": "https://images.isbndb.com/covers/2258243482769.jpg"
+      }
+    ]
+  },
+  "veronica-tucker": {
+    "name": "Veronica Tucker",
+    "books": [
+      {
+        "isbn": "9781969601019",
+        "title": "The House as Witness",
+        "authors": "Veronica Tucker",
+        "cover": "https://images.isbndb.com/covers/6962883482889.jpg"
       }
     ]
   }
