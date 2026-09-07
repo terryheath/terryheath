@@ -25,6 +25,18 @@
         "title": "Train to Providence",
         "authors": "William Doreski",
         "cover": "https://images.isbndb.com/covers/9873193482882.jpg"
+      },
+      {
+        "isbn": "9788119654673",
+        "title": "Cloud Mountain",
+        "authors": "William Doreski",
+        "cover": "https://images.isbndb.com/covers/27705113485078.jpg"
+      },
+      {
+        "isbn": "9780821412794",
+        "title": "Robert Lowell's Shifting Colors: The Poetics Of The Public & The Personal",
+        "authors": "William Doreski",
+        "cover": "https://images.isbndb.com/covers/12168743482480.jpg"
       }
     ]
   },
@@ -83,6 +95,12 @@
         "title": "Felones de Se",
         "authors": "Lindaann Loschiavo",
         "cover": "https://images.isbndb.com/covers/22399653485519.jpg"
+      },
+      {
+        "isbn": "9781942007296",
+        "title": "A Route Obscure and Lonely Poetrylandia 2",
+        "authors": "Lindaann Loschiavo",
+        "cover": "https://images.isbndb.com/covers/11883553482879.jpg"
       }
     ]
   },
@@ -206,6 +224,17 @@
         "title": "The House as Witness",
         "authors": "Veronica Tucker",
         "cover": "https://images.isbndb.com/covers/6962883482889.jpg"
+      }
+    ]
+  },
+  "elizabeth-meaney": {
+    "name": "Elizabeth Meaney",
+    "books": [
+      {
+        "isbn": "9780241407196",
+        "title": "Bad Habits",
+        "authors": "Flynn Meaney",
+        "cover": "https://images.isbndb.com/covers/25871293482273.jpg"
       }
     ]
   }
