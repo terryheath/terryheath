@@ -1,0 +1,53 @@
+name: Inkhorn Review weekly digest
+
+on:
+  schedule:
+    # Every Sunday at 15:00 UTC (8:00 AM PDT / 7:00 AM PST)
+    - cron: '0 15 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (log only, change nothing)'
+        type: boolean
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @tryghost/admin-api
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/607719180653/locations/global/workloadIdentityPools/github-actions/providers/github-terryheath
+          service_account: inkhorn-digest@whiterabbit-prod.iam.gserviceaccount.com
+
+      - name: Fetch secrets from GCP Secret Manager
+        id: secrets
+        uses: google-github-actions/get-secretmanager-secrets@v2
+        with:
+          secrets: |-
+            GHOST_API_URL:whiterabbit-prod/ghost-api-url-inkhorn
+            GHOST_ADMIN_KEY:whiterabbit-prod/ghost-admin-key-inkhorn
+            PUBLISH_MODE:whiterabbit-prod/ghost-publish-mode-inkhorn-digest
+
+      - name: Run digest
+        env:
+          GHOST_API_URL: ${{ steps.secrets.outputs.GHOST_API_URL }}
+          GHOST_ADMIN_KEY: ${{ steps.secrets.outputs.GHOST_ADMIN_KEY }}
+          PUBLISH_MODE: ${{ steps.secrets.outputs.PUBLISH_MODE }}
+          DRY_RUN: >-
+            ${{ github.event.inputs.dry_run == 'true' && '1' || '' }}
+        run: node inkhorn/digest.js
