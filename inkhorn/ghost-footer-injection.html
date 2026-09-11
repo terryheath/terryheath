@@ -17,15 +17,10 @@
 .inkhorn-home { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 
 /* Current issue */
-.ih-issue { display: grid; grid-template-columns: 220px 1fr; gap: 3rem; align-items: start; margin-bottom: 3rem; }
-.ih-issue-cover img { width: 100%; height: auto; display: block; }
-.ih-eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #888; margin: 0 0 .6rem; }
-.ih-issue-title { font-size: 2rem; font-weight: 700; margin: 0 0 .8rem; line-height: 1.15; }
-.ih-issue-desc { font-size: 1rem; line-height: 1.65; color: #444; margin: 0 0 1.2rem; font-style: italic; }
-.ih-read-link { display: inline-block; font-weight: 700; color: #1a1a1a; text-decoration: none; font-size: .95rem; margin-bottom: 1.2rem; }
-.ih-ebook-links { font-size: .82rem; color: #888; margin-bottom: 1.5rem; }
-.ih-ebook-links a { color: #666; text-decoration: none; }
-.ih-ebook-links a:hover { text-decoration: underline; }
+.ih-issue { display: grid; grid-template-columns: 25% 1fr; gap: 3rem; align-items: start; margin-bottom: 3rem; }
+.ih-issue-cover-link { display: block; }
+.ih-issue-cover-link img { width: 100%; height: auto; display: block; }
+.ih-issue-desc { font-size: 1rem; line-height: 1.65; color: #444; margin: 0 0 1.4rem; font-style: italic; }
 
 /* TOC */
 .ih-toc { margin-top: .25rem; }
@@ -41,13 +36,14 @@
 .ih-hr { border: none; border-top: 1px solid #e8e8e8; margin: 2.5rem 0; }
 
 /* Department grid */
-.ih-dept-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem 2.5rem; margin-bottom: .5rem; }
+.ih-dept-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem 2.5rem; }
 .ih-dept-name { font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #bbb; margin-bottom: .35rem; }
 .ih-dept-title a { display: block; font-size: .93rem; font-weight: 600; color: #1a1a1a; text-decoration: none; line-height: 1.35; }
 .ih-dept-title a:hover { text-decoration: underline; }
 .ih-dept-excerpt { font-size: .8rem; color: #777; font-style: italic; margin-top: .2rem; line-height: 1.4; }
-.ih-dept-all { font-size: .75rem; color: #aaa; text-decoration: none; margin-top: .5rem; display: inline-block; }
-.ih-dept-all:hover { color: #666; }
+.ih-dept-podcast { display: flex; gap: .75rem; align-items: flex-start; }
+.ih-dept-headshot { width: 72px; height: 72px; object-fit: cover; flex-shrink: 0; border-radius: 2px; }
+.ih-dept-body { flex: 1; min-width: 0; }
 
 /* Art gallery — full-bleed, images only. Width/offset set by JS after injection. */
 .ih-gallery-section { position: relative; overflow: hidden; }
@@ -66,8 +62,8 @@
 
 @media (max-width: 720px) {
   .ih-issue { grid-template-columns: 1fr; gap: 1.5rem; }
-  .ih-issue-cover { max-width: 240px; }
-  .ih-dept-grid { grid-template-columns: 1fr 1fr; }
+  .ih-issue-cover { max-width: 55vw; }
+  .ih-dept-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
   .ih-dept-grid { grid-template-columns: 1fr; }
@@ -144,6 +140,12 @@
       amazon: null,
       kobo: null
     }
+  };
+
+  // Per-issue cover image URLs — set to the ebook/print cover once uploaded.
+  // Falls back to the issue tag's feature_image (cover art already on the site).
+  var ISSUE_COVERS = {
+    'autumn-2026': null
   };
 
   // Skip month-year issue slugs (september-2026, november-2026, …) and genre tags.
@@ -483,73 +485,69 @@
   }
 
   function buildHomePage() {
-    // Three parallel fetches: all tags, recent dept posts, recent art posts
+    // Five parallel fetches: tags (current issue), micro, podcast, colophon, art.
+    // Dept fetches are per-tag so we get exactly one post each without grouping logic.
     Promise.all([
       fetch(GHOST_URL + '/ghost/api/content/tags/?key=' + CONTENT_KEY +
         '&limit=all&include=count.posts&fields=slug,name,description,feature_image,url')
         .then(function(r) { return r.json(); }),
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
-        '&filter=' + encodeURIComponent('primary_tag:[fiction,nonfiction,poetry,micro,podcast,letter]') +
-        '&fields=title,url,tags,custom_excerpt,feature_image&limit=50&order=published_at+desc')
+        '&filter=primary_tag:micro&fields=title,url,custom_excerpt&limit=1&order=published_at+desc')
         .then(function(r) { return r.json(); }),
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
-        '&filter=tag:art&fields=title,url,feature_image,custom_excerpt,tags&limit=10&order=published_at+desc')
+        '&filter=primary_tag:podcast&fields=title,url,custom_excerpt,feature_image&limit=1&order=published_at+desc')
+        .then(function(r) { return r.json(); }),
+      fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+        '&filter=primary_tag:letter&fields=title,url,custom_excerpt&limit=1&order=published_at+desc')
+        .then(function(r) { return r.json(); }),
+      fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+        '&filter=primary_tag:art&fields=title,url,feature_image&limit=12&order=published_at+desc')
         .then(function(r) { return r.json(); })
     ]).then(function(results) {
-      var allTags   = (results[0] && results[0].tags)  || [];
-      var deptPosts = (results[1] && results[1].posts) || [];
-      var artPosts  = (results[2] && results[2].posts) || [];
+      var allTags      = (results[0] && results[0].tags)  || [];
+      var microPost    = results[1] && results[1].posts && results[1].posts[0] || null;
+      var podcastPost  = results[2] && results[2].posts && results[2].posts[0] || null;
+      var colophonPost = results[3] && results[3].posts && results[3].posts[0] || null;
+      var artPosts     = (results[4] && results[4].posts) || [];
 
-      // Find current issue (highest ordinal among published issue tags)
       var issueTags = allTags.filter(function(t) { return ISSUE_RE.test(t.slug); });
       issueTags.sort(function(a, b) { return issueToOrdinal(a.slug) - issueToOrdinal(b.slug); });
       var currentIssue = issueTags[issueTags.length - 1];
       if (!currentIssue) return;
 
-      // Fetch current issue TOC
+      // TOC fetch — &include=tags is required; listing 'tags' in &fields does nothing.
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
         '&filter=' + encodeURIComponent('primary_tag:' + currentIssue.slug) +
-        '&fields=title,url,tags,custom_excerpt&limit=all&order=published_at+asc')
+        '&fields=title,url,custom_excerpt&include=tags&limit=all&order=published_at+asc')
         .then(function(r) { return r.json(); })
         .then(function(data) {
           var issuePosts = (data && data.posts) || [];
-          renderHome(currentIssue, issuePosts, deptPosts, artPosts);
+          renderHome(currentIssue, issuePosts, microPost, podcastPost, colophonPost, artPosts);
         });
     }).catch(function() {});
   }
 
-  function renderHome(issue, issuePosts, deptPosts, artPosts) {
+  function renderHome(issue, issuePosts, microPost, podcastPost, colophonPost, artPosts) {
     var e = escapeHtml;
+    var issueUrl = '/' + issue.slug + '/';
 
-    // ── Current issue section ──────────────────────────────────────────────
-
-    var coverHtml = issue.feature_image
-      ? '<img src="' + e(issue.feature_image) + '" alt="' + e(formatIssueTitle(issue.slug)) + ' cover" class="ih-cover-img">'
+    // ── Cover ─────────────────────────────────────────────────────────────────
+    // ISSUE_COVERS[slug]: set to ebook/print cover URL once uploaded.
+    // Falls back to the issue tag's feature_image (cover art already on site).
+    var coverSrc = ISSUE_COVERS[issue.slug] || issue.feature_image || null;
+    var coverHtml = coverSrc
+      ? '<a href="' + e(issueUrl) + '" class="ih-issue-cover-link">' +
+        '<img src="' + e(coverSrc) + '" alt="' + e(formatIssueTitle(issue.slug)) + ' cover">' +
+        '</a>'
       : '';
 
-    var descHtml = issue.description
-      ? '<p class="ih-issue-desc">' + e(issue.description) + '</p>'
-      : '';
-
-    var countHtml = (issue.count && issue.count.posts)
-      ? '<p style="font-size:.82rem;color:#aaa;margin:0 0 1rem">' + issue.count.posts + ' pieces</p>'
-      : '';
-
-    var ebook = EBOOK_LINKS[issue.slug] || null;
-    var ebookHtml = '';
-    if (ebook && (ebook.apple || ebook.amazon || ebook.kobo)) {
-      var links = [];
-      if (ebook.apple)  links.push('<a href="' + e(ebook.apple)  + '">Apple Books</a>');
-      if (ebook.amazon) links.push('<a href="' + e(ebook.amazon) + '">Amazon</a>');
-      if (ebook.kobo)   links.push('<a href="' + e(ebook.kobo)   + '">Kobo</a>');
-      ebookHtml = '<p class="ih-ebook-links">Download ebook: ' + links.join(' &nbsp;·&nbsp; ') + '</p>';
-    }
-
-    // TOC grouped by genre in display order
-    var GENRE_ORDER = ['poetry', 'fiction', 'nonfiction', 'micro', 'art', 'letter'];
-    var GENRE_LABELS = { poetry: 'Poetry', fiction: 'Fiction', nonfiction: 'Nonfiction', micro: 'Micro Fiction', art: 'Art', letter: 'Letter' };
-    var genreGroups = {};
-    var ungrouped = [];
+    // ── TOC ───────────────────────────────────────────────────────────────────
+    // Grouped by genre. include=tags on the fetch populates post.tags;
+    // ungrouped posts (no genre tag) are rendered last without a heading.
+    var GENRE_ORDER  = ['poetry', 'fiction', 'nonfiction', 'micro', 'art', 'letter'];
+    var GENRE_LABELS = { poetry: 'Poetry', fiction: 'Fiction', nonfiction: 'Nonfiction',
+                         micro: 'Micro Fiction', art: 'Art', letter: 'Colophon' };
+    var genreGroups = {}, ungrouped = [];
     for (var i = 0; i < issuePosts.length; i++) {
       var p = issuePosts[i];
       var g = deptOfPost(p);
@@ -561,127 +559,117 @@
       }
     }
 
+    // Format: Author, <a>Title</a>
+    function tocEntry(post) {
+      var author = post.custom_excerpt ? post.custom_excerpt.replace(/^by\s+/i, '').trim() : '';
+      return '<div class="ih-toc-item">' +
+             (author ? e(author) + ', ' : '') +
+             '<a href="' + e(post.url) + '">' + e(post.title || 'Untitled') + '</a>' +
+             '</div>';
+    }
+
     var tocHtml = '<nav class="ih-toc">';
-    var genresWithContent = GENRE_ORDER.filter(function(g) { return genreGroups[g] && genreGroups[g].length; });
-    for (var gi = 0; gi < genresWithContent.length; gi++) {
-      var genre = genresWithContent[gi];
-      var posts = genreGroups[genre];
+    var activeGenres = GENRE_ORDER.filter(function(g) { return genreGroups[g] && genreGroups[g].length; });
+    for (var gi = 0; gi < activeGenres.length; gi++) {
+      var genre = activeGenres[gi];
       tocHtml += '<div class="ih-toc-genre"><p class="ih-toc-genre-label">' + GENRE_LABELS[genre] + '</p>';
-      for (var pi = 0; pi < posts.length; pi++) {
-        var post = posts[pi];
-        var byline = post.custom_excerpt ? post.custom_excerpt.replace(/^by\s+/i, '') : '';
-        tocHtml += '<div class="ih-toc-item"><a href="' + e(post.url) + '">' + e(post.title || 'Untitled') + '</a>';
-        if (byline) tocHtml += '<span class="ih-toc-byline">' + e(byline) + '</span>';
-        tocHtml += '</div>';
-      }
+      var gPosts = genreGroups[genre];
+      for (var pi = 0; pi < gPosts.length; pi++) tocHtml += tocEntry(gPosts[pi]);
+      tocHtml += '</div>';
+    }
+    if (ungrouped.length) {
+      tocHtml += '<div class="ih-toc-genre">';
+      for (var ui = 0; ui < ungrouped.length; ui++) tocHtml += tocEntry(ungrouped[ui]);
       tocHtml += '</div>';
     }
     tocHtml += '</nav>';
 
-    var issueTitle = formatIssueTitle(issue.slug);
-    var issueUrl   = '/' + issue.slug + '/';
+    var descHtml = issue.description
+      ? '<p class="ih-issue-desc">' + e(issue.description) + '</p>'
+      : '';
 
     var issueHtml =
       '<section class="ih-issue">' +
       (coverHtml ? '<div class="ih-issue-cover">' + coverHtml + '</div>' : '') +
-      '<div class="ih-issue-info">' +
-      descHtml + countHtml +
-      '<a href="' + e(issueUrl) + '" class="ih-read-link">Read the issue &rarr;</a>' +
-      ebookHtml + tocHtml +
-      '</div></section>';
-
-    // ── Department row ─────────────────────────────────────────────────────
-
-    // Index deptPosts: one per dept (most recent = first in list, already ordered desc)
-    var latestByDept = {};
-    for (var di = 0; di < deptPosts.length; di++) {
-      var dp = deptPosts[di];
-      var dd = deptOfPost(dp);
-      if (dd && !latestByDept[dd]) latestByDept[dd] = dp;
-    }
-    // Also pick up art from artPosts
-    if (!latestByDept['art'] && artPosts.length) latestByDept['art'] = artPosts[0];
-
-    var deptGridHtml = '<div class="ih-dept-grid">';
-    for (var dti = 0; dti < DEPT_TAGS.length; dti++) {
-      var dept = DEPT_TAGS[dti];
-      var latest = latestByDept[dept];
-      var deptPath = DEPT_PATHS[dept];
-      deptGridHtml += '<div class="ih-dept">';
-      deptGridHtml += '<p class="ih-dept-name">' + DEPT_LABELS[dept] + '</p>';
-      if (latest) {
-        var bylineText = latest.custom_excerpt ? latest.custom_excerpt.replace(/^by\s+/i, '') : '';
-        deptGridHtml += '<div class="ih-dept-title"><a href="' + e(latest.url) + '">' + e(latest.title || 'Untitled') + '</a></div>';
-        if (bylineText) deptGridHtml += '<p class="ih-dept-excerpt">' + e(bylineText) + '</p>';
-      }
-      deptGridHtml += '<a href="' + e(deptPath) + '" class="ih-dept-all">More ' + DEPT_LABELS[dept].toLowerCase() + ' &rarr;</a>';
-      deptGridHtml += '</div>';
-    }
-    deptGridHtml += '</div>';
-
-    var deptSectionHtml =
-      '<section>' +
-      '<span class="ih-section-head">Departments</span>' +
-      deptGridHtml +
+      '<div class="ih-issue-info">' + descHtml + tocHtml + '</div>' +
       '</section>';
 
-    // ── Art gallery ────────────────────────────────────────────────────────
+    // ── Departments ───────────────────────────────────────────────────────────
+    // Micro, Podcast, Colophon only. A dept with no post renders nothing at all.
+    var depts = [
+      { label: 'Micro Fiction', post: microPost,    headshot: false },
+      { label: 'Podcast',       post: podcastPost,  headshot: true  },
+      { label: 'Colophon',      post: colophonPost, headshot: false },
+    ];
+    var deptCells = '';
+    for (var di = 0; di < depts.length; di++) {
+      var dept = depts[di];
+      if (!dept.post) continue;
+      var dp = dept.post;
+      var dByline = dp.custom_excerpt ? dp.custom_excerpt.replace(/^by\s+/i, '').trim() : '';
+      var dCell = '<div class="ih-dept"><p class="ih-dept-name">' + dept.label + '</p>';
+      if (dept.headshot && dp.feature_image) {
+        dCell +=
+          '<div class="ih-dept-podcast">' +
+          '<img src="' + e(dp.feature_image) + '" alt="" class="ih-dept-headshot">' +
+          '<div class="ih-dept-body">' +
+          '<div class="ih-dept-title"><a href="' + e(dp.url) + '">' + e(dp.title || 'Untitled') + '</a></div>' +
+          (dByline ? '<p class="ih-dept-excerpt">' + e(dByline) + '</p>' : '') +
+          '</div></div>';
+      } else {
+        dCell += '<div class="ih-dept-title"><a href="' + e(dp.url) + '">' + e(dp.title || 'Untitled') + '</a></div>';
+        if (dByline) dCell += '<p class="ih-dept-excerpt">' + e(dByline) + '</p>';
+      }
+      dCell += '</div>';
+      deptCells += dCell;
+    }
+    var deptSectionHtml = deptCells
+      ? '<hr class="ih-hr"><section><span class="ih-section-head">Departments</span>' +
+        '<div class="ih-dept-grid">' + deptCells + '</div></section>'
+      : '';
 
-    var galleryItems = artPosts.filter(function(p) { return p.feature_image; }).slice(0, 8);
+    // ── Art gallery ───────────────────────────────────────────────────────────
+    var galleryItems = artPosts.filter(function(p) { return p.feature_image; });
     var galleryHtml = '';
     if (galleryItems.length) {
       var band = '<div class="ih-gallery-band">';
       for (var ai = 0; ai < galleryItems.length; ai++) {
-        var ap = galleryItems[ai];
         band +=
-          '<a href="' + e(ap.url) + '" class="ih-gallery-item">' +
-          '<img src="' + e(ap.feature_image) + '" alt="" class="ih-gallery-img" loading="lazy">' +
+          '<a href="' + e(galleryItems[ai].url) + '" class="ih-gallery-item">' +
+          '<img src="' + e(galleryItems[ai].feature_image) + '" alt="" class="ih-gallery-img" loading="lazy">' +
           '</a>';
       }
       band += '</div>';
-      galleryHtml =
-        '<section>' +
-        '<span class="ih-section-head">Art</span>' +
-        '<div class="ih-gallery-section">' + band + '</div>' +
-        '</section>';
+      galleryHtml = '<hr class="ih-hr"><section><div class="ih-gallery-section">' + band + '</div></section>';
     }
 
-    // ── Subscribe CTA ──────────────────────────────────────────────────────
-
+    // ── Subscribe CTA ─────────────────────────────────────────────────────────
     var subUrl = GHOST_URL + '/#/portal/account/newsletters';
     var subscribeHtml =
-      '<section class="ih-subscribe">' +
+      '<hr class="ih-hr"><section class="ih-subscribe">' +
       '<p class="ih-subscribe-head">The Inkhorn Review Digest</p>' +
-      '<p class="ih-subscribe-body">A weekly email with new work from the journal — fiction, nonfiction, poetry, and art.</p>' +
+      '<p class="ih-subscribe-body">A weekly email with new work from the journal &mdash; fiction, nonfiction, poetry, and art.</p>' +
       '<p class="ih-subscribe-cta"><a href="' + e(GHOST_URL) + '/#/portal/signup">Subscribe free</a></p>' +
       '<p class="ih-subscribe-secondary">Also available: <a href="' + e(subUrl) + '">issue announcements</a> and <a href="' + e(subUrl) + '">Weekly Micro Fiction</a>.</p>' +
       '</section>';
 
-    // ── Assemble and inject ────────────────────────────────────────────────
-
+    // ── Assemble and inject ───────────────────────────────────────────────────
     var homeHtml =
       '<div class="inkhorn-home">' +
-      issueHtml +
-      '<hr class="ih-hr">' +
-      deptSectionHtml +
-      (galleryHtml ? '<hr class="ih-hr">' + galleryHtml : '') +
-      '<hr class="ih-hr">' +
-      subscribeHtml +
+      issueHtml + deptSectionHtml + galleryHtml + subscribeHtml +
       '</div>';
 
-    // Clear Ghost page content and inject home page
     var articleHeader = document.querySelector('.gh-article-header');
     var content = document.querySelector('.gh-content');
     if (articleHeader) articleHeader.style.display = 'none';
     if (content) {
       content.innerHTML = homeHtml;
     } else {
-      // Fallback: append to main article element
       var article = document.querySelector('.gh-article') || document.querySelector('main');
       if (article) article.innerHTML = homeHtml;
     }
 
-    // Size gallery to actual client width (excludes scrollbar — avoids 100vw overflow).
+    // Size gallery to actual client width (excludes scrollbar)
     var gallerySection = document.querySelector('.ih-gallery-section');
     if (gallerySection) {
       var clientW = document.documentElement.clientWidth;
