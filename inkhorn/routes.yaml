@@ -244,6 +244,31 @@ routes:
     filter: tag:summer-2031+tag:nonfiction
     order: published_at asc
 
+  /fiction/:
+    controller: channel
+    filter: tag:fiction
+    order: published_at desc
+
+  /nonfiction/:
+    controller: channel
+    filter: tag:nonfiction
+    order: published_at desc
+
+  /poetry/:
+    controller: channel
+    filter: tag:poetry
+    order: published_at desc
+
+  /art/:
+    controller: channel
+    filter: tag:art
+    order: published_at desc
+
+  /letter/:
+    controller: channel
+    filter: tag:letter
+    order: published_at desc
+
 collections:
   /autumn-2026/:
     permalink: /autumn-2026/{slug}/
