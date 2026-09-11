@@ -244,31 +244,6 @@ routes:
     filter: tag:summer-2031+tag:nonfiction
     order: published_at asc
 
-  /fiction/:
-    controller: channel
-    filter: tag:fiction
-    order: published_at desc
-
-  /nonfiction/:
-    controller: channel
-    filter: tag:nonfiction
-    order: published_at desc
-
-  /poetry/:
-    controller: channel
-    filter: tag:poetry
-    order: published_at desc
-
-  /art/:
-    controller: channel
-    filter: tag:art
-    order: published_at desc
-
-  /letter/:
-    controller: channel
-    filter: tag:letter
-    order: published_at desc
-
 collections:
   /autumn-2026/:
     permalink: /autumn-2026/{slug}/
@@ -428,6 +403,46 @@ collections:
     filter: primary_tag:summer-2031
     data: tag.summer-2031
     order: published_at asc
+    limit: 999
+
+  /fiction/:
+    permalink: /fiction/{slug}/
+    template: tag
+    filter: primary_tag:fiction
+    data: tag.fiction
+    order: published_at desc
+    limit: 999
+
+  /nonfiction/:
+    permalink: /nonfiction/{slug}/
+    template: tag
+    filter: primary_tag:nonfiction
+    data: tag.nonfiction
+    order: published_at desc
+    limit: 999
+
+  /poetry/:
+    permalink: /poetry/{slug}/
+    template: tag
+    filter: primary_tag:poetry
+    data: tag.poetry
+    order: published_at desc
+    limit: 999
+
+  /art/:
+    permalink: /art/{slug}/
+    template: tag
+    filter: primary_tag:art
+    data: tag.art
+    order: published_at desc
+    limit: 999
+
+  /letter/:
+    permalink: /letter/{slug}/
+    template: tag
+    filter: primary_tag:letter
+    data: tag.letter
+    order: published_at desc
     limit: 999
 
   /podcast/:

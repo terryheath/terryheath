@@ -49,12 +49,12 @@
 .ih-dept-all { font-size: .75rem; color: #aaa; text-decoration: none; margin-top: .5rem; display: inline-block; }
 .ih-dept-all:hover { color: #666; }
 
-/* Art gallery */
-.ih-gallery-band { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: .75rem; -webkit-overflow-scrolling: touch; scrollbar-width: thin; margin-bottom: .5rem; }
-.ih-gallery-item { flex: 0 0 180px; text-decoration: none; color: inherit; }
-.ih-gallery-img { width: 180px; height: 180px; object-fit: cover; display: block; }
-.ih-gallery-caption { font-size: .77rem; line-height: 1.35; margin-top: .35rem; color: #444; }
-.ih-gallery-caption .ih-byline { color: #999; font-style: italic; font-size: .73rem; display: block; }
+/* Art gallery — full-bleed, images only */
+.ih-gallery-section { width: 100vw; position: relative; left: 50%; transform: translateX(-50%); overflow: hidden; }
+.ih-gallery-band { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.ih-gallery-band::-webkit-scrollbar { display: none; }
+.ih-gallery-item { flex: 0 0 auto; display: block; line-height: 0; }
+.ih-gallery-img { height: 280px; width: auto; display: block; }
 
 /* Subscribe */
 .ih-subscribe { background: #f7f7f7; border-radius: 3px; padding: 2rem 2.5rem; text-align: center; margin-top: 1rem; }
@@ -145,6 +145,10 @@
       kobo: null
     }
   };
+
+  // Nav links — update slugs if Ghost pages use different slugs, or point to external URLs.
+  var COLOPHON_URL = '/colophon/';
+  var SUBMIT_URL   = '/submit/'; // replace with Duosuma URL when ready
 
   // Skip month-year issue slugs (september-2026, november-2026, …) and genre tags.
   // The original regex only matched seasonal slugs (winter/spring/…) and missed
@@ -426,12 +430,6 @@
 
   // ── HOME PAGE BUILDER ──────────────────────────────────────────────────────
 
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
   function issueToOrdinal(slug) {
     // Returns a sortable integer. autumn=Sep, winter=Dec (of prior year), spring=Mar, summer=Jun.
     var m = slug.match(/^(autumn|winter|spring|summer)-(\d{4})$/);
@@ -465,7 +463,7 @@
         '&limit=all&include=count.posts&fields=slug,name,description,feature_image,url')
         .then(function(r) { return r.json(); }),
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
-        '&filter=' + encodeURIComponent('tags:[fiction,nonfiction,poetry,micro,podcast,letter]') +
+        '&filter=' + encodeURIComponent('primary_tag:[fiction,nonfiction,poetry,micro,podcast,letter]') +
         '&fields=title,url,tags,custom_excerpt,feature_image&limit=50&order=published_at+desc')
         .then(function(r) { return r.json(); }),
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
@@ -561,8 +559,6 @@
       '<section class="ih-issue">' +
       (coverHtml ? '<div class="ih-issue-cover">' + coverHtml + '</div>' : '') +
       '<div class="ih-issue-info">' +
-      '<p class="ih-eyebrow">Current Issue</p>' +
-      '<h2 class="ih-issue-title">' + e(issueTitle) + '</h2>' +
       descHtml + countHtml +
       '<a href="' + e(issueUrl) + '" class="ih-read-link">Read the issue &rarr;</a>' +
       ebookHtml + tocHtml +
@@ -611,19 +607,16 @@
       var band = '<div class="ih-gallery-band">';
       for (var ai = 0; ai < galleryItems.length; ai++) {
         var ap = galleryItems[ai];
-        var apByline = ap.custom_excerpt ? ap.custom_excerpt.replace(/^by\s+/i, '') : '';
         band +=
           '<a href="' + e(ap.url) + '" class="ih-gallery-item">' +
-          '<img src="' + e(ap.feature_image) + '" alt="' + e(ap.title || '') + '" class="ih-gallery-img" loading="lazy">' +
-          '<div class="ih-gallery-caption">' + e(ap.title || '') +
-          (apByline ? '<span class="ih-byline">' + e(apByline) + '</span>' : '') +
-          '</div></a>';
+          '<img src="' + e(ap.feature_image) + '" alt="" class="ih-gallery-img" loading="lazy">' +
+          '</a>';
       }
       band += '</div>';
       galleryHtml =
         '<section>' +
         '<span class="ih-section-head">Art</span>' +
-        band +
+        '<div class="ih-gallery-section">' + band + '</div>' +
         '</section>';
     }
 
@@ -662,19 +655,35 @@
       if (article) article.innerHTML = homeHtml;
     }
 
-    // Update nav: find the current issue nav link if it exists, or append one
-    var nav = document.querySelector('.gh-navigation-menu') ||
-              document.querySelector('.nav') ||
-              document.querySelector('nav ul');
-    if (nav) {
-      // Remove any existing issue nav link (identified by data-issue attr)
-      var existing = nav.querySelector('[data-issue]');
-      if (existing) existing.parentNode.removeChild(existing);
-      // Add current issue link as first item
-      var li = document.createElement('li');
-      li.setAttribute('data-issue', issue.slug);
-      li.innerHTML = '<a href="' + e(issueUrl) + '">' + e(issueTitle) + '</a>';
-      nav.insertBefore(li, nav.firstChild);
+    // Update nav — target the <ul> specifically (Casper: ul.nav inside .gh-navigation-menu).
+    // If the selector resolves to a non-ul element, log a warning and skip rather than
+    // inject <li> elements into an inappropriate container.
+    var nav = document.querySelector('ul.nav') ||
+              document.querySelector('.gh-navigation-menu ul') ||
+              document.querySelector('nav > ul');
+    if (!nav || nav.tagName !== 'UL') {
+      console.warn('[inkhorn-home] Nav <ul> not found — skipping nav injection.');
+    } else {
+      // Remove any previously injected items
+      var injected = nav.querySelectorAll('[data-inkhorn-nav]');
+      for (var ni = 0; ni < injected.length; ni++) {
+        injected[ni].parentNode.removeChild(injected[ni]);
+      }
+      // Items to prepend; inserted in reverse so they land in display order
+      var navItems = [
+        { label: issueTitle,  href: issueUrl },
+        { label: 'Micros',    href: '/micro/' },
+        { label: 'Art',       href: '/art/' },
+        { label: 'Podcast',   href: '/podcast/' },
+        { label: 'Colophon',  href: COLOPHON_URL },
+        { label: 'Submit',    href: SUBMIT_URL },
+      ];
+      for (var nj = navItems.length - 1; nj >= 0; nj--) {
+        var li = document.createElement('li');
+        li.setAttribute('data-inkhorn-nav', '1');
+        li.innerHTML = '<a href="' + e(navItems[nj].href) + '">' + e(navItems[nj].label) + '</a>';
+        nav.insertBefore(li, nav.firstChild);
+      }
     }
   }
 
