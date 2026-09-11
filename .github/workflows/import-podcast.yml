@@ -20,7 +20,6 @@ on:
         default: ''
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
@@ -43,33 +42,17 @@ jobs:
           key: book-cache-${{ github.run_id }}
           restore-keys: book-cache-
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: projects/607719180653/locations/global/workloadIdentityPools/github-actions/providers/github-terryheath
-          service_account: podcast-importer@whiterabbit-prod.iam.gserviceaccount.com
-
-      - name: Fetch secrets from GCP Secret Manager
-        id: secrets
-        uses: google-github-actions/get-secretmanager-secrets@v2
-        with:
-          secrets: |-
-            GHOST_API_URL:whiterabbit-prod/ghost-api-url-podcast
-            GHOST_ADMIN_KEY:whiterabbit-prod/ghost-admin-key-podcast
-            ISBNDB_KEY:whiterabbit-prod/isbndb-key
-            NEWSLETTER_SLUG:whiterabbit-prod/newsletter-slug-podcast
-
       - name: Run importer
         env:
-          GHOST_API_URL: ${{ steps.secrets.outputs.GHOST_API_URL }}
-          GHOST_ADMIN_KEY: ${{ steps.secrets.outputs.GHOST_ADMIN_KEY }}
-          ISBNDB_KEY: ${{ steps.secrets.outputs.ISBNDB_KEY }}
+          GHOST_API_URL: ${{ secrets.GHOST_API_URL }}
+          GHOST_ADMIN_KEY: ${{ secrets.GHOST_ADMIN_KEY }}
+          ISBNDB_KEY: ${{ secrets.ISBNDB_KEY }}
           BOOKSHOP_ID: '94291'
           HEADSHOT_DIR: ./headshots
           MAX_AGE_DAYS: '14'
           POST_STATUS: >-
             ${{ github.event.inputs.status || vars.POST_STATUS || 'draft' }}
-          NEWSLETTER_SLUG: ${{ steps.secrets.outputs.NEWSLETTER_SLUG }}
+          NEWSLETTER_SLUG: ${{ vars.NEWSLETTER_SLUG }}
           DRY_RUN: >-
             ${{ github.event.inputs.dry_run == 'true' && '1'
                 || vars.DRY_RUN || '' }}
