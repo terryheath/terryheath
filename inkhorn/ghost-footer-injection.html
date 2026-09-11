@@ -14,10 +14,12 @@
 }
 
 /* ── HOME PAGE ────────────────────────────────────────────────────────────── */
+/* Break the home page out of the theme's content column width. */
+.home-template .gh-content { max-width: none !important; padding-left: 0 !important; padding-right: 0 !important; }
 .inkhorn-home { max-width: 1100px; margin: 0 auto; padding: 0 24px 64px; }
 
 /* Current issue */
-.ih-issue { display: grid; grid-template-columns: 25% 1fr; gap: 48px; align-items: start; margin-bottom: 48px; }
+.ih-issue { display: grid; grid-template-columns: 320px 1fr; gap: 48px; align-items: start; margin-bottom: 48px; }
 .ih-issue-cover-link { display: block; }
 .ih-issue-cover-link img { width: 100%; height: auto; display: block; }
 .ih-issue-desc { font-size: 16px; line-height: 1.65; color: #444; margin: 0 0 22px; font-style: italic; }
@@ -35,14 +37,15 @@
 .ih-section-head { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #888; border-bottom: 2px solid #1a1a1a; padding-bottom: 6px; margin: 0 0 24px; display: block; }
 .ih-hr { border: none; border-top: 1px solid #e8e8e8; margin: 40px 0; }
 
-/* Department grid */
-.ih-dept-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px 40px; }
+/* Department grid: two columns — left stacks micro + colophon, right is podcast */
+.ih-dept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.ih-dept-col { display: flex; flex-direction: column; gap: 32px; }
 .ih-dept-name { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #bbb; margin-bottom: 6px; }
 .ih-dept-title a { display: block; font-size: 15px; font-weight: 600; color: #1a1a1a; text-decoration: none; line-height: 1.35; }
 .ih-dept-title a:hover { text-decoration: underline; }
 .ih-dept-excerpt { font-size: 13px; color: #777; font-style: italic; margin-top: 3px; line-height: 1.4; }
 .ih-dept-podcast { display: flex; gap: 12px; align-items: flex-start; }
-.ih-dept-headshot { width: 72px; height: 72px; object-fit: cover; flex-shrink: 0; border-radius: 2px; }
+.ih-dept-headshot { width: 96px; height: 96px; object-fit: cover; flex-shrink: 0; border-radius: 2px; }
 .ih-dept-body { flex: 1; min-width: 0; }
 
 /* Art gallery — full-bleed, images only. Width/offset set by JS after injection. */
@@ -56,7 +59,7 @@
 .ih-subscribe { background: #f7f7f7; border-radius: 3px; padding: 32px 40px; text-align: center; margin-top: 16px; }
 .ih-subscribe-head { font-size: 17px; font-weight: 700; margin: 0 0 8px; color: #1a1a1a; }
 .ih-subscribe-body { font-size: 15px; color: #555; margin: 0 0 12px; line-height: 1.55; }
-.ih-subscribe-cta a { display: inline-block; background: #1a1a1a; color: #fff; font-size: 14px; font-weight: 700; padding: 10px 24px; border-radius: 3px; text-decoration: none; }
+.ih-subscribe-cta a { display: inline-block; background: #1a1a1a; color: #fff !important; font-size: 14px; font-weight: 700; padding: 10px 24px; border-radius: 3px; text-decoration: none !important; }
 .ih-subscribe-secondary { font-size: 13px; color: #aaa; margin-top: 12px; }
 .ih-subscribe-secondary a { color: #888; }
 
@@ -595,21 +598,16 @@
       '</section>';
 
     // ── Departments ───────────────────────────────────────────────────────────
-    // Micro, Podcast, Colophon only. A dept with no post renders nothing at all.
-    var depts = [
-      { label: 'Micro Fiction', post: microPost,    headshot: false },
-      { label: 'Podcast',       post: podcastPost,  headshot: true  },
-      { label: 'Colophon',      post: colophonPost, headshot: false },
-    ];
-    var deptCells = '';
-    for (var di = 0; di < depts.length; di++) {
-      var dept = depts[di];
-      if (!dept.post) continue;
-      var dp = dept.post;
+    // Left column: Micro Fiction + Colophon stacked.
+    // Right column: Podcast (headshot + excerpt).
+    // A dept with no post renders nothing; empty column is omitted entirely.
+    function renderDept(label, post, headshot) {
+      if (!post) return '';
+      var dp = post;
       var dByline = dp.custom_excerpt ? dp.custom_excerpt.replace(/^by\s+/i, '').trim() : '';
-      var dCell = '<div class="ih-dept"><p class="ih-dept-name">' + dept.label + '</p>';
-      if (dept.headshot && dp.feature_image) {
-        dCell +=
+      var cell = '<div class="ih-dept"><p class="ih-dept-name">' + label + '</p>';
+      if (headshot && dp.feature_image) {
+        cell +=
           '<div class="ih-dept-podcast">' +
           '<img src="' + e(dp.feature_image) + '" alt="" class="ih-dept-headshot">' +
           '<div class="ih-dept-body">' +
@@ -617,16 +615,26 @@
           (dByline ? '<p class="ih-dept-excerpt">' + e(dByline) + '</p>' : '') +
           '</div></div>';
       } else {
-        dCell += '<div class="ih-dept-title"><a href="' + e(dp.url) + '">' + e(dp.title || 'Untitled') + '</a></div>';
-        if (dByline) dCell += '<p class="ih-dept-excerpt">' + e(dByline) + '</p>';
+        cell += '<div class="ih-dept-title"><a href="' + e(dp.url) + '">' + e(dp.title || 'Untitled') + '</a></div>';
+        if (dByline) cell += '<p class="ih-dept-excerpt">' + e(dByline) + '</p>';
       }
-      dCell += '</div>';
-      deptCells += dCell;
+      cell += '</div>';
+      return cell;
     }
-    var deptSectionHtml = deptCells
-      ? '<hr class="ih-hr"><section><span class="ih-section-head">Departments</span>' +
-        '<div class="ih-dept-grid">' + deptCells + '</div></section>'
-      : '';
+
+    var leftCells = renderDept('Micro Fiction', microPost, false) +
+                    renderDept('Colophon', colophonPost, false);
+    var rightCell = renderDept('Podcast', podcastPost, true);
+
+    var deptSectionHtml = '';
+    if (leftCells || rightCell) {
+      deptSectionHtml =
+        '<hr class="ih-hr"><section><span class="ih-section-head">Departments</span>' +
+        '<div class="ih-dept-grid">' +
+        (leftCells ? '<div class="ih-dept-col">' + leftCells + '</div>' : '') +
+        (rightCell ? '<div class="ih-dept-col">' + rightCell + '</div>' : '') +
+        '</div></section>';
+    }
 
     // ── Art gallery ───────────────────────────────────────────────────────────
     var galleryItems = artPosts.filter(function(p) { return p.feature_image; });
@@ -662,6 +670,8 @@
     var content = document.querySelector('.gh-content');
     if (articleHeader) articleHeader.style.display = 'none';
     if (content) {
+      content.style.maxWidth = 'none';
+      content.style.padding = '0';
       content.innerHTML = homeHtml;
     } else {
       var article = document.querySelector('.gh-article') || document.querySelector('main');
