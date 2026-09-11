@@ -49,8 +49,8 @@
 .ih-dept-all { font-size: .75rem; color: #aaa; text-decoration: none; margin-top: .5rem; display: inline-block; }
 .ih-dept-all:hover { color: #666; }
 
-/* Art gallery — full-bleed, images only */
-.ih-gallery-section { width: 100vw; position: relative; left: 50%; transform: translateX(-50%); overflow: hidden; }
+/* Art gallery — full-bleed, images only. Width/offset set by JS after injection. */
+.ih-gallery-section { position: relative; overflow: hidden; }
 .ih-gallery-band { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .ih-gallery-band::-webkit-scrollbar { display: none; }
 .ih-gallery-item { flex: 0 0 auto; display: block; line-height: 0; }
@@ -146,10 +146,6 @@
     }
   };
 
-  // Nav links — update slugs if Ghost pages use different slugs, or point to external URLs.
-  var COLOPHON_URL = '/colophon/';
-  var SUBMIT_URL   = '/submit/'; // replace with Duosuma URL when ready
-
   // Skip month-year issue slugs (september-2026, november-2026, …) and genre tags.
   // The original regex only matched seasonal slugs (winter/spring/…) and missed
   // month-based ones, causing the issue slug to land at tags[0] incorrectly.
@@ -159,16 +155,19 @@
   var DEPT_TAGS = ['fiction', 'nonfiction', 'poetry', 'micro', 'art', 'podcast', 'letter'];
   var DEPT_LABELS = {
     fiction: 'Fiction', nonfiction: 'Nonfiction', poetry: 'Poetry',
-    micro: 'Micro Fiction', art: 'Art', podcast: 'Podcast', letter: 'Letter'
+    micro: 'Micro Fiction', art: 'Art', podcast: 'Podcast', letter: 'Colophon'
   };
   var DEPT_PATHS = {
     fiction: '/fiction/', nonfiction: '/nonfiction/', poetry: '/poetry/',
-    micro: '/micro/', art: '/art/', podcast: '/podcast/', letter: '/letter/'
+    micro: '/micro/', art: '/art/', podcast: '/podcast/', letter: '/colophon/'
   };
 
   var isHome = window.location.pathname === '/';
   var isPost = document.body.classList.contains("post-template");
   var isTag  = document.body.classList.contains("tag-template");
+
+  // Current-issue nav link runs on every page before any early returns.
+  injectCurrentIssueNav();
 
   // ── HOME PAGE ──────────────────────────────────────────────────────────────
   if (isHome) {
@@ -430,6 +429,33 @@
 
   // ── HOME PAGE BUILDER ──────────────────────────────────────────────────────
 
+  // Runs on every page. Fetches the tag list (slug only, lightweight) to find
+  // the current issue, then prepends a single dynamic link to the nav <ul>.
+  function injectCurrentIssueNav() {
+    fetch(GHOST_URL + '/ghost/api/content/tags/?key=' + CONTENT_KEY +
+      '&limit=all&fields=slug')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var tags = (data && data.tags) || [];
+        var issueTags = tags.filter(function(t) { return ISSUE_RE.test(t.slug); });
+        issueTags.sort(function(a, b) { return issueToOrdinal(a.slug) - issueToOrdinal(b.slug); });
+        var current = issueTags[issueTags.length - 1];
+        if (!current) return;
+        var nav = document.querySelector('ul.nav') ||
+                  document.querySelector('.gh-navigation-menu ul') ||
+                  document.querySelector('nav > ul');
+        if (!nav || nav.tagName !== 'UL') return;
+        var existing = nav.querySelector('[data-inkhorn-issue]');
+        if (existing) existing.parentNode.removeChild(existing);
+        var li = document.createElement('li');
+        li.setAttribute('data-inkhorn-issue', '1');
+        li.innerHTML = '<a href="/' + escapeHtml(current.slug) + '/">' +
+                       escapeHtml(formatIssueTitle(current.slug)) + '</a>';
+        nav.insertBefore(li, nav.firstChild);
+      })
+      .catch(function() {});
+  }
+
   function issueToOrdinal(slug) {
     // Returns a sortable integer. autumn=Sep, winter=Dec (of prior year), spring=Mar, summer=Jun.
     var m = slug.match(/^(autumn|winter|spring|summer)-(\d{4})$/);
@@ -655,35 +681,13 @@
       if (article) article.innerHTML = homeHtml;
     }
 
-    // Update nav — target the <ul> specifically (Casper: ul.nav inside .gh-navigation-menu).
-    // If the selector resolves to a non-ul element, log a warning and skip rather than
-    // inject <li> elements into an inappropriate container.
-    var nav = document.querySelector('ul.nav') ||
-              document.querySelector('.gh-navigation-menu ul') ||
-              document.querySelector('nav > ul');
-    if (!nav || nav.tagName !== 'UL') {
-      console.warn('[inkhorn-home] Nav <ul> not found — skipping nav injection.');
-    } else {
-      // Remove any previously injected items
-      var injected = nav.querySelectorAll('[data-inkhorn-nav]');
-      for (var ni = 0; ni < injected.length; ni++) {
-        injected[ni].parentNode.removeChild(injected[ni]);
-      }
-      // Items to prepend; inserted in reverse so they land in display order
-      var navItems = [
-        { label: issueTitle,  href: issueUrl },
-        { label: 'Micros',    href: '/micro/' },
-        { label: 'Art',       href: '/art/' },
-        { label: 'Podcast',   href: '/podcast/' },
-        { label: 'Colophon',  href: COLOPHON_URL },
-        { label: 'Submit',    href: SUBMIT_URL },
-      ];
-      for (var nj = navItems.length - 1; nj >= 0; nj--) {
-        var li = document.createElement('li');
-        li.setAttribute('data-inkhorn-nav', '1');
-        li.innerHTML = '<a href="' + e(navItems[nj].href) + '">' + e(navItems[nj].label) + '</a>';
-        nav.insertBefore(li, nav.firstChild);
-      }
+    // Size gallery to actual client width (excludes scrollbar — avoids 100vw overflow).
+    var gallerySection = document.querySelector('.ih-gallery-section');
+    if (gallerySection) {
+      var clientW = document.documentElement.clientWidth;
+      var galleryLeft = gallerySection.getBoundingClientRect().left;
+      gallerySection.style.width = clientW + 'px';
+      gallerySection.style.marginLeft = (-galleryLeft) + 'px';
     }
   }
 

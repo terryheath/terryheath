@@ -1,2 +1,9 @@
 301:
   ^/september-2026/(.*)$: /autumn-2026/$1
+  /tag/poetry/: /poetry/
+  /tag/fiction/: /fiction/
+  /tag/nonfiction/: /nonfiction/
+  /tag/micro/: /micro/
+  /tag/art/: /art/
+  /tag/podcast/: /podcast/
+  /tag/letter/: /colophon/
