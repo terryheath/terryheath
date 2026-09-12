@@ -14,12 +14,14 @@
 }
 
 /* ── HOME PAGE ────────────────────────────────────────────────────────────── */
-/* Break the home page out of the theme's content column width. */
-.home-template .gh-content { max-width: none !important; padding-left: 0 !important; padding-right: 0 !important; }
+/* Break the home page out of the theme's content column width.
+   display:block disables any CSS-grid canvas layout Casper may apply.
+   overflow:visible lets the full-bleed gallery and home block escape. */
+.home-template .gh-content { max-width: none !important; padding: 0 !important; display: block !important; overflow: visible !important; }
 .inkhorn-home { max-width: 1100px; margin: 0 auto; padding: 0 24px 64px; }
 
 /* Current issue */
-.ih-issue { display: grid; grid-template-columns: 320px 1fr; gap: 48px; align-items: start; margin-bottom: 48px; }
+.ih-issue { display: grid; grid-template-columns: 2fr 1fr; gap: 48px; align-items: start; margin-bottom: 48px; }
 .ih-issue-cover-link { display: block; }
 .ih-issue-cover-link img { width: 100%; height: auto; display: block; }
 .ih-issue-desc { font-size: 16px; line-height: 1.65; color: #444; margin: 0 0 22px; font-style: italic; }
@@ -28,7 +30,7 @@
 .ih-toc { margin-top: 4px; }
 .ih-toc-genre { margin-bottom: 16px; }
 .ih-toc-genre-label { font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: #bbb; border-bottom: 1px solid #ebebeb; padding-bottom: 5px; margin: 0 0 8px; }
-.ih-toc-item { font-size: 15px; line-height: 1.5; margin-bottom: 4px; }
+.ih-toc-item { font-size: 13px; line-height: 1.4; margin-bottom: 4px; }
 .ih-toc-item a { color: #1a1a1a; text-decoration: none; }
 .ih-toc-item a:hover { text-decoration: underline; }
 .ih-toc-byline { color: #999; font-style: italic; margin-left: 5px; font-size: 13px; }
@@ -53,7 +55,7 @@
 .ih-gallery-band { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .ih-gallery-band::-webkit-scrollbar { display: none; }
 .ih-gallery-item { flex: 0 0 auto; display: block; line-height: 0; }
-.ih-gallery-img { height: 280px; width: auto; display: block; }
+.ih-gallery-img { height: 260px !important; width: auto !important; max-width: none !important; display: block; }
 
 /* Subscribe */
 .ih-subscribe { background: #f7f7f7; border-radius: 3px; padding: 32px 40px; text-align: center; margin-top: 16px; }
@@ -672,13 +674,31 @@
     if (content) {
       content.style.maxWidth = 'none';
       content.style.padding = '0';
+      content.style.display = 'block';
       content.innerHTML = homeHtml;
     } else {
       var article = document.querySelector('.gh-article') || document.querySelector('main');
       if (article) article.innerHTML = homeHtml;
     }
 
-    // Size gallery to actual client width (excludes scrollbar)
+    // Step 1: Expand .inkhorn-home to full viewport width, then re-center its
+    // content via padding. This sidesteps any theme layout offset — same
+    // technique used for the gallery, applied to the whole home block.
+    var homeEl = document.querySelector('.inkhorn-home');
+    if (homeEl) {
+      var vw = document.documentElement.clientWidth;
+      var homeLeft = homeEl.getBoundingClientRect().left;
+      var sidePad = Math.max(24, Math.floor((vw - 1100) / 2));
+      homeEl.style.maxWidth = 'none';
+      homeEl.style.width = vw + 'px';
+      homeEl.style.marginLeft = (-homeLeft) + 'px';
+      homeEl.style.boxSizing = 'border-box';
+      homeEl.style.paddingLeft = sidePad + 'px';
+      homeEl.style.paddingRight = sidePad + 'px';
+    }
+
+    // Step 2: Full-bleed gallery. Must run after Step 1 so the left offset
+    // reflects the home block's corrected position.
     var gallerySection = document.querySelector('.ih-gallery-section');
     if (gallerySection) {
       var clientW = document.documentElement.clientWidth;
