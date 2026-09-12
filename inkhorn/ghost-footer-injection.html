@@ -488,25 +488,6 @@
   }
 
   function buildHomePage() {
-    var rendered = false;
-    var revealed = false;
-
-    // Reveal the page — either after successful injection (no-op since homeRoot
-    // is already visible) or as the failsafe path (restores original article).
-    function revealPage() {
-      if (revealed) return;
-      revealed = true;
-      if (!rendered) {
-        // API failed or timed out — show the original Ghost page content.
-        var ghArticle = document.querySelector('.gh-article');
-        if (ghArticle) ghArticle.style.opacity = '1';
-      }
-    }
-
-    // 5-second failsafe: if the Content API is unreachable or too slow,
-    // reveal the original page rather than leaving a blank screen.
-    var failsafe = setTimeout(revealPage, 5000);
-
     // Five parallel fetches: tags (current issue), micro, podcast, colophon, art.
     Promise.all([
       fetch(GHOST_URL + '/ghost/api/content/tags/?key=' + CONTENT_KEY +
@@ -534,7 +515,7 @@
       var issueTags = allTags.filter(function(t) { return ISSUE_RE.test(t.slug); });
       issueTags.sort(function(a, b) { return issueToOrdinal(a.slug) - issueToOrdinal(b.slug); });
       var currentIssue = issueTags[issueTags.length - 1];
-      if (!currentIssue) { clearTimeout(failsafe); revealPage(); return; }
+      if (!currentIssue) return;
 
       // TOC fetch — &include=tags is required; listing 'tags' in &fields does nothing.
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
@@ -542,14 +523,10 @@
         '&fields=title,url,custom_excerpt&include=tags&limit=all&order=published_at+asc')
         .then(function(r) { return r.json(); })
         .then(function(data) {
-          clearTimeout(failsafe);
           var issuePosts = (data && data.posts) || [];
           renderHome(currentIssue, issuePosts, microPost, podcastPost, colophonPost, artPosts);
-          rendered = true;
-          revealPage();
-        })
-        .catch(function() { clearTimeout(failsafe); revealPage(); });
-    }).catch(function() { clearTimeout(failsafe); revealPage(); });
+        });
+    }).catch(function() {});
   }
 
   function renderHome(issue, issuePosts, microPost, podcastPost, colophonPost, artPosts) {
@@ -683,32 +660,34 @@
       '</section>';
 
     // ── Assemble and inject ───────────────────────────────────────────────────
-    // Insert as a direct body child immediately after .gh-head (the nav),
-    // entirely outside Ghost's article/content layout containers.
-    // .inkhorn-home centres itself via CSS max-width + margin:auto.
     var homeHtml =
       '<div class="inkhorn-home">' +
       issueHtml + deptSectionHtml + galleryHtml + subscribeHtml +
       '</div>';
 
-    // Hide the original article (hero + now-empty page body).
+    var articleHeader = document.querySelector('.gh-article-header');
+    var content = document.querySelector('.gh-content');
     var ghArticle = document.querySelector('.gh-article');
-    if (ghArticle) ghArticle.style.display = 'none';
 
-    // Walk up from .gh-head to its direct body-child ancestor, then insert
-    // homeRoot right after it so it lands after the nav in the flow.
-    var homeRoot = document.createElement('div');
-    homeRoot.innerHTML = homeHtml;
-    var ref = document.querySelector('.gh-head');
-    while (ref && ref.parentNode !== document.body) ref = ref.parentNode;
-    if (ref) {
-      document.body.insertBefore(homeRoot, ref.nextSibling);
+    // Hide the hero. Zero out layout constraints so .gh-content fills its
+    // parent and .inkhorn-home can centre itself via max-width + margin:auto.
+    if (articleHeader) articleHeader.style.display = 'none';
+    if (ghArticle) {
+      ghArticle.style.maxWidth = 'none';
+      ghArticle.style.padding = '0';
+    }
+    if (content) {
+      content.style.maxWidth = 'none';
+      content.style.padding = '0';
+      content.style.margin = '0';
+      content.style.display = 'block';
+      content.innerHTML = homeHtml;
     } else {
-      document.body.appendChild(homeRoot);
+      var article = document.querySelector('.gh-article') || document.querySelector('main');
+      if (article) article.innerHTML = homeHtml;
     }
 
-    // Full-bleed gallery. homeRoot is a direct body child with no offset,
-    // so galleryLeft equals the horizontal padding of .inkhorn-home.
+    // Full-bleed gallery
     var gallerySection = document.querySelector('.ih-gallery-section');
     if (gallerySection) {
       var clientW = document.documentElement.clientWidth;
