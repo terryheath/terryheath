@@ -14,10 +14,8 @@
 }
 
 /* ── HOME PAGE ────────────────────────────────────────────────────────────── */
-/* Break the home page out of the theme's content column width.
-   display:block disables any CSS-grid canvas layout Casper may apply.
-   overflow:visible lets the full-bleed gallery and home block escape. */
-.home-template .gh-content { max-width: none !important; padding: 0 !important; display: block !important; overflow: visible !important; }
+/* .inkhorn-home is inserted as a direct body child (after .gh-head),
+   completely outside Ghost's article/content layout. margin:auto centers it. */
 .inkhorn-home { max-width: 1100px; margin: 0 auto; padding: 0 24px 64px; }
 
 /* Current issue */
@@ -490,8 +488,26 @@
   }
 
   function buildHomePage() {
+    var rendered = false;
+    var revealed = false;
+
+    // Reveal the page — either after successful injection (no-op since homeRoot
+    // is already visible) or as the failsafe path (restores original article).
+    function revealPage() {
+      if (revealed) return;
+      revealed = true;
+      if (!rendered) {
+        // API failed or timed out — show the original Ghost page content.
+        var ghArticle = document.querySelector('.gh-article');
+        if (ghArticle) ghArticle.style.opacity = '1';
+      }
+    }
+
+    // 5-second failsafe: if the Content API is unreachable or too slow,
+    // reveal the original page rather than leaving a blank screen.
+    var failsafe = setTimeout(revealPage, 5000);
+
     // Five parallel fetches: tags (current issue), micro, podcast, colophon, art.
-    // Dept fetches are per-tag so we get exactly one post each without grouping logic.
     Promise.all([
       fetch(GHOST_URL + '/ghost/api/content/tags/?key=' + CONTENT_KEY +
         '&limit=all&include=count.posts&fields=slug,name,description,feature_image,url')
@@ -518,7 +534,7 @@
       var issueTags = allTags.filter(function(t) { return ISSUE_RE.test(t.slug); });
       issueTags.sort(function(a, b) { return issueToOrdinal(a.slug) - issueToOrdinal(b.slug); });
       var currentIssue = issueTags[issueTags.length - 1];
-      if (!currentIssue) return;
+      if (!currentIssue) { clearTimeout(failsafe); revealPage(); return; }
 
       // TOC fetch — &include=tags is required; listing 'tags' in &fields does nothing.
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
@@ -526,10 +542,14 @@
         '&fields=title,url,custom_excerpt&include=tags&limit=all&order=published_at+asc')
         .then(function(r) { return r.json(); })
         .then(function(data) {
+          clearTimeout(failsafe);
           var issuePosts = (data && data.posts) || [];
           renderHome(currentIssue, issuePosts, microPost, podcastPost, colophonPost, artPosts);
-        });
-    }).catch(function() {});
+          rendered = true;
+          revealPage();
+        })
+        .catch(function() { clearTimeout(failsafe); revealPage(); });
+    }).catch(function() { clearTimeout(failsafe); revealPage(); });
   }
 
   function renderHome(issue, issuePosts, microPost, podcastPost, colophonPost, artPosts) {
@@ -663,42 +683,32 @@
       '</section>';
 
     // ── Assemble and inject ───────────────────────────────────────────────────
+    // Insert as a direct body child immediately after .gh-head (the nav),
+    // entirely outside Ghost's article/content layout containers.
+    // .inkhorn-home centres itself via CSS max-width + margin:auto.
     var homeHtml =
       '<div class="inkhorn-home">' +
       issueHtml + deptSectionHtml + galleryHtml + subscribeHtml +
       '</div>';
 
-    var articleHeader = document.querySelector('.gh-article-header');
-    var content = document.querySelector('.gh-content');
-    if (articleHeader) articleHeader.style.display = 'none';
-    if (content) {
-      content.style.maxWidth = 'none';
-      content.style.padding = '0';
-      content.style.display = 'block';
-      content.innerHTML = homeHtml;
+    // Hide the original article (hero + now-empty page body).
+    var ghArticle = document.querySelector('.gh-article');
+    if (ghArticle) ghArticle.style.display = 'none';
+
+    // Walk up from .gh-head to its direct body-child ancestor, then insert
+    // homeRoot right after it so it lands after the nav in the flow.
+    var homeRoot = document.createElement('div');
+    homeRoot.innerHTML = homeHtml;
+    var ref = document.querySelector('.gh-head');
+    while (ref && ref.parentNode !== document.body) ref = ref.parentNode;
+    if (ref) {
+      document.body.insertBefore(homeRoot, ref.nextSibling);
     } else {
-      var article = document.querySelector('.gh-article') || document.querySelector('main');
-      if (article) article.innerHTML = homeHtml;
+      document.body.appendChild(homeRoot);
     }
 
-    // Step 1: Expand .inkhorn-home to full viewport width, then re-center its
-    // content via padding. This sidesteps any theme layout offset — same
-    // technique used for the gallery, applied to the whole home block.
-    var homeEl = document.querySelector('.inkhorn-home');
-    if (homeEl) {
-      var vw = document.documentElement.clientWidth;
-      var homeLeft = homeEl.getBoundingClientRect().left;
-      var sidePad = Math.max(24, Math.floor((vw - 1100) / 2));
-      homeEl.style.maxWidth = 'none';
-      homeEl.style.width = vw + 'px';
-      homeEl.style.marginLeft = (-homeLeft) + 'px';
-      homeEl.style.boxSizing = 'border-box';
-      homeEl.style.paddingLeft = sidePad + 'px';
-      homeEl.style.paddingRight = sidePad + 'px';
-    }
-
-    // Step 2: Full-bleed gallery. Must run after Step 1 so the left offset
-    // reflects the home block's corrected position.
+    // Full-bleed gallery. homeRoot is a direct body child with no offset,
+    // so galleryLeft equals the horizontal padding of .inkhorn-home.
     var gallerySection = document.querySelector('.ih-gallery-section');
     if (gallerySection) {
       var clientW = document.documentElement.clientWidth;

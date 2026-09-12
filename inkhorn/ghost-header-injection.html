@@ -1,0 +1,14 @@
+<style>
+  /*
+    Hide the home page's article before the body renders, preventing the
+    hero (logo, tagline, Subscribe Now / Login, page heading) from flashing
+    before the footer script replaces it with the injected home block.
+
+    The footer script reveals the page by either:
+      - leaving homeRoot (the injected block) visible after success, or
+      - restoring gh-article opacity to 1 if the API fails or exceeds 5 s.
+
+    Selector is .home-template so no other page is affected.
+  */
+  .home-template .gh-article { opacity: 0; }
+</style>
