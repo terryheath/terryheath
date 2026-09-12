@@ -14,8 +14,8 @@
 }
 
 /* ── HOME PAGE ────────────────────────────────────────────────────────────── */
-/* .inkhorn-home is inserted as a direct body child (after .gh-head),
-   completely outside Ghost's article/content layout. margin:auto centers it. */
+/* Header injection zeros .gh-article/.gh-content constraints before JS runs.
+   .inkhorn-home then centres itself via max-width + margin:auto. */
 .inkhorn-home { max-width: 1100px; margin: 0 auto; padding: 0 24px 64px; }
 
 /* Current issue */
@@ -488,7 +488,20 @@
   }
 
   function buildHomePage() {
-    // Five parallel fetches: tags (current issue), micro, podcast, colophon, art.
+    var revealed = false;
+
+    // Restore the article header if the API fails or takes longer than 5 s.
+    // In the success path renderHome sets display:none (hiding it permanently);
+    // calling revealPage after that is a no-op because revealed is already true.
+    function revealPage() {
+      if (revealed) return;
+      revealed = true;
+      var ah = document.querySelector('.gh-article-header');
+      if (ah) ah.style.opacity = '1';
+    }
+
+    var failsafe = setTimeout(revealPage, 5000);
+
     Promise.all([
       fetch(GHOST_URL + '/ghost/api/content/tags/?key=' + CONTENT_KEY +
         '&limit=all&include=count.posts&fields=slug,name,description,feature_image,url')
@@ -515,7 +528,7 @@
       var issueTags = allTags.filter(function(t) { return ISSUE_RE.test(t.slug); });
       issueTags.sort(function(a, b) { return issueToOrdinal(a.slug) - issueToOrdinal(b.slug); });
       var currentIssue = issueTags[issueTags.length - 1];
-      if (!currentIssue) return;
+      if (!currentIssue) { clearTimeout(failsafe); revealPage(); return; }
 
       // TOC fetch — &include=tags is required; listing 'tags' in &fields does nothing.
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
@@ -523,10 +536,13 @@
         '&fields=title,url,custom_excerpt&include=tags&limit=all&order=published_at+asc')
         .then(function(r) { return r.json(); })
         .then(function(data) {
+          clearTimeout(failsafe);
+          revealed = true; // success: renderHome hides the header via display:none
           var issuePosts = (data && data.posts) || [];
           renderHome(currentIssue, issuePosts, microPost, podcastPost, colophonPost, artPosts);
-        });
-    }).catch(function() {});
+        })
+        .catch(function() { clearTimeout(failsafe); revealPage(); });
+    }).catch(function() { clearTimeout(failsafe); revealPage(); });
   }
 
   function renderHome(issue, issuePosts, microPost, podcastPost, colophonPost, artPosts) {
@@ -669,22 +685,24 @@
     var content = document.querySelector('.gh-content');
     var ghArticle = document.querySelector('.gh-article');
 
-    // Hide the hero. Zero out layout constraints so .gh-content fills its
-    // parent and .inkhorn-home can centre itself via max-width + margin:auto.
+    // Success path: permanently hide the hero.
     if (articleHeader) articleHeader.style.display = 'none';
-    if (ghArticle) {
-      ghArticle.style.maxWidth = 'none';
-      ghArticle.style.padding = '0';
-    }
+
+    // Reinforce the header injection's layout zeroing with setProperty so the
+    // JS override wins even if something re-asserts the theme CSS at runtime.
+    // display:block kills Casper's .gh-canvas grid on .gh-content.
+    [ghArticle, content].forEach(function(el) {
+      if (!el) return;
+      el.style.setProperty('max-width', 'none', 'important');
+      el.style.setProperty('padding',   '0',    'important');
+      el.style.setProperty('margin',    '0',    'important');
+    });
     if (content) {
-      content.style.maxWidth = 'none';
-      content.style.padding = '0';
-      content.style.margin = '0';
-      content.style.display = 'block';
+      content.style.setProperty('display', 'block', 'important');
       content.innerHTML = homeHtml;
     } else {
-      var article = document.querySelector('.gh-article') || document.querySelector('main');
-      if (article) article.innerHTML = homeHtml;
+      var fallback = document.querySelector('main');
+      if (fallback) fallback.innerHTML = homeHtml;
     }
 
     // Full-bleed gallery

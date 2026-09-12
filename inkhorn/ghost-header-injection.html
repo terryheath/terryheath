@@ -1,3 +1,36 @@
-<!-- Inkhorn Review site header injection. -->
-<!-- Flash fix placeholder: intentionally empty until the footer injection
-     is confirmed working. See ghost-footer-injection.html. -->
+<style>
+  /*
+    PRE-PAINT HIDE — home page only (.home-template body class).
+
+    Hides the article header (logo, tagline, Subscribe Now / Login, page
+    heading) before first paint so it never flashes. .gh-content is NOT
+    hidden — it is the injection target, and hiding it is what blanked the
+    page in the previous attempt.
+
+    The footer script's success path calls articleHeader.style.display='none'
+    (permanent hero removal). The failure path and 5 s failsafe both call
+    articleHeader.style.opacity='1' to restore the original page.
+  */
+  .home-template .gh-article-header { opacity: 0; }
+
+  /*
+    LAYOUT ZEROING — lets .inkhorn-home centre itself with max-width + margin:auto.
+
+    Casper sets a ~720px max-width on .gh-content and, in v5, makes it a
+    CSS-grid container (.gh-canvas) where child elements default to the
+    narrow main column. Zeroing max-width, padding, margin, and forcing
+    display:block here (before JS runs) means .gh-content fills its parent
+    and .inkhorn-home's own max-width:1100px / margin:auto does the centring.
+  */
+  .home-template .gh-article {
+    max-width: none !important;
+    padding:   0    !important;
+    margin:    0    !important;
+  }
+  .home-template .gh-content {
+    display:   block !important;
+    max-width: none  !important;
+    padding:   0     !important;
+    margin:    0     !important;
+  }
+</style>
