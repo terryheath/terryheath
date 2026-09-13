@@ -2,8 +2,8 @@ name: Inkhorn Review weekly digest
 
 on:
   schedule:
-    # Every Sunday at 15:00 UTC (8:00 AM PDT / 7:00 AM PST)
-    - cron: '0 15 * * 0'
+    # Every Sunday at 15:17 UTC (8:17 AM PDT / 7:17 AM PST)
+    - cron: '17 15 * * 0'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -12,7 +12,7 @@ on:
         default: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   digest:
@@ -32,6 +32,20 @@ jobs:
           GHOST_API_URL: ${{ secrets.GHOST_API_URL }}
           GHOST_ADMIN_KEY: ${{ secrets.GHOST_ADMIN_KEY }}
           PUBLISH_MODE: ${{ vars.PUBLISH_MODE }}
-          DRY_RUN: >-
-            ${{ github.event.inputs.dry_run == 'true' && '1' || '' }}
+          # Scheduled runs are always live. Dispatch honours the checkbox.
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true' && '1' || '' }}
         run: node inkhorn/digest.js
+
+      - name: Commit digest state
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          if [ -f inkhorn/digest-state.json ]; then
+            git add inkhorn/digest-state.json
+          fi
+          if git diff --staged --quiet; then
+            echo "No state changes to commit."
+          else
+            git commit -m "chore: digest watermark [skip ci]"
+            git push
+          fi
