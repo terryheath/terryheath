@@ -397,7 +397,6 @@ async function main() {
     email_subject: emailSubject,
     html:          digestHtml,
     status:        'draft',
-    email_only:    true,
     feature_image: featureImage,
     tags:          [{ name: '#digest' }],
     visibility:    'members',
