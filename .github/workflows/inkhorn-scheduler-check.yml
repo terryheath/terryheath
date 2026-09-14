@@ -12,8 +12,8 @@ jobs:
     steps:
       - name: Check for overdue scheduled posts
         env:
-          INKHORN_URL: ${{ secrets.INKHORN_URL }}
-          INKHORN_ADMIN_KEY: ${{ secrets.INKHORN_ADMIN_KEY }}
+          INKHORN_URL: ${{ secrets.GHOST_API_URL }}
+          INKHORN_ADMIN_KEY: ${{ secrets.GHOST_ADMIN_KEY }}
         run: |
           node -e "
           const crypto = require('crypto');
