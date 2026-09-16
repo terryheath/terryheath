@@ -403,9 +403,11 @@ function buildTranscriptMap(xml) {
     if (!guidM) continue;
     const guid = guidM[1].trim();
 
-    // Collect all podcast:transcript elements in this item
+    // Collect all podcast:transcript elements in this item.
+    // Match both self-closing (<podcast:transcript ... />) and
+    // paired (<podcast:transcript ...></podcast:transcript>) forms.
     const candidates = [];
-    const txRe = /<podcast:transcript([^>]*?)\/>/g;
+    const txRe = /<podcast:transcript([^>]*?)(?:\/>|>[\s\S]*?<\/podcast:transcript>)/g;
     let tx;
     while ((tx = txRe.exec(block)) !== null) {
       const attrs = tx[1];
@@ -428,24 +430,100 @@ function buildTranscriptMap(xml) {
   return map;
 }
 
-// Strip VTT/SRT formatting to extract plain dialogue text.
-// VTT: remove WEBVTT header, cue numbers (bare integers), and timestamp lines.
-// SRT: same structure, no WEBVTT header.
+// Strip VTT/SRT caption formatting and merge cues into speaker paragraphs.
+//
+// Processing order:
+//   1. Remove WEBVTT header, NOTE blocks, STYLE blocks.
+//   2. Split into cue blocks (double-newline separated).
+//   3. For each cue block: discard cue numbers (bare integers) and timestamp
+//      lines (HH:MM or MM:SS prefix). What remains is the cue payload.
+//   4. Strip VTT voice tags: <v Speaker Name>text</v> → "Speaker Name: text".
+//      <v> with no name just drops the tag.
+//   5. Strip any remaining VTT inline tags (<c>, <b>, <i>, <u>, <ruby>, etc.).
+//   6. Merge cues into paragraphs: start a new paragraph on a speaker change
+//      or after a cue ending in sentence-final punctuation (. ! ?). Otherwise
+//      append to the current paragraph with a space.
+//   7. Collapse whitespace within each paragraph.
 function stripCaptionFormat(text) {
-  return text
-    .split(/\n\n+/)
-    .map(block => {
-      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-      // Remove WEBVTT header line
-      const filtered = lines.filter(l =>
-        !/^WEBVTT/i.test(l) &&           // VTT header
-        !/^\d+$/.test(l) &&              // cue number
-        !/^\d{2}:\d{2}/.test(l)          // timestamp line (HH:MM or MM:SS)
-      );
-      return filtered.join(' ').trim();
-    })
-    .filter(Boolean)
-    .join('\n\n');
+  // 1. Remove WEBVTT header line, NOTE blocks, STYLE blocks
+  text = text
+    .replace(/^WEBVTT[^\n]*\n/i, '')
+    .replace(/\bNOTE\b[\s\S]*?(?=\n\n|\n?$)/g, '')
+    .replace(/\bSTYLE\b[\s\S]*?(?=\n\n|\n?$)/g, '');
+
+  const TIMESTAMP_RE = /^\d{1,2}:\d{2}[:\d.]*\s*-->/;
+  const CUE_NUMBER_RE = /^\d+$/;
+  // VTT voice tag: <v.optional-class Speaker Name> ... </v>
+  const VOICE_RE = /^<v(?:\.[^>]*)?\s+([^>]+)>([\s\S]*)<\/v>$/;
+  const VOICE_OPEN_RE = /^<v(?:\.[^>]*)?\s+([^>]+)>/;    // without closing tag
+  const INLINE_TAG_RE = /<\/?(?:c|b|i|u|ruby|rt|lang|v)[^>]*>/g;
+  const SENTENCE_END_RE = /[.!?](\s*["»›"'])?$/;
+
+  // 2. Split into cue blocks
+  const cueBlocks = text.split(/\n{2,}/);
+
+  // 3–5. Parse each cue block into { speaker, text }
+  const cues = [];
+  for (const block of cueBlocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    // Drop cue number and timestamp lines
+    const payload = lines.filter(l => !CUE_NUMBER_RE.test(l) && !TIMESTAMP_RE.test(l));
+    if (!payload.length) continue;
+
+    let speaker = null;
+    let cueText = payload.join(' ');
+
+    // Extract voice tag speaker from start of cue text
+    let vm = cueText.match(VOICE_RE);
+    if (vm) {
+      speaker = vm[1].trim();
+      cueText = vm[2];
+    } else {
+      vm = cueText.match(VOICE_OPEN_RE);
+      if (vm) {
+        speaker = vm[1].trim() || null;
+        cueText = cueText.slice(vm[0].length).replace(/<\/v>/g, '');
+      }
+    }
+
+    // Strip remaining VTT inline tags, collapse whitespace
+    cueText = cueText.replace(INLINE_TAG_RE, '').replace(/\s+/g, ' ').trim();
+    if (!cueText) continue;
+
+    cues.push({ speaker, text: cueText });
+  }
+
+  // 6. Merge cues into paragraphs
+  const paragraphs = [];
+  let currentSpeaker = null;
+  let currentText = '';
+
+  for (const cue of cues) {
+    const speakerChanged = cue.speaker !== null && cue.speaker !== currentSpeaker;
+    const sentenceEnd = currentText && SENTENCE_END_RE.test(currentText);
+
+    if (currentText && (speakerChanged || sentenceEnd)) {
+      // Emit current paragraph
+      const para = currentSpeaker
+        ? `${currentSpeaker}: ${currentText}`
+        : currentText;
+      paragraphs.push(para.replace(/\s+/g, ' ').trim());
+      currentText = '';
+    }
+
+    if (cue.speaker !== null) currentSpeaker = cue.speaker;
+    currentText = currentText ? `${currentText} ${cue.text}` : cue.text;
+  }
+
+  // Flush last paragraph
+  if (currentText) {
+    const para = currentSpeaker
+      ? `${currentSpeaker}: ${currentText}`
+      : currentText;
+    paragraphs.push(para.replace(/\s+/g, ' ').trim());
+  }
+
+  return paragraphs.join('\n\n');
 }
 
 // Fetch transcript text and convert to HTML paragraphs with bold speaker names.
