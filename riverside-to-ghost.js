@@ -292,6 +292,27 @@ function extractIsbns(html) {
   return { html: cleaned, isbns };
 }
 
+// Wrap the "Topics & Timestamps" paragraph and all following timestamp
+// paragraphs in a collapsed <details> HTML card. Works on both raw RSS HTML
+// (no card markers) and stored Ghost HTML (which may have card markers after
+// the timestamps section).
+function wrapTimestamps(html) {
+  const m = html.match(
+    /(<p[^>]*>\s*Topics\s*(?:&amp;|&)\s*Timestamps\s*<\/p>)([\s\S]*?)(?=<!--kg-card-begin|$)/i
+  );
+  if (!m) return html;
+  const before = html.slice(0, m.index);
+  const after  = html.slice(m.index + m[0].length);
+  return before
+    + '<!--kg-card-begin: html-->\n'
+    + '<details class="lw-toc">\n'
+    + '<summary>Topics &amp; Timestamps</summary>\n'
+    + m[2].trim()
+    + '\n</details>\n'
+    + '<!--kg-card-end: html-->\n'
+    + after;
+}
+
 async function booksSection(isbns) {
   if (!isbns.length || !SHOP_ID) return '';
   const cards = [];
@@ -337,11 +358,19 @@ function trimExcerpt(raw) {
 function formatDuration(raw) {
   if (!raw) return '';
   const parts = raw.split(':').map(Number);
+  let h, m;
   if (parts.length === 3) {
-    const [h, m] = parts;
-    return h > 0 ? `${h}h ${m}m` : `${m} min`;
+    [h, m] = parts;
+  } else if (parts.length === 2) {
+    h = 0; m = parts[0];
+  } else {
+    // Integer seconds
+    const total = Math.round(Number(raw));
+    if (!Number.isFinite(total) || total < 0) return '';
+    h = Math.floor(total / 3600);
+    m = Math.floor((total % 3600) / 60);
   }
-  return raw;
+  return h > 0 ? `${h}h ${m}m` : `${m} min`;
 }
 
 function audioPlayer(audioUrl, postUrl, duration) {
@@ -358,12 +387,123 @@ ${listenLine}
 <!--kg-card-end: html-->`;
 }
 
-async function buildHtml(item, postUrl) {
+// Build a guid → { url, type } map from raw RSS XML.
+// rss-parser doesn't expose attributes on self-closing elements,
+// so we parse <podcast:transcript> directly from the raw XML.
+// Preference order: text/plain → text/html → text/vtt → application/x-subrip
+const TRANSCRIPT_PREFERENCE = ['text/plain', 'text/html', 'text/vtt', 'application/x-subrip'];
+
+function buildTranscriptMap(xml) {
+  const map = new Map();
+  const itemRe = /<item>([\s\S]*?)<\/item>/g;
+  let m;
+  while ((m = itemRe.exec(xml)) !== null) {
+    const block = m[1];
+    const guidM = block.match(/<guid[^>]*>(.*?)<\/guid>/);
+    if (!guidM) continue;
+    const guid = guidM[1].trim();
+
+    // Collect all podcast:transcript elements in this item
+    const candidates = [];
+    const txRe = /<podcast:transcript([^>]*?)\/>/g;
+    let tx;
+    while ((tx = txRe.exec(block)) !== null) {
+      const attrs = tx[1];
+      const urlM  = attrs.match(/url="([^"]+)"/);
+      const typeM = attrs.match(/type="([^"]+)"/);
+      if (urlM) candidates.push({ url: urlM[1], type: (typeM?.[1] ?? '').toLowerCase() });
+    }
+    if (!candidates.length) continue;
+
+    // Pick by preference order
+    let chosen = null;
+    for (const pref of TRANSCRIPT_PREFERENCE) {
+      chosen = candidates.find(c => c.type === pref) ?? null;
+      if (chosen) break;
+    }
+    if (!chosen) chosen = candidates[0]; // fallback: first available
+
+    map.set(guid, chosen);
+  }
+  return map;
+}
+
+// Strip VTT/SRT formatting to extract plain dialogue text.
+// VTT: remove WEBVTT header, cue numbers (bare integers), and timestamp lines.
+// SRT: same structure, no WEBVTT header.
+function stripCaptionFormat(text) {
+  return text
+    .split(/\n\n+/)
+    .map(block => {
+      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+      // Remove WEBVTT header line
+      const filtered = lines.filter(l =>
+        !/^WEBVTT/i.test(l) &&           // VTT header
+        !/^\d+$/.test(l) &&              // cue number
+        !/^\d{2}:\d{2}/.test(l)          // timestamp line (HH:MM or MM:SS)
+      );
+      return filtered.join(' ').trim();
+    })
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+// Fetch transcript text and convert to HTML paragraphs with bold speaker names.
+// Returns a collapsed <!--kg-card-begin: html--> block, or '' on failure.
+// `type` is the MIME type from podcast:transcript (e.g. 'text/plain', 'text/vtt').
+async function transcriptSection(url, type = 'text/plain') {
+  if (!url) return '';
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+    if (!res.ok) return '';
+    let text = (await res.text()).trim();
+    if (!text) return '';
+
+    // Strip caption formatting for VTT and SRT before paragraph parsing
+    if (type === 'text/vtt' || type === 'application/x-subrip') {
+      text = stripCaptionFormat(text);
+      if (!text) return '';
+    }
+
+    // For HTML transcripts, strip tags to get plain text
+    if (type === 'text/html') {
+      text = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const body = text
+      .split(/\n\n+/)
+      .filter(p => p.trim())
+      .map(p => {
+        p = p.replace(/\n/g, ' ').trim();
+        const colon = p.indexOf(': ');
+        if (colon > 0 && colon < 60) {
+          return `<p><strong>${esc(p.slice(0, colon))}:</strong> ${esc(p.slice(colon + 2))}</p>`;
+        }
+        return `<p>${esc(p)}</p>`;
+      })
+      .join('\n');
+    if (!body) return '';
+    return `<!--kg-card-begin: html-->
+<details class="lw-transcript">
+<summary>Transcript</summary>
+${body}
+</details>
+<!--kg-card-end: html-->`;
+  } catch {
+    return '';
+  }
+}
+
+async function buildHtml(item, postUrl, transcriptEntry) {
   const raw = item.contentEncoded || item.content || item.description || '';
   const { html, isbns } = extractIsbns(raw);
   const audioUrl = item.enclosure && item.enclosure.url;
+  const { url: txUrl, type: txType } = transcriptEntry ?? {};
   return [audioPlayer(audioUrl, postUrl, item.duration),
-    html, await booksSection(isbns)].filter(Boolean).join('\n');
+    wrapTimestamps(html),
+    await transcriptSection(txUrl, txType),
+    await booksSection(isbns)].filter(Boolean).join('\n');
 }
 
 // ---------- dedupe on guid ----------
@@ -403,7 +543,9 @@ async function main() {
     + ` newsletter=${NEWSLETTER_SLUG || '(none)'}`
     + ` maxAge=${MAX_AGE_DAYS}d${DRY_RUN ? ' DRY_RUN' : ''}`);
 
-  const feed = await parser.parseURL(FEED_URL);
+  const rawXml = await fetch(FEED_URL).then(r => r.text());
+  const transcriptUrls = buildTranscriptMap(rawXml);
+  const feed = await parser.parseString(rawXml);
   const done = await importedGuids();
   const cutoff = Date.now() - MAX_AGE_DAYS * 86400000;
 
@@ -471,10 +613,11 @@ async function main() {
       const draft = await api.posts.add(
         {
           title,
-          html: await buildHtml(item, null),
+          html: await buildHtml(item, null, transcriptUrls.get(guid)),
           custom_excerpt: trimExcerpt(item.contentSnippet) || undefined,
           feature_image: feature || undefined,
           feature_image_caption: feature ? caption : undefined,
+          custom_template: 'custom-narrow-feature-image',
           tags,
           status: 'draft',
           published_at: item.isoDate || undefined
@@ -485,7 +628,7 @@ async function main() {
       // Step 2: rebuild HTML with the listen link now that we have the slug.
       // draft.url is a preview UUID path; the real URL uses the slug.
       const postUrl = `${process.env.GHOST_API_URL}/${draft.slug}/`;
-      const finalHtml = await buildHtml(item, postUrl);
+      const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid));
       const editPayload = {
         id: draft.id,
         html: finalHtml,
