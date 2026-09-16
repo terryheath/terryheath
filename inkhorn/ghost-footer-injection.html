@@ -24,6 +24,12 @@
 .ih-issue-cover-link img { width: 100%; height: auto; display: block; }
 .ih-issue-desc { font-size: 16px; line-height: 1.65; color: #444; margin: 0 0 22px; font-style: italic; }
 
+/* Issue name — left column, above cover */
+.ih-issue-name { font-size: 22px; font-weight: 700; color: #1a1a1a; margin: 0 0 12px; line-height: 1.2; }
+
+/* TOC parent label — right column, above genre list */
+.ih-toc-head { font-size: 13px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: #888; margin: 0 0 14px; }
+
 /* TOC */
 .ih-toc { margin-top: 4px; }
 .ih-toc-genre { margin-bottom: 16px; }
@@ -54,6 +60,14 @@
 .ih-gallery-band::-webkit-scrollbar { display: none; }
 .ih-gallery-item { flex: 0 0 auto; display: block; line-height: 0; }
 .ih-gallery-img { height: 260px !important; width: auto !important; max-width: none !important; display: block; }
+
+/* Art collection page masonry grid */
+.ih-art-grid-wrapper { max-width: 1100px; margin: 0 auto; padding: 0 24px 48px; }
+.ih-art-grid { column-count: 3; column-gap: 16px; }
+.ih-art-item { break-inside: avoid; margin-bottom: 16px; display: block; line-height: 0; }
+.ih-art-item img { width: 100%; height: auto; display: block; }
+@media (max-width: 900px) { .ih-art-grid { column-count: 2; } }
+@media (max-width: 480px) { .ih-art-grid-wrapper { padding: 0 16px 32px; } .ih-art-grid { column-count: 1; } }
 
 /* Subscribe */
 .ih-subscribe { background: #f7f7f7; border-radius: 3px; padding: 32px 40px; text-align: center; margin-top: 16px; }
@@ -202,6 +216,14 @@
       .replace(/"/g, "&quot;");
   }
 
+  // Extract the src of the first <img> in a Ghost HTML body string.
+  // Used for art posts where the content image is in the body, not feature_image.
+  function firstBodyImg(html) {
+    if (!html) return null;
+    var m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return m ? m[1] : null;
+  }
+
   function buildCards(books) {
     return books.map(function (book) {
       var img = book.cover
@@ -295,6 +317,42 @@
         })
         .catch(function () {});
 
+      return;
+    }
+
+    // ── Art collection page: /art/ ──────────────────────────────────────────
+    if (window.location.pathname === '/art/') {
+      // Hide the "Load more" button — the grid loads everything at once.
+      var loadMore = document.querySelector('.gh-loadmore');
+      if (loadMore) loadMore.style.display = 'none';
+
+      fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+        '&filter=primary_tag:art&fields=title,url,feature_image,html&limit=all&order=published_at+desc')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var posts = (data && data.posts) || [];
+          var items = posts.filter(function(p) {
+            return firstBodyImg(p.html) || p.feature_image;
+          });
+          if (!items.length) return;
+          var gridHtml = '<div class="ih-art-grid">';
+          for (var i = 0; i < items.length; i++) {
+            var src = firstBodyImg(items[i].html) || items[i].feature_image;
+            gridHtml +=
+              '<a href="' + escapeHtml(items[i].url) + '" class="ih-art-item">' +
+              '<img src="' + escapeHtml(src) + '" alt="' + escapeHtml(items[i].title || '') + '" loading="lazy">' +
+              '</a>';
+          }
+          gridHtml += '</div>';
+          var feed = document.querySelector('.post-feed');
+          if (feed) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'ih-art-grid-wrapper';
+            wrapper.innerHTML = gridHtml;
+            feed.parentNode.replaceChild(wrapper, feed);
+          }
+        })
+        .catch(function() {});
       return;
     }
 
@@ -490,14 +548,16 @@
   function buildHomePage() {
     var revealed = false;
 
-    // Restore the article header if the API fails or takes longer than 5 s.
-    // In the success path renderHome sets display:none (hiding it permanently);
+    // Restore the cover hero + page title if the API fails or takes > 5 s.
+    // In the success path renderHome sets display:none (hiding them permanently);
     // calling revealPage after that is a no-op because revealed is already true.
     function revealPage() {
       if (revealed) return;
       revealed = true;
-      var ah = document.querySelector('.gh-article-header');
-      if (ah) ah.style.opacity = '1';
+      ['.cover', '.single-header'].forEach(function(sel) {
+        var el = document.querySelector(sel);
+        if (el) el.style.opacity = '1';
+      });
     }
 
     var failsafe = setTimeout(revealPage, 5000);
@@ -516,7 +576,7 @@
         '&filter=primary_tag:letter&fields=title,url,custom_excerpt&limit=1&order=published_at+desc')
         .then(function(r) { return r.json(); }),
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
-        '&filter=primary_tag:art&fields=title,url,feature_image&limit=12&order=published_at+desc')
+        '&filter=primary_tag:art&fields=title,url,feature_image,html&limit=12&order=published_at+desc')
         .then(function(r) { return r.json(); })
     ]).then(function(results) {
       var allTags      = (results[0] && results[0].tags)  || [];
@@ -537,7 +597,7 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           clearTimeout(failsafe);
-          revealed = true; // success: renderHome hides the header via display:none
+          revealed = true; // success: renderHome hides cover + single-header via display:none
           var issuePosts = (data && data.posts) || [];
           renderHome(currentIssue, issuePosts, microPost, podcastPost, colophonPost, artPosts);
         })
@@ -609,7 +669,11 @@
     var issueHtml =
       '<section class="ih-issue">' +
       (coverHtml ? '<div class="ih-issue-cover">' + coverHtml + '</div>' : '') +
-      '<div class="ih-issue-info">' + descHtml + tocHtml + '</div>' +
+      '<div class="ih-issue-info">' +
+      '<h2 class="ih-issue-name">' + e(formatIssueTitle(issue.slug)) + '</h2>' +
+      descHtml +
+      '<p class="ih-toc-head">Table of Contents</p>' +
+      tocHtml + '</div>' +
       '</section>';
 
     // ── Departments ───────────────────────────────────────────────────────────
@@ -652,14 +716,15 @@
     }
 
     // ── Art gallery ───────────────────────────────────────────────────────────
-    var galleryItems = artPosts.filter(function(p) { return p.feature_image; });
+    var galleryItems = artPosts.filter(function(p) { return firstBodyImg(p.html) || p.feature_image; });
     var galleryHtml = '';
     if (galleryItems.length) {
       var band = '<div class="ih-gallery-band">';
       for (var ai = 0; ai < galleryItems.length; ai++) {
+        var galSrc = firstBodyImg(galleryItems[ai].html) || galleryItems[ai].feature_image;
         band +=
           '<a href="' + e(galleryItems[ai].url) + '" class="ih-gallery-item">' +
-          '<img src="' + e(galleryItems[ai].feature_image) + '" alt="" class="ih-gallery-img" loading="lazy">' +
+          '<img src="' + e(galSrc) + '" alt="" class="ih-gallery-img" loading="lazy">' +
           '</a>';
       }
       band += '</div>';
@@ -681,12 +746,14 @@
       issueHtml + deptSectionHtml + galleryHtml + subscribeHtml +
       '</div>';
 
-    var articleHeader = document.querySelector('.gh-article-header');
     var content = document.querySelector('.gh-content');
     var ghArticle = document.querySelector('.gh-article');
 
-    // Success path: permanently hide the hero.
-    if (articleHeader) articleHeader.style.display = 'none';
+    // Success path: permanently hide the cover hero and page title.
+    ['.cover', '.single-header'].forEach(function(sel) {
+      var el = document.querySelector(sel);
+      if (el) el.style.display = 'none';
+    });
 
     // Reinforce the header injection's layout zeroing with setProperty so the
     // JS override wins even if something re-asserts the theme CSS at runtime.
@@ -715,5 +782,18 @@
     }
   }
 
+})();
+</script>
+
+<script>
+// Append ISSN below the theme-rendered copyright line in the site footer.
+// The .gh-copyright div is owned by the Casper theme and cannot be edited
+// without forking the theme, so it is patched here instead.
+(function () {
+  var cp = document.querySelector('.gh-copyright');
+  if (cp && cp.textContent.indexOf('ISSN') === -1) {
+    cp.insertAdjacentHTML('beforeend',
+      '<br><span style="font-size:.85em;opacity:.7">ISSN 3144-1998 (Online)</span>');
+  }
 })();
 </script>
