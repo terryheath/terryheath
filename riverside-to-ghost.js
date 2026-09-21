@@ -674,9 +674,9 @@ async function main() {
     // Check for an existing draft that may be upgradeable.
     const existingDraft = ghostDrafts.get(guid);
 
-    // Age filter applies only to genuinely new episodes, not draft upgrades.
+    // Age filter applies to both new episodes and existing drafts.
     const pubDate = item.isoDate ? Date.parse(item.isoDate) : Date.now();
-    if (!existingDraft && pubDate < cutoff) {
+    if (pubDate < cutoff) {
       console.log(`skip  too old    ${title}`);
       skipped++; continue;
     }
