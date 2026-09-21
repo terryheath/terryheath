@@ -20,7 +20,11 @@
  *   DRY_RUN            "1" = log what would happen, change nothing
  *   INCLUDE_TRAILER    "1" to include the trailer
  *
- * Dedupe is on the RSS guid, stored as a hidden internal tag (#rs-<guid>).
+ * Dedupe is on the RSS guid, stored two ways:
+ *   1. Hidden internal tag (#rs-<guid>) on the Ghost post.
+ *   2. imported-guids.json in the repo root (published episodes only).
+ * A guid in either source is treated as done. The file is the backstop that
+ * survives Ghost post deletion; the tag is the primary live source.
  * Editing a post title in Ghost will NOT cause a re-import.
  */
 
@@ -39,7 +43,8 @@ const POST_STATUS = process.env.POST_STATUS || 'draft';
 const NEWSLETTER_SLUG = process.env.NEWSLETTER_SLUG;
 const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS || '14', 10);
 const DRY_RUN = process.env.DRY_RUN === '1';
-const CACHE_FILE = path.join(process.cwd(), '.book-cache.json');
+const CACHE_FILE  = path.join(process.cwd(), '.book-cache.json');
+const GUIDS_FILE  = path.join(process.cwd(), 'imported-guids.json');
 
 const api = new GhostAdminAPI({
   url: process.env.GHOST_API_URL,
@@ -62,6 +67,14 @@ let cache = {};
 try { cache = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8')); } catch (e) {}
 const saveCache = () =>
   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
+
+// Guids of episodes that were successfully published; persisted across runs
+// so that deleting a Ghost post doesn't cause a re-import.
+let publishedGuidFile = new Set();
+try {
+  const raw = JSON.parse(fs.readFileSync(GUIDS_FILE, 'utf8'));
+  if (Array.isArray(raw)) for (const g of raw) publishedGuidFile.add(g);
+} catch (e) {}
 
 let credits = {};
 {
@@ -588,25 +601,37 @@ async function buildHtml(item, postUrl, transcriptEntry) {
 
 const guidTag = guid => `#rs-${guid}`;
 
+// Returns { published: Set<guid>, drafts: Map<guid, {id, updated_at, slug}> }.
+// published = guids whose Ghost post is published or scheduled (treat as done).
+// drafts    = guids whose Ghost post is still a draft (eligible for upgrade).
 async function importedGuids() {
-  const guids = new Set();
+  const published = new Set();
+  const drafts    = new Map();
   let page = 1;
   while (true) {
     const posts = await api.posts.browse({
-      limit: 100, page, fields: 'id', include: 'tags',
+      limit: 100, page,
+      fields: 'id,status,updated_at,slug',
+      include: 'tags',
       filter: 'status:[draft,published,scheduled]'
     });
     for (const p of posts) {
       for (const t of (p.tags || [])) {
         if (t.name && t.name.startsWith('#rs-')) {
-          guids.add(t.name.slice(4));
+          const guid = t.name.slice(4);
+          if (p.status === 'draft') {
+            drafts.set(guid, { id: p.id, updated_at: p.updated_at, slug: p.slug });
+          } else {
+            published.add(guid);
+            drafts.delete(guid); // published wins if both exist somehow
+          }
         }
       }
     }
     if (!posts.meta || !posts.meta.pagination.next) break;
     page = posts.meta.pagination.next;
   }
-  return guids;
+  return { published, drafts };
 }
 
 // ---------- main ----------
@@ -624,10 +649,12 @@ async function main() {
   const rawXml = await fetch(FEED_URL).then(r => r.text());
   const transcriptUrls = buildTranscriptMap(rawXml);
   const feed = await parser.parseString(rawXml);
-  const done = await importedGuids();
+  const { published: ghostPublished, drafts: ghostDrafts } = await importedGuids();
+  // Merge Ghost published guids with the file-based backstop.
+  const publishedGuids = new Set([...ghostPublished, ...publishedGuidFile]);
   const cutoff = Date.now() - MAX_AGE_DAYS * 86400000;
 
-  let created = 0, skipped = 0;
+  let created = 0, skipped = 0, guidFileChanged = false;
 
   for (const item of feed.items.slice().reverse()) {
     const title = (item.title || '').trim();
@@ -637,12 +664,19 @@ async function main() {
         && process.env.INCLUDE_TRAILER !== '1') {
       skipped++; continue;
     }
-    if (done.has(guid)) {
+
+    // Already published (Ghost tag or file backstop) — permanently done.
+    if (publishedGuids.has(guid)) {
       console.log(`skip  imported   ${title}`);
       skipped++; continue;
     }
-    const published = item.isoDate ? Date.parse(item.isoDate) : Date.now();
-    if (published < cutoff) {
+
+    // Check for an existing draft that may be upgradeable.
+    const existingDraft = ghostDrafts.get(guid);
+
+    // Age filter applies only to genuinely new episodes, not draft upgrades.
+    const pubDate = item.isoDate ? Date.parse(item.isoDate) : Date.now();
+    if (!existingDraft && pubDate < cutoff) {
       console.log(`skip  too old    ${title}`);
       skipped++; continue;
     }
@@ -656,27 +690,45 @@ async function main() {
     const wantPublish = POST_STATUS === 'published';
     const wantEmail   = wantPublish && NEWSLETTER_SLUG;
 
+    // Existing draft running in draft mode is already in the desired state.
+    if (existingDraft && !wantPublish) {
+      console.log(`skip  draft      ${title}`);
+      skipped++; continue;
+    }
+
     // A missing headshot on a publish run is a hard failure: the newsletter
-    // email cannot be recalled after send. Create as draft instead and mark
-    // the step failed so GitHub sends a failure notification.
-    // On dry runs, report the problem without failing.
+    // email cannot be recalled after send.
+    // - New episode:      create as draft, fail.
+    // - Existing draft:   leave it as-is, fail.
+    // On dry runs, report without failing.
     if (missingHeadshot && wantPublish) {
-      console.warn(`  no headshot for "${guest}" — will create as draft, no newsletter`);
+      const note = existingDraft ? 'leaving draft' : 'will create as draft';
+      console.warn(`  no headshot for "${guest}" — ${note}, no newsletter`);
       if (!DRY_RUN) process.exitCode = 1;
     } else if (missingHeadshot) {
       console.warn(`  no headshot for "${guest}"`);
     }
 
-    // Actual publish/email intent, after applying the downgrade.
+    // Actual publish/email intent, after applying the headshot downgrade.
     const actualPublish = wantPublish && !missingHeadshot;
     const actualEmail   = actualPublish && NEWSLETTER_SLUG;
 
     if (DRY_RUN) {
-      const label = (missingHeadshot && wantPublish) ? 'WOULD draft (no headshot)' : 'WOULD create             ';
+      let label;
+      if (existingDraft && actualPublish)      label = 'WOULD upgrade draft      ';
+      else if (existingDraft)                  label = 'WOULD leave draft        ';
+      else if (missingHeadshot && wantPublish) label = 'WOULD draft (no headshot)';
+      else                                     label = 'WOULD create             ';
       console.log(`${label}  ${title}`
         + `${guest ? `  [${guest}]` : ''}`
         + `${shotPath ? '  +headshot' : ''}`);
       created++; continue;
+    }
+
+    // Existing draft with missing headshot: can't upgrade yet; leave as-is.
+    // (process.exitCode already set above.)
+    if (existingDraft && !actualPublish) {
+      skipped++; continue;
     }
 
     const feature = shotPath ? await uploadLocal(shotPath) : null;
@@ -686,49 +738,87 @@ async function main() {
     }
 
     try {
-      // Step 1: create as draft (HTML without listen link — we need the
-      // post URL first, which Ghost assigns on create).
-      const draft = await api.posts.add(
-        {
-          title,
-          html: await buildHtml(item, null, transcriptUrls.get(guid)),
+      if (existingDraft) {
+        // ── UPGRADE PATH ──────────────────────────────────────────────────
+        // The draft already has the correct slug, tags, template, and
+        // published_at. Patch in the headshot + final HTML and publish.
+        const postUrl  = `${process.env.GHOST_API_URL}/${existingDraft.slug}/`;
+        const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid));
+        const editPayload = {
+          id: existingDraft.id,
+          html: finalHtml,
           custom_excerpt: trimExcerpt(item.contentSnippet) || undefined,
           feature_image: feature || undefined,
           feature_image_caption: feature ? caption : undefined,
-          custom_template: 'custom-narrow-feature-image',
-          tags,
-          status: 'draft',
-          published_at: item.isoDate || undefined
-        },
-        { source: 'html' }
-      );
+          status: 'published',
+          updated_at: existingDraft.updated_at
+        };
+        const editOpts = { source: 'html' };
+        if (actualEmail) editOpts.newsletter = NEWSLETTER_SLUG;
 
-      // Step 2: rebuild HTML with the listen link now that we have the slug.
-      // draft.url is a preview UUID path; the real URL uses the slug.
-      const postUrl = `${process.env.GHOST_API_URL}/${draft.slug}/`;
-      const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid));
-      const editPayload = {
-        id: draft.id,
-        html: finalHtml,
-        status: actualPublish ? 'published' : 'draft',
-        updated_at: draft.updated_at
-      };
-      const editOpts = { source: 'html' };
-      if (actualEmail) editOpts.newsletter = NEWSLETTER_SLUG;
+        await api.posts.edit(editPayload, editOpts);
 
-      await api.posts.edit(editPayload, editOpts);
+        console.log(`UPGRADED           ${title}${guest ? `  [${guest}]` : ''}`
+          + `${feature ? '  +headshot' : ''}`
+          + `${actualEmail ? '  +emailed' : ''}`);
+      } else {
+        // ── CREATE PATH ───────────────────────────────────────────────────
+        // Step 1: create as draft (no listen link yet — need the slug first).
+        const draft = await api.posts.add(
+          {
+            title,
+            html: await buildHtml(item, null, transcriptUrls.get(guid)),
+            custom_excerpt: trimExcerpt(item.contentSnippet) || undefined,
+            feature_image: feature || undefined,
+            feature_image_caption: feature ? caption : undefined,
+            custom_template: 'custom-narrow-feature-image',
+            tags,
+            status: 'draft',
+            published_at: item.isoDate || undefined
+          },
+          { source: 'html' }
+        );
 
-      const statusLabel = actualPublish    ? 'PUBLISHED          '
-                        : missingHeadshot  ? 'DRAFT (no headshot)'
-                        :                   'created            ';
-      console.log(`${statusLabel}  ${title}${guest ? `  [${guest}]` : ''}`
-        + `${feature ? '  +headshot' : ''}`
-        + `${actualEmail ? '  +emailed' : ''}`);
+        // Step 2: rebuild HTML with the listen link now that we have the slug.
+        const postUrl = `${process.env.GHOST_API_URL}/${draft.slug}/`;
+        const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid));
+        const editPayload = {
+          id: draft.id,
+          html: finalHtml,
+          status: actualPublish ? 'published' : 'draft',
+          updated_at: draft.updated_at
+        };
+        const editOpts = { source: 'html' };
+        if (actualEmail) editOpts.newsletter = NEWSLETTER_SLUG;
+
+        await api.posts.edit(editPayload, editOpts);
+
+        const statusLabel = actualPublish    ? 'PUBLISHED          '
+                          : missingHeadshot  ? 'DRAFT (no headshot)'
+                          :                   'created            ';
+        console.log(`${statusLabel}  ${title}${guest ? `  [${guest}]` : ''}`
+          + `${feature ? '  +headshot' : ''}`
+          + `${actualEmail ? '  +emailed' : ''}`);
+      }
+
       created++;
+      // Record the guid in the file backstop only once the episode is published.
+      if (actualPublish) {
+        publishedGuidFile.add(guid);
+        guidFileChanged = true;
+      }
     } catch (err) {
-      console.error(`FAILED            ${title}\n  ${err.message}`);
+      const op = existingDraft ? 'UPGRADE FAILED    ' : 'FAILED            ';
+      console.error(`${op}  ${title}\n  ${err.message}`);
       process.exitCode = 1;
     }
+  }
+
+  // Persist any newly published guids to the backstop file.
+  if (guidFileChanged) {
+    const sorted = [...publishedGuidFile].sort();
+    fs.writeFileSync(GUIDS_FILE, JSON.stringify(sorted, null, 2) + '\n');
+    console.log(`\nupdated imported-guids.json (${sorted.length} entries)`);
   }
 
   console.log(`\n${created} ${DRY_RUN ? 'would be created' : 'created'},`

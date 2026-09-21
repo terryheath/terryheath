@@ -20,7 +20,7 @@ on:
         default: ''
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   import:
@@ -57,3 +57,16 @@ jobs:
             ${{ github.event.inputs.dry_run == 'true' && '1'
                 || vars.DRY_RUN || '' }}
         run: node riverside-to-ghost.js
+
+      - name: Save imported-guids.json
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add imported-guids.json
+          if git diff --cached --quiet; then
+            echo "No new guids to save."
+          else
+            git commit -m "chore: update imported-guids.json"
+            git pull --rebase
+            git push
+          fi
