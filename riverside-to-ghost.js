@@ -606,8 +606,8 @@ function headshotCard(url, alt, caption) {
   const figcaption = caption ? `\n<figcaption>${caption}</figcaption>` : '';
   return `<!--kg-card-begin: html-->
 <figure class="kg-card kg-image-card">
-<img src="${url}" class="kg-image" alt="${alt || ''}">
-${figcaption}</figure>
+<img src="${url}" class="kg-image" alt="${alt || ''}">${figcaption}
+</figure>
 <!--kg-card-end: html-->`;
 }
 
