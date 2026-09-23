@@ -153,19 +153,27 @@ async function fetchSupporters() {
 // ── Ghost page storage ─────────────────────────────────────────────────────
 
 function buildGhostHtml(data) {
-  // Encode JSON for safe embedding in a <script> tag — no </script> injection possible
-  const json = JSON.stringify({ names: data.names, anonymous: data.anonymous })
-    .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+  // Store as data-attributes on a <div>. Ghost's Content API strips <script> tags
+  // but passes HTML card <div> elements through untouched.
+  const namesEncoded = JSON.stringify(data.names)
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;');
   return '<!--kg-card-begin: html-->' +
-    '<script type="application/json" id="ih-patron-data">' + json + '</script>' +
+    `<div id="ih-patron-data" data-names="${namesEncoded}" data-anonymous="${data.anonymous}"></div>` +
     '<!--kg-card-end: html-->';
 }
 
 function extractStoredData(html) {
   if (!html) return null;
-  const m = html.match(/<script[^>]+id="ih-patron-data"[^>]*>([\s\S]*?)<\/script>/);
-  if (!m) return null;
-  try { return JSON.parse(m[1]); } catch { return null; }
+  const divM = html.match(/<div[^>]+id="ih-patron-data"([^>]*)>/);
+  if (!divM) return null;
+  const tag   = divM[0];
+  const namesM = tag.match(/data-names="([^"]*)"/);
+  const anonM  = tag.match(/data-anonymous="(\d+)"/);
+  if (!namesM || !anonM) return null;
+  try {
+    const names = JSON.parse(namesM[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
+    return { names, anonymous: parseInt(anonM[1]) || 0 };
+  } catch { return null; }
 }
 
 async function getExistingPage() {

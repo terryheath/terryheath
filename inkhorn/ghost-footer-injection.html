@@ -683,9 +683,16 @@
     var patronData = (function() {
       var html = patronPageResp && patronPageResp.pages && patronPageResp.pages[0] && patronPageResp.pages[0].html;
       if (!html) return null;
-      var m = html.match(/<script[^>]+id="ih-patron-data"[^>]*>([\s\S]*?)<\/script>/);
-      if (!m) return null;
-      try { return JSON.parse(m[1]); } catch(x) { return null; }
+      try {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        var el = tmp.querySelector('#ih-patron-data');
+        if (!el) return null;
+        return {
+          names: JSON.parse(el.getAttribute('data-names') || '[]'),
+          anonymous: parseInt(el.getAttribute('data-anonymous') || '0') || 0
+        };
+      } catch(x) { return null; }
     })();
 
     var patronNamesHtml = '';
