@@ -9,8 +9,8 @@ Scripts and config for Terry Heath's Ghost sites. Scripts are run on demand loca
 Inkhorn Review's stack:
 - **Publishing** — Ghost at inkhornreview.com (PikaPods). Posts, pages, and routing all managed there.
 - **Submissions** — Duosuma. No submission code lives in this repo.
-- **This repo** — `inkhorn/routes.yaml`, `inkhorn/contributors.json`, `inkhorn/build-shelves.js`, `inkhorn/shelves.json`, `inkhorn/ghost-footer-injection.html`, `inkhorn/set-og-images.js`, and issue scripts. Nothing else.
-- **Scheduler** — Railway project "Inkhorn Cron" runs three cron services against this repo. GitHub Actions workflows are manual-dispatch fallbacks only; they no longer run on a schedule.
+- **This repo** — `inkhorn/routes.yaml`, `inkhorn/contributors.json`, `inkhorn/build-shelves.js`, `inkhorn/shelves.json`, `inkhorn/ghost-footer-injection.html`, `inkhorn/set-og-images.js`, `inkhorn/patreon-sync.js`, and issue scripts. Nothing else.
+- **Scheduler** — Railway project "Inkhorn Cron" runs four cron services against this repo. GitHub Actions workflows are manual-dispatch fallbacks only; they no longer run on a schedule.
 
 ## The sites
 
@@ -23,6 +23,7 @@ Inkhorn Review's stack:
 - **riverside-to-ghost.js** — Converts Riverside podcast recordings into Ghost posts with embedded audio, show notes, and book cards. Scheduled daily via Railway (podcast-import service). Reads/writes `imported-guids.json` and `.book-cache.json` from `STATE_DIR` (Railway volume on Railway; `process.cwd()` locally). Looks up ISBNs via ISBNdb → Google Books → Open Library.
 - **inkhorn/digest.js** — Builds and sends the weekly Inkhorn digest newsletter. Scheduled weekly via Railway (digest service). Derives watermark from the most recently published digest post in Ghost — no local state file.
 - **inkhorn/scheduler-check.js** — Checks for Ghost posts stuck in scheduled state. Scheduled daily via Railway (scheduler-check service). Exits 1 if any overdue posts found (Railway logs as failure).
+- **inkhorn/patreon-sync.js** — Fetches active paid Patreon supporters and writes names + anonymous count to the Ghost page at slug `patreon-supporters`. Scheduled daily at 0 6 * * * UTC via Railway (patreon-sync service). Requires `PATREON_CREATOR_TOKEN`, `GHOST_API_URL`, `GHOST_ADMIN_KEY`. Stores data as JSON in the page's `codeinjection_head` (Ghost 5.x lexical editor silently drops the `html` field on PUT, so the body is not used). The home page footer injection reads this page via Content API and renders the supporter list below the issue cover image.
 - **.github/workflows/import-podcast.yml** — Manual dispatch fallback for the podcast importer. No schedule.
 - **.github/workflows/inkhorn-digest.yml** — Manual dispatch fallback for the digest. No schedule.
 - **.github/workflows/inkhorn-scheduler-check.yml** — Manual dispatch fallback for the scheduler check. No schedule.
