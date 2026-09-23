@@ -94,7 +94,7 @@ async function fetchSupporters() {
   // Step 2: fetch active members — page[count]=1000 covers any realistic campaign
   const membersResp = await get(
     'https://www.patreon.com/api/oauth2/v2/campaigns/' + campaignId + '/members' +
-    '?fields[member]=full_name,patron_status' +
+    '?fields[member]=full_name,patron_status,currently_entitled_amount_cents' +
     '&fields[user]=full_name,hide_pledges' +
     '&include=user' +
     '&filter[patron_status]=active_patron' +
@@ -121,6 +121,9 @@ async function fetchSupporters() {
   for (const member of members) {
     const userId = member.relationships?.user?.data?.id;
     const user   = userId ? userMap[userId] : null;
+
+    // Skip free-tier members (active_patron but paying $0)
+    if ((member.attributes?.currently_entitled_amount_cents ?? 0) === 0) continue;
 
     if (user?.hide_pledges === true) {
       // Patron opted out of public visibility — count toward anonymous total
