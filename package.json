@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "scripts": {
+    "start": "node riverside-to-ghost.js"
+  },
   "dependencies": {
     "@tryghost/admin-api": "^1.14.11",
     "libsodium-wrappers": "^0.8.4",
