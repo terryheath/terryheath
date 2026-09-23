@@ -152,40 +152,34 @@ async function fetchSupporters() {
 
 // ── Ghost page storage ─────────────────────────────────────────────────────
 
-function buildGhostHtml(data) {
-  // Store as data-attributes on a <div>. Ghost's Content API strips <script> tags
-  // but passes HTML card <div> elements through untouched.
-  const namesEncoded = JSON.stringify(data.names)
-    .replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-  return '<!--kg-card-begin: html-->' +
-    `<div id="ih-patron-data" data-names="${namesEncoded}" data-anonymous="${data.anonymous}"></div>` +
-    '<!--kg-card-end: html-->';
+function buildCIHead(data) {
+  // Store patron data in codeinjection_head as a JSON script tag.
+  // This field is a plain text column Ghost never sanitizes, and the
+  // Content API returns it verbatim — unlike html/lexical body content
+  // which Ghost 5.x ignores on PUT if the page was created in lexical format.
+  const json = JSON.stringify(data)
+    .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+  return '<meta name="robots" content="noindex,nofollow">' +
+    `<script type="application/json" id="ih-patron-data">${json}</script>`;
 }
 
-function extractStoredData(html) {
-  if (!html) return null;
-  const divM = html.match(/<div[^>]+id="ih-patron-data"([^>]*)>/);
-  if (!divM) return null;
-  const tag   = divM[0];
-  const namesM = tag.match(/data-names="([^"]*)"/);
-  const anonM  = tag.match(/data-anonymous="(\d+)"/);
-  if (!namesM || !anonM) return null;
-  try {
-    const names = JSON.parse(namesM[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
-    return { names, anonymous: parseInt(anonM[1]) || 0 };
-  } catch { return null; }
+function extractStoredData(ciHead) {
+  if (!ciHead) return null;
+  const m = ciHead.match(/<script[^>]+id="ih-patron-data"[^>]*>([\s\S]*?)<\/script>/);
+  if (!m) return null;
+  try { return JSON.parse(m[1]); } catch { return null; }
 }
 
 async function getExistingPage() {
   const resp = await get(
     GHOST_URL + '/ghost/api/admin/pages/?filter=slug:' + PAGE_SLUG +
-    '&fields=id,html,updated_at',
+    '&fields=id,codeinjection_head,updated_at',
     { Authorization: 'Ghost ' + makeJwt() }
   );
   return resp.pages?.[0] ?? null;
 }
 
-async function upsertGhostPage(existing, html) {
+async function upsertGhostPage(existing, ciHead) {
   const jwt = makeJwt();
   const pageData = {
     title             : 'Patreon Supporters',
@@ -193,9 +187,8 @@ async function upsertGhostPage(existing, html) {
     status            : 'published',
     visibility        : 'public',
     featured          : false,
-    html,
     tags              : [{ name: '#patreon' }],
-    codeinjection_head: '<meta name="robots" content="noindex,nofollow">'
+    codeinjection_head: ciHead
   };
 
   if (existing) {
@@ -219,11 +212,11 @@ async function upsertGhostPage(existing, html) {
 
 async function main() {
   const data     = await fetchSupporters();
-  const newHtml  = buildGhostHtml(data);
+  const ciHead   = buildCIHead(data);
   const existing = await getExistingPage();
 
   if (existing) {
-    const stored = extractStoredData(existing.html);
+    const stored = extractStoredData(existing.codeinjection_head);
     if (stored &&
         JSON.stringify(stored.names) === JSON.stringify(data.names) &&
         stored.anonymous === data.anonymous) {
@@ -232,7 +225,7 @@ async function main() {
     }
   }
 
-  await upsertGhostPage(existing, newHtml);
+  await upsertGhostPage(existing, ciHead);
 }
 
 main().catch(err => { console.error(err.message); process.exit(1); });

@@ -586,7 +586,7 @@
         '&filter=primary_tag:art&fields=title,url,feature_image,html&limit=12&order=published_at+desc')
         .then(function(r) { return r.json(); }),
       fetch(GHOST_URL + '/ghost/api/content/pages/?key=' + CONTENT_KEY +
-        '&filter=slug:patreon-supporters&fields=html')
+        '&filter=slug:patreon-supporters&fields=codeinjection_head')
         .then(function(r) { return r.json(); })
         .catch(function() { return null; })
     ]).then(function(results) {
@@ -681,17 +681,12 @@
     // ── Patreon supporters ────────────────────────────────────────────────────
     // Parsed here so the block embeds inside the cover column, below the image.
     var patronData = (function() {
-      var html = patronPageResp && patronPageResp.pages && patronPageResp.pages[0] && patronPageResp.pages[0].html;
-      if (!html) return null;
+      var ci = patronPageResp && patronPageResp.pages && patronPageResp.pages[0] && patronPageResp.pages[0].codeinjection_head;
+      if (!ci) return null;
       try {
-        var tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        var el = tmp.querySelector('#ih-patron-data');
-        if (!el) return null;
-        return {
-          names: JSON.parse(el.getAttribute('data-names') || '[]'),
-          anonymous: parseInt(el.getAttribute('data-anonymous') || '0') || 0
-        };
+        var m = ci.match(/<script[^>]+id="ih-patron-data"[^>]*>([\s\S]*?)<\/script>/);
+        if (!m) return null;
+        return JSON.parse(m[1]);
       } catch(x) { return null; }
     })();
 
