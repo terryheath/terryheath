@@ -181,11 +181,11 @@
   var DEPT_TAGS = ['fiction', 'nonfiction', 'poetry', 'micro', 'art', 'podcast', 'letter'];
   var DEPT_LABELS = {
     fiction: 'Fiction', nonfiction: 'Nonfiction', poetry: 'Poetry',
-    micro: 'Micro Fiction', art: 'Art', podcast: 'Podcast', letter: 'Colophon'
+    micro: 'Micro Fiction', art: 'Art', podcast: 'Podcast', letter: "Founder's Letter"
   };
   var DEPT_PATHS = {
     fiction: '/fiction/', nonfiction: '/nonfiction/', poetry: '/poetry/',
-    micro: '/micro/', art: '/art/', podcast: '/podcast/', letter: '/colophon/'
+    micro: '/micro/', art: '/art/', podcast: '/podcast/', letter: '/founder-letter/'
   };
 
   var isHome = window.location.pathname === '/';
@@ -636,7 +636,7 @@
     // ungrouped posts (no genre tag) are rendered last without a heading.
     var GENRE_ORDER  = ['poetry', 'fiction', 'nonfiction', 'micro', 'art', 'letter'];
     var GENRE_LABELS = { poetry: 'Poetry', fiction: 'Fiction', nonfiction: 'Nonfiction',
-                         micro: 'Micro Fiction', art: 'Art', letter: 'Colophon' };
+                         micro: 'Micro Fiction', art: 'Art', letter: "Founder's Letter" };
     var genreGroups = {}, ungrouped = [];
     for (var i = 0; i < issuePosts.length; i++) {
       var p = issuePosts[i];
@@ -747,7 +747,7 @@
     }
 
     var leftCells = renderDept('Micro Fiction', microPost, false) +
-                    renderDept('Colophon', colophonPost, false);
+                    renderDept("Founder's Letter", colophonPost, false);
     var rightCell = renderDept('Podcast', podcastPost, true);
 
     var deptSectionHtml = '';
