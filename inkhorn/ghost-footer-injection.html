@@ -70,11 +70,11 @@
 @media (max-width: 480px) { .ih-art-grid-wrapper { padding: 0 16px 32px; } .ih-art-grid { column-count: 1; } }
 
 /* Patreon supporters */
-.ih-patrons { background: #f7f7f7; border-radius: 3px; padding: 20px 28px; }
-.ih-patrons-label { font-size: 14px; color: #555; margin: 0; line-height: 1.5; }
-.ih-patrons-label a { color: inherit; text-decoration: underline; text-decoration-color: #ccc; text-underline-offset: 0.15em; }
-.ih-patrons-label a:hover { text-decoration-color: #444; }
-.ih-patrons-names { font-size: 14px; color: #555; margin: 8px 0 0; line-height: 1.6; }
+.ih-patrons { margin-top: 16px; }
+.ih-patrons-label { font-size: 12px; color: #777; margin: 0; line-height: 1.5; }
+.ih-patrons-label a { color: inherit; text-decoration: underline; text-decoration-color: #bbb; text-underline-offset: 0.15em; }
+.ih-patrons-label a:hover { text-decoration-color: #555; }
+.ih-patrons-names { font-size: 12px; color: #777; margin: 6px 0 0; line-height: 1.6; }
 
 /* Subscribe */
 .ih-subscribe { background: #f7f7f7; border-radius: 3px; padding: 32px 40px; text-align: center; margin-top: 16px; }
@@ -678,9 +678,40 @@
       ? '<p class="ih-issue-desc">' + e(issue.description) + '</p>'
       : '';
 
+    // ── Patreon supporters ────────────────────────────────────────────────────
+    // Parsed here so the block embeds inside the cover column, below the image.
+    var patronData = (function() {
+      var html = patronPageResp && patronPageResp.pages && patronPageResp.pages[0] && patronPageResp.pages[0].html;
+      if (!html) return null;
+      var m = html.match(/<script[^>]+id="ih-patron-data"[^>]*>([\s\S]*?)<\/script>/);
+      if (!m) return null;
+      try { return JSON.parse(m[1]); } catch(x) { return null; }
+    })();
+
+    var patronNamesHtml = '';
+    if (patronData && patronData.names && patronData.names.length) {
+      var pParts = patronData.names.map(function(n) { return e(n); });
+      if (patronData.anonymous > 0) {
+        pParts.push('and ' + patronData.anonymous +
+          ' anonymous ' + (patronData.anonymous === 1 ? 'supporter' : 'supporters'));
+      }
+      patronNamesHtml = '<p class="ih-patrons-names">' + pParts.join(', ') + '</p>';
+    } else if (patronData && patronData.anonymous > 0) {
+      patronNamesHtml = '<p class="ih-patrons-names">' + patronData.anonymous +
+        ' anonymous ' + (patronData.anonymous === 1 ? 'supporter' : 'supporters') + '</p>';
+    }
+
+    var patreonBlockHtml =
+      '<div class="ih-patrons">' +
+      '<p class="ih-patrons-label"><em>Inkhorn Review</em> is made possible in part by the generous' +
+      ' support of our <a href="https://www.patreon.com/cw/inkhornreview"' +
+      ' target="_blank" rel="noopener">Patreon subscribers</a>.</p>' +
+      patronNamesHtml +
+      '</div>';
+
     var issueHtml =
       '<section class="ih-issue">' +
-      (coverHtml ? '<div class="ih-issue-cover">' + coverHtml + '</div>' : '') +
+      '<div class="ih-issue-cover">' + (coverHtml || '') + patreonBlockHtml + '</div>' +
       '<div class="ih-issue-info">' +
       '<h2 class="ih-issue-name">' + e(formatIssueTitle(issue.slug)) + '</h2>' +
       descHtml +
@@ -752,43 +783,10 @@
       '<p class="ih-subscribe-secondary">Also available: <a href="' + e(GHOST_URL) + '/#/portal/signup">issue announcements</a> and <a href="' + e(GHOST_URL) + '/#/portal/account/newsletters">Weekly Micro Fiction</a>.</p>' +
       '</section>';
 
-    // ── Patreon supporters ────────────────────────────────────────────────────
-    // Parse stored JSON from the Ghost page. Render the label+link regardless;
-    // render names only when present.
-    var patronData = (function() {
-      var html = patronPageResp && patronPageResp.pages && patronPageResp.pages[0] && patronPageResp.pages[0].html;
-      if (!html) return null;
-      var m = html.match(/<script[^>]+id="ih-patron-data"[^>]*>([\s\S]*?)<\/script>/);
-      if (!m) return null;
-      try { return JSON.parse(m[1]); } catch(x) { return null; }
-    })();
-
-    var patronNamesHtml = '';
-    if (patronData && patronData.names && patronData.names.length) {
-      var pParts = patronData.names.map(function(n) { return e(n); });
-      if (patronData.anonymous > 0) {
-        pParts.push('and ' + patronData.anonymous +
-          ' anonymous ' + (patronData.anonymous === 1 ? 'supporter' : 'supporters'));
-      }
-      patronNamesHtml = '<p class="ih-patrons-names">' + pParts.join(', ') + '</p>';
-    } else if (patronData && patronData.anonymous > 0) {
-      patronNamesHtml = '<p class="ih-patrons-names">' + patronData.anonymous +
-        ' anonymous ' + (patronData.anonymous === 1 ? 'supporter' : 'supporters') + '</p>';
-    }
-
-    var patreonHtml =
-      '<hr class="ih-hr">' +
-      '<section class="ih-patrons">' +
-      '<p class="ih-patrons-label"><em>Inkhorn Review</em> is made possible in part by the generous' +
-      ' support of our <a href="https://www.patreon.com/cw/inkhornreview"' +
-      ' target="_blank" rel="noopener">Patreon subscribers</a>.</p>' +
-      patronNamesHtml +
-      '</section>';
-
     // ── Assemble and inject ───────────────────────────────────────────────────
     var homeHtml =
       '<div class="inkhorn-home">' +
-      issueHtml + patreonHtml + deptSectionHtml + galleryHtml + subscribeHtml +
+      issueHtml + deptSectionHtml + galleryHtml + subscribeHtml +
       '</div>';
 
     var content = document.querySelector('.gh-content');
