@@ -798,7 +798,7 @@ async function main() {
             custom_excerpt: trimExcerpt(item.contentSnippet) || undefined,
             feature_image: feature || undefined,
             feature_image_caption: feature ? caption : undefined,
-            custom_template: 'custom-narrow-feature-image',
+
             tags,
             status: 'draft',
             published_at: item.isoDate || undefined
