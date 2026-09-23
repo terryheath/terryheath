@@ -1,9 +1,6 @@
 name: Import podcast episodes to Ghost
 
 on:
-  schedule:
-    # Every day at 13:17 UTC (6:17am PDT / 5:17am PST).
-    - cron: '17 13 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -19,9 +16,6 @@ on:
           - published
         default: ''
 
-permissions:
-  contents: write
-
 jobs:
   import:
     runs-on: ubuntu-latest
@@ -33,14 +27,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install @tryghost/admin-api rss-parser
-
-      - name: Restore book cache
-        uses: actions/cache@v4
-        with:
-          path: .book-cache.json
-          key: book-cache-${{ github.run_id }}
-          restore-keys: book-cache-
+        run: npm install
 
       - name: Run importer
         env:
@@ -57,17 +44,3 @@ jobs:
             ${{ github.event.inputs.dry_run == 'true' && '1'
                 || vars.DRY_RUN || '' }}
         run: node riverside-to-ghost.js
-
-      - name: Save imported-guids.json
-        if: always()
-        run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git add imported-guids.json
-          if git diff --cached --quiet; then
-            echo "No new guids to save."
-          else
-            git commit -m "chore: update imported-guids.json"
-            git pull --rebase
-            git push
-          fi

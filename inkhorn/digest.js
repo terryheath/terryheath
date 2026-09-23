@@ -12,12 +12,7 @@
 
 import GhostAdminAPI from '@tryghost/admin-api';
 import { createHmac } from 'crypto';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const STATE_FILE = join(__dirname, 'digest-state.json');
+import { postToBluesky } from './social-bluesky.js';
 
 const GHOST_API_URL   = process.env.GHOST_API_URL;
 const GHOST_ADMIN_KEY = process.env.GHOST_ADMIN_KEY;
@@ -40,24 +35,6 @@ const api = new GhostAdminAPI({
   key:     GHOST_ADMIN_KEY,
   version: 'v5.0',
 });
-
-// ── Watermark state ───────────────────────────────────────────────────────────
-// Shape: { "sections": { "<sectionKey>": "<ISO published_at>" } }
-// Section keys: issue:autumn-2026, letter, micro, poetry, fiction,
-//               nonfiction, art, podcast
-
-function loadState() {
-  if (!existsSync(STATE_FILE)) return { sections: {} };
-  try {
-    return JSON.parse(readFileSync(STATE_FILE, 'utf8'));
-  } catch {
-    return { sections: {} };
-  }
-}
-
-function saveState(state) {
-  writeFileSync(STATE_FILE, JSON.stringify(state, null, 2) + '\n');
-}
 
 // ── Issue tag helpers ─────────────────────────────────────────────────────────
 
@@ -212,15 +189,35 @@ function buildJWT() {
   return `${sigInput}.${sig}`;
 }
 
+// ── Ghost-derived watermark ───────────────────────────────────────────────────
+// Replaces digest-state.json. Returns the published_at of the most recently
+// published digest post, or null if no digest has ever been sent.
+async function getLastDigestAt() {
+  try {
+    const posts = await api.posts.browse({
+      filter: 'tag:hash-digest+status:published',
+      order:  'published_at desc',
+      limit:  1,
+      fields: 'published_at',
+    });
+    return posts[0]?.published_at ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  const state = loadState();
-  console.log('Watermark state:', JSON.stringify(state.sections));
+  const lastDigestAt = await getLastDigestAt();
+  console.log('Last digest published_at:', lastDigestAt ?? '(none — first run)');
 
-  console.log('\nFetching all published posts (excluding #digest) …');
+  const postsFilter = lastDigestAt
+    ? `status:published+tag:-hash-digest+published_at:>'${lastDigestAt}'`
+    : 'status:published+tag:-hash-digest';
+  console.log('\nFetching posts newer than last digest …');
   const rawPosts = await api.posts.browse({
-    filter: 'status:published+tag:-hash-digest',
+    filter: postsFilter,
     include: 'tags',
     limit:   'all',
   });
@@ -249,7 +246,6 @@ async function main() {
   // For each section, select the newest post and filter by watermark
   const groups        = new Map(); // rendering map: DEPT_ORDER key -> items[]
   const seenIssueSlugs = new Set();
-  const newWatermarks  = new Map(); // sectionKey -> published_at (written on success)
 
   for (const { key } of DEPT_ORDER) {
     if (key === 'issue') {
@@ -260,20 +256,10 @@ async function main() {
 
         sectionPosts.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
         const newest    = sectionPosts[0];
-        const watermark = state.sections[sectionKey];
-
-        if (watermark && new Date(newest.published_at) <= new Date(watermark)) {
-          console.log(`  SKIP [watermark] ${sectionKey}: newest="${newest.title}" at ${newest.published_at} not after watermark ${watermark}`);
-          sectionPosts.slice(1).forEach(p =>
-            console.log(`  SKIP [not-newest] ${sectionKey}: "${p.title}" at ${p.published_at}`)
-          );
-          continue;
-        }
 
         seenIssueSlugs.add(issueSlug);
         if (!groups.has('issue')) groups.set('issue', []);
         groups.get('issue').push({ type: 'issue', slug: issueSlug });
-        newWatermarks.set(sectionKey, newest.published_at);
 
         sectionPosts.slice(1).forEach(p =>
           console.log(`  SKIP [not-newest] ${sectionKey}: "${p.title}" at ${p.published_at}`)
@@ -284,19 +270,8 @@ async function main() {
       if (!sectionPosts?.length) continue;
 
       sectionPosts.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
-      const newest    = sectionPosts[0];
-      const watermark = state.sections[key];
-
-      if (watermark && new Date(newest.published_at) <= new Date(watermark)) {
-        console.log(`  SKIP [watermark] ${key}: newest="${newest.title}" at ${newest.published_at} not after watermark ${watermark}`);
-        sectionPosts.slice(1).forEach(p =>
-          console.log(`  SKIP [not-newest] ${key}: "${p.title}" at ${p.published_at}`)
-        );
-        continue;
-      }
-
+      const newest = sectionPosts[0];
       groups.set(key, [{ type: 'post', post: newest }]);
-      newWatermarks.set(key, newest.published_at);
 
       sectionPosts.slice(1).forEach(p =>
         console.log(`  SKIP [not-newest] ${key}: "${p.title}" at ${p.published_at}`)
@@ -354,8 +329,6 @@ async function main() {
   console.log(`Subject:  ${emailSubject}`);
   console.log(`Sections: ${orderedKeys.join(', ')}`);
   console.log(`Feature image: ${featureImage ? 'yes' : 'none'}`);
-  console.log('Watermarks that will be written on success:');
-  for (const [k, v] of newWatermarks) console.log(`  ${k}: ${v}`);
 
   // Build HTML
   const parts = [];
@@ -459,12 +432,26 @@ async function main() {
 
   console.log('\nSend confirmed by API.');
 
-  // Write watermarks only after confirmed send
-  for (const [k, v] of newWatermarks) {
-    state.sections[k] = v;
+  // Post to Bluesky (failure must not fail the digest)
+  if (!DRY_RUN) {
+    try {
+      const sectionNames = orderedKeys.map(key => {
+        if (key === 'issue') {
+          return groups.get('issue').map(item => formatIssueTitle(item.slug)).join(' & ');
+        }
+        return DEPT_ORDER.find(d => d.key === key)?.label ?? key;
+      });
+      await postToBluesky({
+        title:           digestTitle,
+        sectionNames,
+        url:             sent.url,
+        featureImageUrl: featureImage,
+      });
+    } catch (bskyErr) {
+      console.error('\n⚠️  Bluesky post failed (digest still succeeded):');
+      console.error(bskyErr.message);
+    }
   }
-  saveState(state);
-  console.log('Watermark state written to digest-state.json.');
 }
 
 main().catch(err => {

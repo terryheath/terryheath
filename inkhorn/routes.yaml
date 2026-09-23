@@ -437,8 +437,8 @@ collections:
     order: published_at desc
     limit: 999
 
-  /colophon/:
-    permalink: /colophon/{slug}/
+  /founder-letter/:
+    permalink: /founder-letter/{slug}/
     template: tag
     filter: primary_tag:letter
     data: tag.letter
@@ -458,6 +458,13 @@ collections:
     template: tag
     filter: primary_tag:micro
     data: tag.micro
+    order: published_at desc
+    limit: 999
+
+  /digest/:
+    permalink: /digest/{slug}/
+    template: index
+    filter: tag:hash-digest
     order: published_at desc
     limit: 999
 

@@ -1,6 +1,6 @@
 # terryheath repo
 
-Scripts and config for Terry Heath's Ghost sites. This is not a web app — it's a toolbox. Nothing here is deployed as a service; scripts are run on demand and config files are uploaded into Ghost by hand.
+Scripts and config for Terry Heath's Ghost sites. Scripts are run on demand locally or triggered via Railway cron (for scheduled jobs) or GitHub Actions dispatch (manual fallback).
 
 ## Scope
 
@@ -10,6 +10,7 @@ Inkhorn Review's stack:
 - **Publishing** — Ghost at inkhornreview.com (PikaPods). Posts, pages, and routing all managed there.
 - **Submissions** — Duosuma. No submission code lives in this repo.
 - **This repo** — `inkhorn/routes.yaml`, `inkhorn/contributors.json`, `inkhorn/build-shelves.js`, `inkhorn/shelves.json`, `inkhorn/ghost-footer-injection.html`, `inkhorn/set-og-images.js`, and issue scripts. Nothing else.
+- **Scheduler** — Railway project "Inkhorn Cron" runs three cron services against this repo. GitHub Actions workflows are manual-dispatch fallbacks only; they no longer run on a schedule.
 
 ## The sites
 
@@ -19,8 +20,12 @@ Inkhorn Review's stack:
 
 ## What's in here
 
-- **riverside-to-ghost.js** — Converts Riverside podcast recordings into Ghost posts with embedded audio, show notes, and book cards. Run manually after a new episode is edited. Looks up ISBNs via ISBNdb → Google Books → Open Library.
-- **.github/workflows/import-podcast.yml** — GitHub Actions workflow that runs the podcast import pipeline. Triggered manually or on push.
+- **riverside-to-ghost.js** — Converts Riverside podcast recordings into Ghost posts with embedded audio, show notes, and book cards. Scheduled daily via Railway (podcast-import service). Reads/writes `imported-guids.json` and `.book-cache.json` from `STATE_DIR` (Railway volume on Railway; `process.cwd()` locally). Looks up ISBNs via ISBNdb → Google Books → Open Library.
+- **inkhorn/digest.js** — Builds and sends the weekly Inkhorn digest newsletter. Scheduled weekly via Railway (digest service). Derives watermark from the most recently published digest post in Ghost — no local state file.
+- **inkhorn/scheduler-check.js** — Checks for Ghost posts stuck in scheduled state. Scheduled daily via Railway (scheduler-check service). Exits 1 if any overdue posts found (Railway logs as failure).
+- **.github/workflows/import-podcast.yml** — Manual dispatch fallback for the podcast importer. No schedule.
+- **.github/workflows/inkhorn-digest.yml** — Manual dispatch fallback for the digest. No schedule.
+- **.github/workflows/inkhorn-scheduler-check.yml** — Manual dispatch fallback for the scheduler check. No schedule.
 - **headshots/** — Guest headshot images referenced by podcast posts.
 - **inkhorn/routes.yaml** — Ghost custom routes for Inkhorn Review. Defines seasonal collection URLs (`/autumn-2026/`, `/winter-2027/`, `/spring-2027/`, `/summer-2027/`, etc.) and genre channel routes (poetry, fiction, nonfiction per issue). Uploaded via Ghost Settings → Labs. The backup `inkhorn/routes.yaml.bimonthly.bak` preserves the previous bimonthly layout.
 - **inkhorn/contributors.json** — Hand-maintained list of Inkhorn contributors and their book ISBNs. Add entries here to populate the book shelf.
@@ -135,7 +140,7 @@ After editing, upload the file to Ghost: **Settings → Labs → Routes → Uplo
 
 ### Re-running the podcast import
 
-Trigger the GitHub Actions workflow `import-podcast.yml` from the Actions tab, or run `riverside-to-ghost.js` locally with the required environment variables (Ghost Admin API key, Riverside credentials).
+Trigger manually via Railway (podcast-import service → Run now), or trigger the GitHub Actions workflow `import-podcast.yml` from the Actions tab, or run `riverside-to-ghost.js` locally with the required environment variables.
 
 ## Credentials
 
@@ -148,6 +153,9 @@ Trigger the GitHub Actions workflow `import-podcast.yml` from the Actions tab, o
 
 ## Hard-won constraints — DO NOT relearn these
 
+- **Railway is the scheduler; GitHub Actions workflows are manual-dispatch fallbacks only.** Do not add `schedule:` triggers back to the workflows.
+- **digest.js derives its watermark from Ghost** (most recent published `#digest` post's `published_at`). There is no `digest-state.json`. Do not reintroduce a local state file.
+- **imported-guids.json and .book-cache.json live on the Railway volume** (`STATE_DIR` env var). On Railway, `STATE_DIR` points to the mounted volume. Locally, `STATE_DIR` defaults to `process.cwd()` so local runs are unchanged. Do not commit these files back to git.
 - **Ghost strips raw HTML on import.** Anything with markup must be wrapped in `<!--kg-card-begin: html-->` / `<!--kg-card-end: html-->`. The email card variant (`<!--kg-card-begin: email-->`) does NOT survive the same import path.
 - **Ghost only sends newsletter email on a draft → published transition,** never on a post created as published in one API call. Two-step publish is required: create as draft, then update status to published.
 - **inkhorn/routes.yaml does NOT travel with a Ghost export.** It must be re-uploaded via Settings → Labs on any new install, and it is irreplaceable once issues publish — there is no other canonical copy.

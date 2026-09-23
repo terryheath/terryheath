@@ -28,11 +28,15 @@
  * Editing a post title in Ghost will NOT cause a re-import.
  */
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const GhostAdminAPI = require('@tryghost/admin-api');
-const Parser = require('rss-parser');
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import GhostAdminAPI from '@tryghost/admin-api';
+import Parser from 'rss-parser';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const FEED_URL = process.env.FEED_URL
   || 'https://api.riverside.com/hosting/V48At7Hk.rss';
@@ -43,8 +47,9 @@ const POST_STATUS = process.env.POST_STATUS || 'draft';
 const NEWSLETTER_SLUG = process.env.NEWSLETTER_SLUG;
 const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS || '14', 10);
 const DRY_RUN = process.env.DRY_RUN === '1';
-const CACHE_FILE  = path.join(process.cwd(), '.book-cache.json');
-const GUIDS_FILE  = path.join(process.cwd(), 'imported-guids.json');
+const STATE_DIR   = path.resolve(process.env.STATE_DIR || process.cwd());
+const CACHE_FILE  = path.join(STATE_DIR, '.book-cache.json');
+const GUIDS_FILE  = path.join(STATE_DIR, 'imported-guids.json');
 
 const api = new GhostAdminAPI({
   url: process.env.GHOST_API_URL,
@@ -67,6 +72,16 @@ let cache = {};
 try { cache = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8')); } catch (e) {}
 const saveCache = () =>
   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
+
+// On first Railway run, seed from repo copy if volume is empty
+if (!fs.existsSync(GUIDS_FILE)) {
+  fs.mkdirSync(STATE_DIR, { recursive: true });
+  const repoCopy = path.resolve(__dirname, 'imported-guids.json');
+  if (fs.existsSync(repoCopy) && path.resolve(GUIDS_FILE) !== repoCopy) {
+    fs.copyFileSync(repoCopy, GUIDS_FILE);
+    console.log(`Seeded imported-guids.json from repo copy.`);
+  }
+}
 
 // Guids of episodes that were successfully published; persisted across runs
 // so that deleting a Ghost post doesn't cause a re-import.

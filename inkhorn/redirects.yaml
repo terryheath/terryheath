@@ -6,4 +6,5 @@
   /tag/micro/: /micro/
   /tag/art/: /art/
   /tag/podcast/: /podcast/
-  /tag/letter/: /colophon/
+  /tag/letter/: /founder-letter/
+  /colophon/: /founder-letter/
