@@ -601,12 +601,23 @@ ${body}
   }
 }
 
-async function buildHtml(item, postUrl, transcriptEntry) {
+function headshotCard(url, alt, caption) {
+  if (!url) return '';
+  const figcaption = caption ? `\n<figcaption>${caption}</figcaption>` : '';
+  return `<!--kg-card-begin: html-->
+<figure class="kg-card kg-image-card">
+<img src="${url}" class="kg-image" alt="${alt || ''}">
+${figcaption}</figure>
+<!--kg-card-end: html-->`;
+}
+
+async function buildHtml(item, postUrl, transcriptEntry, { headshotUrl, headshotAlt, headshotCaption } = {}) {
   const raw = item.contentEncoded || item.content || item.description || '';
   const { html, isbns } = extractIsbns(raw);
   const audioUrl = item.enclosure && item.enclosure.url;
   const { url: txUrl, type: txType } = transcriptEntry ?? {};
-  return [audioPlayer(audioUrl, postUrl, item.duration),
+  return [headshotCard(headshotUrl, headshotAlt, headshotCaption),
+    audioPlayer(audioUrl, postUrl, item.duration),
     wrapTimestamps(html),
     await transcriptSection(txUrl, txType),
     await booksSection(isbns)].filter(Boolean).join('\n');
@@ -758,7 +769,8 @@ async function main() {
         // The draft already has the correct slug, tags, template, and
         // published_at. Patch in the headshot + final HTML and publish.
         const postUrl  = `${process.env.GHOST_API_URL}/${existingDraft.slug}/`;
-        const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid));
+        const headshotOpts = { headshotUrl: feature || undefined, headshotAlt: guest || undefined, headshotCaption: caption };
+        const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid), headshotOpts);
         const editPayload = {
           id: existingDraft.id,
           html: finalHtml,
@@ -796,7 +808,8 @@ async function main() {
 
         // Step 2: rebuild HTML with the listen link now that we have the slug.
         const postUrl = `${process.env.GHOST_API_URL}/${draft.slug}/`;
-        const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid));
+        const headshotOpts = { headshotUrl: feature || undefined, headshotAlt: guest || undefined, headshotCaption: caption };
+        const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid), headshotOpts);
         const editPayload = {
           id: draft.id,
           html: finalHtml,
