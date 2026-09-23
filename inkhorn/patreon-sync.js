@@ -15,8 +15,8 @@
  * Never prints token values to stdout.
  */
 
-const https  = require('https');
-const crypto = require('crypto');
+import https  from 'https';
+import crypto from 'crypto';
 
 const PATREON_TOKEN = process.env.PATREON_CREATOR_TOKEN;
 const GHOST_URL     = (process.env.GHOST_API_URL  || '').replace(/\/$/, '');
@@ -180,15 +180,14 @@ async function upsertGhostPage(existing, html) {
     title             : 'Patreon Supporters',
     slug              : PAGE_SLUG,
     status            : 'published',
-    visibility        : 'public',        // public so Content API can read it unauthenticated
+    visibility        : 'public',
     featured          : false,
     html,
-    tags              : [{ name: '#patreon' }],  // internal tag — excluded from sitemap
+    tags              : [{ name: '#patreon' }],
     codeinjection_head: '<meta name="robots" content="noindex,nofollow">'
   };
 
   if (existing) {
-    // updated_at is required to prevent Ghost's "editing older version" conflict check
     await put(
       GHOST_URL + '/ghost/api/admin/pages/' + existing.id + '/',
       { Authorization: 'Ghost ' + jwt },
