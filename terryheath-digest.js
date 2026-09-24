@@ -83,15 +83,24 @@ async function fetchInkhornPosts(filter) {
 }
 
 // ── Draft body ────────────────────────────────────────────────────────────────
-// Plain titled links, no styling. Wrapped in an html card so Ghost renders it.
+// Plain <p>, <h3>, <ul>/<li>, <a> — no kg-card wrappers. Ghost converts these
+// to native editor content (paragraph, heading, list cards) on import.
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 function buildBody(thPosts, letterPosts, podcastPosts) {
-  const lines = ['<!--kg-card-begin: html-->', '<p><em>Raw notes — delete before sending</em></p>'];
+  const lines = ['<p><em>Raw notes — delete before sending</em></p>'];
 
   lines.push('<h3>terryheath.com</h3>');
   if (thPosts.length) {
     lines.push('<ul>');
-    for (const p of thPosts) lines.push(`  <li><a href="${p.url}">${p.title}</a></li>`);
+    for (const p of thPosts) lines.push(`  <li><a href="${esc(p.url)}">${esc(p.title)}</a></li>`);
     lines.push('</ul>');
   } else {
     lines.push('<p>(none)</p>');
@@ -100,7 +109,7 @@ function buildBody(thPosts, letterPosts, podcastPosts) {
   lines.push("<h3>Founder's Letter</h3>");
   if (letterPosts.length) {
     lines.push('<ul>');
-    for (const p of letterPosts) lines.push(`  <li><a href="${p.url}">${p.title}</a></li>`);
+    for (const p of letterPosts) lines.push(`  <li><a href="${esc(p.url)}">${esc(p.title)}</a></li>`);
     lines.push('</ul>');
   } else {
     lines.push('<p>(none)</p>');
@@ -109,13 +118,12 @@ function buildBody(thPosts, letterPosts, podcastPosts) {
   lines.push('<h3>Life on Words</h3>');
   if (podcastPosts.length) {
     lines.push('<ul>');
-    for (const p of podcastPosts) lines.push(`  <li><a href="${p.url}">${p.title}</a></li>`);
+    for (const p of podcastPosts) lines.push(`  <li><a href="${esc(p.url)}">${esc(p.title)}</a></li>`);
     lines.push('</ul>');
   } else {
     lines.push('<p>(none)</p>');
   }
 
-  lines.push('<!--kg-card-end: html-->');
   return lines.join('\n');
 }
 
