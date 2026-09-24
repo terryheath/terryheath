@@ -16,10 +16,11 @@ Inkhorn Review's stack:
 
 - **lifeonwords.com** — Life on Words, a literary podcast. Ghost instance on PikaPods. The podcast import pipeline in this repo feeds it.
 - **inkhornreview.com** — Inkhorn Review, a quarterly literary journal (4 issues/year: autumn/September, winter/December, spring/March, summer/June). Ghost instance on PikaPods. Routes, contributor shelves, and code injection in this repo support it.
-- **terryheath.com** — Personal site. Still on Ghost Pro, to be ported to PikaPods.
+- **terryheath.com** — Personal site. Ghost on PikaPods (`smoky-hyena.pikapod.net`). The weekly digest in this repo feeds it.
 
 ## What's in here
 
+- **terryheath-digest.js** — Builds and sends the weekly Terry Heath digest newsletter. Scheduled weekly via Railway (terryheath-digest service). Sections: all new terryheath.com posts (newest first), newest Inkhorn founder's letter, and all new Life on Words podcast episodes. Watermark derived from the most recently published `#digest` post on terryheath.com — no local state file. Falls back to 7 days before now on first run. If there are no new terryheath.com posts, exits without sending. Requires `TH_GHOST_API_URL`, `TH_GHOST_ADMIN_KEY`; Inkhorn cross-site sections via `INKHORN_API_URL` + `INKHORN_CONTENT_KEY` (Content API, read-only). Set `TH_PUBLISH_MODE=publish` and `TH_NEWSLETTER_SLUG` to send live.
 - **riverside-to-ghost.js** — Converts Riverside podcast recordings into Ghost posts with embedded audio, show notes, and book cards. Scheduled daily via Railway (podcast-import service). Reads/writes `imported-guids.json` and `.book-cache.json` from `STATE_DIR` (Railway volume on Railway; `process.cwd()` locally). Looks up ISBNs via ISBNdb → Google Books → Open Library.
 - **inkhorn/digest.js** — Builds and sends the weekly Inkhorn digest newsletter. Scheduled weekly via Railway (digest service). Derives watermark from the most recently published digest post in Ghost — no local state file.
 - **inkhorn/scheduler-check.js** — Checks for Ghost posts stuck in scheduled state. Scheduled daily via Railway (scheduler-check service). Exits 1 if any overdue posts found (Railway logs as failure).
@@ -149,13 +150,15 @@ Trigger manually via Railway (podcast-import service → Run now), or trigger th
 - **Ghost Admin API key (Inkhorn)** — macOS Keychain, service name `ghost-admin-inkhorn`. Retrieve with `security find-generic-password -s "ghost-admin-inkhorn" -w`.
 - **Ghost Content API key (Inkhorn)** — macOS Keychain, service name `ghost-content-inkhorn`. Retrieve with `security find-generic-password -s "ghost-content-inkhorn" -w`.
 - **Ghost URL (Inkhorn)** — macOS Keychain, service name `ghost-url-inkhorn`. Retrieve with `security find-generic-password -s "ghost-url-inkhorn" -w`. Value: `https://accelerated-basilisk.pikapod.net`.
+- **Ghost Admin API key (terryheath.com)** — macOS Keychain, service name `ghost-admin-terryheath`. Create in terryheath.com Ghost Admin → Settings → Integrations, then store with `security add-generic-password -s "ghost-admin-terryheath" -a "$USER" -w "KEY_HERE"`. Push to Railway: `railway variables set --service terryheath-digest "TH_GHOST_ADMIN_KEY=$(security find-generic-password -s "ghost-admin-terryheath" -w)"`.
 - **GitHub Actions secrets** — Configured on the repo's Settings → Secrets page.
 - **Cloudflare** — Wrangler OAuth (run `npx wrangler login` if expired). DNS-only API token in GCP Secret Manager: `whiterabbit-cloudflare-api-token` in project `whiterabbit-prod`.
 
 ## Hard-won constraints — DO NOT relearn these
 
 - **Railway is the scheduler; GitHub Actions workflows are manual-dispatch fallbacks only.** Do not add `schedule:` triggers back to the workflows.
-- **digest.js derives its watermark from Ghost** (most recent published `#digest` post's `published_at`). There is no `digest-state.json`. Do not reintroduce a local state file.
+- **digest.js and terryheath-digest.js both derive their watermark from Ghost** (most recent published `#digest` post's `published_at` on their respective sites). There is no state file for either. Do not reintroduce a local state file.
+- **terryheath-digest.js reads Inkhorn via Content API (read-only) using INKHORN_CONTENT_KEY.** It does NOT use the Inkhorn Admin API. The Inkhorn posts it fetches have canonical inkhornreview.com URLs already in the response — no URL rewriting needed.
 - **imported-guids.json and .book-cache.json live on the Railway volume** (`STATE_DIR` env var). On Railway, `STATE_DIR` points to the mounted volume. Locally, `STATE_DIR` defaults to `process.cwd()` so local runs are unchanged. Do not commit these files back to git.
 - **Ghost strips raw HTML on import.** Anything with markup must be wrapped in `<!--kg-card-begin: html-->` / `<!--kg-card-end: html-->`. The email card variant (`<!--kg-card-begin: email-->`) does NOT survive the same import path.
 - **Ghost only sends newsletter email on a draft → published transition,** never on a post created as published in one API call. Two-step publish is required: create as draft, then update status to published.
