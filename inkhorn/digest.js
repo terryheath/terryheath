@@ -2,8 +2,8 @@
 // inkhorn/digest.js — Inkhorn Review weekly digest generator
 //
 // PUBLISH_MODE (env var):
-//   draft   — creates post as draft, no newsletter send (default)
-//   publish — two-step: create draft → publish with digest newsletter
+//   publish — two-step: create draft → publish with digest newsletter (default)
+//   draft   — creates post as draft, no newsletter send
 //
 // Required env vars:
 //   GHOST_API_URL   e.g. https://accelerated-basilisk.pikapod.net
@@ -16,7 +16,7 @@ import { postToBluesky } from './social-bluesky.js';
 
 const GHOST_API_URL   = process.env.GHOST_API_URL;
 const GHOST_ADMIN_KEY = process.env.GHOST_ADMIN_KEY;
-const PUBLISH_MODE    = (process.env.PUBLISH_MODE || 'draft').trim().toLowerCase();
+const PUBLISH_MODE    = (process.env.PUBLISH_MODE || 'publish').trim().toLowerCase();
 const DRY_RUN         = process.env.DRY_RUN === '1';
 const SITE_URL        = 'https://inkhornreview.com';
 
