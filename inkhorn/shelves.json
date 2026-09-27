@@ -237,5 +237,27 @@
         "cover": "https://images.isbndb.com/covers/25871293482273.jpg"
       }
     ]
+  },
+  "beth-sherman": {
+    "name": "Beth Sherman",
+    "books": [
+      {
+        "isbn": "9781915247841",
+        "title": "How to Get There from Here",
+        "authors": "Beth Sherman",
+        "cover": "https://images.isbndb.com/covers/25146903482869.jpg"
+      }
+    ]
+  },
+  "allyson-petrek": {
+    "name": "Allyson Petrek",
+    "books": [
+      {
+        "isbn": "1962812049",
+        "title": "TulipTree Review Spring/Summer 2025 Wild Women Issue 17",
+        "authors": "Various Allyson Petrek",
+        "cover": "https://images.isbndb.com/covers/23330533482886.jpg"
+      }
+    ]
   }
 }
