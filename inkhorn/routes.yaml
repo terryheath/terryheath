@@ -3,6 +3,11 @@ routes:
     template: home
     data: page.home
 
+  /archive/:
+    controller: channel
+    filter: tag:hash-archive
+    order: published_at desc
+
   /autumn-2026/poetry/:
     controller: channel
     filter: tag:autumn-2026+tag:poetry

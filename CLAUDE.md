@@ -32,7 +32,7 @@ Inkhorn Review's stack:
 - **inkhorn/routes.yaml** — Ghost custom routes for Inkhorn Review. Defines seasonal collection URLs (`/autumn-2026/`, `/winter-2027/`, `/spring-2027/`, `/summer-2027/`, etc.) and genre channel routes (poetry, fiction, nonfiction per issue). Uploaded via Ghost Settings → Labs. The backup `inkhorn/routes.yaml.bimonthly.bak` preserves the previous bimonthly layout.
 - **inkhorn/contributors.json** — Hand-maintained list of Inkhorn contributors and their book ISBNs. Add entries here to populate the book shelf.
 - **inkhorn/shelves.json** — Generated output of `build-shelves.js`. Served from `raw.githubusercontent.com` and fetched client-side by the book shelf script. Commit and push after regenerating.
-- **inkhorn/build-shelves.js** — Resolves ISBNs in `contributors.json` to titles, authors, and cover images. Writes `shelves.json`. Run with `ISBNDB_KEY` env var.
+- **inkhorn/build-shelves.cjs** — Resolves ISBNs in `contributors.json` to titles, authors, and cover images. Writes `shelves.json`. Run with `ISBNDB_KEY` env var. Uses `.cjs` extension to bypass the root `"type":"module"` setting (file uses CommonJS `require()`).
 - **inkhorn/ghost-footer-injection.html** — JavaScript block pasted into Ghost's Site Footer code injection for Inkhorn Review. Renders a "Books by [Name]" shelf on contributor post pages.
 - **inkhorn/set-og-images.js** — Sets `og_image` on every post in an issue to the issue tag's cover art. Run once per issue after publishing. See Recurring tasks below.
 
@@ -44,7 +44,7 @@ Inkhorn Review's stack:
 2. Run the build:
    ```
    ISBNDB_KEY=$(security find-generic-password -s "isbndb-inkhorn" -w) \
-     node inkhorn/build-shelves.js
+     node inkhorn/build-shelves.cjs
    ```
 3. Check the output — every ISBN should show `OK` with title, author, and cover.
 4. Commit and push `inkhorn/shelves.json` (and `contributors.json`). The shelf appears automatically on the next page load.
@@ -167,6 +167,11 @@ Trigger manually via Railway (podcast-import service → Run now), or trigger th
 - **Never remove a collection block from routes.yaml.** Those URLs are permanent. Removing a block breaks every piece in that issue.
 - **The book shelf renders client-side deliberately.** Do NOT rewrite it to modify post content via the Admin API — round-tripping a contributor's piece through Ghost's HTML converter risks damaging their work.
 - **The Ghost Admin API cannot edit settings or code injection.** Anything in Settings has to be done by hand in the browser.
+- **digest.js never includes visibility:paid posts.** The `+visibility:-paid` filter is intentional — paid (#archive) drip pieces must not appear in the digest.
+- **Drip posts must never have a newsletter attached.** Ghost 6.61 email segmenter bug. schedule-drip.js sets no newsletter; verify in Ghost Admin after scheduling.
+- **PRINT_META and EBOOK_LINKS live in ghost-footer-injection.html.** Update both per issue. EBOOK_URLS in digest.js must be kept in sync with EBOOK_LINKS.
+- **The address service (inkhorn/address-service/) runs on Railway.** It verifies Ghost member tokens via JWKS and writes SHIP blocks to member notes. GHOST_ADMIN_KEY lives in Railway env vars only — never in the repo.
+- **Tier slugs are `print` and `digital`.** Portal deep-link URLs: `#/portal/signup/print/yearly` and `#/portal/signup/digital/yearly`.
 
 ## Working style
 

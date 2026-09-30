@@ -20,9 +20,15 @@ const PUBLISH_MODE    = (process.env.PUBLISH_MODE || 'publish').trim().toLowerCa
 const DRY_RUN         = process.env.DRY_RUN === '1';
 const SITE_URL        = 'https://inkhornreview.com';
 
-// Ebook download URLs keyed by issue slug. Add entries as issues are released.
-// Example: 'autumn-2026': { epub: 'https://...', pdf: 'https://...' }
+// Ebook download/store URLs keyed by issue slug.
+// Keep in sync with EBOOK_LINKS in inkhorn/ghost-footer-injection.html.
+// Format mirrors EBOOK_LINKS: apple, amazon, kobo (add epub/pdf when available).
 const EBOOK_URLS = {
+  'autumn-2026': {
+    apple: 'https://books.apple.com/us/book/inkhorn-review/id6809263868',
+    amazon: null,
+    kobo: null,
+  }
 };
 
 if (!GHOST_API_URL || !GHOST_ADMIN_KEY) {
@@ -56,7 +62,6 @@ function department(post) {
   const pt = post.primary_tag?.slug || '';
   if (isIssueTag(pt))      return 'issue:' + pt;
   if (pt === 'letter')     return 'letter';
-  if (pt === 'micro')      return 'micro';
   if (pt === 'poetry')     return 'poetry';
   if (pt === 'fiction')    return 'fiction';
   if (pt === 'nonfiction') return 'nonfiction';
@@ -69,7 +74,6 @@ function department(post) {
 const DEPT_ORDER = [
   { key: 'issue',      label: null },
   { key: 'letter',     label: 'Letter from the Editor' },
-  { key: 'micro',      label: 'Micro Fiction' },
   { key: 'poetry',     label: 'Poetry' },
   { key: 'fiction',    label: 'Fiction' },
   { key: 'nonfiction', label: 'Nonfiction' },
@@ -120,13 +124,14 @@ function issueBlock(issueSlug, tag) {
   html += `<p style="margin:0 0 10px"><a href="${esc(url)}" ` +
     `style="color:#1a1a1a;font-weight:700;text-decoration:none">Read the issue &rarr;</a></p>\n`;
 
-  if (ebook?.epub || ebook?.pdf) {
-    let ebookLine = `<p style="margin:0;font-size:14px">Download: `;
-    if (ebook.epub) ebookLine += `<a href="${esc(ebook.epub)}" style="color:#555">EPUB</a>`;
-    if (ebook.epub && ebook.pdf) ebookLine += ` &nbsp;·&nbsp; `;
-    if (ebook.pdf)  ebookLine += `<a href="${esc(ebook.pdf)}" style="color:#555">PDF</a>`;
-    ebookLine += `</p>\n`;
-    html += ebookLine;
+  if (ebook && (ebook.apple || ebook.amazon || ebook.kobo || ebook.epub || ebook.pdf)) {
+    const links = [];
+    if (ebook.apple)  links.push(`<a href="${esc(ebook.apple)}"  style="color:#555">Apple Books</a>`);
+    if (ebook.amazon) links.push(`<a href="${esc(ebook.amazon)}" style="color:#555">Amazon</a>`);
+    if (ebook.kobo)   links.push(`<a href="${esc(ebook.kobo)}"   style="color:#555">Kobo</a>`);
+    if (ebook.epub)   links.push(`<a href="${esc(ebook.epub)}"   style="color:#555">EPUB</a>`);
+    if (ebook.pdf)    links.push(`<a href="${esc(ebook.pdf)}"    style="color:#555">PDF</a>`);
+    html += `<p style="margin:0;font-size:14px">Ebook: ${links.join(' &nbsp;·&nbsp; ')}</p>\n`;
   }
 
   return html;
@@ -163,13 +168,14 @@ function itemRow(post, opts = {}) {
 }
 
 function digestFooter() {
+  // ISSN 3144-1998 (Online)
+  // Print ISSN: [placeholder — add when assigned]
   const link = `${SITE_URL}/#/portal/account/newsletters`;
   return (
     HR +
     `<p style="margin:0;font-size:13px;color:#999;line-height:1.5">` +
     `Also from Inkhorn Review: ` +
-    `<a href="${esc(link)}" style="color:#999">Weekly Micro Fiction</a>, ` +
-    `<a href="${esc(link)}" style="color:#999">The Colophon</a>, and ` +
+    `<a href="${esc(link)}" style="color:#999">The Colophon</a> and ` +
     `<a href="${esc(link)}" style="color:#999">Issue Announcements</a>. ` +
     `Manage your subscriptions to add them.` +
     `</p>\n`
@@ -212,9 +218,10 @@ async function main() {
   const lastDigestAt = await getLastDigestAt();
   console.log('Last digest published_at:', lastDigestAt ?? '(none — first run)');
 
+  // Never include paid (#archive, visibility:paid) posts in the digest.
   const postsFilter = lastDigestAt
-    ? `status:published+tag:-hash-digest+published_at:>'${lastDigestAt}'`
-    : 'status:published+tag:-hash-digest';
+    ? `status:published+tag:-hash-digest+visibility:-paid+published_at:>'${lastDigestAt}'`
+    : 'status:published+tag:-hash-digest+visibility:-paid';
   console.log('\nFetching posts newer than last digest …');
   const rawPosts = await api.posts.browse({
     filter: postsFilter,
