@@ -790,7 +790,7 @@
 
     // ── Patrons ───────────────────────────────────────────────────────────────
     // Source: Ghost page slug:patreon-supporters, codeinjection_head field.
-    // patreon-sync.js writes <script id="ih-patron-data">{"names":[...],"anonymous":N}</script>
+    // patreon-sync.js writes a script tag with id="ih-patron-data" containing JSON.
     var patronData = (function() {
       var ci = patronsPage && patronsPage.codeinjection_head;
       if (!ci) return null;
