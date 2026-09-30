@@ -595,9 +595,9 @@
       fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
         '&filter=primary_tag:art&fields=title,url,feature_image,html&limit=5&order=published_at+desc')
         .then(function(r) { return r.json(); }),
-      // Patrons page
+      // Patreon supporters page (written by patreon-sync.js)
       fetch(GHOST_URL + '/ghost/api/content/pages/?key=' + CONTENT_KEY +
-        '&filter=slug:patrons&fields=html,custom_excerpt&limit=1')
+        '&filter=slug:patreon-supporters&fields=codeinjection_head&limit=1')
         .then(function(r) { return r.json(); }).catch(function() { return null; }),
     ]).then(function(results) {
       clearTimeout(failsafe);
@@ -789,17 +789,34 @@
     }
 
     // ── Patrons ───────────────────────────────────────────────────────────────
-    var patronsHtml = '';
-    var patronNames = '';
-    if (patronsPage) {
-      // Use custom_excerpt for names (Terry edits this in Ghost Admin)
-      patronNames = patronsPage.custom_excerpt || '';
+    // Source: Ghost page slug:patreon-supporters, codeinjection_head field.
+    // patreon-sync.js writes <script id="ih-patron-data">{"names":[...],"anonymous":N}</script>
+    var patronData = (function() {
+      var ci = patronsPage && patronsPage.codeinjection_head;
+      if (!ci) return null;
+      try {
+        var m = ci.match(/<script[^>]+id="ih-patron-data"[^>]*>([\s\S]*?)<\/script>/);
+        if (!m) return null;
+        return JSON.parse(m[1]);
+      } catch(x) { return null; }
+    })();
+    var patronNamesText = '';
+    if (patronData && patronData.names && patronData.names.length) {
+      var pParts = patronData.names.map(function(n) { return e(n); });
+      if (patronData.anonymous > 0) {
+        pParts.push('and ' + patronData.anonymous +
+          ' anonymous ' + (patronData.anonymous === 1 ? 'supporter' : 'supporters'));
+      }
+      patronNamesText = pParts.join(', ');
+    } else if (patronData && patronData.anonymous > 0) {
+      patronNamesText = patronData.anonymous + ' anonymous ' +
+        (patronData.anonymous === 1 ? 'supporter' : 'supporters');
     }
-    patronsHtml =
+    var patronsHtml =
       '<section class="ih-patrons-section">' +
       '<div class="ih-patrons-body">' +
       '<div class="ih-patrons-head-label">With thanks to our patrons</div>' +
-      (patronNames ? '<div class="ih-patrons-names-text">' + e(patronNames) + '</div>' : '') +
+      (patronNamesText ? '<div class="ih-patrons-names-text">' + patronNamesText + '</div>' : '') +
       '</div>' +
       '<a href="/colophon/" class="ih-colophon-link">Colophon</a>' +
       '</section>';
