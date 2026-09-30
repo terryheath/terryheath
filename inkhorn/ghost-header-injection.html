@@ -682,6 +682,64 @@ a:hover { color: #8f1d1d; }
 .ih-art-item { break-inside: avoid; margin-bottom: 16px; display: block; line-height: 0; }
 .ih-art-item img { width: 100%; height: auto; display: block; }
 
+/* ── PRINT CATALOG PAGE (/print/) ──────────────────────────────────────────── */
+.ih-catalog-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 80px 80px;
+  box-sizing: border-box;
+}
+.ih-page-heading {
+  font-family: 'EB Garamond', serif;
+  font-size: 48px;
+  font-weight: 500;
+  margin: 0 0 32px;
+  letter-spacing: 0.01em;
+  color: #1c1a17;
+}
+.ih-catalog-rule {
+  border: none;
+  border-top: 2px solid #1c1a17;
+  margin: 48px 0;
+}
+.ih-catalog-row {
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+}
+.ih-catalog-cover {
+  flex: 0 0 auto;
+  width: 260px;
+}
+.ih-catalog-cover .ih-cover-box {
+  width: 100%;
+  height: auto;
+  max-width: 260px;
+}
+.ih-catalog-cover .ih-cover-box img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.ih-catalog-info {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.ih-catalog-title {
+  font-family: 'EB Garamond', serif;
+  font-size: 36px;
+  font-weight: 500;
+  margin: 6px 0 12px;
+  color: #1c1a17;
+}
+.ih-buy-link-coming {
+  display: inline-block;
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+  color: #5b544a;
+  margin: 12px 0 20px;
+}
+
 /* ── RESPONSIVE ─────────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   #ih-masthead { padding: 18px 20px 0; gap: 12px; }
@@ -743,6 +801,14 @@ a:hover { color: #8f1d1d; }
   .ih-patrons-names-text { font-size: 17px; }
 
   .ih-art-grid { column-count: 2; }
+
+  .ih-catalog-page { padding: 32px 20px 48px; }
+  .ih-page-heading { font-size: 36px; margin-bottom: 24px; }
+  .ih-catalog-row { flex-direction: column; gap: 20px; }
+  .ih-catalog-cover { width: 100%; }
+  .ih-catalog-cover .ih-cover-box { max-width: 100%; }
+  .ih-catalog-title { font-size: 28px; }
+  .ih-catalog-rule { margin: 32px 0; }
 }
 @media (max-width: 480px) {
   .ih-art-grid-wrapper { padding: 0 16px 32px; }

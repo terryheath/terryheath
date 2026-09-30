@@ -15,11 +15,17 @@
   var ADDRESS_SERVICE  = "https://address.inkhornreview.com"; // Railway service URL — update after deploy
 
   // ── PRINT_META ──────────────────────────────────────────────────────────────
-  // Per-issue data for the hero section. Update each release.
-  // buyUrl: Stripe Payment Link for the single-issue purchase — Terry fills in.
-  // Ebook store links — keep in sync with EBOOK_URLS in inkhorn/digest.js.
-  var PRINT_META = {
-    'autumn-2026': {
+  // Ordered list of all Inkhorn print titles, newest first.
+  // featured: true  — the home page hero reads this entry.
+  // buyUrl: Stripe Payment Link — paste in when available. Omit or set to ''
+  //         to suppress the buy link and show status label only.
+  // Ebook store links for each slug — keep in sync with EBOOK_URLS in digest.js.
+  // To add a title: prepend one entry to this array. No other code changes needed.
+  var PRINT_META = [
+    {
+      slug:        'autumn-2026',
+      type:        'Issue',
+      featured:    true,
       statusLabel: 'The Print Edition \u00b7 Coming October',
       title:       'Autumn 2026',
       description: 'What it costs to be seen, and what it costs not to be. Twelve pieces, in print for the first time.',
@@ -46,7 +52,7 @@
         ],
       },
     },
-  };
+  ];
 
   // Ebook store links keyed by issue slug.
   // Keep in sync with EBOOK_URLS in inkhorn/digest.js.
@@ -62,8 +68,8 @@
   var SKIP    = /^[a-z]+-\d{4}$|^(poetry|fiction|nonfiction|micro|podcast|art|letter)$/;
   var ISSUE_RE = /^(autumn|winter|spring|summer)-(\d{4})$/;
 
-  var isHome        = window.location.pathname === '/';
-  var isPrintEdition = window.location.pathname === '/print-edition/';
+  var isHome  = window.location.pathname === '/';
+  var isPrint = window.location.pathname === '/print/';
   var isPost = document.body.classList.contains("post-template");
   var isTag  = document.body.classList.contains("tag-template");
 
@@ -80,7 +86,7 @@
   setTimeout(maybeShowAddressBanner, 500);
 
   if (isHome) { buildHomePage(); return; }
-  if (isPrintEdition) { buildPrintEditionPage(); return; }
+  if (isPrint) { buildPrintCatalogPage(); return; }
   if (!isPost && !isTag) return;
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────
@@ -302,7 +308,7 @@
   function injectMasthead() {
     var isMobile = window.innerWidth <= 900;
     var nav = [
-      ['/print-edition/', 'Print Edition'],
+      ['/print/',         'Print Edition'],
       ['/archive/',       'Archive'],
       ['/podcast/',       'Podcast'],
       ['/founder-letter/', "Founder's Letter"],
@@ -427,19 +433,9 @@
     document.body.appendChild(banner);
   }
 
-  // ── PRINT EDITION PAGE ───────────────────────────────────────────────────────
-  // Renders the same hero as the home page, built from PRINT_META.
-  function buildPrintEditionPage() {
-    var issueSlugs = Object.keys(PRINT_META);
-    var issueSlug  = issueSlugs[issueSlugs.length - 1];
-    var meta       = PRINT_META[issueSlug];
-    if (!meta) return;
-
-    var coverSrc = meta.coverUrl;
-    var coverHtml = coverSrc
-      ? '<div class="ih-cover-box"><img src="' + e(coverSrc) + '" alt="' + e(meta.title) + ' cover"></div>'
-      : '<div class="ih-cover-box-placeholder"></div>';
-
+  // ── PRINT CATALOG PAGE ──────────────────────────────────────────────────────
+  // Lists every print title from PRINT_META, newest first.
+  function buildPrintCatalogPage() {
     var subscribeBlock =
       '<div class="ih-subscribe-block">' +
       '<div class="ih-sub-head">Subscribe</div>' +
@@ -455,36 +451,51 @@
       '<div class="ih-sub-tier-desc">The full archive and every title as an ebook.</div>' +
       '<a href="' + GHOST_URL + '/#/portal/signup/digital/yearly" class="ih-sub-btn-digital">Subscribe to Digital</a>' +
       '</div>' +
-      '</div>' +
-      '<a href="' + e(meta.buyUrl) + '" class="ih-buy-link">Or buy the ' + e(meta.title) + ' issue \u2014 $' + meta.coverPrice + ' + shipping</a>';
-
-    var heroInfoHtml =
-      '<div class="ih-hero-info">' +
-      '<div class="ih-eyebrow">' + e(meta.statusLabel) + '</div>' +
-      '<h1 class="ih-hero-title">' + e(meta.title) + '</h1>' +
-      (meta.description ? '<p class="ih-hero-desc">' + e(meta.description) + '</p>' : '') +
-      subscribeBlock +
       '</div>';
 
-    var contentsHtml = '';
-    if (meta.contents) {
-      var genreNames = { poetry: 'Poetry', fiction: 'Fiction' };
-      var genreBlocks = '';
-      for (var genre in meta.contents) {
-        var rows = meta.contents[genre].map(function(item) {
-          return '<div class="ih-contents-item">' + e(item[0]) + ', <i>' + e(item[1]) + '</i></div>';
-        }).join('');
-        genreBlocks += '<div><div class="ih-contents-genre-head">' + e(genreNames[genre] || genre) + '</div>' + rows + '</div>';
+    var rowsHtml = '';
+    for (var ri = 0; ri < PRINT_META.length; ri++) {
+      var meta = PRINT_META[ri];
+      var coverHtml = meta.coverUrl
+        ? '<div class="ih-cover-box"><img src="' + e(meta.coverUrl) + '" alt="' + e(meta.title) + ' cover"></div>'
+        : '<div class="ih-cover-box-placeholder"></div>';
+
+      var contentsHtml = '';
+      if (meta.contents) {
+        var genreNames = { poetry: 'Poetry', fiction: 'Fiction', nonfiction: 'Nonfiction' };
+        var genreBlocks = '';
+        for (var genre in meta.contents) {
+          var items = meta.contents[genre].map(function(item) {
+            return '<div class="ih-contents-item">' + e(item[0]) + ', <i>' + e(item[1]) + '</i></div>';
+          }).join('');
+          genreBlocks += '<div><div class="ih-contents-genre-head">' + e(genreNames[genre] || genre) + '</div>' + items + '</div>';
+        }
+        contentsHtml = '<div class="ih-contents"><div class="ih-contents-head">In This Issue</div>' + genreBlocks + '</div>';
       }
-      contentsHtml = '<aside class="ih-contents"><div class="ih-contents-head">In This Issue</div>' + genreBlocks + '</aside>';
+
+      var buyHtml = meta.buyUrl && meta.buyUrl !== '#'
+        ? '<a href="' + e(meta.buyUrl) + '" class="ih-buy-link">Buy \u2014 $' + meta.coverPrice + ' + shipping</a>'
+        : (meta.coverPrice ? '<span class="ih-buy-link-coming">$' + meta.coverPrice + ' + shipping \u2014 coming soon</span>' : '');
+
+      rowsHtml +=
+        (ri > 0 ? '<div class="ih-catalog-rule"></div>' : '') +
+        '<div class="ih-catalog-row">' +
+        '<div class="ih-catalog-cover">' + coverHtml + '</div>' +
+        '<div class="ih-catalog-info">' +
+        '<div class="ih-eyebrow">' + e(meta.type) + (meta.statusLabel ? ' \u00b7 ' + e(meta.statusLabel) : '') + '</div>' +
+        '<h2 class="ih-catalog-title">' + e(meta.title) + '</h2>' +
+        (meta.description ? '<p class="ih-hero-desc">' + e(meta.description) + '</p>' : '') +
+        buyHtml +
+        contentsHtml +
+        '</div>' +
+        '</div>';
     }
 
     var pageHtml =
-      '<div class="inkhorn-home">' +
-      '<section class="ih-hero">' +
-      '<div class="ih-hero-left">' + coverHtml + heroInfoHtml + '</div>' +
-      contentsHtml +
-      '</section>' +
+      '<div class="ih-catalog-page">' +
+      '<h1 class="ih-page-heading">Print</h1>' +
+      subscribeBlock +
+      rowsHtml +
       '</div>';
 
     var content = document.querySelector('.gh-content');
@@ -610,8 +621,10 @@
   }
 
   function renderHome(currentIssue, podcastPost, letterPost, thisWeekPost, archivePosts, artPosts, patronsPage) {
-    var issueSlug = currentIssue ? currentIssue.slug : null;
-    var meta = issueSlug ? (PRINT_META[issueSlug] || null) : null;
+    var meta = null;
+    for (var fi = 0; fi < PRINT_META.length; fi++) { if (PRINT_META[fi].featured) { meta = PRINT_META[fi]; break; } }
+    if (!meta) meta = PRINT_META[0] || null;
+    var issueSlug = meta ? meta.slug : (currentIssue ? currentIssue.slug : null);
 
     // ── Hero ──────────────────────────────────────────────────────────────────
     var coverSrc = (meta && meta.coverUrl) || (currentIssue && currentIssue.feature_image) || null;
