@@ -62,7 +62,8 @@
   var SKIP    = /^[a-z]+-\d{4}$|^(poetry|fiction|nonfiction|micro|podcast|art|letter)$/;
   var ISSUE_RE = /^(autumn|winter|spring|summer)-(\d{4})$/;
 
-  var isHome = window.location.pathname === '/';
+  var isHome        = window.location.pathname === '/';
+  var isPrintEdition = window.location.pathname === '/print-edition/';
   var isPost = document.body.classList.contains("post-template");
   var isTag  = document.body.classList.contains("tag-template");
 
@@ -79,6 +80,7 @@
   setTimeout(maybeShowAddressBanner, 500);
 
   if (isHome) { buildHomePage(); return; }
+  if (isPrintEdition) { buildPrintEditionPage(); return; }
   if (!isPost && !isTag) return;
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────
@@ -423,6 +425,84 @@
       '<button style="background:none;border:none;color:#f6f1e7;cursor:pointer;font-size:20px;line-height:1;padding:0 0 0 16px"' +
       ' onclick="this.parentNode.remove()">&times;</button>';
     document.body.appendChild(banner);
+  }
+
+  // ── PRINT EDITION PAGE ───────────────────────────────────────────────────────
+  // Renders the same hero as the home page, built from PRINT_META.
+  function buildPrintEditionPage() {
+    var issueSlugs = Object.keys(PRINT_META);
+    var issueSlug  = issueSlugs[issueSlugs.length - 1];
+    var meta       = PRINT_META[issueSlug];
+    if (!meta) return;
+
+    var coverSrc = meta.coverUrl;
+    var coverHtml = coverSrc
+      ? '<div class="ih-cover-box"><img src="' + e(coverSrc) + '" alt="' + e(meta.title) + ' cover"></div>'
+      : '<div class="ih-cover-box-placeholder"></div>';
+
+    var subscribeBlock =
+      '<div class="ih-subscribe-block">' +
+      '<div class="ih-sub-head">Subscribe</div>' +
+      '<div class="ih-sub-tier">' +
+      '<div class="ih-sub-tier-row"><div class="ih-sub-tier-name">Print</div>' +
+      '<div class="ih-sub-tier-price">$59 a year</div></div>' +
+      '<div class="ih-sub-tier-desc">Four issues, the Awards edition, and every White Rabbit released during your year, mailed to any U.S. address. Includes the full archive and every ebook.</div>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup/print/yearly" class="ih-sub-btn-print">Subscribe to Print</a>' +
+      '</div>' +
+      '<div class="ih-sub-tier">' +
+      '<div class="ih-sub-tier-row"><div class="ih-sub-tier-name">Digital</div>' +
+      '<div class="ih-sub-tier-price">$20 a year</div></div>' +
+      '<div class="ih-sub-tier-desc">The full archive and every title as an ebook.</div>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup/digital/yearly" class="ih-sub-btn-digital">Subscribe to Digital</a>' +
+      '</div>' +
+      '</div>' +
+      '<a href="' + e(meta.buyUrl) + '" class="ih-buy-link">Or buy the ' + e(meta.title) + ' issue \u2014 $' + meta.coverPrice + ' + shipping</a>';
+
+    var heroInfoHtml =
+      '<div class="ih-hero-info">' +
+      '<div class="ih-eyebrow">' + e(meta.statusLabel) + '</div>' +
+      '<h1 class="ih-hero-title">' + e(meta.title) + '</h1>' +
+      (meta.description ? '<p class="ih-hero-desc">' + e(meta.description) + '</p>' : '') +
+      subscribeBlock +
+      '</div>';
+
+    var contentsHtml = '';
+    if (meta.contents) {
+      var genreNames = { poetry: 'Poetry', fiction: 'Fiction' };
+      var genreBlocks = '';
+      for (var genre in meta.contents) {
+        var rows = meta.contents[genre].map(function(item) {
+          return '<div class="ih-contents-item">' + e(item[0]) + ', <i>' + e(item[1]) + '</i></div>';
+        }).join('');
+        genreBlocks += '<div><div class="ih-contents-genre-head">' + e(genreNames[genre] || genre) + '</div>' + rows + '</div>';
+      }
+      contentsHtml = '<aside class="ih-contents"><div class="ih-contents-head">In This Issue</div>' + genreBlocks + '</aside>';
+    }
+
+    var pageHtml =
+      '<div class="inkhorn-home">' +
+      '<section class="ih-hero">' +
+      '<div class="ih-hero-left">' + coverHtml + heroInfoHtml + '</div>' +
+      contentsHtml +
+      '</section>' +
+      '</div>';
+
+    var content = document.querySelector('.gh-content');
+    var ghArticle = document.querySelector('.gh-article');
+    ['.cover', '.single-header', '.gh-article-header'].forEach(function(sel) {
+      var el = document.querySelector(sel);
+      if (el) el.style.display = 'none';
+    });
+    [ghArticle, content].forEach(function(el) {
+      if (!el) return;
+      el.style.setProperty('max-width', 'none', 'important');
+      el.style.setProperty('padding',   '0',    'important');
+      el.style.setProperty('margin',    '0',    'important');
+    });
+    if (content) {
+      content.style.setProperty('display', 'block', 'important');
+      content.innerHTML = pageHtml;
+    }
   }
 
   // ── HOME PAGE BUILDER ─────────────────────────────────────────────────────────
