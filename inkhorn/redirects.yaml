@@ -1,5 +1,7 @@
 301:
   ^/september-2026/(.*)$: /autumn-2026/$1
+  ^/autumn-2026/(page/[0-9]+/)?$: /archive/
+  /tag/autumn-2026/: /archive/
   /tag/poetry/: /poetry/
   /tag/fiction/: /fiction/
   /tag/nonfiction/: /nonfiction/

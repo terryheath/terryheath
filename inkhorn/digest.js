@@ -33,16 +33,26 @@ const api = new GhostAdminAPI({
 
 // ── Issue tag helpers ─────────────────────────────────────────────────────────
 
-const ISSUE_RE = /^(autumn|winter|spring|summer)-(\d{4})$/;
+// Season tags (kept for backward-compat with autumn-2026 posts)
+const SEASON_RE = /^(autumn|winter|spring|summer)-(\d{4})$/;
+// Publication tags (inkhorn-N, whiterabbit-N, anthology-N, awards-N)
+const PUB_RE    = /^(inkhorn|whiterabbit|anthology|awards)-(\d+)$/;
+// Combined pattern
+const ISSUE_RE  = /^(autumn|winter|spring|summer)-\d{4}$|^(inkhorn|whiterabbit|anthology|awards)-\d+$/;
 
 function isIssueTag(slug) {
   return ISSUE_RE.test(slug);
 }
 
 function formatIssueTitle(slug) {
-  const m = slug.match(ISSUE_RE);
-  if (!m) return slug;
-  return m[1].charAt(0).toUpperCase() + m[1].slice(1) + ' ' + m[2];
+  const pm = slug.match(PUB_RE);
+  if (pm) {
+    const type = pm[1].charAt(0).toUpperCase() + pm[1].slice(1);
+    return type + ' No. ' + pm[2];
+  }
+  const sm = slug.match(SEASON_RE);
+  if (!sm) return slug;
+  return sm[1].charAt(0).toUpperCase() + sm[1].slice(1) + ' ' + sm[2];
 }
 
 // ── Department mapping ────────────────────────────────────────────────────────
@@ -83,8 +93,12 @@ function esc(s) {
 const HR = '<hr style="border:none;border-top:1px solid #e0e0e0;margin:28px 0 24px">';
 
 function issueBlock(issueSlug, tag) {
-  const title = formatIssueTitle(issueSlug);
-  const url   = `${SITE_URL}/${issueSlug}/`;
+  // Prefer tag name over computed title (tag.name = "Inkhorn Review No. 1" etc.)
+  const title = tag?.name || formatIssueTitle(issueSlug);
+  // Publication tags have no collection route — link to their tag page
+  const url   = PUB_RE.test(issueSlug)
+    ? `${SITE_URL}/tag/${issueSlug}/`
+    : `${SITE_URL}/${issueSlug}/`;
   const cover = tag?.feature_image || null;
   const desc  = tag?.description   || null;
   const count = tag?.count?.posts  || null;
@@ -301,7 +315,7 @@ async function main() {
   const leadKey    = orderedKeys[0];
   const extraCount = orderedKeys.length - 1;
   let emailSubject = leadKey === 'issue'
-    ? formatIssueTitle(groups.get('issue')[0].slug)
+    ? (issueTags.get(groups.get('issue')[0].slug)?.name || formatIssueTitle(groups.get('issue')[0].slug))
     : groups.get(leadKey)[0].post.title;
   if (extraCount > 0) emailSubject += ` — and ${extraCount} more`;
 
@@ -422,7 +436,7 @@ async function main() {
     try {
       const sectionNames = orderedKeys.map(key => {
         if (key === 'issue') {
-          return groups.get('issue').map(item => formatIssueTitle(item.slug)).join(' & ');
+          return groups.get('issue').map(item => issueTags.get(item.slug)?.name || formatIssueTitle(item.slug)).join(' & ');
         }
         return DEPT_ORDER.find(d => d.key === key)?.label ?? key;
       });

@@ -118,10 +118,16 @@ const server = http.createServer((req, res) => {
       res.writeHead(200); res.end('ok'); return;
     }
 
-    console.log(`post.published: "${post.title}"  primary tag: ${primaryTag.slug}`);
+    // Prefer first publication tag with a feature image; fall back to primary tag.
+    const PUB_RE = /^(inkhorn|whiterabbit|anthology|awards)-\d+$/;
+    const tags   = post.tags || [];
+    const pubTag = tags.find(t => PUB_RE.test(t.slug));
+    const targetSlug = pubTag ? pubTag.slug : primaryTag.slug;
+
+    console.log(`post.published: "${post.title}"  target tag: ${targetSlug}`);
 
     try {
-      await setOgImagesForTag(primaryTag.slug);
+      await setOgImagesForTag(targetSlug);
     } catch (err) {
       // Log but return 200 — missing data is not a retryable failure
       console.error('setOgImagesForTag error:', err.message || err);

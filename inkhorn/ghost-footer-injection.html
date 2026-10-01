@@ -23,12 +23,12 @@
   // To add a title: prepend one entry to this array. No other code changes needed.
   var PRINT_META = [
     {
-      slug:        'autumn-2026',
+      slug:        'inkhorn-1',
       type:        'Issue',
       featured:    true,
       statusLabel: 'The Print Edition \u00b7 Coming October',
       title:       'Autumn 2026',
-      description: 'What it costs to be seen, and what it costs not to be. Twelve pieces, in print for the first time.',
+      description: 'What it costs to be seen, and what it costs not to be. Thirteen pieces, in print for the first time.',
       coverUrl:    'https://inkhornreview.com/content/images/2026/09/inkhorn-cover.jpg',
       buyUrl:      '#',        // replace with Stripe Payment Link
       coverPrice:  12,
@@ -41,6 +41,7 @@
           ['Rikki Santer',     'Lineage'],
           ['Robin Kathaas',    'Dead Lines (24 Weeks)'],
           ['Jackie McClure',   'Along with Lemon and Ginger'],
+          ['Anna Scott',       'Twenty-Four'],
         ],
         fiction: [
           ['Allyson Petrek',  'Tolls'],
@@ -57,16 +58,21 @@
   // Ebook store links keyed by issue slug.
   // Keep in sync with EBOOK_URLS in inkhorn/digest.js.
   var EBOOK_LINKS = {
-    'autumn-2026': {
+    'inkhorn-1': {
       apple:  'https://books.apple.com/us/book/inkhorn-review/id6809263868',
       amazon: null,
       kobo:   null,
     }
   };
 
-  // Skip issue/genre tags when identifying contributor tags
-  var SKIP    = /^[a-z]+-\d{4}$|^(poetry|fiction|nonfiction|micro|podcast|art|letter)$/;
-  var ISSUE_RE = /^(autumn|winter|spring|summer)-(\d{4})$/;
+  // Publication tag pattern: inkhorn-N, whiterabbit-N, anthology-N, awards-N
+  var PUB_RE   = /^(inkhorn|whiterabbit|anthology|awards)-(\d+)$/;
+  // Season tag pattern (kept for backward-compat with autumn-2026 collection)
+  var SEASON_RE = /^(autumn|winter|spring|summer)-(\d{4})$/;
+  // Combined issue pattern: season OR publication tag
+  var ISSUE_RE  = /^(autumn|winter|spring|summer)-\d{4}$|^(inkhorn|whiterabbit|anthology|awards)-\d+$/;
+  // Skip pattern for contributor detection: publication tags, season tags, genre/dept tags
+  var SKIP    = /^[a-z]+-\d{4}$|^(inkhorn|whiterabbit|anthology|awards)-\d+$|^(poetry|fiction|nonfiction|micro|podcast|art|letter)$/;
 
   var isHome  = window.location.pathname === '/';
   var isPrint = window.location.pathname === '/print/';
@@ -88,6 +94,17 @@
   if (isHome) { buildHomePage(); return; }
   if (isPrint) { buildPrintCatalogPage(); return; }
   if (!isPost && !isTag) return;
+
+  // ── POETRY READING TIME ──────────────────────────────────────────────────────
+  // Ghost's word-count algorithm badly underestimates poetry. For any feed item
+  // tagged poetry, multiply the reading time by 3 (min 3 min).
+  document.querySelectorAll('.feed.tag-poetry .feed-length[data-rt]').forEach(function(el) {
+    var raw = parseInt(el.getAttribute('data-rt'), 10);
+    if (!isNaN(raw)) {
+      var adjusted = Math.max(3, raw * 3);
+      el.textContent = adjusted === 1 ? '1 min read' : adjusted + ' min read';
+    }
+  });
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────
   function e(s) {
@@ -818,7 +835,6 @@
       '<div class="ih-patrons-head-label">With thanks to our patrons</div>' +
       (patronNamesText ? '<div class="ih-patrons-names-text">' + patronNamesText + '</div>' : '') +
       '</div>' +
-      '<a href="/colophon/" class="ih-colophon-link">Colophon</a>' +
       '</section>';
 
     // ── Assemble ──────────────────────────────────────────────────────────────

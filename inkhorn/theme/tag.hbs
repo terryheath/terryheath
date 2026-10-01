@@ -1,0 +1,376 @@
+{{!< default}}
+
+{{!--
+  tag.hbs — Season collections, publication tag pages, genre/dept routes,
+  contributor and theme tag pages.
+
+  Ghost 5: posts are at ROOT LEVEL, not inside {{#tag}}.
+  {{#tag}} provides tag metadata only. Use it for headers.
+  Use {{#foreach posts}} at root for posts.
+
+  Publication tags (inkhorn-N, whiterabbit-N, anthology-N, awards-N):
+    Header + post list use the contributor/theme layout.
+    A link to the matching catalog/issue page is injected above the post list
+    by the footer injection script.
+
+  Contributor detection in post cards:
+    ih-tag-post-issue / ih-card-light-label shows the first publication tag
+    name found on the post, if any. Replaces the old season-name display.
+--}}
+
+<main class="site-main">
+
+{{!-- ── HEADER: inside {{#tag}} to access tag metadata ────────────────────── --}}
+{{#tag}}
+
+{{#match slug "~^" "autumn-"}}
+    <section class="ih-season-page">
+        {{#if feature_image}}
+        <div class="ih-season-cover">
+            <img src="{{img_url feature_image size="l"}}" alt="{{name}} cover">
+        </div>
+        {{/if}}
+        <div class="ih-season-header">
+            <h1 class="ih-season-heading">{{name}}</h1>
+            {{#if description}}<p class="ih-season-desc">{{description}}</p>{{/if}}
+        </div>
+    </section>
+    <div id="ih-season-art-target"></div>
+    <script>(function(){var s=document.getElementById('ih-season-art'),t=document.getElementById('ih-season-art-target');if(s&&t)t.innerHTML=s.innerHTML;})();</script>
+{{/match}}
+
+{{#match slug "~^" "winter-"}}
+    <section class="ih-season-page">
+        {{#if feature_image}}
+        <div class="ih-season-cover">
+            <img src="{{img_url feature_image size="l"}}" alt="{{name}} cover">
+        </div>
+        {{/if}}
+        <div class="ih-season-header">
+            <h1 class="ih-season-heading">{{name}}</h1>
+            {{#if description}}<p class="ih-season-desc">{{description}}</p>{{/if}}
+        </div>
+    </section>
+    <div id="ih-season-art-target"></div>
+    <script>(function(){var s=document.getElementById('ih-season-art'),t=document.getElementById('ih-season-art-target');if(s&&t)t.innerHTML=s.innerHTML;})();</script>
+{{/match}}
+
+{{#match slug "~^" "spring-"}}
+    <section class="ih-season-page">
+        {{#if feature_image}}
+        <div class="ih-season-cover">
+            <img src="{{img_url feature_image size="l"}}" alt="{{name}} cover">
+        </div>
+        {{/if}}
+        <div class="ih-season-header">
+            <h1 class="ih-season-heading">{{name}}</h1>
+            {{#if description}}<p class="ih-season-desc">{{description}}</p>{{/if}}
+        </div>
+    </section>
+    <div id="ih-season-art-target"></div>
+    <script>(function(){var s=document.getElementById('ih-season-art'),t=document.getElementById('ih-season-art-target');if(s&&t)t.innerHTML=s.innerHTML;})();</script>
+{{/match}}
+
+{{#match slug "~^" "summer-"}}
+    <section class="ih-season-page">
+        {{#if feature_image}}
+        <div class="ih-season-cover">
+            <img src="{{img_url feature_image size="l"}}" alt="{{name}} cover">
+        </div>
+        {{/if}}
+        <div class="ih-season-header">
+            <h1 class="ih-season-heading">{{name}}</h1>
+            {{#if description}}<p class="ih-season-desc">{{description}}</p>{{/if}}
+        </div>
+    </section>
+    <div id="ih-season-art-target"></div>
+    <script>(function(){var s=document.getElementById('ih-season-art'),t=document.getElementById('ih-season-art-target');if(s&&t)t.innerHTML=s.innerHTML;})();</script>
+{{/match}}
+
+{{#match slug "=" "poetry"}}
+    <section class="ih-genre-page">
+        <h1 class="ih-genre-heading">{{name}}</h1>
+        {{#if description}}<p class="ih-genre-desc">{{description}}</p>{{/if}}
+    </section>
+{{/match}}
+
+{{#match slug "=" "fiction"}}
+    <section class="ih-genre-page">
+        <h1 class="ih-genre-heading">{{name}}</h1>
+        {{#if description}}<p class="ih-genre-desc">{{description}}</p>{{/if}}
+    </section>
+{{/match}}
+
+{{#match slug "=" "nonfiction"}}
+    <section class="ih-genre-page">
+        <h1 class="ih-genre-heading">{{name}}</h1>
+        {{#if description}}<p class="ih-genre-desc">{{description}}</p>{{/if}}
+    </section>
+{{/match}}
+
+{{#match slug "=" "micro"}}
+    <section class="ih-genre-page">
+        <h1 class="ih-genre-heading">{{name}}</h1>
+        {{#if description}}<p class="ih-genre-desc">{{description}}</p>{{/if}}
+    </section>
+{{/match}}
+
+{{#match slug "=" "art"}}
+    <section class="ih-gallery-page">
+        <h1 class="ih-gallery-page-heading">Gallery</h1>
+        {{#if description}}<p class="ih-gallery-page-desc">{{description}}</p>{{/if}}
+    </section>
+{{/match}}
+
+{{#match slug "=" "podcast"}}
+    <section class="ih-podcast-page">
+        {{> "podcast-pills"}}
+    </section>
+{{/match}}
+
+{{#match slug "=" "letter"}}
+    <section class="ih-genre-page">
+        <h1 class="ih-genre-heading">Founder&rsquo;s Letter</h1>
+    </section>
+{{/match}}
+
+{{!-- Contributor / theme / publication tag header
+     (all non-season, non-genre slugs including inkhorn-N etc.) --}}
+{{#match slug "~^" "autumn-"}}{{else}}
+{{#match slug "~^" "winter-"}}{{else}}
+{{#match slug "~^" "spring-"}}{{else}}
+{{#match slug "~^" "summer-"}}{{else}}
+{{#match slug "=" "poetry"}}{{else}}
+{{#match slug "=" "fiction"}}{{else}}
+{{#match slug "=" "nonfiction"}}{{else}}
+{{#match slug "=" "micro"}}{{else}}
+{{#match slug "=" "art"}}{{else}}
+{{#match slug "=" "podcast"}}{{else}}
+{{#match slug "=" "letter"}}{{else}}
+    {{#if codeinjection_head}}
+    <div class="ih-shelf-wrapper">
+        <div id="ih-shelf-target-{{slug}}"></div>
+    </div>
+    <script>(function(){var s=document.getElementById('ih-shelf-{{slug}}'),t=document.getElementById('ih-shelf-target-{{slug}}');if(s&&t)t.innerHTML=s.innerHTML;})();</script>
+    {{/if}}
+    <section class="ih-tag-page">
+        {{#if feature_image}}
+        <div class="ih-tag-cover">
+            <img src="{{img_url feature_image size="l"}}" alt="{{name}} cover">
+        </div>
+        {{/if}}
+        <div class="ih-tag-page-header">
+            <h1 class="ih-tag-page-name">{{name}}</h1>
+            {{#if description}}<p class="ih-tag-page-desc">{{description}}</p>{{/if}}
+        </div>
+    </section>
+    {{!-- For publication tag pages (inkhorn-N, etc.): link to the matching
+         catalog/issue page, server-side via {{#get}}. --}}
+    {{#match slug "~^" "inkhorn-"}}
+        {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
+        {{#foreach pages}}<div class="ih-pub-tag-page-link"><a href="{{url}}">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}">buy the print edition &rarr;</a>{{/match}}{{/foreach}}</div>{{/foreach}}
+        {{/get}}
+    {{/match}}
+    {{#match slug "~^" "whiterabbit-"}}
+        {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
+        {{#foreach pages}}<div class="ih-pub-tag-page-link"><a href="{{url}}">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}">buy the print edition &rarr;</a>{{/match}}{{/foreach}}</div>{{/foreach}}
+        {{/get}}
+    {{/match}}
+    {{#match slug "~^" "anthology-"}}
+        {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
+        {{#foreach pages}}<div class="ih-pub-tag-page-link"><a href="{{url}}">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}">buy the print edition &rarr;</a>{{/match}}{{/foreach}}</div>{{/foreach}}
+        {{/get}}
+    {{/match}}
+    {{#match slug "~^" "awards-"}}
+        {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
+        {{#foreach pages}}<div class="ih-pub-tag-page-link"><a href="{{url}}">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}">buy the print edition &rarr;</a>{{/match}}{{/foreach}}</div>{{/foreach}}
+        {{/get}}
+    {{/match}}
+{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}
+
+{{/tag}}
+
+{{!-- ── POSTS: at root level (Ghost 5: posts are NOT inside {{#tag}}) ──────── --}}
+
+{{!-- Season collection post lists --}}
+{{#match slug "~^" "autumn-"}}
+<div class="ih-season-posts">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-card-light">
+        <div class="ih-card-light-label">
+            {{#foreach tags}}{{#match slug "=" "micro"}}Micro{{/match}}{{#match slug "=" "poetry"}}Poetry{{/match}}{{#match slug "=" "fiction"}}Fiction{{/match}}{{#match slug "=" "nonfiction"}}Nonfiction{{/match}}{{#match slug "=" "art"}}Art{{/match}}{{/foreach}}
+        </div>
+        <div class="ih-card-light-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{#match slug "~^" "winter-"}}
+<div class="ih-season-posts">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-card-light">
+        <div class="ih-card-light-label">
+            {{#foreach tags}}{{#match slug "=" "micro"}}Micro{{/match}}{{#match slug "=" "poetry"}}Poetry{{/match}}{{#match slug "=" "fiction"}}Fiction{{/match}}{{#match slug "=" "nonfiction"}}Nonfiction{{/match}}{{#match slug "=" "art"}}Art{{/match}}{{/foreach}}
+        </div>
+        <div class="ih-card-light-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{#match slug "~^" "spring-"}}
+<div class="ih-season-posts">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-card-light">
+        <div class="ih-card-light-label">
+            {{#foreach tags}}{{#match slug "=" "micro"}}Micro{{/match}}{{#match slug "=" "poetry"}}Poetry{{/match}}{{#match slug "=" "fiction"}}Fiction{{/match}}{{#match slug "=" "nonfiction"}}Nonfiction{{/match}}{{#match slug "=" "art"}}Art{{/match}}{{/foreach}}
+        </div>
+        <div class="ih-card-light-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{#match slug "~^" "summer-"}}
+<div class="ih-season-posts">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-card-light">
+        <div class="ih-card-light-label">
+            {{#foreach tags}}{{#match slug "=" "micro"}}Micro{{/match}}{{#match slug "=" "poetry"}}Poetry{{/match}}{{#match slug "=" "fiction"}}Fiction{{/match}}{{#match slug "=" "nonfiction"}}Nonfiction{{/match}}{{#match slug "=" "art"}}Art{{/match}}{{/foreach}}
+        </div>
+        <div class="ih-card-light-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{!-- Genre page post lists: label shows publication tag name, not season name --}}
+{{#match slug "=" "poetry"}}
+<div class="ih-genre-list">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-card-light">
+        <div class="ih-card-light-label">{{#foreach tags}}{{#match slug "~^" "inkhorn-"}}{{name}}{{/match}}{{#match slug "~^" "whiterabbit-"}}{{name}}{{/match}}{{#match slug "~^" "anthology-"}}{{name}}{{/match}}{{#match slug "~^" "awards-"}}{{name}}{{/match}}{{/foreach}}</div>
+        <div class="ih-card-light-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{#match slug "=" "fiction"}}
+<div class="ih-genre-list">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-card-light">
+        <div class="ih-card-light-label">{{#foreach tags}}{{#match slug "~^" "inkhorn-"}}{{name}}{{/match}}{{#match slug "~^" "whiterabbit-"}}{{name}}{{/match}}{{#match slug "~^" "anthology-"}}{{name}}{{/match}}{{#match slug "~^" "awards-"}}{{name}}{{/match}}{{/foreach}}</div>
+        <div class="ih-card-light-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{#match slug "=" "nonfiction"}}
+<div class="ih-genre-list">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-card-light">
+        <div class="ih-card-light-label">{{#foreach tags}}{{#match slug "~^" "inkhorn-"}}{{name}}{{/match}}{{#match slug "~^" "whiterabbit-"}}{{name}}{{/match}}{{#match slug "~^" "anthology-"}}{{name}}{{/match}}{{#match slug "~^" "awards-"}}{{name}}{{/match}}{{/foreach}}</div>
+        <div class="ih-card-light-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{#match slug "=" "micro"}}
+<div class="ih-genre-list">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-card-light">
+        <div class="ih-card-light-label">{{#foreach tags}}{{#match slug "~^" "inkhorn-"}}{{name}}{{/match}}{{#match slug "~^" "whiterabbit-"}}{{name}}{{/match}}{{#match slug "~^" "anthology-"}}{{name}}{{/match}}{{#match slug "~^" "awards-"}}{{name}}{{/match}}{{/foreach}}</div>
+        <div class="ih-card-light-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{#match slug "=" "art"}}
+<div class="ih-gallery-grid-full">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-gallery-img-wrap">
+        {{#if feature_image}}<img src="{{img_url feature_image size="m"}}" alt="{{title}}" loading="lazy">{{else}}<div class="ih-gallery-placeholder"></div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{#match slug "=" "podcast"}}
+<div class="ih-podcast-list">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-podcast-list-item">
+        {{#if feature_image}}<img class="ih-podcast-list-img" src="{{img_url feature_image size="xs"}}" alt="{{title}}">{{/if}}
+        <div class="ih-podcast-list-body">
+            <div class="ih-podcast-list-date">{{date published_at format="MMMM D, YYYY"}}</div>
+            <div class="ih-podcast-list-title">{{title}}</div>
+            {{#if custom_excerpt}}<div class="ih-podcast-list-excerpt">{{custom_excerpt}}</div>{{/if}}
+        </div>
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{#match slug "=" "letter"}}
+<div class="ih-genre-list">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-card-light">
+        <div class="ih-card-light-label">{{date published_at format="MMMM YYYY"}}</div>
+        <div class="ih-card-light-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}
+
+{{!-- Contributor / theme / publication tag posts
+     ih-tag-post-issue shows the first publication tag name found on each post. --}}
+{{#match slug "~^" "autumn-"}}{{else}}
+{{#match slug "~^" "winter-"}}{{else}}
+{{#match slug "~^" "spring-"}}{{else}}
+{{#match slug "~^" "summer-"}}{{else}}
+{{#match slug "=" "poetry"}}{{else}}
+{{#match slug "=" "fiction"}}{{else}}
+{{#match slug "=" "nonfiction"}}{{else}}
+{{#match slug "=" "micro"}}{{else}}
+{{#match slug "=" "art"}}{{else}}
+{{#match slug "=" "podcast"}}{{else}}
+{{#match slug "=" "letter"}}{{else}}
+<div class="ih-tag-post-list">
+    {{#foreach posts}}
+    <a href="{{url}}" class="ih-tag-post-item">
+        <div class="ih-tag-post-issue">
+            {{#foreach tags}}{{#match slug "~^" "inkhorn-"}}{{name}}{{/match}}{{#match slug "~^" "whiterabbit-"}}{{name}}{{/match}}{{#match slug "~^" "anthology-"}}{{name}}{{/match}}{{#match slug "~^" "awards-"}}{{name}}{{/match}}{{/foreach}}
+        </div>
+        <div class="ih-tag-post-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-tag-post-excerpt">{{custom_excerpt}}</div>{{/if}}
+    </a>
+    {{/foreach}}
+</div>
+{{#if pagination}}{{pagination}}{{/if}}
+{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}
+
+</main>

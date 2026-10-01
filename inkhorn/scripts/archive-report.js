@@ -31,7 +31,7 @@ const api = new GhostAdminAPI({
   version: 'v5.0',
 });
 
-const SKIP = /^[a-z]+-\d{4}$|^(poetry|fiction|nonfiction|micro|podcast|art|letter)$/;
+const SKIP = /^[a-z]+-\d{4}$|^(inkhorn|whiterabbit|anthology|awards)-\d+$|^(poetry|fiction|nonfiction|micro|podcast|art|letter)$/;
 
 function contributorName(post) {
   // Contributor tag: non-issue, non-genre, non-internal tag

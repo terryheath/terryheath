@@ -1,0 +1,151 @@
+{{!< default}}
+
+{{!--
+  post.hbs — Individual contribution pages.
+  Publication links: JS fills .ih-publication-links for any post that has a
+    matching publication page (inkhorn-N, whiterabbit-N, anthology-N, awards-N tag).
+  Genre label: single genre via {{#has}} — micro wins; else first of poetry /
+    fiction / nonfiction / art. Never shows two genres.
+  Byline: custom_excerpt linked to first contributor tag — the first public tag
+    that is not a publication tag, not a season tag, and not a genre/dept tag.
+    Detected via nested {{#match}} skipping all those prefixes/slugs.
+  Shelf: same contributor detection; codeinjection_head holds the shelf payload.
+--}}
+
+{{#post}}
+<main class="site-main">
+<article class="ih-post {{post_class}}">
+
+    {{!-- ── POST HEADER ──────────────────────────────────────────────────── --}}
+    <header class="ih-post-header">
+
+        {{!-- Publication page links + genre label --}}
+        {{!-- For each publication tag (inkhorn-N, whiterabbit-N, anthology-N, awards-N)
+             fetch the matching page (server-side via {{#get}}) and link to it.
+             Appends " — buy the print edition →" when the page carries #catalog. --}}
+        <div class="ih-post-issue-label">
+            {{#foreach tags}}
+            {{#match slug "~^" "inkhorn-"}}
+                {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
+                {{#foreach pages}}<a href="{{url}}" class="ih-post-issue-link">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}" class="ih-post-issue-link">buy the print edition &rarr;</a>{{/match}}{{/foreach}}{{/foreach}}
+                {{/get}}
+            {{/match}}
+            {{#match slug "~^" "whiterabbit-"}}
+                {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
+                {{#foreach pages}}<a href="{{url}}" class="ih-post-issue-link">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}" class="ih-post-issue-link">buy the print edition &rarr;</a>{{/match}}{{/foreach}}{{/foreach}}
+                {{/get}}
+            {{/match}}
+            {{#match slug "~^" "anthology-"}}
+                {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
+                {{#foreach pages}}<a href="{{url}}" class="ih-post-issue-link">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}" class="ih-post-issue-link">buy the print edition &rarr;</a>{{/match}}{{/foreach}}{{/foreach}}
+                {{/get}}
+            {{/match}}
+            {{#match slug "~^" "awards-"}}
+                {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
+                {{#foreach pages}}<a href="{{url}}" class="ih-post-issue-link">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}" class="ih-post-issue-link">buy the print edition &rarr;</a>{{/match}}{{/foreach}}{{/foreach}}
+                {{/get}}
+            {{/match}}
+            {{/foreach}}
+            {{!-- Genre: micro wins; else first of poetry/fiction/nonfiction/art --}}
+            {{#has tag="micro"}}<a href="/archive/" class="ih-post-issue-link">Micro</a>{{else}}
+            {{#has tag="poetry"}}<a href="/archive/" class="ih-post-issue-link">Poetry</a>{{else}}
+            {{#has tag="fiction"}}<a href="/archive/" class="ih-post-issue-link">Fiction</a>{{else}}
+            {{#has tag="nonfiction"}}<a href="/archive/" class="ih-post-issue-link">Nonfiction</a>{{else}}
+            {{#has tag="art"}}<a href="/archive/" class="ih-post-issue-link">Art</a>{{/has}}{{/has}}{{/has}}{{/has}}{{/has}}
+        </div>
+
+        <h1 class="ih-post-title">{{title}}</h1>
+
+        {{!-- Byline: custom_excerpt linked to contributor tag.
+             Contributor = first public tag that is not a publication tag
+             (inkhorn-/whiterabbit-/anthology-/awards-), not a season tag
+             (autumn-/winter-/spring-/summer-), and not a genre/dept tag. --}}
+        {{#if custom_excerpt}}
+        <div class="ih-post-byline">
+            {{#foreach tags}}
+            {{#match slug "~^" "inkhorn-"}}{{else}}
+            {{#match slug "~^" "whiterabbit-"}}{{else}}
+            {{#match slug "~^" "anthology-"}}{{else}}
+            {{#match slug "~^" "awards-"}}{{else}}
+            {{#match slug "~^" "autumn-"}}{{else}}
+            {{#match slug "~^" "winter-"}}{{else}}
+            {{#match slug "~^" "spring-"}}{{else}}
+            {{#match slug "~^" "summer-"}}{{else}}
+            {{#match slug "=" "poetry"}}{{else}}
+            {{#match slug "=" "fiction"}}{{else}}
+            {{#match slug "=" "nonfiction"}}{{else}}
+            {{#match slug "=" "micro"}}{{else}}
+            {{#match slug "=" "art"}}{{else}}
+            {{#match slug "=" "podcast"}}{{else}}
+            {{#match slug "=" "letter"}}{{else}}
+            <a href="{{url}}" class="ih-post-byline-link">{{../custom_excerpt}}</a>
+            {{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}
+            {{/foreach}}
+        </div>
+        {{/if}}
+
+        <div class="ih-post-meta">
+            {{date published_at format="MMMM YYYY"}}
+        </div>
+
+        {{#if feature_image}}
+        <figure class="ih-post-feature-image">
+            <img src="{{img_url feature_image size="xl"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">
+            {{#if feature_image_caption}}<figcaption>{{feature_image_caption}}</figcaption>{{/if}}
+        </figure>
+        {{/if}}
+
+    </header>
+
+    {{!-- ── POST CONTENT ─────────────────────────────────────────────────── --}}
+    <section class="ih-post-content gh-content">
+        {{content}}
+    </section>
+
+    {{!-- ── MEMBERSHIP CTA (paywall) ──────────────────────────────────────── --}}
+    {{> "content-cta"}}
+
+    {{!-- ── CONTRIBUTOR SECTION ───────────────────────────────────────────── --}}
+    {{!-- Contributor = first public tag that is not a publication, season, or
+         genre/dept tag. Same detection rule as byline above.
+         codeinjection_head holds the shelf payload; placement script moves it in. --}}
+    {{#foreach tags}}
+    {{#match slug "~^" "inkhorn-"}}{{else}}
+    {{#match slug "~^" "whiterabbit-"}}{{else}}
+    {{#match slug "~^" "anthology-"}}{{else}}
+    {{#match slug "~^" "awards-"}}{{else}}
+    {{#match slug "~^" "autumn-"}}{{else}}
+    {{#match slug "~^" "winter-"}}{{else}}
+    {{#match slug "~^" "spring-"}}{{else}}
+    {{#match slug "~^" "summer-"}}{{else}}
+    {{#match slug "=" "poetry"}}{{else}}
+    {{#match slug "=" "fiction"}}{{else}}
+    {{#match slug "=" "nonfiction"}}{{else}}
+    {{#match slug "=" "micro"}}{{else}}
+    {{#match slug "=" "art"}}{{else}}
+    {{#match slug "=" "podcast"}}{{else}}
+    {{#match slug "=" "letter"}}{{else}}
+        {{{codeinjection_head}}}
+        <div id="ih-shelf-target-{{slug}}"></div>
+        <script>(function(){var s=document.getElementById('ih-shelf-{{slug}}'),t=document.getElementById('ih-shelf-target-{{slug}}');if(s&&t)t.innerHTML=s.innerHTML;})();</script>
+
+        {{#if description}}
+        <aside class="ih-contributor-section">
+            <div class="ih-contributor-bio">
+                <h3 class="ih-contributor-name"><a href="{{url}}">{{name}}</a></h3>
+                <p>{{description}}</p>
+            </div>
+        </aside>
+        {{/if}}
+    {{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}
+    {{/foreach}}
+
+    {{!-- ── RELATED POSTS ────────────────────────────────────────────────── --}}
+    {{> "related-posts"}}
+
+    {{!-- ── COMMENTS ──────────────────────────────────────────────────────── --}}
+    {{> "comments"}}
+
+</article>
+</main>
+{{/post}}
