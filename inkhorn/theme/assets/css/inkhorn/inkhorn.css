@@ -1,0 +1,1503 @@
+/* ── INKHORN REVIEW — THEME CSS ─────────────────────────────────────────────
+   Fonts: EB Garamond (400/500/600, italic 400) + Libre Franklin (400/500/600)
+   Colors: ground #f6f1e7  ink #1c1a17  crimson #8f1d1d
+           secondary #3a352e / #5b544a   rules #d6cdbd
+           card ground #efe8da  dark band #1c1a17  dark tiles #3b3630
+           pink label on dark #e8a0a0
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── BASE ─────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Libre+Franklin:wght@400;500;600&display=swap');
+
+body {
+    margin: 0;
+    background: #f6f1e7;
+    font-family: 'EB Garamond', Georgia, serif;
+    color: #1c1a17;
+    -webkit-font-smoothing: antialiased;
+}
+a { color: #1c1a17; text-decoration: none; }
+a:hover { color: #8f1d1d; }
+
+/* ── SUPPRESS DAWN CHROME ─────────────────────────────────────────────────── */
+/* Inkhorn masthead and footer are in theme templates, not Dawn's */
+.gh-head,
+.gh-foot { display: none !important; }
+
+/* Hide Dawn author elements — contributor is in post tags, not Ghost author */
+.gh-article-meta,
+.gh-author-image,
+.gh-author-name,
+.gh-article-author-image,
+.gh-article-meta .gh-author-name { display: none !important; }
+
+/* Tag archive headings — remove # prefix Ghost adds to internal tags */
+.tag .tag-name::before { content: ""; }
+
+/* Feature image max-width */
+.single-media { max-width: 720px; margin-inline: auto; }
+
+/* ── SITE LAYOUT ──────────────────────────────────────────────────────────── */
+.site {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #f6f1e7;
+}
+.site-content {
+    flex-grow: 1;
+    padding: 0;
+}
+/* Pages (including home, print) have no extra padding */
+.page-template .site-content,
+.home-template .site-content {
+    padding: 0;
+}
+
+/* ── MASTHEAD ─────────────────────────────────────────────────────────────── */
+#ih-masthead {
+    box-sizing: border-box;
+    padding: 28px 80px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background: #f6f1e7;
+}
+.ih-mast-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+.ih-wordmark-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.ih-wordmark {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 54px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: #1c1a17;
+    text-decoration: none;
+}
+.ih-wordmark:hover { color: #1c1a17; }
+.ih-tagline {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 19px;
+    font-style: italic;
+    color: #5b544a;
+}
+.ih-mast-actions-desktop {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+}
+.ih-mast-actions-desktop a { color: #1c1a17; }
+.ih-mast-actions-desktop a:hover { color: #8f1d1d; }
+.ih-mast-actions-phone {
+    display: none;
+}
+.ih-subscribe-btn {
+    background: #8f1d1d;
+    color: #ffffff !important;
+    padding: 12px 20px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+.ih-subscribe-btn:hover { background: #7a1818; color: #fff !important; }
+
+/* Nav */
+.ih-nav {
+    display: flex;
+    gap: 36px;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 0;
+    border-top: 2px solid #8f1d1d;
+    border-bottom: 1px solid #d6cdbd;
+    flex-wrap: wrap;
+}
+.ih-nav a { color: #1c1a17; }
+.ih-nav a:hover { color: #8f1d1d; }
+
+/* Hamburger — phone only */
+.ih-menu-btn {
+    display: none;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+/* Phone nav overlay */
+.ih-nav-overlay {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    background: #f6f1e7;
+    border-top: 1px solid #d6cdbd;
+    padding: 8px 0 16px;
+}
+.ih-nav-overlay a {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #1c1a17;
+    padding: 12px 20px;
+    display: block;
+}
+.ih-nav-overlay a:hover { color: #8f1d1d; }
+.ih-nav-overlay.open { display: flex; }
+
+/* ── FOOTER ───────────────────────────────────────────────────────────────── */
+#ih-footer {
+    box-sizing: border-box;
+    padding: 28px 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+    background: #f6f1e7;
+    border-top: 1px solid #d6cdbd;
+    margin-top: 40px;
+}
+#ih-footer a { color: #5b544a; }
+#ih-footer a:hover { color: #8f1d1d; }
+.ih-footer-links {
+    display: flex;
+    gap: 24px;
+}
+
+/* ── HOME ─────────────────────────────────────────────────────────────────── */
+/* Ghost article chrome reset on home */
+.home-template .gh-article,
+.home-template .gh-content {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.home-template .single-header { display: none; }
+
+.inkhorn-home {
+    box-sizing: border-box;
+    background: #f6f1e7;
+}
+
+/* Hero: 2fr + 1fr grid */
+.ih-hero {
+    box-sizing: border-box;
+    padding: 44px 80px 0;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 56px;
+}
+.ih-hero-left {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+.ih-cover-box {
+    width: 480px;
+    flex-shrink: 0;
+    box-shadow: 0 18px 40px rgba(28,26,23,0.18);
+}
+.ih-cover-box img { display: block; width: 100%; height: auto; }
+.ih-cover-box-placeholder {
+    width: 480px;
+    height: 690px;
+    flex-shrink: 0;
+    background: #efe6d3;
+    border: 1px solid #cbbfa8;
+    box-shadow: 0 18px 40px rgba(28,26,23,0.18);
+}
+.ih-hero-info {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding-top: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Shared label / title / desc */
+.ih-eyebrow {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8f1d1d;
+}
+.ih-hero-title {
+    margin: 0;
+    font-size: 50px;
+    font-weight: 500;
+    line-height: 1.05;
+    font-family: 'EB Garamond', Georgia, serif;
+}
+.ih-hero-desc {
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.45;
+    color: #3a352e;
+}
+
+/* Subscribe block */
+.ih-subscribe-block {
+    box-sizing: border-box;
+    background: #1c1a17;
+    color: #f6f1e7;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 8px;
+}
+.ih-sub-head {
+    font-size: 26px;
+    font-weight: 500;
+    font-family: 'EB Garamond', Georgia, serif;
+}
+.ih-sub-tier {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #4a443c;
+}
+.ih-sub-tier:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.ih-sub-tier-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+.ih-sub-tier-name {
+    font-size: 21px;
+    font-weight: 500;
+}
+.ih-sub-tier-price {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #f6f1e7;
+}
+.ih-sub-tier-desc {
+    font-size: 17px;
+    line-height: 1.45;
+    color: #e3dccd;
+}
+.ih-sub-btn-print {
+    align-self: flex-start;
+    background: #8f1d1d;
+    color: #ffffff !important;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 14px 22px;
+    margin-top: 4px;
+    text-decoration: none;
+    display: inline-block;
+}
+.ih-sub-btn-print:hover { background: #7a1818; }
+.ih-sub-btn-digital {
+    align-self: flex-start;
+    border: 1px solid #f6f1e7;
+    color: #f6f1e7 !important;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 13px 22px;
+    margin-top: 4px;
+    text-decoration: none;
+    display: inline-block;
+}
+.ih-sub-btn-digital:hover { background: rgba(255,255,255,0.08); }
+
+/* Buy link below subscribe block */
+.ih-buy-link {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    text-decoration: underline;
+    color: #3a352e;
+}
+.ih-buy-link:hover { color: #8f1d1d; }
+
+/* In This Issue (right column on home, aside on print) */
+.ih-contents {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding-top: 8px;
+}
+.ih-contents-head {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #5b544a;
+    border-bottom: 1px solid #d6cdbd;
+    padding-bottom: 10px;
+}
+/* Catalog page body: genre headings + entries */
+.ih-contents-body h2 {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8f1d1d;
+    margin: 0 0 4px;
+}
+.ih-contents-body h2:not(:first-child) {
+    margin-top: 16px;
+}
+.ih-contents-body p {
+    font-size: 18px;
+    line-height: 1.5;
+    margin: 0;
+}
+.ih-contents-body p em { font-style: italic; }
+
+/* Podcast + Founder's Letter cards */
+.ih-cards-2col {
+    box-sizing: border-box;
+    padding: 72px 80px 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 56px;
+}
+.ih-card-podcast {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    border-top: 2px solid #1c1a17;
+    padding-top: 24px;
+    text-decoration: none;
+    color: #1c1a17;
+}
+.ih-card-podcast:hover { color: #1c1a17; }
+.ih-podcast-img {
+    width: 200px;
+    height: 200px;
+    flex-shrink: 0;
+    object-fit: cover;
+    display: block;
+}
+.ih-podcast-img-placeholder {
+    width: 200px;
+    height: 200px;
+    flex-shrink: 0;
+    background: #d9cfbd;
+}
+.ih-card-podcast-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ih-card-letter {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 2px solid #1c1a17;
+    padding-top: 24px;
+    text-decoration: none;
+    color: #1c1a17;
+}
+.ih-card-letter:hover { color: #1c1a17; }
+.ih-card-label {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8f1d1d;
+}
+.ih-card-title {
+    font-size: 34px;
+    font-weight: 500;
+    line-height: 1.1;
+}
+.ih-card-byline {
+    font-size: 18px;
+    font-style: italic;
+    color: #5b544a;
+}
+.ih-card-excerpt {
+    font-size: 20px;
+    line-height: 1.55;
+    color: #3a352e;
+}
+.ih-card-podcast .ih-card-excerpt {
+    font-size: 18px;
+    line-height: 1.5;
+    color: #3a352e;
+}
+.ih-card-listen {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1c1a17;
+}
+
+/* Archive section on home */
+.ih-archive-section {
+    box-sizing: border-box;
+    padding: 72px 80px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+.ih-archive-head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-top: 2px solid #1c1a17;
+    padding-top: 24px;
+}
+.ih-archive-heading {
+    font-size: 40px;
+    font-weight: 500;
+    font-family: 'EB Garamond', Georgia, serif;
+    margin: 0;
+}
+.ih-archive-browse {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+}
+.ih-archive-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 24px;
+}
+
+/* Dark archive card (#this-week) */
+.ih-card-dark {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #1c1a17;
+    padding: 24px;
+    text-decoration: none;
+}
+.ih-card-dark:hover { background: #2a2724; }
+.ih-card-dark-label {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #e8a0a0;
+}
+.ih-card-dark-title {
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1.15;
+    color: #f6f1e7;
+}
+.ih-card-dark-author {
+    font-size: 17px;
+    font-style: italic;
+    color: #e3dccd;
+}
+
+/* Light archive card */
+.ih-card-light {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #efe8da;
+    padding: 24px;
+    text-decoration: none;
+}
+.ih-card-light:hover { background: #e8e0d1; }
+.ih-card-light-label {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5b544a;
+}
+.ih-card-light-title {
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1.15;
+    color: #1c1a17;
+}
+.ih-card-light-author {
+    font-size: 17px;
+    font-style: italic;
+    color: #3a352e;
+}
+
+/* Gallery band */
+.ih-gallery-outer {
+    margin-top: 80px;
+    background: #1c1a17;
+    padding: 40px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+.ih-gallery-head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+.ih-gallery-heading {
+    font-size: 30px;
+    font-weight: 500;
+    color: #f6f1e7;
+}
+.ih-gallery-see {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #f6f1e7;
+}
+.ih-gallery-see:hover { color: #e3dccd; }
+.ih-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+}
+.ih-gallery-img-wrap { display: block; line-height: 0; }
+.ih-gallery-img-wrap img { width: 100%; height: 200px; object-fit: cover; display: block; }
+.ih-gallery-placeholder {
+    height: 200px;
+    background: #3b3630;
+}
+
+/* Patrons section */
+.ih-patrons-section {
+    box-sizing: border-box;
+    padding: 40px 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 56px;
+    border-bottom: 1px solid #d6cdbd;
+}
+.ih-patrons-body { display: flex; flex-direction: column; gap: 8px; max-width: 900px; }
+.ih-patrons-head-label {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #5b544a;
+}
+.ih-patrons-names-text {
+    font-size: 18px;
+    line-height: 1.5;
+    color: #3a352e;
+}
+.ih-colophon-link {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    color: #3a352e;
+    text-decoration: underline;
+    white-space: nowrap;
+}
+.ih-colophon-link:hover { color: #8f1d1d; }
+
+/* ── PRINT CATALOG PAGE (/print/) ─────────────────────────────────────────── */
+.ih-catalog-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 80px 80px;
+    box-sizing: border-box;
+}
+.ih-page-heading {
+    font-family: 'EB Garamond', serif;
+    font-size: 48px;
+    font-weight: 500;
+    margin: 0 0 32px;
+    letter-spacing: 0.01em;
+    color: #1c1a17;
+}
+.ih-catalog-rule {
+    border: none;
+    border-top: 2px solid #1c1a17;
+    margin: 48px 0;
+}
+.ih-catalog-row {
+    display: flex;
+    gap: 48px;
+    align-items: flex-start;
+}
+.ih-catalog-cover {
+    flex: 0 0 auto;
+    width: 260px;
+}
+.ih-catalog-cover .ih-cover-box {
+    width: 100%;
+    max-width: 260px;
+    height: auto;
+}
+.ih-catalog-cover .ih-cover-box img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.ih-catalog-info {
+    flex: 1 1 0;
+    min-width: 0;
+}
+.ih-catalog-title {
+    font-family: 'EB Garamond', serif;
+    font-size: 36px;
+    font-weight: 500;
+    margin: 6px 0 12px;
+    color: #1c1a17;
+}
+.ih-buy-link-coming {
+    display: inline-block;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    color: #5b544a;
+    margin: 12px 0 20px;
+}
+
+/* ── ARCHIVE PAGE (/archive/ channel) ────────────────────────────────────── */
+.ih-archive-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+    box-sizing: border-box;
+}
+.ih-archive-page-heading {
+    font-family: 'EB Garamond', serif;
+    font-size: 40px;
+    font-weight: 500;
+    margin: 0 0 8px;
+}
+.ih-archive-page-subhead {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    color: #5b544a;
+    margin: 0 0 32px;
+}
+.ih-season-heading {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #5b544a;
+    padding: 24px 0 10px;
+    border-top: 2px solid #1c1a17;
+    margin-top: 8px;
+}
+.ih-season-heading:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.ih-archive-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid #d6cdbd;
+    text-decoration: none;
+    color: #1c1a17;
+}
+.ih-archive-entry:hover { color: #8f1d1d; }
+.ih-archive-entry-label {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5b544a;
+    min-width: 120px;
+    flex-shrink: 0;
+}
+.ih-archive-entry-title { font-size: 20px; font-weight: 500; flex: 1; }
+.ih-archive-entry-author { font-size: 17px; font-style: italic; color: #3a352e; margin-left: 6px; }
+.ih-archive-entry-date {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    color: #5b544a;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+/* ── POST PAGES ───────────────────────────────────────────────────────────── */
+/* Poem spacing */
+.inkhorn-poem {
+    white-space: pre-wrap;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.8;
+    margin: 0;
+}
+
+/* Contributor byline (custom_excerpt is "by Name") */
+.ih-byline {
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #5b544a;
+    margin: 0 0 1.5rem;
+}
+.ih-byline a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: rgba(0,0,0,0.25);
+    text-underline-offset: 0.1em;
+}
+.ih-byline a:hover { color: #8f1d1d; }
+
+/* Contributor section at bottom of post */
+.ih-contributor-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #d6cdbd;
+}
+.ih-contributor-name {
+    display: inline-block;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1c1a17;
+    text-decoration: none;
+    margin-bottom: 0.6rem;
+}
+.ih-contributor-name:hover { color: #8f1d1d; }
+.ih-contributor-bio {
+    margin: 0 0 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.65;
+}
+.ih-contributor-shelf-head {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    font-family: 'Libre Franklin', sans-serif;
+}
+.ih-book-shelf {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+.ih-book-card {
+    width: 110px;
+    text-decoration: none;
+    color: inherit;
+}
+.ih-book-card img {
+    width: 110px;
+    height: auto;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+.ih-book-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.25;
+    display: block;
+}
+.ih-book-author {
+    font-size: 0.8rem;
+    opacity: 0.65;
+    display: block;
+    margin-top: 0.15rem;
+}
+
+/* ── CONTRIBUTOR / SEASON TAG PAGES ──────────────────────────────────────── */
+/* The tag page header stays Dawn's .tag structure; we add below it */
+.ih-tag-shelf {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+}
+.ih-tag-shelf-head {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-family: 'Libre Franklin', sans-serif;
+}
+
+/* Season tag page — artwork credit */
+.ih-season-credit {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 24px;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+    font-style: italic;
+}
+
+/* ── PODCAST TAG PAGE ─────────────────────────────────────────────────────── */
+.lw-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 24px auto 0;
+    max-width: 640px;
+    padding: 0 16px;
+}
+.lw-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 13px 6px 6px;
+    background: #f1f1f1;
+    border-radius: 999px;
+    text-decoration: none !important;
+    color: #333 !important;
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1;
+    transition: background .15s;
+}
+.lw-pill:hover { background: #e2e2e2; }
+.lw-pill-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.lw-pill-icon svg { width: 14px; height: 14px; fill: #fff; }
+.lw-listen { display: none; }
+
+/* ── ART GALLERY PAGE (/art/) ─────────────────────────────────────────────── */
+.ih-art-grid-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 48px;
+}
+.ih-art-grid { column-count: 3; column-gap: 16px; }
+.ih-art-item { break-inside: avoid; margin-bottom: 16px; display: block; line-height: 0; }
+.ih-art-item img { width: 100%; height: auto; display: block; }
+
+/* ── POST PAGE ────────────────────────────────────────────────────────────── */
+.ih-post {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+    box-sizing: border-box;
+}
+.ih-post-header {
+    margin-bottom: 2.5rem;
+}
+.ih-post-issue-label {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8f1d1d;
+    margin-bottom: 0.75rem;
+}
+.ih-post-issue-link { color: #8f1d1d; text-decoration: none; }
+.ih-post-issue-link:hover { text-decoration: underline; }
+.ih-post-title {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 52px;
+    font-weight: 500;
+    line-height: 1.05;
+    margin: 0 0 0.5rem;
+}
+.ih-post-byline {
+    font-size: 22px;
+    font-style: italic;
+    color: #5b544a;
+    margin-bottom: 0.5rem;
+}
+.ih-post-meta {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+}
+.ih-post-feature-image {
+    margin: 2rem 0;
+}
+.ih-post-feature-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.ih-post-feature-image figcaption {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+.ih-post-content {
+    font-size: 21px;
+    line-height: 1.65;
+}
+.ih-post-content p { margin: 0 0 1.4em; }
+.ih-post-content h2 { font-size: 28px; font-weight: 500; margin: 2em 0 0.5em; }
+.ih-post-content h3 { font-size: 22px; font-weight: 500; margin: 1.5em 0 0.4em; }
+
+/* Book shelf (post + tag pages) */
+.ih-shelf-label {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #5b544a;
+    margin-bottom: 1rem;
+}
+.ih-shelf-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+.ih-book-cover {
+    width: 110px;
+    height: auto;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+.ih-book-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.ih-sub-tier-benefits {
+    margin: 0;
+    padding-left: 1.1em;
+    font-size: 17px;
+    line-height: 1.55;
+    color: #e3dccd;
+}
+
+/* ── PRINT CATALOG PAGE (page-print.hbs) ──────────────────────────────────── */
+.ih-print-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 80px 80px;
+    box-sizing: border-box;
+}
+.ih-print-heading {
+    font-family: 'EB Garamond', serif;
+    font-size: 48px;
+    font-weight: 500;
+    margin: 0 0 12px;
+}
+.ih-print-intro {
+    font-size: 20px;
+    line-height: 1.5;
+    color: #3a352e;
+    margin: 0 0 48px;
+}
+.ih-catalog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.ih-catalog-cover-wrap {
+    display: block;
+    flex: 0 0 auto;
+    width: 260px;
+}
+.ih-catalog-cover-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+    box-shadow: 0 12px 30px rgba(28,26,23,0.16);
+}
+.ih-catalog-info { flex: 1 1 0; min-width: 0; }
+.ih-catalog-eyebrow {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8f1d1d;
+    margin-bottom: 6px;
+}
+.ih-catalog-actions {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+}
+.ih-catalog-buy {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    text-decoration: underline;
+    color: #3a352e;
+}
+.ih-catalog-buy:hover { color: #8f1d1d; }
+
+/* ── CONTRIBUTOR TAG PAGE ─────────────────────────────────────────────────── */
+.ih-contributor-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 32px;
+    box-sizing: border-box;
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+}
+.ih-contributor-photo {
+    flex: 0 0 auto;
+    width: 140px;
+}
+.ih-contributor-photo img {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+.ih-contributor-header { flex: 1; }
+.ih-contributor-header .ih-contributor-name {
+    font-size: 36px;
+    font-weight: 500;
+    font-family: 'EB Garamond', serif;
+    display: block;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+    color: #1c1a17;
+}
+.ih-contributor-header .ih-contributor-name:hover { color: #8f1d1d; }
+.ih-contributor-header .ih-contributor-bio {
+    font-size: 20px;
+    line-height: 1.55;
+    color: #3a352e;
+}
+.ih-book-shelf + .ih-contributor-page,
+.ih-contributor-page + .ih-book-shelf {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
+.ih-tag-post-list {
+    max-width: 860px;
+    margin: 32px auto 0;
+    padding: 0 24px 48px;
+    box-sizing: border-box;
+}
+.ih-tag-post-heading {
+    font-family: 'EB Garamond', serif;
+    font-size: 28px;
+    font-weight: 500;
+    margin: 0 0 16px;
+    padding-top: 24px;
+    border-top: 1px solid #d6cdbd;
+}
+.ih-tag-post-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 0;
+    border-bottom: 1px solid #d6cdbd;
+    text-decoration: none;
+    color: #1c1a17;
+}
+.ih-tag-post-item:hover .ih-tag-post-title { color: #8f1d1d; }
+.ih-tag-post-issue {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5b544a;
+}
+.ih-tag-post-title { font-size: 22px; font-weight: 500; }
+.ih-tag-post-excerpt { font-size: 18px; font-style: italic; color: #5b544a; }
+
+/* ── SEASON TAG PAGE ─────────────────────────────────────────────────────── */
+.ih-season-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 80px 0;
+    box-sizing: border-box;
+    display: flex;
+    gap: 48px;
+    align-items: flex-start;
+}
+.ih-season-cover {
+    flex: 0 0 auto;
+    width: 280px;
+}
+.ih-season-cover img {
+    width: 100%;
+    height: auto;
+    display: block;
+    box-shadow: 0 12px 30px rgba(28,26,23,0.16);
+}
+.ih-season-header { flex: 1; padding-top: 8px; }
+.ih-season-desc {
+    font-size: 20px;
+    line-height: 1.5;
+    color: #3a352e;
+    margin: 0;
+}
+.ih-season-posts {
+    max-width: 1100px;
+    margin: 32px auto 0;
+    padding: 0 80px 48px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 20px;
+}
+
+/* ── GALLERY TAG PAGE (full grid) ────────────────────────────────────────── */
+.ih-gallery-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 24px 0;
+    box-sizing: border-box;
+}
+.ih-gallery-page-heading {
+    font-family: 'EB Garamond', serif;
+    font-size: 40px;
+    font-weight: 500;
+    margin: 0 0 8px;
+}
+.ih-gallery-page-desc {
+    font-size: 18px;
+    color: #3a352e;
+    margin: 0 0 32px;
+}
+.ih-gallery-grid-full {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 48px;
+    box-sizing: border-box;
+    column-count: 3;
+    column-gap: 16px;
+}
+.ih-gallery-grid-full .ih-gallery-img-wrap {
+    break-inside: avoid;
+    margin-bottom: 16px;
+    display: block;
+    line-height: 0;
+}
+.ih-gallery-grid-full .ih-gallery-img-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.ih-gallery-grid-full .ih-gallery-placeholder {
+    height: 240px;
+    background: #d9cfbd;
+}
+
+/* ── PODCAST TAG PAGE ─────────────────────────────────────────────────────── */
+.ih-podcast-page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 0;
+    box-sizing: border-box;
+    text-align: center;
+}
+.ih-podcast-page-heading {
+    font-family: 'EB Garamond', serif;
+    font-size: 40px;
+    font-weight: 500;
+    margin: 0 0 8px;
+}
+.ih-podcast-page-desc {
+    font-size: 18px;
+    color: #3a352e;
+    margin: 0 0 24px;
+}
+.ih-podcast-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 0;
+}
+.ih-podcast-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 13px 6px 6px;
+    background: #efe8da;
+    text-decoration: none !important;
+    color: #1c1a17 !important;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    transition: background 0.15s;
+}
+.ih-podcast-pill:hover { background: #e5ddd0; }
+.ih-podcast-list {
+    max-width: 760px;
+    margin: 32px auto 0;
+    padding: 0 24px 48px;
+    box-sizing: border-box;
+}
+.ih-podcast-list-item {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 18px 0;
+    border-bottom: 1px solid #d6cdbd;
+    text-decoration: none;
+    color: #1c1a17;
+}
+.ih-podcast-list-item:hover .ih-podcast-list-title { color: #8f1d1d; }
+.ih-podcast-list-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    flex-shrink: 0;
+    display: block;
+}
+.ih-podcast-list-body { flex: 1; }
+.ih-podcast-list-date {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    color: #5b544a;
+    margin-bottom: 4px;
+}
+.ih-podcast-list-title { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+.ih-podcast-list-excerpt { font-size: 17px; color: #3a352e; line-height: 1.5; }
+
+/* ── GENRE TAG PAGE ───────────────────────────────────────────────────────── */
+.ih-genre-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 0;
+    box-sizing: border-box;
+}
+.ih-genre-heading {
+    font-family: 'EB Garamond', serif;
+    font-size: 40px;
+    font-weight: 500;
+    margin: 0 0 8px;
+}
+.ih-genre-desc {
+    font-size: 18px;
+    color: #3a352e;
+    margin: 0 0 32px;
+}
+.ih-genre-list {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px 48px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 20px;
+}
+
+/* ── ADDRESS BANNER ───────────────────────────────────────────────────────── */
+.ih-address-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #1c1a17;
+    color: #f6f1e7;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 9999;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+}
+.ih-address-banner-link { color: #e8a0a0; text-decoration: underline; }
+.ih-address-banner-link:hover { color: #f0b0b0; }
+.ih-address-banner-close {
+    background: none;
+    border: none;
+    color: #f6f1e7;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0 0 0 16px;
+}
+
+/* ── ADDRESS FORM PAGE ────────────────────────────────────────────────────── */
+.ih-address-page { max-width: 520px; margin: 60px auto; padding: 0 24px 80px; }
+.ih-address-page-title { font-family: 'EB Garamond', serif; font-size: 32px; font-weight: 400; margin: 0 0 12px; color: #1c1a17; }
+.ih-address-page-desc { font-size: 15px; color: #555; margin: 0 0 32px; }
+.ih-address-form { display: flex; flex-direction: column; gap: 20px; }
+.ih-address-field { display: flex; flex-direction: column; gap: 6px; }
+.ih-address-field label { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #444; }
+.ih-address-optional { font-weight: 400; text-transform: none; letter-spacing: 0; color: #888; }
+.ih-address-field input {
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 10px 12px;
+    font-size: 16px;
+    font-family: 'Libre Franklin', sans-serif;
+    color: #1c1a17;
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+}
+.ih-address-field input:focus { outline: none; border-color: #8b1a1a; box-shadow: 0 0 0 2px rgba(139,26,26,0.15); }
+.ih-address-field--state input { text-transform: uppercase; }
+.ih-address-field-row { display: grid; grid-template-columns: 1fr 72px 120px; gap: 12px; }
+.ih-address-error { color: #c0392b; font-size: 14px; padding: 10px 14px; background: #fdf2f2; border: 1px solid #f5c6c6; border-radius: 3px; }
+.ih-address-submit {
+    display: inline-block;
+    background: #8b1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 12px 28px;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    align-self: flex-start;
+}
+.ih-address-submit:hover { background: #7a1818; }
+.ih-address-submit:disabled { opacity: 0.6; cursor: default; }
+.ih-address-success p { font-size: 16px; color: #2d6a2d; }
+.ih-address-page-gate p { font-size: 16px; }
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    /* Masthead */
+    #ih-masthead { padding: 18px 20px 0; gap: 12px; }
+    .ih-mast-top { align-items: center; }
+    .ih-wordmark { font-size: 26px; letter-spacing: 0.12em; }
+    .ih-tagline { font-size: 16px; }
+    .ih-mast-actions-desktop { display: none; }
+    .ih-mast-actions-phone {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        font-family: 'Libre Franklin', sans-serif;
+        font-size: 13px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #8f1d1d;
+    }
+    .ih-mast-actions-phone .ih-subscribe-btn { padding: 12px 16px; }
+    .ih-menu-btn { display: flex; }
+    .ih-nav { display: none; }
+
+    /* Footer */
+    #ih-footer { padding: 22px 20px; flex-direction: column; gap: 14px; align-items: flex-start; }
+    .ih-footer-links { flex-wrap: wrap; gap: 20px; }
+
+    /* Hero */
+    .ih-hero { padding: 24px 20px 0; grid-template-columns: 1fr; gap: 24px; }
+    .ih-hero-left { flex-direction: column; }
+    .ih-cover-box, .ih-cover-box-placeholder { width: 100%; height: auto; }
+    .ih-cover-box-placeholder { height: 400px; }
+    .ih-hero-title { font-size: 38px; }
+    .ih-hero-desc { font-size: 18px; }
+
+    /* Cards */
+    .ih-cards-2col { padding: 36px 20px 0; grid-template-columns: 1fr; gap: 0; }
+    .ih-card-podcast { flex-direction: column; padding: 18px 0; gap: 12px; }
+    .ih-podcast-img, .ih-podcast-img-placeholder { width: 96px; height: 96px; }
+    .ih-card-letter { padding: 18px 0; }
+    .ih-card-title { font-size: 28px; }
+    .ih-card-excerpt { font-size: 18px; }
+
+    /* Archive section on home */
+    .ih-archive-section { padding: 32px 20px 0; gap: 14px; }
+    .ih-archive-heading { font-size: 32px; }
+    .ih-archive-grid { grid-template-columns: 1fr; gap: 0; }
+    .ih-card-dark { padding: 18px; }
+    .ih-card-dark-title { font-size: 22px; }
+    .ih-card-light { padding: 14px 0; background: none; }
+    .ih-card-light:hover { background: none; }
+    .ih-card-light-title { font-size: 20px; }
+
+    /* Gallery */
+    .ih-gallery-outer { margin-top: 32px; padding: 28px 20px; }
+    .ih-gallery-heading { font-size: 26px; }
+    .ih-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .ih-gallery-img-wrap img, .ih-gallery-placeholder { height: 160px; }
+
+    /* Patrons */
+    .ih-patrons-section { padding: 28px 20px; flex-direction: column; gap: 10px; }
+    .ih-patrons-names-text { font-size: 17px; }
+
+    /* Print catalog */
+    .ih-catalog-page { padding: 32px 20px 48px; }
+    .ih-page-heading { font-size: 36px; margin-bottom: 24px; }
+    .ih-catalog-row { flex-direction: column; gap: 20px; }
+    .ih-catalog-cover { width: 100%; }
+    .ih-catalog-cover .ih-cover-box { max-width: 100%; }
+    .ih-catalog-title { font-size: 28px; }
+    .ih-catalog-rule { margin: 32px 0; }
+
+    /* Archive page */
+    .ih-archive-page { padding: 32px 16px 48px; }
+
+    /* Art gallery */
+    .ih-art-grid { column-count: 2; }
+
+    /* Post page */
+    .ih-post { padding: 32px 16px 48px; }
+    .ih-post-title { font-size: 36px; }
+    .ih-post-byline { font-size: 18px; }
+    .ih-post-content { font-size: 18px; }
+
+    /* Print catalog */
+    .ih-print-page { padding: 32px 20px 48px; }
+    .ih-print-heading { font-size: 36px; }
+    .ih-catalog-cover-wrap { width: 100%; }
+
+    /* Contributor tag page */
+    .ih-contributor-page { padding: 32px 16px 24px; flex-direction: column; }
+    .ih-contributor-photo { width: 100px; }
+    .ih-contributor-photo img { width: 100px; height: 100px; }
+    .ih-contributor-header .ih-contributor-name { font-size: 28px; }
+    .ih-tag-post-list { padding: 0 16px 48px; }
+
+    /* Season tag page */
+    .ih-season-page { padding: 32px 20px 0; flex-direction: column; gap: 24px; }
+    .ih-season-cover { width: 100%; }
+    .ih-season-posts { padding: 0 20px 48px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+
+    /* Gallery tag page */
+    .ih-gallery-page { padding: 32px 16px 0; }
+    .ih-gallery-grid-full { padding: 0 16px 32px; column-count: 2; }
+
+    /* Podcast tag page */
+    .ih-podcast-page { padding: 32px 16px 0; }
+    .ih-podcast-list { padding: 0 16px 48px; }
+
+    /* Genre tag page */
+    .ih-genre-page { padding: 32px 16px 0; }
+    .ih-genre-list { padding: 0 16px 48px; grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    .ih-art-grid-wrapper { padding: 0 16px 32px; }
+    .ih-art-grid { column-count: 1; }
+    .ih-gallery-grid-full { column-count: 1; }
+    .ih-season-posts { grid-template-columns: 1fr; }
+}
