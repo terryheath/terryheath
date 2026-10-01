@@ -2,11 +2,14 @@
 const fs = require("fs");
 const path = require("path");
 
-const DIR = path.dirname(__filename);
+const DIR   = path.dirname(__filename);
+const STATE = process.env.STATE_DIR || DIR;  // Railway volume when deployed; repo dir locally
 const CONTRIBUTORS = path.join(DIR, "contributors.json");
-const SHELVES = path.join(DIR, "shelves.json");
-const CACHE = path.join(DIR, ".book-cache.json");
-const ISBNDB_KEY = process.env.ISBNDB_KEY || null;
+const SHELVES = path.join(DIR, "shelves.json");  // still written locally for reference; not committed
+const CACHE = path.join(STATE, ".book-cache.json");
+const ISBNDB_KEY    = process.env.ISBNDB_KEY    || null;
+const GHOST_API_URL = process.env.GHOST_API_URL || null;
+const GHOST_ADMIN_KEY = process.env.GHOST_ADMIN_KEY || null;
 
 if (!ISBNDB_KEY) {
   console.error("FATAL: ISBNDB_KEY is not set. ISBNdb is the primary source; without it most lookups will silently fail.");
@@ -335,8 +338,116 @@ async function main() {
     shelves[slug] = { name, books };
   }
 
-  fs.writeFileSync(SHELVES, JSON.stringify(shelves, null, 2) + "\n");
-  console.log(`\nWrote shelves.json — ${Object.keys(shelves).length} contributor(s)`);
+  // shelves.json write retired — shelf data now goes directly to Ghost tag
+  // codeinjection_head. shelves.json is no longer committed or fetched.
+  // console.log(`\nWrote shelves.json — ${Object.keys(shelves).length} contributor(s)`);
+
+  // --- Write shelf data to Ghost tag codeinjection_head ---
+  if (GHOST_API_URL && GHOST_ADMIN_KEY) {
+    const [kid, secret] = GHOST_ADMIN_KEY.split(":");
+    const { createHmac } = require("crypto");
+
+    function buildJWT() {
+      const iat = Math.floor(Date.now() / 1000);
+      const exp = iat + 300;
+      const header  = Buffer.from(JSON.stringify({ alg: "HS256", kid, typ: "JWT" })).toString("base64url");
+      const payload = Buffer.from(JSON.stringify({ exp, iat, aud: "/admin/" })).toString("base64url");
+      const sigInput = `${header}.${payload}`;
+      const sig = createHmac("sha256", Buffer.from(secret, "hex")).update(sigInput).digest("base64url");
+      return `${sigInput}.${sig}`;
+    }
+
+    let ghostUpdated = 0;
+    let ghostSkipped = 0;
+    let ghostErrors  = 0;
+
+    function escHtml(s) {
+      return String(s || "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function buildShelfHtml(slug, name, books) {
+      // Wrap in <script type="text/html"> so Ghost can safely auto-inject this into
+      // <head> on the contributor tag's own page without rendering visible HTML there.
+      // The theme's placement script reads it by id and moves it into the body.
+      let inner = `<div class="ih-book-shelf"><div class="ih-shelf-label">Books by ${escHtml(name)}</div><div class="ih-shelf-cards">`;
+      for (const b of books) {
+        const href = b.isbn ? `https://bookshop.org/a/94291/${b.isbn}` : "#";
+        inner += `<a class="ih-book-card" href="${escHtml(href)}" target="_blank" rel="noopener">`;
+        if (b.cover) inner += `<img class="ih-book-cover" src="${escHtml(b.cover)}" alt="${escHtml(b.title)}">`;
+        inner += `<div class="ih-book-info"><div class="ih-book-title">${escHtml(b.title)}</div>`;
+        if (b.authors) inner += `<div class="ih-book-author">${escHtml(b.authors)}</div>`;
+        inner += `</div></a>`;
+      }
+      inner += `</div></div>`;
+      return `<script type="text/html" id="ih-shelf-${escHtml(slug)}">${inner}</script>`;
+    }
+
+    for (const [slug, entry] of Object.entries(shelves)) {
+      if (!entry.books || !entry.books.length) continue;
+
+      const shelfHtml = buildShelfHtml(slug, entry.name, entry.books);
+
+      try {
+        const jwt = buildJWT();
+        // Fetch the tag by slug to get its current id, updated_at, and codeinjection_head
+        const getResp = await fetch(
+          `${GHOST_API_URL}/ghost/api/admin/tags/slug/${slug}/`,
+          { headers: { Authorization: `Ghost ${jwt}` } }
+        );
+        if (!getResp.ok) {
+          if (getResp.status === 404) {
+            console.log(`  SKIP  ghost tag not found: ${slug}`);
+          } else {
+            console.warn(`  WARN  could not fetch tag ${slug}: ${getResp.status}`);
+            ghostErrors++;
+          }
+          continue;
+        }
+        const tagData = await getResp.json();
+        const tag = tagData.tags && tagData.tags[0];
+        if (!tag) { console.warn(`  WARN  empty tag response for ${slug}`); ghostErrors++; continue; }
+
+        // Skip write if shelf HTML is unchanged
+        if ((tag.codeinjection_head || "") === shelfHtml) {
+          console.log(`  SKIP  ${slug} — shelf unchanged`);
+          ghostSkipped++;
+          continue;
+        }
+
+        const putJwt = buildJWT();
+        const putResp = await fetch(
+          `${GHOST_API_URL}/ghost/api/admin/tags/${tag.id}/`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Ghost ${putJwt}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              tags: [{ id: tag.id, codeinjection_head: shelfHtml, updated_at: tag.updated_at }]
+            }),
+          }
+        );
+        if (!putResp.ok) {
+          const err = await putResp.text();
+          console.warn(`  WARN  could not update tag ${slug}: ${putResp.status} — ${err.slice(0, 120)}`);
+          ghostErrors++;
+        } else {
+          console.log(`  GHOST  ${slug} — ${entry.books.length} book(s) written to tag codeinjection_head`);
+          ghostUpdated++;
+        }
+      } catch (err) {
+        console.warn(`  WARN  exception for ${slug}:`, err.message);
+        ghostErrors++;
+      }
+    }
+
+    console.log(`\nGhost update: ${ghostUpdated} updated, ${ghostSkipped} skipped (unchanged), ${ghostErrors} errors`);
+  } else {
+    console.log("\nNo GHOST_API_URL/GHOST_ADMIN_KEY set — shelf HTML not written to Ghost. Set credentials to update tags.");
+  }
 
   // --- Write resolved titles back into contributors.json ---
   if (Object.keys(resolved).length > 0) {

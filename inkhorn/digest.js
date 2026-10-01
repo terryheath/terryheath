@@ -20,17 +20,6 @@ const PUBLISH_MODE    = (process.env.PUBLISH_MODE || 'publish').trim().toLowerCa
 const DRY_RUN         = process.env.DRY_RUN === '1';
 const SITE_URL        = 'https://inkhornreview.com';
 
-// Ebook download/store URLs keyed by issue slug.
-// Keep in sync with EBOOK_LINKS in inkhorn/ghost-footer-injection.html.
-// Format mirrors EBOOK_LINKS: apple, amazon, kobo (add epub/pdf when available).
-const EBOOK_URLS = {
-  'autumn-2026': {
-    apple: 'https://books.apple.com/us/book/inkhorn-review/id6809263868',
-    amazon: null,
-    kobo: null,
-  }
-};
-
 if (!GHOST_API_URL || !GHOST_ADMIN_KEY) {
   console.error('GHOST_API_URL and GHOST_ADMIN_KEY are required');
   process.exit(1);
@@ -99,7 +88,6 @@ function issueBlock(issueSlug, tag) {
   const cover = tag?.feature_image || null;
   const desc  = tag?.description   || null;
   const count = tag?.count?.posts  || null;
-  const ebook = EBOOK_URLS[issueSlug] || null;
 
   let html = '';
 
@@ -123,16 +111,6 @@ function issueBlock(issueSlug, tag) {
 
   html += `<p style="margin:0 0 10px"><a href="${esc(url)}" ` +
     `style="color:#1a1a1a;font-weight:700;text-decoration:none">Read the issue &rarr;</a></p>\n`;
-
-  if (ebook && (ebook.apple || ebook.amazon || ebook.kobo || ebook.epub || ebook.pdf)) {
-    const links = [];
-    if (ebook.apple)  links.push(`<a href="${esc(ebook.apple)}"  style="color:#555">Apple Books</a>`);
-    if (ebook.amazon) links.push(`<a href="${esc(ebook.amazon)}" style="color:#555">Amazon</a>`);
-    if (ebook.kobo)   links.push(`<a href="${esc(ebook.kobo)}"   style="color:#555">Kobo</a>`);
-    if (ebook.epub)   links.push(`<a href="${esc(ebook.epub)}"   style="color:#555">EPUB</a>`);
-    if (ebook.pdf)    links.push(`<a href="${esc(ebook.pdf)}"    style="color:#555">PDF</a>`);
-    html += `<p style="margin:0;font-size:14px">Ebook: ${links.join(' &nbsp;·&nbsp; ')}</p>\n`;
-  }
 
   return html;
 }
