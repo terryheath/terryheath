@@ -54,11 +54,16 @@ if [[ "${1:-}" == "--rollback" ]]; then
 
   JWT=$(build_jwt)
   echo "→ Uploading saved Dawn theme..."
-  curl -s -X PUT \
+  ROLLBACK_UPLOAD=$(curl -s -X POST \
     -H "Authorization: Ghost ${JWT}" \
     -F "file=@${ROLLBACK_DIR}/dawn.zip;type=application/zip" \
-    "${GHOST_URL}/ghost/api/admin/themes/upload/" \
-    | python3 -m json.tool --no-ensure-ascii 2>/dev/null | grep -E '"name"|"active"' || true
+    "${GHOST_URL}/ghost/api/admin/themes/upload/")
+  echo "$ROLLBACK_UPLOAD" | python3 -m json.tool --no-ensure-ascii 2>/dev/null | grep -E '"name"|"active"' || true
+  if echo "$ROLLBACK_UPLOAD" | python3 -c "import json,sys; d=json.load(sys.stdin); exit(0 if d.get('themes') and d['themes'][0].get('name') else 1)" 2>/dev/null; then
+    :
+  else
+    echo "ERROR: Dawn upload failed or returned no theme name."; echo "$ROLLBACK_UPLOAD"; exit 1
+  fi
 
   JWT=$(build_jwt)
   echo "→ Activating Dawn..."
@@ -150,12 +155,17 @@ echo ""
 # 4. Upload new theme (no activation yet)
 JWT=$(build_jwt)
 echo "→ Uploading new theme (not activating yet)..."
-UPLOAD_RESP=$(curl -s -X PUT \
+UPLOAD_RESP=$(curl -s -X POST \
   -H "Authorization: Ghost ${JWT}" \
   -F "file=@${ZIP_PATH};type=application/zip" \
   "${GHOST_URL}/ghost/api/admin/themes/upload/")
 echo "$UPLOAD_RESP" | python3 -m json.tool --no-ensure-ascii 2>/dev/null \
   | grep -E '"name"|"active"|"errors"' || echo "$UPLOAD_RESP"
+if echo "$UPLOAD_RESP" | python3 -c "import json,sys; d=json.load(sys.stdin); exit(0 if d.get('themes') and d['themes'][0].get('name') else 1)" 2>/dev/null; then
+  :
+else
+  echo "ERROR: Theme upload failed or returned no theme name. Stopping before activation."; exit 1
+fi
 
 echo ""
 echo "────────────────────────────────────────────────────────────────────────"
