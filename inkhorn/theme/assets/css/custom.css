@@ -1,0 +1,59 @@
+/* ─── Fix 1: Tag archive headings — remove # prefix ─────────────────────── */
+.tag .tag-name::before {
+    content: "";
+}
+
+/* ─── Fix 2: Tag feature image — banner crop, image-first spacing ─────────── */
+
+/* Image is now first in the header block, not last.
+   Remove the top margin that assumed name came first, add bottom margin
+   to separate image from the name/description text below it. */
+.tag .tag-media {
+    margin-top: 0;
+    margin-bottom: 3.2rem;
+    overflow: hidden;
+    height: 32rem;          /* fixed banner height; image is cropped, not scaled */
+}
+
+/* Replace u-object-fit absolute positioning (removed from markup) with
+   a straightforward cover fill of the fixed-height container. */
+.tag .tag-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+@media (max-width: 767px) {
+    .tag .tag-media {
+        height: 20rem;
+        margin-bottom: 2.4rem;
+    }
+}
+
+/* ─── Image attribution — shown below feature image on tag/collection pages ── */
+.tag .tag-image-credit {
+    margin: -2rem 0 2.4rem;
+    font-size: 1.2rem;
+    opacity: 0.5;
+    text-align: right;
+}
+
+/* ─── Fix 3: Home page links — body text color, subtle underline ───────────── */
+
+/* .gh-content a globally gets ghost-accent-color + underline.
+   On the home page the content is navigation/prose, not article body,
+   so suppress the accent. Scoped to .home-template only. */
+.home-template .gh-content a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--color-mid-gray, #ccc);
+    text-underline-offset: 0.15em;
+    opacity: 1;
+}
+
+.home-template .gh-content a:hover {
+    text-decoration-color: var(--color-dark-gray, #444);
+    opacity: 1;
+}

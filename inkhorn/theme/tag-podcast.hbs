@@ -1,0 +1,32 @@
+{{!< default}}
+
+{{!--
+  tag-podcast.hbs — The podcast index at /podcast/
+  Used by the /podcast/ collection in routes.yaml (template: tag, data: tag.podcast).
+  No {{#tag}} wrapper — that only activates on native Ghost tag routes.
+  Posts are in {{#foreach posts}} from the collection context.
+--}}
+
+<main class="site-main">
+
+    <section class="ih-podcast-page">
+        {{> "podcast-pills"}}
+    </section>
+
+    <div class="ih-podcast-list">
+        {{#foreach posts}}
+        <a href="{{url}}" class="ih-podcast-list-item">
+            {{#if feature_image}}
+                <img class="ih-podcast-list-img" src="{{img_url feature_image size="xs"}}" alt="{{title}}">
+            {{/if}}
+            <div class="ih-podcast-list-body">
+                <div class="ih-podcast-list-date">{{date published_at format="MMMM D, YYYY"}}</div>
+                <div class="ih-podcast-list-title">{{title}}</div>
+                {{#if custom_excerpt}}<div class="ih-podcast-list-excerpt">{{custom_excerpt}}</div>{{/if}}
+            </div>
+        </a>
+        {{/foreach}}
+    </div>
+    {{pagination}}
+
+</main>

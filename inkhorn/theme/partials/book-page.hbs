@@ -1,0 +1,38 @@
+{{!--
+  book-page.hbs — Book page layout partial.
+  Included by page.hbs for pages tagged #catalog.
+  shop.js populates the format picker, status label, and contents from ih-book JSON.
+--}}
+{{{codeinjection_head}}}
+<main class="site-main">
+<div class="ih-book-page">
+
+  {{!-- Hero: cover + buying section --}}
+  <div class="ih-book-hero">
+    {{#if feature_image}}
+    <div class="ih-book-cover">
+      <img src="{{img_url feature_image size="l"}}" alt="{{title}} cover">
+    </div>
+    {{/if}}
+    <div class="ih-book-info">
+      <div class="ih-book-eyebrow" id="ih-book-status"></div>
+      <h1 class="ih-book-title">{{title}}</h1>
+      {{#if custom_excerpt}}<p class="ih-book-desc">{{custom_excerpt}}</p>{{/if}}
+      <div class="ih-book-formats" id="ih-book-formats">
+        {{!-- shop.js populates: format options, prices, quantity, Add to Cart / Preorder button --}}
+        <div class="ih-book-loading">Loading&hellip;</div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Contents + details: shop.js reads ih-book JSON and populates this --}}
+  <div class="ih-book-contents" id="ih-book-contents">
+  </div>
+
+  {{!-- Page body: list of pieces in the issue. Links are made inert via CSS. --}}
+  <div class="ih-book-body">
+    {{{content}}}
+  </div>
+
+</div>
+</main>

@@ -1,0 +1,60 @@
+{{!< default}}
+
+{{!--
+  page-print.hbs — /print/ Books grid
+  Shows all Ghost pages tagged #catalog, newest first.
+  The page body is suppressed; everything is driven by the get helper and shop.js.
+--}}
+
+<main class="site-main">
+<div class="ih-print-page">
+
+  <h1 class="ih-print-heading">Books</h1>
+
+  {{#get "pages" filter="tag:hash-catalog" limit="50" order="published_at desc"}}
+  {{#if pages}}
+  <div class="ih-print-grid">
+
+    {{#foreach pages}}
+
+    {{!-- Output this page's ih-book JSON so the inline script can read it --}}
+    {{{codeinjection_head}}}
+
+    <a class="ih-print-card" href="{{url}}" data-card-id="{{id}}">
+      {{#if feature_image}}
+      <div class="ih-print-card-cover">
+        <img src="{{img_url feature_image size="m"}}" alt="{{title}} cover" loading="lazy">
+      </div>
+      {{/if}}
+      <div class="ih-print-card-status ih-js-card-status-{{id}}"></div>
+      <div class="ih-print-card-title">{{title}}</div>
+      <div class="ih-print-card-prices ih-js-card-prices-{{id}}"></div>
+    </a>
+
+    {{!-- Inline script: read ih-book JSON, stamp sku onto card, rename block --}}
+    <script>
+    (function(){
+      var el = document.getElementById('ih-book');
+      if (!el) return;
+      try {
+        var d = JSON.parse(el.textContent);
+        var id = '{{id}}';
+        var statusEl = document.querySelector('.ih-js-card-status-' + id);
+        if (statusEl && d.statusLabel) statusEl.textContent = d.statusLabel;
+        var card = document.querySelector('[data-card-id="' + id + '"]');
+        if (card && d.sku) card.setAttribute('data-sku', d.sku);
+        el.id = 'ih-book-used-' + id;
+      } catch(x){}
+    })();
+    </script>
+
+    {{/foreach}}
+
+  </div>
+  {{else}}
+  <p class="ih-books-empty">No books yet.</p>
+  {{/if}}
+  {{/get}}
+
+</div>
+</main>

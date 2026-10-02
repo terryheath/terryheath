@@ -33,7 +33,7 @@
     });
   }
 
-  function formatCents(cents, currency) {
+  function formatCents(cents) {
     var dollars = (cents / 100).toFixed(2);
     return '$' + dollars;
   }
@@ -56,6 +56,27 @@
   var isBookPage = !!bookJsonEl;
   var isCartPage = !!document.getElementById('ih-cart-items');
   var isOrderComplete = !!document.getElementById('ih-order-complete');
+  var isGridPage = !!document.querySelector('.ih-print-grid');
+
+  // ── BOOKS GRID PAGE (/print/) ─────────────────────────────────────────────────
+  if (isGridPage) {
+    fetchProducts().then(function (products) {
+      document.querySelectorAll('.ih-print-card[data-sku]').forEach(function (card) {
+        var sku = card.getAttribute('data-sku');
+        var prod = products[sku];
+        var pricesEl = card.querySelector('.ih-print-card-prices');
+        if (!pricesEl) return;
+        if (!prod || !prod.formats || !prod.formats.length) return;
+        var parts = prod.formats.map(function (fmt) {
+          var label = fmt.format === 'print' ? 'Print' : 'Ebook';
+          return label + ' ' + formatCents(fmt.price_cents);
+        });
+        pricesEl.textContent = parts.join(' \u00b7 ');
+      });
+    }).catch(function () {
+      // prices simply stay empty if the service is unreachable
+    });
+  }
 
   // ── BOOK PAGE ─────────────────────────────────────────────────────────────────
   if (isBookPage) {
@@ -70,6 +91,11 @@
     var isbn = bookData.isbn || '';
     var contents = bookData.contents || null;
 
+    // Status label in hero
+    var statusLabel = bookData.statusLabel || '';
+    var statusEl = document.getElementById('ih-book-status');
+    if (statusEl && statusLabel) statusEl.textContent = statusLabel;
+
     // Render contents + details into #ih-book-contents
     renderBookContents(bookData, titleText, isbn, contents);
 
@@ -79,13 +105,13 @@
         var prod = products[sku];
         if (!prod) {
           document.getElementById('ih-book-formats').innerHTML =
-            '<p style="color:#5b544a;font-size:17px">Available soon</p>';
+            '<p class="ih-book-not-available">Not yet available</p>';
           return;
         }
         renderFormatPicker(prod, titleText, isPreorder);
       }).catch(function () {
         document.getElementById('ih-book-formats').innerHTML =
-          '<p style="color:#5b544a;font-size:17px">Shop unavailable — please try again later.</p>';
+          '<p class="ih-book-not-available">Shop unavailable — please try again later.</p>';
       });
     } else {
       document.getElementById('ih-book-formats').innerHTML = '';
@@ -119,7 +145,7 @@
       html += '<div class="ih-book-details">';
       html += '<h2 class="ih-book-section-head">Details</h2>';
       html += '<dl class="ih-book-detail-list">';
-      html += '<dt>ISBN</dt><dd>' + e(isbn) + '</dd>';
+      html += '<dt>ISBN</dt><dd>' + e(isbn) + ' (print)</dd>';
       html += '</dl>';
       html += '</div>';
     }
@@ -161,14 +187,22 @@
         html += '</div>';
       }
 
-      // Add to cart button
-      var btnLabel = isPreorder ? 'Preorder' : 'Add to Cart';
+      // Add to cart button — use per-format preorder flag
+      var selectedFmt = prod.formats.filter(function(f) { return f.format === selected; })[0];
+      var fmtIsPreorder = selectedFmt ? !!selectedFmt.preorder : false;
+      var btnLabel = fmtIsPreorder ? 'Preorder' : 'Add to Cart';
       html += '<button class="ih-add-to-cart-btn' + (selected === 'print' ? ' ih-sub-btn-print' : ' ih-btn-ebook') + '" id="ih-add-to-cart">';
       html += e(btnLabel) + '</button>';
 
-      // US-only note for print
+      // Format note
       if (selected === 'print') {
-        html += '<p class="ih-book-print-note">Print ships to U.S. addresses only.</p>';
+        html += '<p class="ih-book-print-note">Ships to U.S. addresses. $4 for the first book, $1 for each additional.</p>';
+      } else if (selected === 'ebook') {
+        if (fmtIsPreorder) {
+          html += '<p class="ih-book-ebook-note">Preorder. Emailed to you on release day. Available in any country.</p>';
+        } else {
+          html += '<p class="ih-book-ebook-note">Delivered by email. Available in any country.</p>';
+        }
       }
 
       html += '</div>';
@@ -221,15 +255,23 @@
           if (existing) {
             existing.quantity += qty;
           } else {
-            cart.push({ sku: prod.sku, format: fmt, quantity: qty, title: titleText, preorder: isPreorder });
+            var addedFmt = prod.formats.filter(function(f) { return f.format === fmt; })[0];
+            var addedPreorder = addedFmt ? !!addedFmt.preorder : false;
+            cart.push({ sku: prod.sku, format: fmt, quantity: qty, title: titleText, preorder: addedPreorder });
           }
           saveCart(cart);
 
-          // Flash confirmation
-          addBtn.textContent = 'Added!';
-          setTimeout(function () {
-            addBtn.textContent = isPreorder ? 'Preorder' : 'Add to Cart';
-          }, 1500);
+          // Show persistent "Added. View cart" confirmation below the button
+          var picker = container.querySelector('.ih-book-format-picker');
+          if (picker) {
+            var existing_conf = picker.querySelector('.ih-add-confirm');
+            if (!existing_conf) {
+              var conf = document.createElement('div');
+              conf.className = 'ih-add-confirm';
+              conf.innerHTML = 'Added. <a href="/cart/" class="ih-add-confirm-link">View cart</a>';
+              picker.appendChild(conf);
+            }
+          }
         });
       }
     }
@@ -276,7 +318,7 @@
         html += '<div class="ih-cart-item-title">' + e(item.title || item.sku) + '</div>';
         html += '<div class="ih-cart-item-detail">';
         html += '<span class="ih-cart-item-format">' + e(item.format === 'print' ? 'Print' : 'Ebook') + '</span>';
-        if (item.preorder) html += ' <span class="ih-cart-item-preorder">Preorder — ships on release</span>';
+        if (item.preorder) html += ' <span class="ih-cart-item-preorder">' + (item.format === 'ebook' ? 'Preorder — emailed on release day' : 'Preorder — ships on release') + '</span>';
         html += '</div>';
 
         if (item.format === 'print') {
@@ -304,7 +346,7 @@
       sumHtml += '<div class="ih-cart-subtotal">Subtotal: ' + formatCents(subtotal) + '</div>';
       sumHtml += '<div class="ih-cart-shipping">Shipping: ' + shippingText + '</div>';
       if (hasPrint) {
-        sumHtml += '<p class="ih-cart-note">Print ships to U.S. addresses only. One shipping address per order.</p>';
+        sumHtml += '<p class="ih-cart-note">Ships to U.S. addresses only. $4 for the first book, $1 for each additional.</p>';
       }
       sumHtml += '<button class="ih-cart-checkout-btn ih-sub-btn-print" id="ih-checkout-btn">Checkout</button>';
       summaryEl.innerHTML = sumHtml;
@@ -315,7 +357,7 @@
       document.getElementById('ih-checkout-btn').addEventListener('click', function () {
         var btn = this;
         btn.disabled = true;
-        btn.textContent = 'Loading…';
+        btn.textContent = 'Loading\u2026';
 
         var items = cart.map(function (item) {
           return { sku: item.sku, format: item.format, quantity: item.quantity };
@@ -386,7 +428,7 @@
     var orderEl = document.getElementById('ih-order-complete');
 
     if (!sessionId) {
-      orderEl.innerHTML = '<h1 class="ih-order-complete-heading">Order Complete</h1><p>Thank you for your order!</p>';
+      orderEl.innerHTML = '<p class="ih-order-complete-intro">No order found. <a href="/print/">Browse our books \u2192</a></p>';
     } else {
       orderEl.innerHTML = '<h1 class="ih-order-complete-heading">Order Complete</h1><p>Loading your order&hellip;</p>';
 
@@ -396,6 +438,7 @@
           if (data.error) {
             orderEl.innerHTML = '<h1 class="ih-order-complete-heading">Order Complete</h1>' +
               '<p>Thank you for your order! Check your email for confirmation.</p>';
+            saveCart([]);
             return;
           }
 
@@ -407,10 +450,13 @@
             var item = data.items[i];
             html += '<div class="ih-order-item">';
             html += '<div class="ih-order-item-name">' + e(item.name) + ' (' + e(item.format) + ')';
-            if (item.preorder) html += ' <span class="ih-order-preorder">Preorder — ships on release</span>';
+            if (item.preorder) {
+              var preorderMsg = item.format === 'ebook' ? 'Preorder — your ebook will be emailed to you on release day' : 'Preorder — ships on release';
+              html += ' <span class="ih-order-preorder">' + preorderMsg + '</span>';
+            }
             html += '</div>';
             if (item.quantity > 1) html += '<div class="ih-order-item-qty">Qty: ' + item.quantity + '</div>';
-            if (item.download_url) {
+            if (item.download_url && !item.preorder) {
               html += '<div class="ih-download-link-wrap">';
               html += '<a class="ih-download-link" href="' + e(item.download_url) + '" target="_blank" rel="noopener">Download Ebook &rarr;</a>';
               html += '</div>';
@@ -427,8 +473,6 @@
           html += '<p class="ih-order-continue"><a href="/">Continue reading &rarr;</a></p>';
 
           orderEl.innerHTML = html;
-
-          // Clear cart
           saveCart([]);
         })
         .catch(function () {

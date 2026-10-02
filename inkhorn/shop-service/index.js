@@ -45,7 +45,7 @@ async function getProducts() {
   for (const prod of products.data) {
     const { sku, format, download_url } = prod.metadata || {};
     if (!sku || !format) continue;
-    if (format === 'ebook' && !download_url) continue; // only offer ebook if download_url is set
+    if (format === 'ebook' && !download_url && prod.metadata.preorder !== 'true') continue; // offer ebook if download_url is set or it is a preorder
 
     if (!result[sku]) result[sku] = { sku, formats: [] };
 
@@ -314,7 +314,13 @@ async function handleOrderCompleted(session) {
   let buyerBody = `Thank you for your order from Inkhorn Review!\n\n`;
   buyerBody += `Order summary:\n`;
   for (const line of orderLines) {
-    buyerBody += `  - ${line.name} (${line.format})${line.preorder ? ' [Preorder — ships on release]' : ''} x${line.quantity}\n`;
+    let preorderNote = '';
+    if (line.preorder && line.format === 'ebook') {
+      preorderNote = ' [Preorder — your ebook will be emailed to you on release day]';
+    } else if (line.preorder) {
+      preorderNote = ' [Preorder — ships on release]';
+    }
+    buyerBody += `  - ${line.name} (${line.format})${preorderNote} x${line.quantity}\n`;
     if (line.download_url) {
       buyerBody += `    Download: ${line.download_url}\n`;
     }

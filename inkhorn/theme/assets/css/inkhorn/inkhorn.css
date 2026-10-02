@@ -2102,6 +2102,59 @@ a:hover { color: #8f1d1d; }
     color: #8f1d1d;
 }
 
+/* Prices line on grid cards */
+.ih-print-card-prices {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+}
+
+/* Empty grid message */
+.ih-books-empty {
+    font-size: 20px;
+    color: #5b544a;
+}
+
+/* Status label in book page hero */
+.ih-book-eyebrow {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8f1d1d;
+    min-height: 1em;
+}
+
+/* Ebook format note */
+.ih-book-ebook-note {
+    margin: 0;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+}
+
+/* Not yet available message */
+.ih-book-not-available {
+    margin: 0;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 17px;
+    color: #5b544a;
+}
+
+/* "Added. View cart" confirmation after adding to cart */
+.ih-add-confirm {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    color: #1c1a17;
+}
+.ih-add-confirm-link {
+    color: #8f1d1d;
+    text-decoration: underline;
+    text-underline-offset: 0.1em;
+}
+.ih-add-confirm-link:hover { color: #7a1818; }
+
 /* Cart link in masthead */
 .ih-cart-link {
     font-family: 'Libre Franklin', sans-serif;
@@ -2109,6 +2162,22 @@ a:hover { color: #8f1d1d; }
     color: #1c1a17;
 }
 .ih-cart-link:hover { color: #8f1d1d; }
+
+/* ── BOOK PAGE BODY ──────────────────────────────────────────────────────── */
+.ih-book-body {
+    max-width: 720px;
+    margin: 48px 0 0;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #1c1a17;
+}
+.ih-book-body a {
+    pointer-events: none;
+    text-decoration: none !important;
+    color: inherit !important;
+    cursor: default;
+}
 
 /* ── SHOP RESPONSIVE ─────────────────────────────────────────────────────── */
 @media (max-width: 900px) {

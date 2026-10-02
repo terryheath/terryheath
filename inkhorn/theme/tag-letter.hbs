@@ -1,0 +1,26 @@
+{{!< default}}
+
+{{!-- tag-letter.hbs — Founder's Letter index at /founder-letter/
+     Used by the /founder-letter/ collection (template: tag, data: tag.letter).
+     No {{#tag}} wrapper — that only activates on native Ghost tag routes. --}}
+
+<main class="site-main">
+
+    <section class="ih-genre-page">
+        <h1 class="ih-genre-heading">Founder&rsquo;s Letter</h1>
+    </section>
+
+    <div class="ih-genre-list">
+        {{#foreach posts}}
+        <a href="{{url}}" class="ih-card-light">
+            <div class="ih-card-light-label">
+                {{date published_at format="MMMM YYYY"}}
+            </div>
+            <div class="ih-card-light-title">{{title}}</div>
+            {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+        </a>
+        {{/foreach}}
+    </div>
+    {{pagination}}
+
+</main>

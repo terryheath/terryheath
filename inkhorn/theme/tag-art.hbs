@@ -1,0 +1,26 @@
+{{!< default}}
+
+{{!-- tag-art.hbs — The gallery at /art/
+     Used by the /art/ collection (template: tag, data: tag.art).
+     No {{#tag}} wrapper — that only activates on native Ghost tag routes. --}}
+
+<main class="site-main">
+
+    <section class="ih-gallery-page">
+        <h1 class="ih-gallery-page-heading">Gallery</h1>
+    </section>
+
+    <div class="ih-gallery-grid-full">
+        {{#foreach posts}}
+        <a href="{{url}}" class="ih-gallery-img-wrap">
+            {{#if feature_image}}
+                <img src="{{img_url feature_image size="m"}}" alt="{{title}}" loading="lazy">
+            {{else}}
+                <div class="ih-gallery-placeholder"></div>
+            {{/if}}
+        </a>
+        {{/foreach}}
+    </div>
+    {{pagination}}
+
+</main>

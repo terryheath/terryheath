@@ -1,0 +1,31 @@
+{{!< default}}
+
+{{!-- author.hbs — Ghost author archive page at /author/{slug}/
+     Ghost sets author properties at root context for native author routes.
+     Uses Inkhorn CSS classes (not Dawn's suppressed .gh-canvas etc.) --}}
+
+<main class="site-main">
+
+    {{#author}}
+    <section class="ih-tag-page">
+        <div class="ih-tag-page-header">
+            <h1 class="ih-tag-page-name">{{name}}</h1>
+            {{#if bio}}<p class="ih-tag-page-desc">{{bio}}</p>{{/if}}
+        </div>
+    </section>
+    {{/author}}
+
+    <div class="ih-tag-post-list">
+        {{#foreach posts}}
+        <a href="{{url}}" class="ih-tag-post-item">
+            <div class="ih-tag-post-issue">
+                {{#foreach tags}}{{#match slug "~^" "autumn-"}}{{name}}{{/match}}{{#match slug "~^" "winter-"}}{{name}}{{/match}}{{#match slug "~^" "spring-"}}{{name}}{{/match}}{{#match slug "~^" "summer-"}}{{name}}{{/match}}{{/foreach}}
+            </div>
+            <div class="ih-tag-post-title">{{title}}</div>
+            {{#if custom_excerpt}}<div class="ih-tag-post-excerpt">{{custom_excerpt}}</div>{{/if}}
+        </a>
+        {{/foreach}}
+    </div>
+    {{#if pagination}}{{pagination}}{{/if}}
+
+</main>

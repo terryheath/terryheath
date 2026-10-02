@@ -1,0 +1,17 @@
+/* Inkhorn Review theme — based on Ghost Dawn 1.0.0 */
+
+/* Shared Ghost theme assets (cards, membership paywall, portal) */
+@import "@tryghost/shared-theme-assets/assets/css/v1/screen.css";
+
+/* Dawn pieces we keep: post content, paywall CTA, related posts, pagination */
+@import "blog/single.css";
+@import "blog/feed.css";
+@import "blog/related.css";
+@import "blog/pagination.css";
+@import "blog/comment.css";
+@import "blog/share.css";
+@import "blog/navigation.css";
+@import "misc/utils.css";
+
+/* Inkhorn: masthead, footer, home, archive, post, catalog, all pages */
+@import "inkhorn/inkhorn.css";

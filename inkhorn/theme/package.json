@@ -1,0 +1,69 @@
+{
+    "name": "inkhorn",
+    "description": "Inkhorn Review Ghost theme",
+    "version": "1.0.0",
+    "private": true,
+    "engines": {
+        "ghost": ">=5.0.0"
+    },
+    "license": "MIT",
+    "author": {
+        "name": "Terry Heath",
+        "email": "hello@terryheath.com",
+        "url": "https://inkhornreview.com"
+    },
+    "keywords": [
+        "ghost",
+        "theme",
+        "ghost-theme"
+    ],
+    "config": {
+        "posts_per_page": 5,
+        "image_sizes": {
+            "xs": {
+                "width": 150
+            },
+            "s": {
+                "width": 400
+            },
+            "m": {
+                "width": 750
+            },
+            "l": {
+                "width": 960
+            },
+            "xl": {
+                "width": 1140
+            },
+            "xxl": {
+                "width": 1920
+            }
+        },
+        "posts_per_page": 30,
+        "card_assets": true
+    },
+    "scripts": {
+        "dev": "gulp",
+        "test": "gscan .",
+        "zip": "gulp zip"
+    },
+    "packageManager": "pnpm@11.25.0",
+    "devDependencies": {
+        "@tryghost/shared-theme-assets": "2.7.3",
+        "@tryghost/theme-translations": "^0.0.9",
+        "autoprefixer": "10.5.4",
+        "beeper": "2.1.0",
+        "cssnano": "9.0.2",
+        "gscan": "6.4.2",
+        "gulp": "5.0.1",
+        "gulp-concat": "2.6.1",
+        "gulp-livereload": "4.0.2",
+        "gulp-postcss": "10.0.0",
+        "gulp-uglify": "3.0.2",
+        "gulp-zip": "5.1.0",
+        "ordered-read-streams": "2.0.0",
+        "postcss": "8.5.26",
+        "postcss-easy-import": "4.0.0",
+        "pump": "3.0.4"
+    }
+}

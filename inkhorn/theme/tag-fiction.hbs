@@ -1,0 +1,53 @@
+{{!< default}}
+
+{{!-- tag-fiction.hbs — Fiction archive at /fiction/
+     Uses {{#get}} (tag filter) so autumn-2026 posts are found regardless of
+     which collection owns their permalink. --}}
+
+<main class="site-main">
+<div class="ih-archive-page">
+
+    <div class="ih-archive-page-header">
+        <h1 class="ih-archive-page-heading">The Archive &middot; Fiction</h1>
+    </div>
+    {{> "genre-filter-row"}}
+
+    <div class="ih-archive-post-list" id="ih-archive-list">
+        {{#get "posts" filter="tag:fiction+tag:hash-archive" order="published_at desc" limit="999"}}
+        {{#foreach posts}}
+        <div class="ih-archive-entry"
+             data-month="{{date published_at format="YYYY-MM"}}"
+             data-month-name="{{date published_at format="MMMM YYYY"}}">
+            <div class="ih-archive-entry-label">
+                {{#match visibility "=" "public"}}Free{{else}}Subscribers{{/match}} &middot; <a href="/fiction/" class="ih-archive-genre-link">Fiction</a>
+            </div>
+            <div class="ih-archive-entry-title"><a href="{{url}}" class="ih-archive-entry-link">{{title}}</a></div>
+            {{#if custom_excerpt}}<div class="ih-archive-entry-author">{{custom_excerpt}}</div>{{/if}}
+            <div class="ih-archive-entry-date">{{date published_at format="D MMM YYYY"}}</div>
+        </div>
+        {{/foreach}}
+        {{/get}}
+    </div>
+
+</div>
+</main>
+
+<script>
+(function(){
+    var list = document.getElementById('ih-archive-list');
+    if (!list) return;
+    var items = list.querySelectorAll('.ih-archive-entry');
+    var lastMonth = null;
+    items.forEach(function(item) {
+        var month = item.getAttribute('data-month');
+        var monthName = item.getAttribute('data-month-name');
+        if (month && month !== lastMonth) {
+            var heading = document.createElement('div');
+            heading.className = 'ih-season-heading';
+            heading.textContent = monthName || month;
+            list.insertBefore(heading, item);
+            lastMonth = month;
+        }
+    });
+})();
+</script>
