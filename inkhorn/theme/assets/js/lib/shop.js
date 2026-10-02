@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  var SHOP_SERVICE_URL = 'https://inkhorn-shop-service.up.railway.app'; // update after Railway deploy
+  var SHOP_SERVICE_URL = 'https://inkhorn-shop-service-production.up.railway.app';
   var CART_KEY = 'ih-cart';
 
   // ── HELPERS ──────────────────────────────────────────────────────────────────
