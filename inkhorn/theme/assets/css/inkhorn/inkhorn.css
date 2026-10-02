@@ -114,7 +114,6 @@ a:hover { color: #8f1d1d; }
 /* Nav */
 .ih-nav {
     display: flex;
-    gap: 36px;
     font-family: 'Libre Franklin', sans-serif;
     font-size: 13px;
     font-weight: 500;
@@ -123,10 +122,19 @@ a:hover { color: #8f1d1d; }
     padding: 14px 0;
     border-top: 2px solid #8f1d1d;
     border-bottom: 1px solid #d6cdbd;
-    flex-wrap: wrap;
 }
+/* Ghost {{navigation}} renders <ul>/<li>; make it a horizontal flex row */
+.ih-nav ul { display: flex; gap: 36px; list-style: none; padding: 0; margin: 0; flex-wrap: wrap; }
+.ih-nav li { padding: 0; margin: 0; }
 .ih-nav a { color: #1c1a17; }
 .ih-nav a:hover { color: #8f1d1d; }
+/* Also handles custom navigation partial (plain <a> tags as direct children) */
+.ih-nav > a { margin-right: 36px; }
+.ih-nav > a:last-child { margin-right: 0; }
+
+/* Phone nav overlay — Ghost {{navigation}} renders <ul>/<li> here too */
+.ih-nav-overlay ul { list-style: none; padding: 0; margin: 0; width: 100%; }
+.ih-nav-overlay li { padding: 0; margin: 0; }
 
 /* Hamburger — phone only */
 .ih-menu-btn {
@@ -361,6 +369,18 @@ a:hover { color: #8f1d1d; }
     border-bottom: 1px solid #d6cdbd;
     padding-bottom: 10px;
 }
+/* Genre heading class (used in catalog page HTML) */
+.ih-contents-genre-head {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8f1d1d;
+    margin: 16px 0 4px;
+}
+.ih-contents-genre-head:first-child { margin-top: 0; }
+
 /* Catalog page body: genre headings + entries */
 .ih-contents-body h2 {
     font-family: 'Libre Franklin', sans-serif;
@@ -372,7 +392,7 @@ a:hover { color: #8f1d1d; }
     margin: 0 0 4px;
 }
 .ih-contents-body h2:not(:first-child) {
-    margin-top: 16px;
+    margin-top: 28px;
 }
 .ih-contents-body p {
     font-size: 18px;
@@ -526,14 +546,32 @@ a:hover { color: #8f1d1d; }
 
 /* Light archive card */
 .ih-card-light {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 10px;
     background: #efe8da;
     padding: 24px;
-    text-decoration: none;
 }
 .ih-card-light:hover { background: #e8e0d1; }
+.ih-card-light-link {
+    color: inherit;
+    text-decoration: none;
+}
+.ih-card-light-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+.ih-card-light:hover .ih-card-light-link { color: #8f1d1d; }
+.ih-card-light-genre-link {
+    position: relative;
+    z-index: 1;
+    color: inherit;
+    text-decoration: none;
+}
+.ih-card-light-genre-link:hover { color: #8f1d1d; }
 .ih-card-light-label {
     font-family: 'Libre Franklin', sans-serif;
     font-size: 11px;
@@ -582,7 +620,7 @@ a:hover { color: #8f1d1d; }
 .ih-gallery-see:hover { color: #e3dccd; }
 .ih-gallery-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 16px;
 }
 .ih-gallery-img-wrap { display: block; line-height: 0; }
@@ -600,7 +638,6 @@ a:hover { color: #8f1d1d; }
     justify-content: space-between;
     align-items: flex-start;
     gap: 56px;
-    border-bottom: 1px solid #d6cdbd;
 }
 .ih-patrons-body { display: flex; flex-direction: column; gap: 8px; max-width: 900px; }
 .ih-patrons-head-label {
@@ -683,6 +720,25 @@ a:hover { color: #8f1d1d; }
     margin: 12px 0 20px;
 }
 
+/* ── GENRE FILTER ROW ────────────────────────────────────────────────────── */
+.ih-genre-filter-row {
+    display: flex;
+    gap: 20px;
+    margin: 0 0 32px;
+    flex-wrap: wrap;
+}
+.ih-genre-filter-link {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5b544a;
+    text-decoration: none;
+}
+.ih-genre-filter-link:hover,
+.ih-genre-filter-active { color: #8f1d1d; }
+
 /* ── ARCHIVE PAGE (/archive/ channel) ────────────────────────────────────── */
 .ih-archive-page {
     max-width: 860px;
@@ -715,15 +771,32 @@ a:hover { color: #8f1d1d; }
 }
 .ih-season-heading:first-child { margin-top: 0; padding-top: 0; border-top: none; }
 .ih-archive-entry {
+    position: relative;
     display: flex;
     align-items: baseline;
     gap: 16px;
     padding: 16px 0;
     border-bottom: 1px solid #d6cdbd;
-    text-decoration: none;
     color: #1c1a17;
 }
-.ih-archive-entry:hover { color: #8f1d1d; }
+.ih-archive-entry-link {
+    color: inherit;
+    text-decoration: none;
+}
+.ih-archive-entry-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+.ih-archive-entry:hover .ih-archive-entry-link { color: #8f1d1d; }
+.ih-archive-genre-link {
+    position: relative;
+    z-index: 1;
+    color: inherit;
+    text-decoration: none;
+}
+.ih-archive-genre-link:hover { color: #8f1d1d; }
 .ih-archive-entry-label {
     font-family: 'Libre Franklin', sans-serif;
     font-size: 11px;
@@ -795,11 +868,17 @@ a:hover { color: #8f1d1d; }
     margin: 0 0 1rem;
     font-family: 'Libre Franklin', sans-serif;
 }
+/* Shelf wrapper — constrains the book shelf on contributor tag pages */
+.ih-shelf-wrapper {
+    max-width: 860px;
+    margin: 40px auto 0;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
 .ih-book-shelf {
     display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
 }
 .ih-book-card {
     width: 110px;
@@ -986,11 +1065,7 @@ a:hover { color: #8f1d1d; }
     gap: 0.15rem;
 }
 .ih-sub-tier-benefits {
-    margin: 0;
-    padding-left: 1.1em;
-    font-size: 17px;
-    line-height: 1.55;
-    color: #e3dccd;
+    display: none;
 }
 
 /* ── PRINT CATALOG PAGE (page-print.hbs) ──────────────────────────────────── */
@@ -1053,6 +1128,54 @@ a:hover { color: #8f1d1d; }
 }
 .ih-catalog-buy:hover { color: #8f1d1d; }
 
+/* ── CONTRIBUTOR / AUTHOR TAG PAGE HEADER ────────────────────────────────── */
+.ih-tag-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 0;
+    box-sizing: border-box;
+}
+.ih-tag-page-header {
+    padding-bottom: 24px;
+    border-bottom: 1px solid #d6cdbd;
+}
+.ih-tag-page-name {
+    font-family: 'EB Garamond', serif;
+    font-size: 36px;
+    font-weight: 500;
+    margin: 0 0 0.5rem;
+    color: #1c1a17;
+}
+.ih-tag-page-desc {
+    font-size: 20px;
+    line-height: 1.55;
+    color: #3a352e;
+    margin: 0;
+}
+
+/* ── RELATED POSTS ───────────────────────────────────────────────────────── */
+.related-wrapper {
+    max-width: 860px;
+    margin: 64px auto 0;
+    padding: 32px 24px 48px;
+    box-sizing: border-box;
+    background: transparent;
+}
+.related-title {
+    font-family: 'EB Garamond', serif;
+    font-size: 24px;
+    font-weight: 500;
+    color: #1c1a17;
+    margin: 0 0 24px;
+    padding-bottom: 16px;
+    border-top: 1px solid #d6cdbd;
+    padding-top: 24px;
+}
+.related-feed {
+    display: flex;
+    flex-direction: column;
+}
+
 /* ── CONTRIBUTOR TAG PAGE ─────────────────────────────────────────────────── */
 .ih-contributor-page {
     max-width: 860px;
@@ -1112,15 +1235,32 @@ a:hover { color: #8f1d1d; }
     border-top: 1px solid #d6cdbd;
 }
 .ih-tag-post-item {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 4px;
     padding: 16px 0;
     border-bottom: 1px solid #d6cdbd;
-    text-decoration: none;
     color: #1c1a17;
 }
-.ih-tag-post-item:hover .ih-tag-post-title { color: #8f1d1d; }
+.ih-tag-post-link {
+    color: inherit;
+    text-decoration: none;
+}
+.ih-tag-post-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+.ih-tag-post-item:hover .ih-tag-post-link { color: #8f1d1d; }
+.ih-tag-post-genre-link {
+    position: relative;
+    z-index: 1;
+    color: inherit;
+    text-decoration: none;
+}
+.ih-tag-post-genre-link:hover { color: #8f1d1d; }
 .ih-tag-post-issue {
     font-family: 'Libre Franklin', sans-serif;
     font-size: 11px;
@@ -1437,7 +1577,7 @@ a:hover { color: #8f1d1d; }
     /* Gallery */
     .ih-gallery-outer { margin-top: 32px; padding: 28px 20px; }
     .ih-gallery-heading { font-size: 26px; }
-    .ih-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .ih-gallery-grid { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 12px; }
     .ih-gallery-img-wrap img, .ih-gallery-placeholder { height: 160px; }
 
     /* Patrons */
@@ -1500,4 +1640,490 @@ a:hover { color: #8f1d1d; }
     .ih-art-grid { column-count: 1; }
     .ih-gallery-grid-full { column-count: 1; }
     .ih-season-posts { grid-template-columns: 1fr; }
+}
+
+/* ── SHOP: BOOK PAGE ──────────────────────────────────────────────────────── */
+.ih-book-page {
+    box-sizing: border-box;
+    padding: 48px 80px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.ih-book-hero {
+    display: flex;
+    gap: 56px;
+    align-items: flex-start;
+    margin-bottom: 56px;
+}
+.ih-book-cover {
+    width: 340px;
+    flex-shrink: 0;
+    box-shadow: 0 18px 40px rgba(28,26,23,0.18);
+}
+.ih-book-cover img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+.ih-book-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.ih-book-title {
+    margin: 0;
+    font-size: 46px;
+    font-weight: 500;
+    line-height: 1.08;
+    font-family: 'EB Garamond', Georgia, serif;
+}
+.ih-book-desc {
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.45;
+    color: #3a352e;
+}
+.ih-book-loading {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    color: #5b544a;
+}
+
+/* Format picker */
+.ih-book-format-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.ih-book-format-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ih-book-format-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border: 1px solid #d6cdbd;
+    background: #efe8da;
+    cursor: pointer;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 15px;
+}
+.ih-book-format-option.selected {
+    border-color: #1c1a17;
+    background: #f6f1e7;
+}
+.ih-book-format-option input[type="radio"] {
+    margin: 0;
+    flex-shrink: 0;
+}
+.ih-book-format-name {
+    flex: 1;
+    font-weight: 500;
+}
+.ih-book-format-price {
+    font-weight: 600;
+    color: #1c1a17;
+}
+.ih-book-qty-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ih-book-qty-label {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5b544a;
+}
+.ih-book-qty {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d6cdbd;
+}
+.ih-qty-btn {
+    background: #efe8da;
+    border: none;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    cursor: pointer;
+    color: #1c1a17;
+    line-height: 1;
+    padding: 0;
+    font-family: 'Libre Franklin', sans-serif;
+}
+.ih-qty-btn:hover { background: #d6cdbd; }
+.ih-qty-input {
+    width: 48px;
+    height: 36px;
+    border: none;
+    border-left: 1px solid #d6cdbd;
+    border-right: 1px solid #d6cdbd;
+    text-align: center;
+    font-size: 16px;
+    background: #f6f1e7;
+    color: #1c1a17;
+    font-family: 'Libre Franklin', sans-serif;
+    -moz-appearance: textfield;
+}
+.ih-qty-input::-webkit-outer-spin-button,
+.ih-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.ih-add-to-cart-btn {
+    align-self: flex-start;
+    background: #8f1d1d;
+    color: #ffffff !important;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 14px 28px;
+    border: none;
+    cursor: pointer;
+}
+.ih-add-to-cart-btn:hover { background: #7a1818; }
+.ih-btn-ebook {
+    background: #1c1a17 !important;
+}
+.ih-btn-ebook:hover { background: #3a352e !important; }
+.ih-book-print-note {
+    margin: 0;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+}
+
+/* Book contents */
+.ih-book-contents {
+    border-top: 1px solid #d6cdbd;
+    padding-top: 40px;
+    margin-bottom: 40px;
+}
+.ih-book-contents-inner {
+    margin-bottom: 40px;
+}
+.ih-book-section-head {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #5b544a;
+    margin: 0 0 16px;
+    border-bottom: 1px solid #d6cdbd;
+    padding-bottom: 10px;
+}
+.ih-book-details {
+    margin-top: 32px;
+}
+.ih-book-detail-list {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 20px;
+    font-size: 17px;
+}
+.ih-book-detail-list dt {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #5b544a;
+    margin: 0;
+}
+.ih-book-detail-list dd { margin: 0; }
+
+/* Read online */
+.ih-book-read-online {
+    border-top: 1px solid #d6cdbd;
+    padding-top: 40px;
+    margin-bottom: 40px;
+}
+.ih-book-piece-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ih-book-piece-item {
+    font-size: 19px;
+    line-height: 1.4;
+}
+.ih-book-piece-item a {
+    color: #1c1a17;
+    text-decoration: underline;
+    text-decoration-color: rgba(0,0,0,.3);
+    text-underline-offset: 0.1em;
+}
+.ih-book-piece-item a:hover { color: #8f1d1d; }
+.ih-book-piece-author {
+    font-style: italic;
+    color: #5b544a;
+    font-size: 17px;
+}
+
+/* ── SHOP: CART PAGE ─────────────────────────────────────────────────────── */
+.ih-cart-page {
+    box-sizing: border-box;
+    padding: 48px 80px 80px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.ih-cart-heading {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 46px;
+    font-weight: 500;
+    margin: 0 0 36px;
+}
+.ih-cart-empty {
+    font-size: 20px;
+    color: #5b544a;
+}
+.ih-cart-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: 16px 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid #d6cdbd;
+}
+.ih-cart-item-title {
+    font-size: 20px;
+    font-weight: 500;
+    grid-column: 1;
+    grid-row: 1;
+}
+.ih-cart-item-detail {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+    grid-column: 1;
+    grid-row: 2;
+}
+.ih-cart-item-format {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.ih-cart-item-preorder {
+    color: #8f1d1d;
+}
+.ih-cart-qty-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid #d6cdbd;
+}
+.ih-cart-qty-btn {
+    background: #efe8da;
+    border: none;
+    width: 32px;
+    height: 32px;
+    font-size: 17px;
+    cursor: pointer;
+    color: #1c1a17;
+    padding: 0;
+    font-family: 'Libre Franklin', sans-serif;
+    line-height: 1;
+}
+.ih-cart-qty-btn:hover { background: #d6cdbd; }
+.ih-cart-qty-val {
+    min-width: 40px;
+    text-align: center;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 15px;
+    padding: 0 8px;
+    border-left: 1px solid #d6cdbd;
+    border-right: 1px solid #d6cdbd;
+    line-height: 30px;
+    display: inline-block;
+}
+.ih-cart-line-price {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+}
+.ih-cart-remove {
+    background: none;
+    border: none;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+}
+.ih-cart-remove:hover { color: #8f1d1d; }
+#ih-cart-summary {
+    padding-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ih-cart-subtotal,
+.ih-cart-shipping {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 16px;
+}
+.ih-cart-note {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+    margin: 0;
+}
+.ih-cart-checkout-btn {
+    align-self: flex-start;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+/* ── SHOP: ORDER COMPLETE PAGE ───────────────────────────────────────────── */
+.ih-order-complete-page {
+    box-sizing: border-box;
+    padding: 48px 80px 80px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.ih-order-complete-heading {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 46px;
+    font-weight: 500;
+    margin: 0 0 24px;
+}
+.ih-order-complete-intro {
+    font-size: 20px;
+    color: #3a352e;
+    margin: 0 0 36px;
+}
+.ih-order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+.ih-order-item {
+    padding: 20px 0;
+    border-bottom: 1px solid #d6cdbd;
+}
+.ih-order-item-name {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+.ih-order-preorder {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #8f1d1d;
+    font-weight: normal;
+    margin-left: 8px;
+}
+.ih-order-item-qty {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    color: #5b544a;
+    margin-bottom: 8px;
+}
+.ih-download-link-wrap { margin-top: 10px; }
+.ih-download-link {
+    display: inline-block;
+    background: #8f1d1d;
+    color: #ffffff !important;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 22px;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+}
+.ih-download-link:hover { background: #7a1818; color: #fff !important; }
+.ih-order-total {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 28px;
+}
+.ih-order-continue {
+    font-size: 18px;
+}
+
+/* ── SHOP: PRINT GRID (/print/ page) ────────────────────────────────────── */
+.ih-print-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 36px;
+    margin: 32px 0;
+}
+.ih-print-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-decoration: none;
+    color: #1c1a17;
+}
+.ih-print-card:hover .ih-print-card-title { color: #8f1d1d; }
+.ih-print-card-cover {
+    box-shadow: 0 8px 24px rgba(28,26,23,0.14);
+}
+.ih-print-card-cover img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+.ih-print-card-title {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.25;
+    font-family: 'EB Garamond', Georgia, serif;
+}
+.ih-print-card-from {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+}
+.ih-print-card-status {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8f1d1d;
+}
+
+/* Cart link in masthead */
+.ih-cart-link {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    color: #1c1a17;
+}
+.ih-cart-link:hover { color: #8f1d1d; }
+
+/* ── SHOP RESPONSIVE ─────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .ih-book-page { padding: 32px 24px 60px; }
+    .ih-book-hero { flex-direction: column; gap: 28px; }
+    .ih-book-cover { width: 100%; max-width: 320px; }
+    .ih-book-title { font-size: 34px; }
+    .ih-cart-page { padding: 32px 24px 60px; }
+    .ih-cart-item { grid-template-columns: 1fr auto; }
+    .ih-order-complete-page { padding: 32px 24px 60px; }
+    .ih-print-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+}
+@media (max-width: 480px) {
+    .ih-print-grid { grid-template-columns: 1fr; }
+    .ih-book-page { padding: 24px 16px 48px; }
+    .ih-cart-page { padding: 24px 16px 48px; }
+    .ih-order-complete-page { padding: 24px 16px 48px; }
 }

@@ -1,0 +1,203 @@
+{{!< default}}
+
+{{!--
+  home.hbs — Inkhorn Review home page
+  All sections server-rendered via {{#get}}. No client-side data fetches.
+  Sections: Hero (catalog) → Subscribe → Podcast/Letter → Archive → Gallery → Patrons → Footer
+--}}
+
+<main class="site-main">
+<div class="inkhorn-home">
+
+{{!-- ── HERO + IN THIS ISSUE ─────────────────────────────────────────── --}}
+{{#get "pages" filter="tag:hash-catalog+featured:true" limit="1"}}
+  {{#foreach pages}}
+    {{!-- Output catalog JSON block (statusLabel, coverPrice, buyUrl, etc.) --}}
+    {{{codeinjection_head}}}
+
+    <section class="ih-hero">
+        {{!-- Left: cover + info + subscribe --}}
+        <div class="ih-hero-left">
+            {{#if feature_image}}
+                <div class="ih-cover-box">
+                    <img src="{{img_url feature_image size="l"}}" alt="{{title}} cover">
+                </div>
+            {{else}}
+                <div class="ih-cover-box-placeholder"></div>
+            {{/if}}
+
+            <div class="ih-hero-info">
+                {{!-- Status label filled by inline script from JSON --}}
+                <div class="ih-eyebrow ih-js-status-label"></div>
+                <h1 class="ih-hero-title">{{title}}</h1>
+                {{#if custom_excerpt}}
+                    <p class="ih-hero-desc">{{custom_excerpt}}</p>
+                {{/if}}
+
+                {{!-- Subscribe block --}}
+                {{> "subscribe-block"}}
+            </div>
+        </div>
+
+        {{!-- Right: In This Issue --}}
+        <aside class="ih-contents">
+            <div class="ih-contents-head">In This Issue</div>
+            <div class="ih-contents-body">
+                {{{html}}}
+            </div>
+        </aside>
+    </section>
+
+    {{!-- Inline script: read JSON block, fill status label --}}
+    <script>
+    (function(){
+        var el = document.getElementById('ih-book');
+        if (!el) return;
+        try {
+            var d = JSON.parse(el.textContent);
+            var status = document.querySelector('.ih-js-status-label');
+            if (status && d.statusLabel) status.textContent = d.statusLabel;
+        } catch(x){}
+    })();
+    </script>
+
+  {{/foreach}}
+{{/get}}
+
+{{!-- ── PODCAST + FOUNDER'S LETTER ────────────────────────────────────── --}}
+{{#get "posts" filter="primary_tag:podcast" limit="1" order="published_at desc" as |podcastPosts|}}
+{{#get "posts" filter="primary_tag:letter" limit="1" order="published_at desc" as |letterPosts|}}
+{{#if podcastPosts}}{{#if letterPosts}}
+<section class="ih-cards-2col">
+
+    {{!-- Podcast card --}}
+    {{#foreach podcastPosts}}
+    <a href="{{url}}" class="ih-card-podcast">
+        {{#if feature_image}}
+            <img class="ih-podcast-img" src="{{img_url feature_image size="s"}}" alt="{{title}}">
+        {{else}}
+            <div class="ih-podcast-img-placeholder"></div>
+        {{/if}}
+        <div class="ih-card-podcast-body">
+            <div class="ih-card-label">The Podcast &middot; Free</div>
+            <div class="ih-card-title">Life on Words</div>
+            {{#if title}}<div class="ih-card-excerpt" style="font-style:italic;color:#3a352e">{{title}}</div>{{/if}}
+            {{#if custom_excerpt}}<div class="ih-card-excerpt">{{custom_excerpt}}</div>{{/if}}
+            <div class="ih-card-listen">Listen &rarr;</div>
+        </div>
+    </a>
+    {{/foreach}}
+
+    {{!-- Founder's Letter card --}}
+    {{#foreach letterPosts}}
+    <a href="{{url}}" class="ih-card-letter">
+        <div class="ih-card-label">The Founder&rsquo;s Letter</div>
+        <div class="ih-card-title">{{title}}</div>
+        {{#if custom_excerpt}}<div class="ih-card-excerpt">{{custom_excerpt}}</div>{{/if}}
+        <div class="ih-card-listen">Read the letter &rarr;</div>
+    </a>
+    {{/foreach}}
+
+</section>
+{{/if}}{{/if}}
+{{/get}}
+{{/get}}
+
+{{!-- ── THE ARCHIVE ──────────────────────────────────────────────────── --}}
+{{!-- #this-week card + 4 newest public #archive posts --}}
+{{#get "posts" filter="tag:hash-this-week+visibility:public,tag:hash-this-week+visibility:paid" limit="1" order="published_at desc" as |thisWeekPosts|}}
+{{#get "posts" filter="tag:hash-archive+visibility:public" limit="4" order="published_at desc" include="tags" as |archivePosts|}}
+
+{{#if archivePosts}}
+<section class="ih-archive-section">
+    <div class="ih-archive-head-row">
+        <h2 class="ih-archive-heading">The Archive</h2>
+        <a href="/archive/" class="ih-archive-browse">Browse the full archive &rarr;</a>
+    </div>
+    <div class="ih-archive-grid">
+
+        {{!-- Dark card: newest #this-week post (only when one exists) --}}
+        {{#if thisWeekPosts}}
+        {{#foreach thisWeekPosts}}
+        <a href="{{url}}" class="ih-card-dark">
+            <div class="ih-card-dark-label">New this week &middot; Subscribers</div>
+            <div class="ih-card-dark-title">{{title}}</div>
+            {{#if custom_excerpt}}
+                <div class="ih-card-dark-author">{{custom_excerpt}}</div>
+            {{/if}}
+        </a>
+        {{/foreach}}
+        {{/if}}
+
+        {{!-- Light cards: 4 newest public #archive posts --}}
+        {{#foreach archivePosts}}
+        <div class="ih-card-light">
+            <div class="ih-card-light-label">Free{{#foreach tags}}{{#match slug "=" "poetry"}} &middot; <a href="/poetry/" class="ih-card-light-genre-link">Poetry</a>{{/match}}{{#match slug "=" "fiction"}} &middot; <a href="/fiction/" class="ih-card-light-genre-link">Fiction</a>{{/match}}{{#match slug "=" "nonfiction"}} &middot; <a href="/nonfiction/" class="ih-card-light-genre-link">Nonfiction</a>{{/match}}{{#match slug "=" "micro"}} &middot; <a href="/micro/" class="ih-card-light-genre-link">Micro</a>{{/match}}{{#match slug "=" "art"}} &middot; <a href="/art/" class="ih-card-light-genre-link">Art</a>{{/match}}{{/foreach}}</div>
+            <div class="ih-card-light-title"><a href="{{url}}" class="ih-card-light-link">{{title}}</a></div>
+            {{#if custom_excerpt}}<div class="ih-card-light-author">{{custom_excerpt}}</div>{{/if}}
+        </div>
+        {{/foreach}}
+
+    </div>
+</section>
+{{/if}}
+
+{{/get}}
+{{/get}}
+
+{{!-- ── GALLERY BAND ─────────────────────────────────────────────────── --}}
+{{#get "posts" filter="primary_tag:art" limit="5" order="published_at desc"}}
+{{#if posts}}
+<section class="ih-gallery-outer">
+    <div class="ih-gallery-head-row">
+        <div class="ih-gallery-heading">Gallery</div>
+        <a href="/art/" class="ih-gallery-see">See the gallery &rarr;</a>
+    </div>
+    <div class="ih-gallery-grid">
+        {{#foreach posts}}
+        <a href="{{url}}" class="ih-gallery-img-wrap">
+            {{#if feature_image}}
+                <img src="{{img_url feature_image size="m"}}" alt="{{title}}" loading="lazy">
+            {{else}}
+                <div class="ih-gallery-placeholder"></div>
+            {{/if}}
+        </a>
+        {{/foreach}}
+    </div>
+</section>
+{{/if}}
+{{/get}}
+
+{{!-- ── PATRONS ───────────────────────────────────────────────────────── --}}
+{{!-- patreon-supporters page codeinjection_head has the JSON patron data --}}
+{{#get "pages" filter="slug:patreon-supporters" limit="1"}}
+  {{#foreach pages}}
+    {{{codeinjection_head}}}
+  {{/foreach}}
+{{/get}}
+<section class="ih-patrons-section">
+    <div class="ih-patrons-body">
+        <div class="ih-patrons-head-label">With thanks to our patrons</div>
+        <div class="ih-patrons-names-text" id="ih-patron-names"></div>
+    </div>
+    <a href="/colophon/" class="ih-colophon-link">Colophon</a>
+</section>
+<script>
+(function(){
+    var el = document.getElementById('ih-patron-data');
+    if (!el) return;
+    try {
+        var d = JSON.parse(el.textContent);
+        var parts = (d.names || []).slice();
+        if (d.anonymous > 0) {
+            var anonStr = d.anonymous + ' anonymous ' + (d.anonymous === 1 ? 'supporter' : 'supporters');
+            parts.push(parts.length > 0 ? 'and ' + anonStr : anonStr);
+        }
+        var out = document.getElementById('ih-patron-names');
+        if (out && parts.length) out.textContent = parts.join(', ');
+    } catch(x){}
+})();
+</script>
+
+</div>
+</main>

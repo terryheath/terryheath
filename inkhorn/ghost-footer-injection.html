@@ -30,8 +30,8 @@
       title:       'Autumn 2026',
       description: 'What it costs to be seen, and what it costs not to be. Thirteen pieces, in print for the first time.',
       coverUrl:    'https://inkhornreview.com/content/images/2026/09/inkhorn-cover.jpg',
-      buyUrl:      '#',        // replace with Stripe Payment Link
-      coverPrice:  12,
+      pageUrl:     '/inkhorn-review-no-1-autumn-2026/',
+      lowestPrice: 7,
       isbn:        '',         // placeholder
       contents: {
         poetry:  [
@@ -55,15 +55,7 @@
     },
   ];
 
-  // Ebook store links keyed by issue slug.
-  // Keep in sync with EBOOK_URLS in inkhorn/digest.js.
-  var EBOOK_LINKS = {
-    'inkhorn-1': {
-      apple:  'https://books.apple.com/us/book/inkhorn-review/id6809263868',
-      amazon: null,
-      kobo:   null,
-    }
-  };
+  // Ebook store links removed — ebooks now sold via the shop (/inkhorn-review-no-1-autumn-2026/).
 
   // Publication tag pattern: inkhorn-N, whiterabbit-N, anthology-N, awards-N
   var PUB_RE   = /^(inkhorn|whiterabbit|anthology|awards)-(\d+)$/;
@@ -451,7 +443,7 @@
   }
 
   // ── PRINT CATALOG PAGE ──────────────────────────────────────────────────────
-  // Lists every print title from PRINT_META, newest first.
+  // Grid of all print titles. Each card links to the catalog Ghost page.
   function buildPrintCatalogPage() {
     var subscribeBlock =
       '<div class="ih-subscribe-block">' +
@@ -470,49 +462,27 @@
       '</div>' +
       '</div>';
 
-    var rowsHtml = '';
+    var cardsHtml = '';
     for (var ri = 0; ri < PRINT_META.length; ri++) {
       var meta = PRINT_META[ri];
+      var pageUrl = meta.pageUrl || '#';
       var coverHtml = meta.coverUrl
-        ? '<div class="ih-cover-box"><img src="' + e(meta.coverUrl) + '" alt="' + e(meta.title) + ' cover"></div>'
-        : '<div class="ih-cover-box-placeholder"></div>';
-
-      var contentsHtml = '';
-      if (meta.contents) {
-        var genreNames = { poetry: 'Poetry', fiction: 'Fiction', nonfiction: 'Nonfiction' };
-        var genreBlocks = '';
-        for (var genre in meta.contents) {
-          var items = meta.contents[genre].map(function(item) {
-            return '<div class="ih-contents-item">' + e(item[0]) + ', <i>' + e(item[1]) + '</i></div>';
-          }).join('');
-          genreBlocks += '<div><div class="ih-contents-genre-head">' + e(genreNames[genre] || genre) + '</div>' + items + '</div>';
-        }
-        contentsHtml = '<div class="ih-contents"><div class="ih-contents-head">In This Issue</div>' + genreBlocks + '</div>';
-      }
-
-      var buyHtml = meta.buyUrl && meta.buyUrl !== '#'
-        ? '<a href="' + e(meta.buyUrl) + '" class="ih-buy-link">Buy \u2014 $' + meta.coverPrice + ' + shipping</a>'
-        : (meta.coverPrice ? '<span class="ih-buy-link-coming">$' + meta.coverPrice + ' + shipping \u2014 coming soon</span>' : '');
-
-      rowsHtml +=
-        (ri > 0 ? '<div class="ih-catalog-rule"></div>' : '') +
-        '<div class="ih-catalog-row">' +
-        '<div class="ih-catalog-cover">' + coverHtml + '</div>' +
-        '<div class="ih-catalog-info">' +
-        '<div class="ih-eyebrow">' + e(meta.type) + (meta.statusLabel ? ' \u00b7 ' + e(meta.statusLabel) : '') + '</div>' +
-        '<h2 class="ih-catalog-title">' + e(meta.title) + '</h2>' +
-        (meta.description ? '<p class="ih-hero-desc">' + e(meta.description) + '</p>' : '') +
-        buyHtml +
-        contentsHtml +
-        '</div>' +
-        '</div>';
+        ? '<div class="ih-print-card-cover"><img src="' + e(meta.coverUrl) + '" alt="' + e(meta.title) + ' cover"></div>'
+        : '';
+      cardsHtml +=
+        '<a href="' + e(pageUrl) + '" class="ih-print-card">' +
+        coverHtml +
+        '<div class="ih-print-card-status">' + e(meta.statusLabel || meta.type) + '</div>' +
+        '<div class="ih-print-card-title">' + e(meta.title) + '</div>' +
+        '<div class="ih-print-card-from">from $' + (meta.lowestPrice || 7) + '</div>' +
+        '</a>';
     }
 
     var pageHtml =
       '<div class="ih-catalog-page">' +
       '<h1 class="ih-page-heading">Print</h1>' +
+      '<div class="ih-print-grid">' + cardsHtml + '</div>' +
       subscribeBlock +
-      rowsHtml +
       '</div>';
 
     var content = document.querySelector('.gh-content');
@@ -652,9 +622,6 @@
     var statusLabel = meta ? meta.statusLabel : (currentIssue ? formatIssueTitle(currentIssue.slug) : '');
     var heroTitle   = meta ? meta.title : (currentIssue ? formatIssueTitle(currentIssue.slug) : 'Inkhorn Review');
     var heroDesc    = meta ? meta.description : (currentIssue && currentIssue.description ? currentIssue.description : '');
-    var buyUrl      = meta ? meta.buyUrl : '#';
-    var coverPrice  = meta ? meta.coverPrice : 12;
-
     var subscribeBlock =
       '<div class="ih-subscribe-block">' +
       '<div class="ih-sub-head">Subscribe</div>' +
@@ -670,8 +637,7 @@
       '<div class="ih-sub-tier-desc">The full archive and every title as an ebook.</div>' +
       '<a href="' + GHOST_URL + '/#/portal/signup/digital/yearly" class="ih-sub-btn-digital">Subscribe to Digital</a>' +
       '</div>' +
-      '</div>' +
-      '<a href="' + e(buyUrl) + '" class="ih-buy-link">Or buy the ' + e(heroTitle) + ' issue \u2014 $' + coverPrice + ' + shipping</a>';
+      '</div>';
 
     var heroInfoHtml =
       '<div class="ih-hero-info">' +

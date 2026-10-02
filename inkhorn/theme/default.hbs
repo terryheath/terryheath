@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="{{@site.locale}}">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{#is "post,page"}}{{meta_title}}{{else}}{{#is "tag"}}{{#tag}}{{name}} — {{@site.title}}{{/tag}}{{else}}{{@site.title}}{{/is}}{{/is}}</title>
+    <link rel="stylesheet" href="{{asset "built/screen.css"}}">
+    {{ghost_head}}
+</head>
+
+<body class="{{body_class}}">
+<div class="site">
+
+    {{!-- ── MASTHEAD ─────────────────────────────────────────────────────── --}}
+    <header id="ih-masthead">
+        <div class="ih-mast-top">
+            <div class="ih-wordmark-group">
+                <a class="ih-wordmark" href="{{@site.url}}">{{@site.title}}</a>
+                <div class="ih-tagline">{{@site.description}}</div>
+            </div>
+
+            {{!-- Desktop actions --}}
+            <div class="ih-mast-actions-desktop">
+                <a href="/cart/" class="ih-cart-link">Cart (0)</a>
+                {{#unless @member}}
+                    <a href="#/portal/signin" data-portal="signin">Sign in</a>
+                    <a href="#/portal/signup/free">Sign up</a>
+                    <a href="#/portal/signup" class="ih-subscribe-btn" data-portal="signup">Subscribe</a>
+                {{else}}
+                    <a href="#/portal/account" data-portal="account">Account</a>
+                {{/unless}}
+            </div>
+
+            {{!-- Phone hamburger --}}
+            <button class="ih-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="ih-nav-overlay">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1c1a17" stroke-width="1.8" stroke-linecap="round">
+                    <line x1="4" y1="7" x2="20" y2="7"></line>
+                    <line x1="4" y1="12" x2="20" y2="12"></line>
+                    <line x1="4" y1="17" x2="20" y2="17"></line>
+                </svg>
+            </button>
+        </div>
+
+        {{!-- Phone actions (below wordmark, above nav rule) --}}
+        <div class="ih-mast-actions-phone">
+            <a href="/cart/" class="ih-cart-link">Cart (0)</a>
+            {{#unless @member}}
+                <a href="#/portal/signup" class="ih-subscribe-btn" data-portal="signup">Subscribe</a>
+                <a href="#/portal/signup/free">Sign up</a>
+                <a href="#/portal/signin" data-portal="signin">Sign in</a>
+            {{else}}
+                <a href="#/portal/account" data-portal="account">Account</a>
+            {{/unless}}
+        </div>
+
+        {{!-- Desktop nav (from Ghost navigation settings) --}}
+        <nav class="ih-nav">
+            {{navigation}}
+        </nav>
+
+        {{!-- Phone nav overlay --}}
+        <nav class="ih-nav-overlay" id="ih-nav-overlay">
+            {{navigation}}
+        </nav>
+    </header>
+
+    <div class="site-content">
+        {{{body}}}
+    </div>
+
+    {{!-- ── FOOTER ──────────────────────────────────────────────────────── --}}
+    <footer id="ih-footer">
+        <div>{{@site.title}} &copy; {{date format="YYYY"}} &middot; ISSN 3144-1998 (Online)</div>
+        <div class="ih-footer-links">
+            <a href="#/portal/signup/free">Sign up</a>
+            <a href="#/portal/signup" data-portal="signup">Subscribe</a>
+            <a href="https://www.patreon.com/cw/inkhornreview" target="_blank" rel="noopener">Patreon</a>
+            <a href="#" id="ih-tip-link">Tip Us</a>
+        </div>
+    </footer>
+
+</div>
+
+<script src='{{asset "built/main.min.js"}}'></script>
+
+{{ghost_foot}}
+
+</body>
+</html>

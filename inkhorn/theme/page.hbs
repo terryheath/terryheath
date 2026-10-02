@@ -1,0 +1,83 @@
+{{!< default}}
+
+{{#has tag="hash-catalog"}}
+
+{{!-- ── BOOK PAGE (catalog pages tagged #catalog) ───────────────────────── --}}
+{{#page}}
+{{{codeinjection_head}}}
+<main class="site-main">
+<div class="ih-book-page">
+
+  {{!-- Hero: cover + info --}}
+  <div class="ih-book-hero">
+    {{#if feature_image}}
+    <div class="ih-book-cover">
+      <img src="{{img_url feature_image size="l"}}" alt="{{title}} cover">
+    </div>
+    {{/if}}
+    <div class="ih-book-info">
+      <h1 class="ih-book-title">{{title}}</h1>
+      {{#if custom_excerpt}}<p class="ih-book-desc">{{custom_excerpt}}</p>{{/if}}
+      <div class="ih-book-formats" id="ih-book-formats">
+        {{!-- shop.js populates: format options, prices, quantity, Add to Cart / Preorder button --}}
+        <div class="ih-book-loading">Loading&hellip;</div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Contents + details: shop.js reads ih-book JSON and populates this --}}
+  <div class="ih-book-contents" id="ih-book-contents">
+  </div>
+
+  {{!-- Read online: server-side via {{#get}} on publication tag --}}
+  {{#foreach tags}}
+  {{#match slug "~^" "inkhorn-"}}
+    {{#get "posts" filter="tag:{{slug}}+tag:hash-archive" limit="999" order="published_at asc"}}
+    {{#if posts}}
+    <div class="ih-book-read-online">
+      <h2 class="ih-book-section-head">Read online</h2>
+      <ul class="ih-book-piece-list">
+        {{#foreach posts}}
+        <li class="ih-book-piece-item">
+          <a href="{{url}}">{{title}}</a>{{#if custom_excerpt}} <span class="ih-book-piece-author">{{custom_excerpt}}</span>{{/if}}
+        </li>
+        {{/foreach}}
+      </ul>
+    </div>
+    {{/if}}
+    {{/get}}
+  {{/match}}
+  {{#match slug "~^" "whiterabbit-"}}
+    {{#get "posts" filter="tag:{{slug}}+tag:hash-archive" limit="999" order="published_at asc"}}
+    {{#if posts}}
+    <div class="ih-book-read-online">
+      <h2 class="ih-book-section-head">Read online</h2>
+      <ul class="ih-book-piece-list">
+        {{#foreach posts}}
+        <li class="ih-book-piece-item">
+          <a href="{{url}}">{{title}}</a>{{#if custom_excerpt}} <span class="ih-book-piece-author">{{custom_excerpt}}</span>{{/if}}
+        </li>
+        {{/foreach}}
+      </ul>
+    </div>
+    {{/if}}
+    {{/get}}
+  {{/match}}
+  {{/foreach}}
+
+  {{> "subscribe-block"}}
+
+</div>
+</main>
+{{/page}}
+
+{{else}}
+
+{{!-- ── DEFAULT PAGE LAYOUT ──────────────────────────────────────────────── --}}
+<main class="site-main">
+  {{#post}}
+    {{> "content" width="wide"}}
+  {{/post}}
+</main>
+
+{{/has}}
