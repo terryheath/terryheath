@@ -768,8 +768,10 @@ async function main() {
         // ── UPGRADE PATH ──────────────────────────────────────────────────
         // The draft already has the correct slug, tags, template, and
         // published_at. Patch in the headshot + final HTML and publish.
+        // headshotUrl is omitted here because feature_image already carries the
+        // headshot — including it in the body would duplicate it.
         const postUrl  = `${process.env.GHOST_API_URL}/${existingDraft.slug}/`;
-        const headshotOpts = { headshotUrl: feature || undefined, headshotAlt: guest || undefined, headshotCaption: caption };
+        const headshotOpts = { headshotAlt: guest || undefined, headshotCaption: caption };
         const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid), headshotOpts);
         const editPayload = {
           id: existingDraft.id,
@@ -807,8 +809,10 @@ async function main() {
         );
 
         // Step 2: rebuild HTML with the listen link now that we have the slug.
+        // headshotUrl is omitted here because feature_image already carries the
+        // headshot — including it in the body would duplicate it.
         const postUrl = `${process.env.GHOST_API_URL}/${draft.slug}/`;
-        const headshotOpts = { headshotUrl: feature || undefined, headshotAlt: guest || undefined, headshotCaption: caption };
+        const headshotOpts = { headshotAlt: guest || undefined, headshotCaption: caption };
         const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid), headshotOpts);
         const editPayload = {
           id: draft.id,

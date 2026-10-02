@@ -47,11 +47,11 @@
             {{/match}}
             {{/foreach}}
             {{!-- Genre: micro wins; else first of poetry/fiction/nonfiction/art --}}
-            {{#has tag="micro"}}<a href="/archive/" class="ih-post-issue-link">Micro</a>{{else}}
-            {{#has tag="poetry"}}<a href="/archive/" class="ih-post-issue-link">Poetry</a>{{else}}
-            {{#has tag="fiction"}}<a href="/archive/" class="ih-post-issue-link">Fiction</a>{{else}}
-            {{#has tag="nonfiction"}}<a href="/archive/" class="ih-post-issue-link">Nonfiction</a>{{else}}
-            {{#has tag="art"}}<a href="/archive/" class="ih-post-issue-link">Art</a>{{/has}}{{/has}}{{/has}}{{/has}}{{/has}}
+            {{#has tag="micro"}}<a href="/micro/" class="ih-post-issue-link">Micro</a>{{else}}
+            {{#has tag="poetry"}}<a href="/poetry/" class="ih-post-issue-link">Poetry</a>{{else}}
+            {{#has tag="fiction"}}<a href="/fiction/" class="ih-post-issue-link">Fiction</a>{{else}}
+            {{#has tag="nonfiction"}}<a href="/nonfiction/" class="ih-post-issue-link">Nonfiction</a>{{else}}
+            {{#has tag="art"}}<a href="/art/" class="ih-post-issue-link">Art</a>{{/has}}{{/has}}{{/has}}{{/has}}{{/has}}
         </div>
 
         <h1 class="ih-post-title">{{title}}</h1>
@@ -62,25 +62,7 @@
              (autumn-/winter-/spring-/summer-), and not a genre/dept tag. --}}
         {{#if custom_excerpt}}
         <div class="ih-post-byline">
-            {{#foreach tags}}
-            {{#match slug "~^" "inkhorn-"}}{{else}}
-            {{#match slug "~^" "whiterabbit-"}}{{else}}
-            {{#match slug "~^" "anthology-"}}{{else}}
-            {{#match slug "~^" "awards-"}}{{else}}
-            {{#match slug "~^" "autumn-"}}{{else}}
-            {{#match slug "~^" "winter-"}}{{else}}
-            {{#match slug "~^" "spring-"}}{{else}}
-            {{#match slug "~^" "summer-"}}{{else}}
-            {{#match slug "=" "poetry"}}{{else}}
-            {{#match slug "=" "fiction"}}{{else}}
-            {{#match slug "=" "nonfiction"}}{{else}}
-            {{#match slug "=" "micro"}}{{else}}
-            {{#match slug "=" "art"}}{{else}}
-            {{#match slug "=" "podcast"}}{{else}}
-            {{#match slug "=" "letter"}}{{else}}
-            <a href="{{url}}" class="ih-post-byline-link">{{../custom_excerpt}}</a>
-            {{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}
-            {{/foreach}}
+            {{#foreach tags from="2" to="2"}}<a href="{{url}}" class="ih-post-byline-link">{{../custom_excerpt}}</a>{{/foreach}}
         </div>
         {{/if}}
 
@@ -109,22 +91,7 @@
     {{!-- Contributor = first public tag that is not a publication, season, or
          genre/dept tag. Same detection rule as byline above.
          codeinjection_head holds the shelf payload; placement script moves it in. --}}
-    {{#foreach tags}}
-    {{#match slug "~^" "inkhorn-"}}{{else}}
-    {{#match slug "~^" "whiterabbit-"}}{{else}}
-    {{#match slug "~^" "anthology-"}}{{else}}
-    {{#match slug "~^" "awards-"}}{{else}}
-    {{#match slug "~^" "autumn-"}}{{else}}
-    {{#match slug "~^" "winter-"}}{{else}}
-    {{#match slug "~^" "spring-"}}{{else}}
-    {{#match slug "~^" "summer-"}}{{else}}
-    {{#match slug "=" "poetry"}}{{else}}
-    {{#match slug "=" "fiction"}}{{else}}
-    {{#match slug "=" "nonfiction"}}{{else}}
-    {{#match slug "=" "micro"}}{{else}}
-    {{#match slug "=" "art"}}{{else}}
-    {{#match slug "=" "podcast"}}{{else}}
-    {{#match slug "=" "letter"}}{{else}}
+    {{#foreach tags from="2" to="2"}}
         {{{codeinjection_head}}}
         <div id="ih-shelf-target-{{slug}}"></div>
         <script>(function(){var s=document.getElementById('ih-shelf-{{slug}}'),t=document.getElementById('ih-shelf-target-{{slug}}');if(s&&t)t.innerHTML=s.innerHTML;})();</script>
@@ -137,7 +104,6 @@
             </div>
         </aside>
         {{/if}}
-    {{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}{{/match}}
     {{/foreach}}
 
     {{!-- ── RELATED POSTS ────────────────────────────────────────────────── --}}

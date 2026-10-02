@@ -361,13 +361,13 @@
 {{#match slug "=" "letter"}}{{else}}
 <div class="ih-tag-post-list">
     {{#foreach posts}}
-    <a href="{{url}}" class="ih-tag-post-item">
+    <div class="ih-tag-post-item">
         <div class="ih-tag-post-issue">
-            {{#foreach tags}}{{#match slug "~^" "inkhorn-"}}{{name}}{{/match}}{{#match slug "~^" "whiterabbit-"}}{{name}}{{/match}}{{#match slug "~^" "anthology-"}}{{name}}{{/match}}{{#match slug "~^" "awards-"}}{{name}}{{/match}}{{/foreach}}
+            {{#foreach tags}}{{#match slug "~^" "inkhorn-"}}{{name}}{{/match}}{{#match slug "~^" "whiterabbit-"}}{{name}}{{/match}}{{#match slug "~^" "anthology-"}}{{name}}{{/match}}{{#match slug "~^" "awards-"}}{{name}}{{/match}}{{/foreach}}{{#has tag="micro"}} &middot; <a href="/micro/" class="ih-tag-post-genre-link">Micro</a>{{else}}{{#has tag="poetry"}} &middot; <a href="/poetry/" class="ih-tag-post-genre-link">Poetry</a>{{else}}{{#has tag="fiction"}} &middot; <a href="/fiction/" class="ih-tag-post-genre-link">Fiction</a>{{else}}{{#has tag="nonfiction"}} &middot; <a href="/nonfiction/" class="ih-tag-post-genre-link">Nonfiction</a>{{else}}{{#has tag="art"}} &middot; <a href="/art/" class="ih-tag-post-genre-link">Art</a>{{/has}}{{/has}}{{/has}}{{/has}}{{/has}}
         </div>
-        <div class="ih-tag-post-title">{{title}}</div>
+        <div class="ih-tag-post-title"><a href="{{url}}" class="ih-tag-post-link">{{title}}</a></div>
         {{#if custom_excerpt}}<div class="ih-tag-post-excerpt">{{custom_excerpt}}</div>{{/if}}
-    </a>
+    </div>
     {{/foreach}}
 </div>
 {{#if pagination}}{{pagination}}{{/if}}
