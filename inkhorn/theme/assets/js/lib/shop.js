@@ -101,7 +101,16 @@
 
     // Load products and render format picker
     if (sku) {
+      var formatsDone = false;
+      var formatsTimeout = setTimeout(function () {
+        if (!formatsDone) {
+          var el = document.getElementById('ih-book-formats');
+          if (el) el.innerHTML = '<p class="ih-book-not-available">Not yet available</p>';
+        }
+      }, 6000);
       fetchProducts().then(function (products) {
+        formatsDone = true;
+        clearTimeout(formatsTimeout);
         var prod = products[sku];
         if (!prod) {
           document.getElementById('ih-book-formats').innerHTML =
@@ -110,8 +119,10 @@
         }
         renderFormatPicker(prod, titleText, isPreorder);
       }).catch(function () {
+        formatsDone = true;
+        clearTimeout(formatsTimeout);
         document.getElementById('ih-book-formats').innerHTML =
-          '<p class="ih-book-not-available">Shop unavailable — please try again later.</p>';
+          '<p class="ih-book-not-available">Not yet available</p>';
       });
     } else {
       document.getElementById('ih-book-formats').innerHTML = '';

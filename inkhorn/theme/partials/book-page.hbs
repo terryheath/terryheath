@@ -1,9 +1,10 @@
 {{!--
   book-page.hbs — Book page layout partial.
   Included by page.hbs for pages tagged #catalog.
-  shop.js populates the format picker, status label, and contents from ih-book JSON.
+  shop.js reads the ih-book JSON that ghost_head already injects into <head>.
+  Do NOT output {{{codeinjection_head}}} here — ghost_head handles it; a second
+  element with the same id causes getElementById to return the wrong node.
 --}}
-{{{codeinjection_head}}}
 <main class="site-main">
 <div class="ih-book-page">
 
