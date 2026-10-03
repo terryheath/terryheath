@@ -67,7 +67,7 @@
   var SKIP    = /^[a-z]+-\d{4}$|^(inkhorn|whiterabbit|anthology|awards)-\d+$|^(poetry|fiction|nonfiction|micro|podcast|art|letter)$/;
 
   var isHome  = window.location.pathname === '/';
-  var isPrint = window.location.pathname === '/print/';
+  var isPrint = window.location.pathname === '/books/';
   var isPost = document.body.classList.contains("post-template");
   var isTag  = document.body.classList.contains("tag-template");
 
@@ -317,7 +317,7 @@
   function injectMasthead() {
     var isMobile = window.innerWidth <= 900;
     var nav = [
-      ['/print/',         'Print Edition'],
+      ['/books/',         'Books'],
       ['/archive/',       'Archive'],
       ['/podcast/',       'Podcast'],
       ['/founder-letter/', "Founder's Letter"],

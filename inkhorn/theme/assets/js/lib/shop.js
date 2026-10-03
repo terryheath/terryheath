@@ -58,7 +58,7 @@
   var isOrderComplete = !!document.getElementById('ih-order-complete');
   var isGridPage = !!document.querySelector('.ih-print-grid');
 
-  // ── BOOKS GRID PAGE (/print/) ─────────────────────────────────────────────────
+  // ── BOOKS GRID PAGE (/books/) ─────────────────────────────────────────────────
   if (isGridPage) {
     fetchProducts().then(function (products) {
       document.querySelectorAll('.ih-print-card[data-sku]').forEach(function (card) {
@@ -301,7 +301,7 @@
     if (!itemsEl || !summaryEl) return;
 
     if (!cart.length) {
-      itemsEl.innerHTML = '<p class="ih-cart-empty">Your cart is empty. <a href="/print/">Browse the shop</a>.</p>';
+      itemsEl.innerHTML = '<p class="ih-cart-empty">Your cart is empty. <a href="/books/">Browse the shop</a>.</p>';
       summaryEl.innerHTML = '';
       return;
     }
@@ -439,7 +439,7 @@
     var orderEl = document.getElementById('ih-order-complete');
 
     if (!sessionId) {
-      orderEl.innerHTML = '<p class="ih-order-complete-intro">No order found. <a href="/print/">Browse our books \u2192</a></p>';
+      orderEl.innerHTML = '<p class="ih-order-complete-intro">No order found. <a href="/books/">Browse our books \u2192</a></p>';
     } else {
       orderEl.innerHTML = '<h1 class="ih-order-complete-heading">Order Complete</h1><p>Loading your order&hellip;</p>';
 
