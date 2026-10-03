@@ -653,14 +653,6 @@ a:hover { color: #8f1d1d; }
     line-height: 1.5;
     color: #3a352e;
 }
-.ih-colophon-link {
-    font-family: 'Libre Franklin', sans-serif;
-    font-size: 14px;
-    color: #3a352e;
-    text-decoration: underline;
-    white-space: nowrap;
-}
-.ih-colophon-link:hover { color: #8f1d1d; }
 
 /* ── PRINT CATALOG PAGE (/print/) ─────────────────────────────────────────── */
 .ih-catalog-page {
