@@ -2,12 +2,9 @@
   book-page.hbs — Book page layout partial.
   Included by page.hbs for pages tagged #catalog.
 
-  The codeinjection_head for catalog pages stores raw JSON (no <script> wrapper).
-  ghost_head injects that bare JSON text into <head> where it is harmless.
-  We emit the <script id="ih-book"> element here in the body so that
-  getElementById('ih-book') finds it reliably in all browsers.
+  codeinjection_head stores the full <script id="ih-book" type="application/json">…</script>
+  element. ghost_head already injects it into <head>; we do not repeat it here.
 --}}
-<script id="ih-book" type="application/json">{{{codeinjection_head}}}</script>
 <main class="site-main">
 <div class="ih-book-page">
 
