@@ -2188,3 +2188,99 @@ a:hover { color: #8f1d1d; }
     .ih-cart-page { padding: 24px 16px 48px; }
     .ih-order-complete-page { padding: 24px 16px 48px; }
 }
+
+/* ── HOME HERO MIDDLE COLUMN ──────────────────────────────────────────────── */
+
+/* Title: 38px for the home hero column (overrides base 50px) */
+.ih-hero-info .ih-hero-title {
+    font-size: 38px;
+    line-height: 1.15;
+}
+
+/* Buy prompt */
+.ih-hero-buy {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ih-hero-price {
+    display: none;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1c1a17;
+}
+.ih-hero-buy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #8f1d1d;
+    color: #ffffff !important;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    height: 48px;
+    padding: 0 26px;
+    text-decoration: none;
+    align-self: flex-start;
+}
+.ih-hero-buy-btn:hover { background: #7a1818; color: #fff !important; }
+.ih-hero-buy-note {
+    margin: 0;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    color: #5b544a;
+}
+
+/* Compact subscribe */
+.ih-hero-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ih-hero-sub-rule {
+    height: 1px;
+    background: #cfc8bb;
+    margin: 0;
+}
+.ih-hero-sub-label {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #5b544a;
+    margin: 0;
+}
+.ih-hero-sub-tier {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.ih-hero-sub-tier-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+}
+.ih-hero-sub-tier-name {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 20px;
+    font-weight: 500;
+}
+.ih-hero-sub-link {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #8f1d1d !important;
+    text-decoration: underline;
+    text-underline-offset: 0.1em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.ih-hero-sub-link:hover { color: #7a1818 !important; }
+.ih-hero-sub-tier-desc {
+    font-size: 16px;
+    line-height: 1.45;
+    color: #5b544a;
+}

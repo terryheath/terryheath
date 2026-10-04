@@ -432,6 +432,32 @@
     });
   }
 
+  // ── HOME HERO BUY PROMPT ──────────────────────────────────────────────────────
+  var heroBuyBtn = document.getElementById('ih-hero-buy-btn');
+  if (heroBuyBtn) {
+    var heroBookEl = document.getElementById('ih-book');
+    var heroSku = null;
+    if (heroBookEl) {
+      try { heroSku = JSON.parse(heroBookEl.textContent).sku || null; } catch (_) {}
+    }
+    if (heroSku) {
+      var heroPriceEl = document.getElementById('ih-hero-price');
+      fetchProducts().then(function (products) {
+        var prod = products[heroSku];
+        if (!prod || !prod.formats || !prod.formats.length) return;
+        if (heroPriceEl) {
+          var parts = prod.formats.map(function (fmt) {
+            return (fmt.format === 'print' ? 'Print' : 'Ebook') + ' ' + formatCents(fmt.price_cents);
+          });
+          heroPriceEl.textContent = parts.join(' \u00b7 ');
+          heroPriceEl.style.display = 'block';
+        }
+        var isPreorder = prod.formats.some(function (fmt) { return fmt.preorder; });
+        heroBuyBtn.textContent = isPreorder ? 'Preorder this issue' : 'Buy this issue';
+      }).catch(function () { /* keep "See this issue" */ });
+    }
+  }
+
   // ── ORDER COMPLETE PAGE ────────────────────────────────────────────────────────
   if (isOrderComplete) {
     var params = new URLSearchParams(window.location.search);

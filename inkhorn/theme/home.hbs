@@ -27,15 +27,22 @@
             {{/if}}
 
             <div class="ih-hero-info">
-                {{!-- Status label filled by inline script from JSON --}}
-                <div class="ih-eyebrow ih-js-status-label"></div>
+                {{!-- Status label: JS shows it only when ih-book has a statusLabel --}}
+                <div class="ih-eyebrow ih-js-status-label" style="display:none"></div>
                 <h1 class="ih-hero-title">{{title}}</h1>
                 {{#if custom_excerpt}}
                     <p class="ih-hero-desc">{{custom_excerpt}}</p>
                 {{/if}}
 
-                {{!-- Subscribe block --}}
-                {{> "subscribe-block"}}
+                {{!-- Buy prompt: href set server-side, JS updates text and reveals price --}}
+                <div class="ih-hero-buy">
+                    <div class="ih-hero-price" id="ih-hero-price"></div>
+                    <a href="{{url}}" class="ih-hero-buy-btn" id="ih-hero-buy-btn">See this issue</a>
+                    <p class="ih-hero-buy-note">Print ships to U.S.&nbsp;addresses. Ebook in any country.</p>
+                </div>
+
+                {{!-- Compact subscribe --}}
+                {{> "subscribe-home"}}
             </div>
         </div>
 
@@ -56,7 +63,10 @@
         try {
             var d = JSON.parse(el.textContent);
             var status = document.querySelector('.ih-js-status-label');
-            if (status && d.statusLabel) status.textContent = d.statusLabel;
+            if (status && d.statusLabel) {
+                status.textContent = d.statusLabel;
+                status.style.display = '';
+            }
         } catch(x){}
     })();
     </script>

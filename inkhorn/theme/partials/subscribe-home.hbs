@@ -1,0 +1,18 @@
+{{!-- subscribe-home.hbs — compact home hero subscribe, Digital first --}}
+{{#get "tiers" filter="type:paid" order="yearly_price asc"}}
+  {{#if tiers}}
+  <div class="ih-hero-sub">
+    <div class="ih-hero-sub-rule"></div>
+    <div class="ih-hero-sub-label">Or Subscribe</div>
+    {{#foreach tiers}}
+    <div class="ih-hero-sub-tier">
+      <div class="ih-hero-sub-tier-row">
+        <div class="ih-hero-sub-tier-name">{{name}} &middot; {{price yearly_price currency=currency}}/year</div>
+        <a href="#/portal/signup/{{slug}}/yearly" data-portal="signup" class="ih-hero-sub-link">Subscribe</a>
+      </div>
+      {{#if description}}<div class="ih-hero-sub-tier-desc">{{description}}</div>{{/if}}
+    </div>
+    {{/foreach}}
+  </div>
+  {{/if}}
+{{/get}}
