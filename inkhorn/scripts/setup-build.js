@@ -59,11 +59,11 @@ async function setupTiers() {
   );
 
   const printBenefits = [
-    'Four issues mailed to any U.S. address',
-    'The Awards edition',
-    'Every White Rabbit released during your year',
-    'Full archive access',
-    'Every ebook',
+    'Five issues of Inkhorn Review a year',
+    'The annual Inkhorn Awards edition',
+    'Physical copies mailed to any US address. Ebooks internationally',
+    'Ebooks of every chapbook we produce',
+    'Full internet-archive access',
   ];
   const digitalBenefits = [
     'Full archive access',
@@ -76,7 +76,7 @@ async function setupTiers() {
       tiers: [{
         name:              'Print',
         slug:              'print',
-        description:       'Four issues, the Awards edition, and every White Rabbit released during your year, mailed to any U.S. address. Includes the full archive and every ebook.',
+        description:       'Six books a year: five issues and the Awards edition, mailed to any U.S. address. Includes the full archive.',
         welcome_page_url:  '/address/',
         monthly_price:     5900,  // Ghost requires a monthly price; set equal to yearly
         yearly_price:      5900,
@@ -92,7 +92,7 @@ async function setupTiers() {
       tiers: [{
         name:            'Print',
         slug:            'print',
-        description:     'Four issues, the Awards edition, and every White Rabbit released during your year, mailed to any U.S. address. Includes the full archive and every ebook.',
+        description:     'Six books a year: five issues and the Awards edition, mailed to any U.S. address. Includes the full archive.',
         welcome_page_url: '/address/',
         monthly_price:   5900,
         yearly_price:    5900,
