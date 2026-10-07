@@ -62,7 +62,6 @@ async function setupTiers() {
     'Five issues of Inkhorn Review a year',
     'The annual Inkhorn Awards edition',
     'Physical copies mailed to any US address. Ebooks internationally',
-    'Ebooks of every chapbook we produce',
     'Full internet-archive access',
   ];
   const digitalBenefits = [
