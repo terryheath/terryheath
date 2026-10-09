@@ -18,6 +18,15 @@
  *                      Omit to publish without sending.
  *   MAX_AGE_DAYS       skip episodes older than this (default: 14)
  *   DRY_RUN            "1" = log what would happen, change nothing
+ *   SITE_URL           public site URL used for the "Listen to this episode"
+ *                      link (default: https://inkhornreview.com). Never derived
+ *                      from GHOST_API_URL, which is the admin host.
+ *   REFRESH_GUID       RSS guid of an already-published episode. Instead of the
+ *                      normal import, rebuild that one post's body from the
+ *                      current feed (audio, duration, notes, transcript, books)
+ *                      in place. Status, dates, slug, title, excerpt, feature
+ *                      image and tags are not touched and no newsletter is sent.
+ *                      This REPLACES the whole body, including hand edits.
  *   INCLUDE_TRAILER    "1" to include the trailer
  *
  * Dedupe is on the RSS guid, stored two ways:
@@ -41,6 +50,7 @@ const __dirname = path.dirname(__filename);
 const FEED_URL = process.env.FEED_URL
   || 'https://api.riverside.com/hosting/V48At7Hk.rss';
 const SHOP_ID = process.env.BOOKSHOP_ID;
+const SITE_URL = (process.env.SITE_URL || 'https://inkhornreview.com').replace(/\/+$/, '');
 const ISBNDB_KEY = process.env.ISBNDB_KEY;
 const HEADSHOT_DIR = process.env.HEADSHOT_DIR || './headshots';
 const POST_STATUS = process.env.POST_STATUS || 'draft';
@@ -660,6 +670,39 @@ async function importedGuids() {
   return { published, drafts };
 }
 
+// ---------- refresh one published episode (opt-in) ----------
+
+// REFRESH_GUID=<guid>: rebuild the body of an already-published episode from the
+// current feed, in place. Only html + updated_at are sent: status, published_at,
+// slug, title, excerpt, feature image and tags stay as they are, and no
+// newsletter option is passed, so nothing is emailed.
+async function refreshOne(guid) {
+  const rawXml = await fetch(FEED_URL).then(r => r.text());
+  const transcriptUrls = buildTranscriptMap(rawXml);
+  const feed = await parser.parseString(rawXml);
+  const item = feed.items.find(i => i.guid === guid);
+  if (!item) { console.error(`No feed item with guid ${guid}`); process.exit(1); }
+
+  const found = await api.posts.browse({
+    filter: `tag:hash-rs-${guid.toLowerCase()}`, limit: 2, formats: 'html'
+  });
+  if (found.length !== 1) {
+    console.error(`Expected exactly one Ghost post for ${guid}, found ${found.length}`);
+    process.exit(1);
+  }
+  const post = found[0];
+  const guest = guestFromTitle((item.title || '').trim());
+  const html = await buildHtml(item, `${SITE_URL}/${post.slug}/`, transcriptUrls.get(guid),
+    { headshotAlt: guest || undefined, headshotCaption: (guest && credits[guest]) || undefined });
+
+  if (DRY_RUN) {
+    console.log(`WOULD refresh  ${post.title}  (${post.status}, ${post.slug}) — ${html.length} chars`);
+    return;
+  }
+  await api.posts.edit({ id: post.id, html, updated_at: post.updated_at }, { source: 'html' });
+  console.log(`REFRESHED          ${post.title}  (${post.status}, ${post.slug})`);
+}
+
 // ---------- main ----------
 
 async function main() {
@@ -667,6 +710,8 @@ async function main() {
     console.error('Set GHOST_API_URL and GHOST_ADMIN_KEY.');
     process.exit(1);
   }
+
+  if (process.env.REFRESH_GUID) return refreshOne(process.env.REFRESH_GUID.trim());
 
   console.log(`status=${POST_STATUS}`
     + ` newsletter=${NEWSLETTER_SLUG || '(none)'}`
@@ -770,7 +815,7 @@ async function main() {
         // published_at. Patch in the headshot + final HTML and publish.
         // headshotUrl is omitted here because feature_image already carries the
         // headshot — including it in the body would duplicate it.
-        const postUrl  = `${process.env.GHOST_API_URL}/${existingDraft.slug}/`;
+        const postUrl  = `${SITE_URL}/${existingDraft.slug}/`;
         const headshotOpts = { headshotAlt: guest || undefined, headshotCaption: caption };
         const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid), headshotOpts);
         const editPayload = {
@@ -811,7 +856,7 @@ async function main() {
         // Step 2: rebuild HTML with the listen link now that we have the slug.
         // headshotUrl is omitted here because feature_image already carries the
         // headshot — including it in the body would duplicate it.
-        const postUrl = `${process.env.GHOST_API_URL}/${draft.slug}/`;
+        const postUrl = `${SITE_URL}/${draft.slug}/`;
         const headshotOpts = { headshotAlt: guest || undefined, headshotCaption: caption };
         const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid), headshotOpts);
         const editPayload = {
@@ -857,4 +902,9 @@ async function main() {
     + ` ${skipped} skipped.`);
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+export { buildHtml, transcriptSection, booksSection, wrapTimestamps, formatDuration, buildTranscriptMap, SITE_URL };
+
+// Run only when executed directly, so one-off scripts can import the builders.
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch(err => { console.error(err); process.exit(1); });
+}
