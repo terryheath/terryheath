@@ -10,67 +10,9 @@
 <div class="inkhorn-home">
 
 {{!-- ── HERO + IN THIS ISSUE ─────────────────────────────────────────── --}}
-{{#get "pages" filter="tag:hash-catalog+featured:true" limit="1"}}
+{{#get "pages" filter="tag:hash-catalog+featured:true" order="published_at desc" include="tags" limit="1"}}
   {{#foreach pages}}
-    {{!-- Output catalog JSON block (statusLabel, coverPrice, buyUrl, etc.) --}}
-    {{{codeinjection_head}}}
-
-    <section class="ih-hero">
-        {{!-- Left: cover + info + subscribe --}}
-        <div class="ih-hero-left">
-            {{#if feature_image}}
-                <div class="ih-cover-box">
-                    <img src="{{img_url feature_image size="l"}}" alt="{{title}} cover">
-                </div>
-            {{else}}
-                <div class="ih-cover-box-placeholder"></div>
-            {{/if}}
-
-            <div class="ih-hero-info">
-                {{!-- Status label: JS shows it only when ih-book has a statusLabel --}}
-                <div class="ih-eyebrow ih-js-status-label" style="display:none"></div>
-                <h1 class="ih-hero-title">{{title}}</h1>
-                {{#if custom_excerpt}}
-                    <p class="ih-hero-desc">{{custom_excerpt}}</p>
-                {{/if}}
-
-                {{!-- Buy prompt: href set server-side, JS updates text and reveals price --}}
-                <div class="ih-hero-buy">
-                    <div class="ih-hero-price" id="ih-hero-price"></div>
-                    <a href="{{url}}" class="ih-hero-buy-btn" id="ih-hero-buy-btn">See this issue</a>
-                    <p class="ih-hero-buy-note">Print ships to U.S.&nbsp;addresses. Ebook in any country.</p>
-                </div>
-
-                {{!-- Compact subscribe --}}
-                {{> "subscribe-home"}}
-            </div>
-        </div>
-
-        {{!-- Right: In This Issue --}}
-        <aside class="ih-contents">
-            <div class="ih-contents-head">In This Issue</div>
-            <div class="ih-contents-body">
-                {{{html}}}
-            </div>
-        </aside>
-    </section>
-
-    {{!-- Inline script: read JSON block, fill status label --}}
-    <script>
-    (function(){
-        var el = document.getElementById('ih-book');
-        if (!el) return;
-        try {
-            var d = JSON.parse(el.textContent);
-            var status = document.querySelector('.ih-js-status-label');
-            if (status && d.statusLabel) {
-                status.textContent = d.statusLabel;
-                status.style.display = '';
-            }
-        } catch(x){}
-    })();
-    </script>
-
+    {{> "edition-hero" subscribe="true"}}
   {{/foreach}}
 {{/get}}
 

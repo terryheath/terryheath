@@ -1,0 +1,858 @@
+<!--
+  POETRY SPACING
+  Poems entered with indentation use the .inkhorn-poem wrapper (HTML card).
+  white-space: pre-wrap preserves all leading spaces and blank lines exactly.
+  poem-wrap.js outputs the correct HTML card from a plain-text poem file.
+-->
+
+<script>
+(function () {
+  var SHELVES_URL      = "https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/shelves.json";
+  var ATTRIBUTIONS_URL = "https://raw.githubusercontent.com/terryheath/terryheath/main/inkhorn/attributions.json";
+  var GHOST_URL        = "https://inkhornreview.com";
+  var CONTENT_KEY      = "c993f3aff0f17b55646a9fa964";
+  var SHOP             = "https://bookshop.org/a/94291/";
+  var ADDRESS_SERVICE  = "https://address.inkhornreview.com"; // Railway service URL — update after deploy
+
+  // ── PRINT_META ──────────────────────────────────────────────────────────────
+  // Ordered list of all Inkhorn print titles, newest first.
+  // featured: true  — the home page hero reads this entry.
+  // buyUrl: Stripe Payment Link — paste in when available. Omit or set to ''
+  //         to suppress the buy link and show status label only.
+  // Ebook store links for each slug — keep in sync with EBOOK_URLS in digest.js.
+  // To add a title: prepend one entry to this array. No other code changes needed.
+  var PRINT_META = [
+    {
+      slug:        'autumn-2026',
+      type:        'Issue',
+      featured:    true,
+      statusLabel: 'The Print Edition \u00b7 Coming October',
+      title:       'Autumn 2026',
+      description: 'What it costs to be seen, and what it costs not to be. Twelve pieces, in print for the first time.',
+      coverUrl:    'https://inkhornreview.com/content/images/2026/09/inkhorn-cover.jpg',
+      buyUrl:      '#',        // replace with Stripe Payment Link
+      coverPrice:  12,
+      isbn:        '',         // placeholder
+      contents: {
+        poetry:  [
+          ['Veronica Tucker',  'The Lobster Tank'],
+          ['Patricia Russo',   'Every Word Bitter'],
+          ['L.M. Scarpitto',   'The Crow'],
+          ['Rikki Santer',     'Lineage'],
+          ['Robin Kathaas',    'Dead Lines (24 Weeks)'],
+          ['Jackie McClure',   'Along with Lemon and Ginger'],
+        ],
+        fiction: [
+          ['Allyson Petrek',  'Tolls'],
+          ['Amanda Vega',     'Five Chairs'],
+          ['J. A. Keefe',     'Death and the Maiden'],
+          ['Terry Sanville',  'Dance Partner'],
+          ['Mark Sabourin',   'A Flight from Manila'],
+          ['Alyse LeValley',  'Amalia and the Crows'],
+        ],
+      },
+    },
+  ];
+
+  // Ebook store links keyed by issue slug.
+  // Keep in sync with EBOOK_URLS in inkhorn/digest.js.
+  var EBOOK_LINKS = {
+    'autumn-2026': {
+      apple:  'https://books.apple.com/us/book/inkhorn-review/id6809263868',
+      amazon: null,
+      kobo:   null,
+    }
+  };
+
+  // Skip issue/genre tags when identifying contributor tags
+  var SKIP    = /^[a-z]+-\d{4}$|^(poetry|fiction|nonfiction|micro|podcast|art|letter)$/;
+  var ISSUE_RE = /^(autumn|winter|spring|summer)-(\d{4})$/;
+
+  var isHome  = window.location.pathname === '/';
+  var isPrint = window.location.pathname === '/print/';
+  var isPost = document.body.classList.contains("post-template");
+  var isTag  = document.body.classList.contains("tag-template");
+
+  // ── INJECT MASTHEAD ─────────────────────────────────────────────────────────
+  // Runs synchronously before paint. Inserts the new masthead before .gh-main.
+  injectMasthead();
+
+  // ── INJECT FOOTER ──────────────────────────────────────────────────────────
+  injectFooter();
+
+  // ── ADDRESS BANNER (Print members without address) ─────────────────────────
+  // Shows a banner if the signed-in user is a Print member with no address.
+  // Deferred so it doesn't block page render.
+  setTimeout(maybeShowAddressBanner, 500);
+
+  if (isHome) { buildHomePage(); return; }
+  if (isPrint) { buildPrintCatalogPage(); return; }
+  if (!isPost && !isTag) return;
+
+  // ── HELPERS ─────────────────────────────────────────────────────────────────
+  function e(s) {
+    return String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function firstBodyImg(html) {
+    if (!html) return null;
+    var m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return m ? m[1] : null;
+  }
+
+  function buildCards(books) {
+    return books.map(function (book) {
+      var img = book.cover
+        ? '<img src="' + e(book.cover) + '" alt="' + e(book.title || "") +
+          '" onerror="this.remove()" style="width:110px;height:auto;display:block;margin-bottom:.5rem">'
+        : "";
+      var title = book.title
+        ? '<span style="font-size:.95rem;font-weight:600;line-height:1.25">' + e(book.title) + "</span>"
+        : "";
+      var author = book.authors
+        ? '<span style="font-size:.8rem;opacity:.65;display:block;margin-top:.15rem">' + e(book.authors) + "</span>"
+        : "";
+      return '<a href="' + SHOP + book.isbn + '" style="width:110px;text-decoration:none;color:inherit">' +
+        img + title + author + "</a>";
+    }).join("");
+  }
+
+  function getContribTags() {
+    var tags = [];
+    document.body.className.split(/\s+/).forEach(function (cls) {
+      if (cls.indexOf("tag-") !== 0) return;
+      var s = cls.slice(4);
+      if (!SKIP.test(s) && s.indexOf("hash-") !== 0) tags.push(s);
+    });
+    return tags;
+  }
+
+  // ── TAG PAGE ─────────────────────────────────────────────────────────────────
+  if (isTag) {
+    var tagMatch = window.location.pathname.match(/^\/tag\/([^/]+)/);
+    if (tagMatch) {
+      var tagSlug = tagMatch[1];
+      if (SKIP.test(tagSlug)) return;
+
+      fetch(SHELVES_URL).then(function (r) { return r.json(); }).then(function (shelves) {
+        var entry = shelves[tagSlug];
+        if (!entry || !entry.books || !entry.books.length) return;
+        var html =
+          '<section class="gh-canvas" style="padding-top:1.5rem;padding-bottom:2rem">' +
+          '<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Books</h3>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
+          buildCards(entry.books) + "</div></section>";
+        var header = document.querySelector("section.tag");
+        if (header) header.insertAdjacentHTML("afterend", html);
+      }).catch(function () {});
+      return;
+    }
+
+    // Podcast index page
+    if (window.location.pathname.startsWith('/podcast')) {
+      var pills = [
+        {name:'Apple Podcasts',url:'https://podcasts.apple.com/us/podcast/life-on-words/id6796221237',color:'#9933CC',icon:'<path d="M5.34 0A5.328 5.328 0 000 5.34v13.32A5.328 5.328 0 005.34 24h13.32A5.328 5.328 0 0024 18.66V5.34A5.328 5.328 0 0018.66 0zm6.525 2.568c2.336 0 4.448.902 6.056 2.587 1.224 1.272 1.912 2.619 2.264 4.392.12.59.12 2.2.007 2.864a8.506 8.506 0 01-3.24 5.296c-.608.46-2.096 1.261-2.336 1.261-.088 0-.096-.091-.056-.46.072-.592.144-.715.48-.856.536-.224 1.448-.874 2.008-1.435a7.644 7.644 0 002.008-3.536c.208-.824.184-2.656-.048-3.504-.728-2.696-2.928-4.792-5.624-5.352-.784-.16-2.208-.16-3 0-2.728.56-4.984 2.76-5.672 5.528-.184.752-.184 2.584 0 3.336.456 1.832 1.64 3.512 3.192 4.512.304.2.672.408.824.472.336.144.408.264.472.856.04.36.03.464-.056.464-.056 0-.464-.176-.896-.384l-.04-.03c-2.472-1.216-4.056-3.274-4.632-6.012-.144-.706-.168-2.392-.03-3.04.36-1.74 1.048-3.1 2.192-4.304 1.648-1.737 3.768-2.656 6.128-2.656zm.134 2.81c.409.004.803.04 1.106.106 2.784.62 4.76 3.408 4.376 6.174-.152 1.114-.536 2.03-1.216 2.88-.336.43-1.152 1.15-1.296 1.15-.023 0-.048-.272-.048-.603v-.605l.416-.496c1.568-1.878 1.456-4.502-.256-6.224-.664-.67-1.432-1.064-2.424-1.246-.64-.118-.776-.118-1.448-.008-1.02.167-1.81.562-2.512 1.256-1.72 1.704-1.832 4.342-.264 6.222l.413.496v.608c0 .336-.027.608-.06.608-.03 0-.264-.16-.512-.36l-.034-.011c-.832-.664-1.568-1.842-1.872-2.997-.184-.698-.184-2.024.008-2.72.504-1.878 1.888-3.335 3.808-4.019.41-.145 1.133-.22 1.814-.211zm-.13 2.99c.31 0 .62.06.844.178.488.253.888.745 1.04 1.259.464 1.578-1.208 2.96-2.72 2.254h-.015c-.712-.331-1.096-.956-1.104-1.77 0-.733.408-1.371 1.112-1.745.224-.117.534-.176.844-.176zm-.011 4.728c.988-.004 1.706.349 1.97.97.198.464.124 1.932-.218 4.302-.232 1.656-.36 2.074-.68 2.356-.44.39-1.064.498-1.656.288h-.003c-.716-.257-.87-.605-1.164-2.644-.341-2.37-.416-3.838-.218-4.302.262-.616.974-.966 1.97-.97z"/>'},
+        {name:'Spotify',url:'https://open.spotify.com/show/033Yk3F8x8QWBLK496Wbqd',color:'#1ED760',icon:'<path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>'},
+        {name:'YouTube',url:'https://www.youtube.com/playlist?list=PLCszJw8y8GcM',color:'#FF0000',icon:'<path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>'},
+        {name:'Amazon Music',url:'https://music.amazon.com/podcasts/ac2d231d-d1ec-48df-ada2-bf8937940093/life-on-words',color:'#25D8FD',icon:'<path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>'},
+        {name:'iHeartRadio',url:'https://www.iheart.com/podcast/269-life-on-words-339902963',color:'#C6002B',icon:'<path d="M16.152 0c-1.727 0-3.27.915-4.164 2.252C11.094.915 9.55 0 7.823 0A4.982 4.982 0 002.84 4.983c0 1.746 1.106 3.005 2.261 4.17l4.518 4.272a.371.371 0 00.626-.27V9.827c0-.963.78-1.743 1.743-1.745a1.745 1.745 0 011.742 1.745v3.328c0 .326.39.493.626.27l4.518-4.272c1.155-1.165 2.261-2.424 2.261-4.17A4.982 4.982 0 0016.152 0"/>'},
+        {name:'Deezer',url:'https://link.deezer.com/s/34grV0FJrr7Kxofm1RrOL',color:'#A238FF',icon:'<path d="M.693 10.024c.381 0 .693-1.256.693-2.807 0-1.55-.312-2.807-.693-2.807C.312 4.41 0 5.666 0 7.217s.312 2.808.693 2.808ZM21.038 1.56c-.364 0-.684.805-.91 2.096C19.765 1.446 19.184 0 18.526 0c-.78 0-1.464 2.036-1.784 5-.312-2.158-.788-3.536-1.325-3.536-.745 0-1.386 2.704-1.62 6.472-.442-1.932-1.083-3.145-1.793-3.145s-1.35 1.213-1.793 3.145c-.242-3.76-.874-6.463-1.628-6.463-.537 0-1.013 1.378-1.325 3.535C6.938 2.036 6.262 0 5.474 0c-.658 0-1.247 1.447-1.602 3.665-.217-1.291-.546-2.105-.91-2.105-.675 0-1.221 2.807-1.221 6.272 0 3.466.546 6.273 1.221 6.273.277 0 .537-.476.736-1.273.32 2.928.996 4.938 1.776 4.938.606 0 1.143-1.204 1.507-3.11.251 3.622.875 6.195 1.602 6.195.46 0 .875-1.023 1.187-2.677C10.142 21.6 11 24 12.004 24c1.005 0 1.863-2.4 2.235-5.822.312 1.654.727 2.677 1.186 2.677.728 0 1.352-2.573 1.603-6.195.364 1.906.9 3.11 1.507 3.11.78 0 1.455-2.01 1.775-4.938.208.797.46 1.273.737 1.273.675 0 1.22-2.807 1.22-6.273-.008-3.457-.553-6.272-1.23-6.272ZM23.307 10.024c.381 0 .693-1.256.693-2.807 0-1.55-.312-2.807-.693-2.807-.381 0-.693 1.256-.693 2.807s.312 2.808.693 2.808Z"/>'},
+        {name:'RSS',url:'https://api.riverside.com/hosting/V48At7Hk.rss',color:'#FFA500',icon:'<path d="M19.199 24C19.199 13.467 10.533 4.8 0 4.8V0c13.165 0 24 10.835 24 24h-4.801zM3.291 17.415c1.814 0 3.293 1.479 3.293 3.295 0 1.813-1.485 3.29-3.301 3.29C1.47 24 0 22.526 0 20.71s1.475-3.294 3.291-3.295zM15.909 24h-4.665c0-6.169-5.075-11.245-11.244-11.245V8.09c8.727 0 15.909 7.184 15.909 15.91z"/>'}
+      ];
+      var pillHtml = '<div class="gh-canvas"><div class="lw-pills" style="margin-bottom:2rem">';
+      for (var i = 0; i < pills.length; i++) {
+        pillHtml += '<a class="lw-pill" href="' + pills[i].url + '" target="_blank" rel="noopener">'
+          + '<span class="lw-pill-icon" style="background:' + pills[i].color + ';line-height:0">'
+          + '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block">' + pills[i].icon + '</svg>'
+          + '</span>' + pills[i].name + '</a>';
+      }
+      pillHtml += '</div></div>';
+      var tagHeader = document.querySelector('section.tag') || document.querySelector('.gh-article-header');
+      if (tagHeader) tagHeader.insertAdjacentHTML('afterend', pillHtml);
+      return;
+    }
+
+    // Issue collection pages: /autumn-2026/, etc. — attribution credit
+    var issueMatch = window.location.pathname.match(/^\/([a-z]+-\d{4})\//);
+    if (issueMatch) {
+      var issueSlug = issueMatch[1];
+      fetch(ATTRIBUTIONS_URL).then(function (r) { return r.json(); }).then(function (attributions) {
+        var credit = attributions[issueSlug];
+        if (!credit) return;
+        var tagMedia = document.querySelector(".tag-media");
+        if (tagMedia) tagMedia.insertAdjacentHTML("afterend", '<p class="tag-image-credit">' + e(credit) + "</p>");
+      }).catch(function () {});
+      return;
+    }
+
+    // Art collection page
+    if (window.location.pathname === '/art/') {
+      var loadMore = document.querySelector('.gh-loadmore');
+      if (loadMore) loadMore.style.display = 'none';
+      fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+        '&filter=primary_tag:art&fields=title,url,feature_image,html&limit=all&order=published_at+desc')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var posts = (data && data.posts) || [];
+          var items = posts.filter(function(p) { return firstBodyImg(p.html) || p.feature_image; });
+          if (!items.length) return;
+          var gridHtml = '<div class="ih-art-grid">';
+          for (var i = 0; i < items.length; i++) {
+            var src = firstBodyImg(items[i].html) || items[i].feature_image;
+            gridHtml += '<a href="' + e(items[i].url) + '" class="ih-art-item">' +
+              '<img src="' + e(src) + '" alt="' + e(items[i].title || '') + '" loading="lazy">' + '</a>';
+          }
+          gridHtml += '</div>';
+          var feed = document.querySelector('.post-feed');
+          if (feed) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'ih-art-grid-wrapper';
+            wrapper.innerHTML = gridHtml;
+            feed.parentNode.replaceChild(wrapper, feed);
+          }
+        }).catch(function() {});
+      return;
+    }
+    return;
+  }
+
+  // ── POST PAGE ─────────────────────────────────────────────────────────────────
+  var contribTags = getContribTags();
+  if (!contribTags.length) return;
+  var slug = contribTags[0];
+
+  // Link the byline synchronously
+  var excerptEl = document.querySelector(".single-excerpt");
+  if (excerptEl) {
+    var raw = excerptEl.textContent.trim();
+    if (/^by\s/.test(raw)) {
+      excerptEl.innerHTML = "by " +
+        '<a href="/tag/' + slug + '/" style="color:inherit;text-decoration:underline;' +
+        'text-decoration-color:rgba(0,0,0,.25);text-underline-offset:.1em">' +
+        e(raw.replace(/^by\s+/, "")) + "</a>";
+    }
+  }
+
+  // Fetch books + tag bio in parallel
+  var tagApiUrl = GHOST_URL + "/ghost/api/content/tags/slug/" + slug +
+    "/?key=" + CONTENT_KEY + "&fields=name,description";
+
+  Promise.all([
+    fetch(SHELVES_URL).then(function (r) { return r.json(); }),
+    fetch(tagApiUrl).then(function (r) { return r.json(); })
+  ]).then(function (results) {
+    var shelves = results[0];
+    var tagResp = results[1];
+    var tagData = (tagResp && tagResp.tags && tagResp.tags[0]) || null;
+    var shelfEntry = null;
+    for (var i = 0; i < contribTags.length; i++) {
+      if (shelves[contribTags[i]]) { shelfEntry = shelves[contribTags[i]]; break; }
+    }
+    var hasDesc  = tagData && tagData.description;
+    var hasBooks = shelfEntry && shelfEntry.books && shelfEntry.books.length;
+    if (!hasDesc && !hasBooks) return;
+    var name  = (tagData && tagData.name) || (shelfEntry && shelfEntry.name) || "";
+    var inner = "";
+    if (hasDesc) {
+      inner += '<div style="margin-bottom:' + (hasBooks ? "2rem" : "0") + '">' +
+        '<a href="/tag/' + slug + '/" style="display:inline-block;font-size:1.05rem;font-weight:700;color:inherit;text-decoration:none;margin-bottom:.6rem">' +
+        e(name) + "</a>" +
+        '<p style="margin:0;font-size:1.1rem;line-height:1.65">' + e(tagData.description) + "</p></div>";
+    }
+    if (hasBooks) {
+      inner += '<h3 style="font-size:1rem;font-weight:700;margin:0 0 1rem">Books by ' + e(name) + "</h3>" +
+        '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' +
+        buildCards(shelfEntry.books) + "</div>";
+    }
+    var html = '<div style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(0,0,0,.1)">' + inner + "</div>";
+    var content = document.querySelector(".gh-content");
+    if (content) content.insertAdjacentHTML("beforeend", html);
+  }).catch(function () {});
+
+  // Theme-based related posts
+  var themeSlugs = contribTags.slice(1);
+  if (themeSlugs.length) {
+    var postSlug = window.location.pathname.replace(/\/$/, '').split('/').pop();
+    var relFilter = 'tags:[' + themeSlugs.join(',') + ']+slug:-' + postSlug;
+    fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+      '&filter=' + encodeURIComponent(relFilter) + '&limit=6&fields=title,url,published_at,reading_time')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var posts = data && data.posts;
+        if (!posts || !posts.length) return;
+        for (var i = posts.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = posts[i]; posts[i] = posts[j]; posts[j] = tmp;
+        }
+        var feed = document.querySelector('.related-feed');
+        if (!feed) return;
+        feed.innerHTML = posts.slice(0, 4).map(function (post) {
+          var d = new Date(post.published_at);
+          var day = String(d.getDate()).padStart(2, '0');
+          var month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+          var mins = post.reading_time || 1;
+          var rt = mins === 1 ? '1 min read' : mins + ' min read';
+          return '<article class="feed"><div class="feed-calendar">' +
+            '<div class="feed-calendar-day">' + day + '</div>' +
+            '<div class="feed-calendar-month">' + month + '</div>' +
+            '</div><h2 class="feed-title">' + e(post.title) + '</h2>' +
+            '<div class="feed-right"><div class="feed-length">' + rt + '</div></div>' +
+            '<a class="u-permalink" href="' + e(post.url) + '" aria-label="' + e(post.title) + '"></a></article>';
+        }).join('');
+      }).catch(function () {});
+  }
+
+  // ── MASTHEAD INJECTION ────────────────────────────────────────────────────────
+  function injectMasthead() {
+    var isMobile = window.innerWidth <= 900;
+    var nav = [
+      ['/print/',         'Print Edition'],
+      ['/archive/',       'Archive'],
+      ['/podcast/',       'Podcast'],
+      ['/founder-letter/', "Founder's Letter"],
+      ['/art/',           'Gallery'],
+      ['/submissions/',   'Submissions'],
+      ['/about/',         'About'],
+    ];
+
+    var navLinks = nav.map(function(n) {
+      return '<a href="' + n[0] + '">' + n[1] + '</a>';
+    }).join('');
+
+    // Desktop header HTML
+    var mastheadHtml =
+      '<header id="ih-masthead">' +
+      '<div class="ih-mast-top">' +
+      '<div class="ih-wordmark-group">' +
+      '<a href="/" class="ih-wordmark">Inkhorn Review</a>' +
+      '<div class="ih-tagline">A literary journal. Look. Closer.</div>' +
+      '</div>' +
+      // Desktop actions
+      '<div class="ih-mast-actions ih-mast-actions-desktop">' +
+      '<a href="' + GHOST_URL + '/#/portal/signin">Sign in</a>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup/free">Sign up</a>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup" class="ih-subscribe-btn">Subscribe</a>' +
+      '</div>' +
+      // Phone: hamburger
+      '<button class="ih-menu-btn" id="ih-menu-btn" aria-label="Menu" aria-expanded="false">' +
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1c1a17" stroke-width="1.8" stroke-linecap="round">' +
+      '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>' +
+      '</svg>' +
+      '</button>' +
+      '</div>' +
+      // Phone actions (below wordmark)
+      '<div class="ih-mast-actions-phone" style="display:none">' +
+      '<a href="' + GHOST_URL + '/#/portal/signup" class="ih-subscribe-btn">Subscribe</a>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup/free" style="padding:12px 4px">Sign up</a>' +
+      '<a href="' + GHOST_URL + '/#/portal/signin" style="padding:12px 4px">Sign in</a>' +
+      '</div>' +
+      // Desktop nav
+      '<nav class="ih-nav">' + navLinks + '</nav>' +
+      // Phone nav overlay
+      '<nav class="ih-nav-overlay" id="ih-nav-overlay">' + navLinks + '</nav>' +
+      '</header>';
+
+    var target = document.querySelector('.gh-main') || document.querySelector('main') || document.body.firstChild;
+    if (target && target.parentNode) {
+      var div = document.createElement('div');
+      div.innerHTML = mastheadHtml;
+      target.parentNode.insertBefore(div.firstChild, target);
+    } else {
+      document.body.insertAdjacentHTML('afterbegin', mastheadHtml);
+    }
+
+    // Show phone vs desktop elements
+    function applyResponsive() {
+      var phone = window.innerWidth <= 900;
+      var phoneActions = document.querySelector('.ih-mast-actions-phone');
+      if (phoneActions) phoneActions.style.display = phone ? 'flex' : 'none';
+    }
+    applyResponsive();
+    window.addEventListener('resize', applyResponsive);
+
+    // Hamburger toggle
+    document.addEventListener('click', function(evt) {
+      var btn = document.getElementById('ih-menu-btn');
+      var overlay = document.getElementById('ih-nav-overlay');
+      if (!btn || !overlay) return;
+      if (btn.contains(evt.target)) {
+        var open = overlay.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      } else if (!overlay.contains(evt.target) && overlay.classList.contains('open')) {
+        overlay.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  // ── FOOTER INJECTION ──────────────────────────────────────────────────────────
+  function injectFooter() {
+    // ISSN 3144-1998 (Online) | Print ISSN: [placeholder — add when assigned]
+    var footerHtml =
+      '<footer id="ih-footer">' +
+      '<div>Inkhorn Review \u00a9 2026 \u00b7 ISSN 3144-1998 (Online)</div>' +
+      '<div class="ih-footer-links">' +
+      '<a href="' + GHOST_URL + '/#/portal/signup/free">Sign up</a>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup">Subscribe</a>' +
+      '<a href="https://www.patreon.com/cw/inkhornreview" target="_blank" rel="noopener">Patreon</a>' +
+      '<a href="#" id="ih-tip-link">Tip Us</a>' + // replace href with tip URL
+      '</div>' +
+      '</footer>';
+    document.body.insertAdjacentHTML('beforeend', footerHtml);
+  }
+
+  // ── ADDRESS BANNER ────────────────────────────────────────────────────────────
+  // Shows a banner for signed-in Print members without an address on file.
+  function maybeShowAddressBanner() {
+    fetch(GHOST_URL + '/members/api/session')
+      .then(function(r) { if (!r.ok) throw new Error('not signed in'); return r.json(); })
+      .then(function(session) {
+        var tiers = (session.subscriptions || []).map(function(s) { return s.tier && s.tier.slug; });
+        if (tiers.indexOf('print') === -1) return; // not a Print member
+        return fetch(ADDRESS_SERVICE + '/address/status', {
+          headers: { Authorization: 'Bearer ' + (session.identity || '') }
+        }).then(function(r) { return r.json(); }).then(function(status) {
+          if (status.hasAddress) return;
+          showAddressBanner();
+        });
+      }).catch(function() {});
+  }
+
+  function showAddressBanner() {
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1c1a17;color:#f6f1e7;' +
+      'padding:16px 24px;display:flex;justify-content:space-between;align-items:center;z-index:9999;' +
+      'font-family:\'Libre Franklin\',sans-serif;font-size:14px;';
+    banner.innerHTML =
+      '<span>Your Print subscription needs a mailing address. ' +
+      '<a href="/address/" style="color:#e8a0a0;text-decoration:underline">Add your address \u2192</a></span>' +
+      '<button style="background:none;border:none;color:#f6f1e7;cursor:pointer;font-size:20px;line-height:1;padding:0 0 0 16px"' +
+      ' onclick="this.parentNode.remove()">&times;</button>';
+    document.body.appendChild(banner);
+  }
+
+  // ── PRINT CATALOG PAGE ──────────────────────────────────────────────────────
+  // Lists every print title from PRINT_META, newest first.
+  function buildPrintCatalogPage() {
+    var subscribeBlock =
+      '<div class="ih-subscribe-block">' +
+      '<div class="ih-sub-head">Subscribe</div>' +
+      '<div class="ih-sub-tier">' +
+      '<div class="ih-sub-tier-row"><div class="ih-sub-tier-name">Print</div>' +
+      '<div class="ih-sub-tier-price">$59 a year</div></div>' +
+      '<div class="ih-sub-tier-desc">Four issues, the Awards edition, and every White Rabbit released during your year, mailed to any U.S. address. Includes the full archive and every ebook.</div>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup/print/yearly" class="ih-sub-btn-print">Subscribe to Print</a>' +
+      '</div>' +
+      '<div class="ih-sub-tier">' +
+      '<div class="ih-sub-tier-row"><div class="ih-sub-tier-name">Digital</div>' +
+      '<div class="ih-sub-tier-price">$20 a year</div></div>' +
+      '<div class="ih-sub-tier-desc">The full archive and every title as an ebook.</div>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup/digital/yearly" class="ih-sub-btn-digital">Subscribe to Digital</a>' +
+      '</div>' +
+      '</div>';
+
+    var rowsHtml = '';
+    for (var ri = 0; ri < PRINT_META.length; ri++) {
+      var meta = PRINT_META[ri];
+      var coverHtml = meta.coverUrl
+        ? '<div class="ih-cover-box"><img src="' + e(meta.coverUrl) + '" alt="' + e(meta.title) + ' cover"></div>'
+        : '<div class="ih-cover-box-placeholder"></div>';
+
+      var contentsHtml = '';
+      if (meta.contents) {
+        var genreNames = { poetry: 'Poetry', fiction: 'Fiction', nonfiction: 'Nonfiction' };
+        var genreBlocks = '';
+        for (var genre in meta.contents) {
+          var items = meta.contents[genre].map(function(item) {
+            return '<div class="ih-contents-item">' + e(item[0]) + ', <i>' + e(item[1]) + '</i></div>';
+          }).join('');
+          genreBlocks += '<div><div class="ih-contents-genre-head">' + e(genreNames[genre] || genre) + '</div>' + items + '</div>';
+        }
+        contentsHtml = '<div class="ih-contents"><div class="ih-contents-head">In This Issue</div>' + genreBlocks + '</div>';
+      }
+
+      var buyHtml = meta.buyUrl && meta.buyUrl !== '#'
+        ? '<a href="' + e(meta.buyUrl) + '" class="ih-buy-link">Buy \u2014 $' + meta.coverPrice + ' + shipping</a>'
+        : (meta.coverPrice ? '<span class="ih-buy-link-coming">$' + meta.coverPrice + ' + shipping \u2014 coming soon</span>' : '');
+
+      rowsHtml +=
+        (ri > 0 ? '<div class="ih-catalog-rule"></div>' : '') +
+        '<div class="ih-catalog-row">' +
+        '<div class="ih-catalog-cover">' + coverHtml + '</div>' +
+        '<div class="ih-catalog-info">' +
+        '<div class="ih-eyebrow">' + e(meta.type) + (meta.statusLabel ? ' \u00b7 ' + e(meta.statusLabel) : '') + '</div>' +
+        '<h2 class="ih-catalog-title">' + e(meta.title) + '</h2>' +
+        (meta.description ? '<p class="ih-hero-desc">' + e(meta.description) + '</p>' : '') +
+        buyHtml +
+        contentsHtml +
+        '</div>' +
+        '</div>';
+    }
+
+    var pageHtml =
+      '<div class="ih-catalog-page">' +
+      '<h1 class="ih-page-heading">Print</h1>' +
+      subscribeBlock +
+      rowsHtml +
+      '</div>';
+
+    var content = document.querySelector('.gh-content');
+    var ghArticle = document.querySelector('.gh-article');
+    ['.cover', '.single-header', '.gh-article-header'].forEach(function(sel) {
+      var el = document.querySelector(sel);
+      if (el) el.style.display = 'none';
+    });
+    [ghArticle, content].forEach(function(el) {
+      if (!el) return;
+      el.style.setProperty('max-width', 'none', 'important');
+      el.style.setProperty('padding',   '0',    'important');
+      el.style.setProperty('margin',    '0',    'important');
+    });
+    if (content) {
+      content.style.setProperty('display', 'block', 'important');
+      content.innerHTML = pageHtml;
+    }
+  }
+
+  // ── HOME PAGE BUILDER ─────────────────────────────────────────────────────────
+  function issueToOrdinal(slug) {
+    var m = slug.match(/^(autumn|winter|spring|summer)-(\d{4})$/);
+    if (!m) return 0;
+    var monthOf = { autumn: 9, winter: 12, spring: 3, summer: 6 };
+    var year = parseInt(m[2]);
+    var month = monthOf[m[1]];
+    var actualYear = m[1] === 'winter' ? year - 1 : year;
+    return actualYear * 100 + month;
+  }
+
+  function formatIssueTitle(slug) {
+    var m = slug.match(ISSUE_RE);
+    if (!m) return slug;
+    return m[1].charAt(0).toUpperCase() + m[1].slice(1) + ' ' + m[2];
+  }
+
+  function genreOf(post) {
+    var genres = ['poetry', 'fiction', 'nonfiction', 'micro', 'art'];
+    if (!post.tags) return '';
+    for (var i = 0; i < post.tags.length; i++) {
+      if (genres.indexOf(post.tags[i].slug) !== -1) return post.tags[i].slug;
+    }
+    return '';
+  }
+
+  function genreLabel(slug) {
+    var map = { poetry: 'Poetry', fiction: 'Fiction', nonfiction: 'Nonfiction', micro: 'Micro Fiction', art: 'Art' };
+    return map[slug] || '';
+  }
+
+  function contributorOf(post) {
+    if (!post.tags) return '';
+    for (var i = 0; i < post.tags.length; i++) {
+      var s = post.tags[i].slug;
+      if (s.startsWith('hash-')) continue;
+      if (SKIP.test(s)) continue;
+      return post.tags[i].name || '';
+    }
+    return post.custom_excerpt ? post.custom_excerpt.replace(/^by\s+/i, '').trim() : '';
+  }
+
+  function buildHomePage() {
+    var revealed = false;
+    function revealPage() {
+      if (revealed) return;
+      revealed = true;
+      ['.cover', '.single-header'].forEach(function(sel) {
+        var el = document.querySelector(sel);
+        if (el) el.style.opacity = '1';
+      });
+    }
+    var failsafe = setTimeout(revealPage, 5000);
+
+    Promise.all([
+      // Issue tags
+      fetch(GHOST_URL + '/ghost/api/content/tags/?key=' + CONTENT_KEY +
+        '&limit=all&fields=slug,name,description,feature_image,url')
+        .then(function(r) { return r.json(); }),
+      // Latest podcast
+      fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+        '&filter=primary_tag:podcast&fields=title,url,custom_excerpt,feature_image&limit=1&order=published_at+desc')
+        .then(function(r) { return r.json(); }),
+      // Latest letter
+      fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+        '&filter=primary_tag:letter&fields=title,url,custom_excerpt,published_at&limit=1&order=published_at+desc')
+        .then(function(r) { return r.json(); }),
+      // #this-week (newest — may be paid)
+      fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+        '&filter=tag:hash-this-week&fields=title,url,custom_excerpt,visibility&include=tags&limit=1&order=published_at+desc')
+        .then(function(r) { return r.json(); }),
+      // Free archive posts
+      fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+        '&filter=tag:hash-archive&fields=title,url,custom_excerpt,visibility&include=tags&limit=10&order=published_at+desc')
+        .then(function(r) { return r.json(); }),
+      // Gallery art
+      fetch(GHOST_URL + '/ghost/api/content/posts/?key=' + CONTENT_KEY +
+        '&filter=primary_tag:art&fields=title,url,feature_image,html&limit=5&order=published_at+desc')
+        .then(function(r) { return r.json(); }),
+      // Patreon supporters page (written by patreon-sync.js)
+      fetch(GHOST_URL + '/ghost/api/content/pages/?key=' + CONTENT_KEY +
+        '&filter=slug:patreon-supporters&fields=codeinjection_head&limit=1')
+        .then(function(r) { return r.json(); }).catch(function() { return null; }),
+    ]).then(function(results) {
+      clearTimeout(failsafe);
+      revealed = true;
+
+      var allTags    = (results[0] && results[0].tags)  || [];
+      var podcastPost = results[1] && results[1].posts && results[1].posts[0] || null;
+      var letterPost  = results[2] && results[2].posts && results[2].posts[0] || null;
+      var thisWeekPost = results[3] && results[3].posts && results[3].posts[0] || null;
+      var archivePosts = (results[4] && results[4].posts) || [];
+      var artPosts    = (results[5] && results[5].posts) || [];
+      var patronsPage = results[6] && results[6].pages && results[6].pages[0] || null;
+
+      // Find current issue
+      var issueTags = allTags.filter(function(t) { return ISSUE_RE.test(t.slug); });
+      issueTags.sort(function(a, b) { return issueToOrdinal(a.slug) - issueToOrdinal(b.slug); });
+      var currentIssue = issueTags[issueTags.length - 1];
+
+      renderHome(currentIssue, podcastPost, letterPost, thisWeekPost, archivePosts, artPosts, patronsPage);
+    }).catch(function() { clearTimeout(failsafe); revealPage(); });
+  }
+
+  function renderHome(currentIssue, podcastPost, letterPost, thisWeekPost, archivePosts, artPosts, patronsPage) {
+    var meta = null;
+    for (var fi = 0; fi < PRINT_META.length; fi++) { if (PRINT_META[fi].featured) { meta = PRINT_META[fi]; break; } }
+    if (!meta) meta = PRINT_META[0] || null;
+    var issueSlug = meta ? meta.slug : (currentIssue ? currentIssue.slug : null);
+
+    // ── Hero ──────────────────────────────────────────────────────────────────
+    var coverSrc = (meta && meta.coverUrl) || (currentIssue && currentIssue.feature_image) || null;
+    var coverHtml = coverSrc
+      ? '<div class="ih-cover-box"><img src="' + e(coverSrc) + '" alt="' + e(meta ? meta.title : '') + ' cover"></div>'
+      : '<div class="ih-cover-box-placeholder"></div>';
+
+    var statusLabel = meta ? meta.statusLabel : (currentIssue ? formatIssueTitle(currentIssue.slug) : '');
+    var heroTitle   = meta ? meta.title : (currentIssue ? formatIssueTitle(currentIssue.slug) : 'Inkhorn Review');
+    var heroDesc    = meta ? meta.description : (currentIssue && currentIssue.description ? currentIssue.description : '');
+    var buyUrl      = meta ? meta.buyUrl : '#';
+    var coverPrice  = meta ? meta.coverPrice : 12;
+
+    var subscribeBlock =
+      '<div class="ih-subscribe-block">' +
+      '<div class="ih-sub-head">Subscribe</div>' +
+      '<div class="ih-sub-tier">' +
+      '<div class="ih-sub-tier-row"><div class="ih-sub-tier-name">Print</div>' +
+      '<div class="ih-sub-tier-price">$59 a year</div></div>' +
+      '<div class="ih-sub-tier-desc">Four issues, the Awards edition, and every White Rabbit released during your year, mailed to any U.S. address. Includes the full archive and every ebook.</div>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup/print/yearly" class="ih-sub-btn-print">Subscribe to Print</a>' +
+      '</div>' +
+      '<div class="ih-sub-tier">' +
+      '<div class="ih-sub-tier-row"><div class="ih-sub-tier-name">Digital</div>' +
+      '<div class="ih-sub-tier-price">$20 a year</div></div>' +
+      '<div class="ih-sub-tier-desc">The full archive and every title as an ebook.</div>' +
+      '<a href="' + GHOST_URL + '/#/portal/signup/digital/yearly" class="ih-sub-btn-digital">Subscribe to Digital</a>' +
+      '</div>' +
+      '</div>' +
+      '<a href="' + e(buyUrl) + '" class="ih-buy-link">Or buy the ' + e(heroTitle) + ' issue \u2014 $' + coverPrice + ' + shipping</a>';
+
+    var heroInfoHtml =
+      '<div class="ih-hero-info">' +
+      '<div class="ih-eyebrow">' + e(statusLabel) + '</div>' +
+      '<h1 class="ih-hero-title">' + e(heroTitle) + '</h1>' +
+      (heroDesc ? '<p class="ih-hero-desc">' + e(heroDesc) + '</p>' : '') +
+      subscribeBlock +
+      '</div>';
+
+    var heroLeftHtml = '<div class="ih-hero-left">' + coverHtml + heroInfoHtml + '</div>';
+
+    // In This Issue
+    var contentsHtml = '';
+    if (meta && meta.contents) {
+      var genreBlocks = '';
+      var genreNames = { poetry: 'Poetry', fiction: 'Fiction' };
+      for (var genre in meta.contents) {
+        var items = meta.contents[genre];
+        var rows = items.map(function(item) {
+          return '<div class="ih-contents-item">' + e(item[0]) + ', <i>' + e(item[1]) + '</i></div>';
+        }).join('');
+        genreBlocks += '<div><div class="ih-contents-genre-head">' + e(genreNames[genre] || genre) + '</div>' + rows + '</div>';
+      }
+      contentsHtml =
+        '<aside class="ih-contents">' +
+        '<div class="ih-contents-head">In This Issue</div>' +
+        genreBlocks +
+        '</aside>';
+    }
+
+    var heroSectionHtml = '<section class="ih-hero">' + heroLeftHtml + contentsHtml + '</section>';
+
+    // ── Podcast + Letter ──────────────────────────────────────────────────────
+    var podcastHtml = '';
+    if (podcastPost) {
+      var podImg = podcastPost.feature_image
+        ? '<img src="' + e(podcastPost.feature_image) + '" alt="" class="ih-podcast-img">'
+        : '<div class="ih-podcast-img-placeholder"></div>';
+      var podExcerpt = podcastPost.custom_excerpt ? podcastPost.custom_excerpt.replace(/^by\s+/i, '').trim() : '';
+      podcastHtml =
+        '<a href="' + e(podcastPost.url) + '" class="ih-card-podcast">' +
+        podImg +
+        '<div class="ih-card-podcast-body">' +
+        '<div class="ih-card-label">The Podcast \u00b7 Free</div>' +
+        '<div class="ih-card-title">Life on Words</div>' +
+        '<div class="ih-card-byline" style="font-style:italic;color:#3a352e">' + e(podcastPost.title || '') + '</div>' +
+        (podExcerpt ? '<div class="ih-card-excerpt">' + e(podExcerpt) + '</div>' : '') +
+        '<div class="ih-card-listen">Listen \u2192</div>' +
+        '</div></a>';
+    }
+
+    var letterHtml = '';
+    if (letterPost) {
+      var letterDate = letterPost.published_at
+        ? new Date(letterPost.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : '';
+      var letterExcerpt = letterPost.custom_excerpt || '';
+      letterHtml =
+        '<a href="' + e(letterPost.url) + '" class="ih-card-letter">' +
+        '<div class="ih-card-label">The Founder\'s Letter</div>' +
+        '<div class="ih-card-title">' + e(letterPost.title || '') + '</div>' +
+        '<div class="ih-card-byline">Terry Heath, Founding Editor' + (letterDate ? ' \u00b7 ' + letterDate : '') + '</div>' +
+        (letterExcerpt ? '<div class="ih-card-excerpt">' + e(letterExcerpt) + '</div>' : '') +
+        '<div class="ih-card-listen">Read the letter \u2192</div>' +
+        '</a>';
+    }
+
+    var twoColHtml = (podcastHtml || letterHtml)
+      ? '<section class="ih-cards-2col">' + podcastHtml + letterHtml + '</section>'
+      : '';
+
+    // ── Archive ───────────────────────────────────────────────────────────────
+    var archiveCards = '';
+
+    // Dark #this-week card
+    if (thisWeekPost) {
+      var twContrib = contributorOf(thisWeekPost);
+      archiveCards +=
+        '<a href="' + e(thisWeekPost.url) + '" class="ih-card-dark">' +
+        '<div class="ih-card-dark-label">New this week \u00b7 Subscribers</div>' +
+        '<div class="ih-card-dark-title">' + e(thisWeekPost.title || '') + '</div>' +
+        (twContrib ? '<div class="ih-card-dark-author">' + e(twContrib) + '</div>' : '') +
+        '</a>';
+    }
+
+    // Free archive posts (up to 4)
+    var freeArchive = archivePosts.filter(function(p) {
+      return !thisWeekPost || p.url !== thisWeekPost.url;
+    }).slice(0, 4);
+
+    for (var i = 0; i < freeArchive.length; i++) {
+      var ap = freeArchive[i];
+      var apGenre = genreOf(ap);
+      var apLabel = 'Free' + (apGenre ? ' \u00b7 ' + genreLabel(apGenre) : '');
+      var apContrib = contributorOf(ap);
+      archiveCards +=
+        '<a href="' + e(ap.url) + '" class="ih-card-light">' +
+        '<div class="ih-card-light-label">' + e(apLabel) + '</div>' +
+        '<div class="ih-card-light-title">' + e(ap.title || '') + '</div>' +
+        (apContrib ? '<div class="ih-card-light-author">' + e(apContrib) + '</div>' : '') +
+        '</a>';
+    }
+
+    var archiveSectionHtml = archiveCards
+      ? '<section class="ih-archive-section">' +
+        '<div class="ih-archive-head-row">' +
+        '<h2 class="ih-archive-heading">The Archive</h2>' +
+        '<a href="/archive/" class="ih-archive-browse">Browse the full archive \u2192</a>' +
+        '</div>' +
+        '<div class="ih-archive-grid">' + archiveCards + '</div>' +
+        '</section>'
+      : '';
+
+    // ── Gallery ───────────────────────────────────────────────────────────────
+    var galleryHtml = '';
+    var galItems = artPosts.filter(function(p) { return p.feature_image || firstBodyImg(p.html); });
+    if (galItems.length) {
+      var galGrid = '';
+      for (var gi = 0; gi < galItems.length && gi < 5; gi++) {
+        var galSrc = galItems[gi].feature_image || firstBodyImg(galItems[gi].html);
+        galGrid += '<a href="' + e(galItems[gi].url) + '" class="ih-gallery-img-wrap">' +
+          '<img src="' + e(galSrc) + '" alt="" loading="lazy"></a>';
+      }
+      galleryHtml =
+        '<section class="ih-gallery-outer">' +
+        '<div class="ih-gallery-head-row">' +
+        '<div class="ih-gallery-heading">Gallery</div>' +
+        '<a href="/art/" class="ih-gallery-see">See the gallery \u2192</a>' +
+        '</div>' +
+        '<div class="ih-gallery-grid">' + galGrid + '</div>' +
+        '</section>';
+    }
+
+    // ── Patrons ───────────────────────────────────────────────────────────────
+    // Source: Ghost page slug:patreon-supporters, codeinjection_head field.
+    // patreon-sync.js writes a script tag with id="ih-patron-data" containing JSON.
+    var patronData = (function() {
+      var ci = patronsPage && patronsPage.codeinjection_head;
+      if (!ci) return null;
+      try {
+        var m = ci.match(/<script[^>]+id="ih-patron-data"[^>]*>([\s\S]*?)<\/script>/);
+        if (!m) return null;
+        return JSON.parse(m[1]);
+      } catch(x) { return null; }
+    })();
+    var patronNamesText = '';
+    if (patronData && patronData.names && patronData.names.length) {
+      var pParts = patronData.names.map(function(n) { return e(n); });
+      if (patronData.anonymous > 0) {
+        pParts.push('and ' + patronData.anonymous +
+          ' anonymous ' + (patronData.anonymous === 1 ? 'supporter' : 'supporters'));
+      }
+      patronNamesText = pParts.join(', ');
+    } else if (patronData && patronData.anonymous > 0) {
+      patronNamesText = patronData.anonymous + ' anonymous ' +
+        (patronData.anonymous === 1 ? 'supporter' : 'supporters');
+    }
+    var patronsHtml =
+      '<section class="ih-patrons-section">' +
+      '<div class="ih-patrons-body">' +
+      '<div class="ih-patrons-head-label">With thanks to our patrons</div>' +
+      (patronNamesText ? '<div class="ih-patrons-names-text">' + patronNamesText + '</div>' : '') +
+      '</div>' +
+      '<a href="/colophon/" class="ih-colophon-link">Colophon</a>' +
+      '</section>';
+
+    // ── Assemble ──────────────────────────────────────────────────────────────
+    var homeHtml =
+      '<div class="inkhorn-home">' +
+      heroSectionHtml +
+      twoColHtml +
+      archiveSectionHtml +
+      galleryHtml +
+      patronsHtml +
+      '</div>';
+
+    var content = document.querySelector('.gh-content');
+    var ghArticle = document.querySelector('.gh-article');
+
+    ['.cover', '.single-header'].forEach(function(sel) {
+      var el = document.querySelector(sel);
+      if (el) el.style.display = 'none';
+    });
+
+    [ghArticle, content].forEach(function(el) {
+      if (!el) return;
+      el.style.setProperty('max-width', 'none', 'important');
+      el.style.setProperty('padding',   '0',    'important');
+      el.style.setProperty('margin',    '0',    'important');
+    });
+    if (content) {
+      content.style.setProperty('display', 'block', 'important');
+      content.innerHTML = homeHtml;
+    } else {
+      var fallback = document.querySelector('main');
+      if (fallback) fallback.innerHTML = homeHtml;
+    }
+  }
+
+})();
+</script>

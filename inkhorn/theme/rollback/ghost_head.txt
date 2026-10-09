@@ -1,0 +1,752 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Libre+Franklin:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ‚îÄ‚îÄ BASE ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+/* Ghost theme base is overridden here. All Inkhorn UI uses EB Garamond +
+   Libre Franklin. Colors: ground #f6f1e7, ink #1c1a17, crimson #8f1d1d. */
+body {
+  background: #f6f1e7 !important;
+  font-family: 'EB Garamond', Georgia, serif !important;
+  color: #1c1a17 !important;
+}
+a { color: #1c1a17; text-decoration: none; }
+a:hover { color: #8f1d1d; }
+
+/* ‚îÄ‚îÄ SUPPRESS GHOST'S DEFAULT CHROME ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+/* We inject our own masthead and footer via JS. Ghost's header and footer
+   are hidden before first paint to prevent flash. */
+.gh-head,
+.gh-foot { display: none !important; }
+
+/* ‚îÄ‚îÄ AUTHOR DISPLAY ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+/* Every post is authored by the Inkhorn Review account; real contributor
+   name is in the custom excerpt. Hide all Ghost author elements. */
+.gh-article-meta,
+.gh-author-image,
+.gh-author-name,
+.gh-article-author-image,
+.gh-article-meta .gh-author-name { display: none !important; }
+
+/* ‚îÄ‚îÄ PODCAST PLATFORM PILLS ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ*/
+/* Row of linked platform badges injected by footer script into .gh-canvas. */
+.lw-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 24px auto 0;
+  max-width: 640px;
+  padding: 0 16px;
+}
+.lw-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 13px 6px 6px;
+  background: #f1f1f1;
+  border-radius: 999px;
+  text-decoration: none !important;
+  color: #333 !important;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1;
+  transition: background .15s;
+}
+.lw-pill:hover { background: #e2e2e2; }
+.lw-pill-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.lw-pill-icon svg { width: 14px; height: 14px; fill: #fff; }
+
+/* PODCAST ‚Äî hide web-only listen link (visible in email, hidden on web) */
+.lw-listen { display: none; }
+
+/* ‚îÄ‚îÄ FEATURE IMAGE WIDTH ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+.single-media { max-width: 720px; margin-inline: auto; }
+
+/* ‚îÄ‚îÄ MASTHEAD ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+/* Injected by footer script as #ih-masthead before .gh-main */
+#ih-masthead {
+  box-sizing: border-box;
+  padding: 28px 80px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: #f6f1e7;
+}
+.ih-mast-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.ih-wordmark-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ih-wordmark {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 54px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #1c1a17;
+  text-decoration: none;
+}
+.ih-wordmark:hover { color: #1c1a17; }
+.ih-tagline {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 19px;
+  font-style: italic;
+  color: #5b544a;
+}
+.ih-mast-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+}
+.ih-mast-actions a { color: #1c1a17; }
+.ih-mast-actions a:hover { color: #8f1d1d; }
+.ih-subscribe-btn {
+  background: #8f1d1d;
+  color: #ffffff !important;
+  padding: 12px 20px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.ih-subscribe-btn:hover { background: #7a1818; color: #fff !important; }
+.ih-nav {
+  display: flex;
+  gap: 36px;
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 14px 0;
+  border-top: 2px solid #8f1d1d;
+  border-bottom: 1px solid #d6cdbd;
+  flex-wrap: wrap;
+}
+.ih-nav a { color: #1c1a17; }
+.ih-nav a:hover { color: #8f1d1d; }
+
+/* Hamburger (phone only, hidden on desktop) */
+.ih-menu-btn {
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+/* Phone nav overlay */
+.ih-nav-overlay {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  background: #f6f1e7;
+  border-top: 1px solid #d6cdbd;
+  padding: 8px 0 16px;
+}
+.ih-nav-overlay a {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #1c1a17;
+  padding: 12px 20px;
+  display: block;
+}
+.ih-nav-overlay a:hover { color: #8f1d1d; }
+.ih-nav-overlay.open { display: flex; }
+
+/* ‚îÄ‚îÄ SITE FOOTER ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+/* Injected by footer script as #ih-footer after .gh-main */
+#ih-footer {
+  box-sizing: border-box;
+  padding: 28px 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 13px;
+  color: #5b544a;
+  background: #f6f1e7;
+  border-top: 1px solid #d6cdbd;
+  margin-top: 40px;
+}
+#ih-footer a { color: #5b544a; }
+#ih-footer a:hover { color: #8f1d1d; }
+.ih-footer-links {
+  display: flex;
+  gap: 24px;
+}
+
+/* ‚îÄ‚îÄ HOME PAGE ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+/* Pre-paint: hide Ghost page title and cover until JS renders the home page */
+.home-template .cover,
+.home-template .single-header { opacity: 0; }
+
+/* Layout reset: let .inkhorn-home fill viewport and centre itself */
+.home-template .gh-article {
+  max-width: none !important;
+  padding:   0    !important;
+  margin:    0    !important;
+}
+.home-template .gh-content {
+  display:   block !important;
+  max-width: none  !important;
+  padding:   0     !important;
+  margin:    0     !important;
+}
+
+/* Home wrapper */
+.inkhorn-home {
+  box-sizing: border-box;
+  background: #f6f1e7;
+}
+
+/* Hero: 2fr + 1fr grid */
+.ih-hero {
+  box-sizing: border-box;
+  padding: 44px 80px 0;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 56px;
+}
+.ih-hero-left {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+.ih-cover-box {
+  width: 480px;
+  flex-shrink: 0;
+  box-shadow: 0 18px 40px rgba(28,26,23,0.18);
+}
+.ih-cover-box img { display: block; width: 100%; height: auto; }
+.ih-cover-box-placeholder {
+  width: 480px;
+  height: 690px;
+  flex-shrink: 0;
+  background: #efe6d3;
+  border: 1px solid #cbbfa8;
+  box-shadow: 0 18px 40px rgba(28,26,23,0.18);
+}
+.ih-hero-info {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.ih-eyebrow {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8f1d1d;
+}
+.ih-hero-title {
+  margin: 0;
+  font-size: 50px;
+  font-weight: 500;
+  line-height: 1.05;
+  font-family: 'EB Garamond', Georgia, serif;
+}
+.ih-hero-desc {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.45;
+  color: #3a352e;
+}
+
+/* Subscribe block */
+.ih-subscribe-block {
+  box-sizing: border-box;
+  background: #1c1a17;
+  color: #f6f1e7;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 8px;
+}
+.ih-sub-head {
+  font-size: 26px;
+  font-weight: 500;
+  font-family: 'EB Garamond', Georgia, serif;
+}
+.ih-sub-tier {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #4a443c;
+}
+.ih-sub-tier:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.ih-sub-tier-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.ih-sub-tier-name {
+  font-size: 21px;
+  font-weight: 500;
+}
+.ih-sub-tier-price {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f6f1e7;
+}
+.ih-sub-tier-desc {
+  font-size: 17px;
+  line-height: 1.45;
+  color: #e3dccd;
+}
+.ih-sub-btn-print {
+  align-self: flex-start;
+  background: #8f1d1d;
+  color: #ffffff !important;
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 14px 22px;
+  margin-top: 4px;
+  text-decoration: none;
+  display: inline-block;
+}
+.ih-sub-btn-print:hover { background: #7a1818; }
+.ih-sub-btn-digital {
+  align-self: flex-start;
+  border: 1px solid #f6f1e7;
+  color: #f6f1e7 !important;
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 13px 22px;
+  margin-top: 4px;
+  text-decoration: none;
+  display: inline-block;
+}
+.ih-sub-btn-digital:hover { background: rgba(255,255,255,0.08); }
+.ih-buy-link {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+  text-decoration: underline;
+  color: #3a352e;
+}
+.ih-buy-link:hover { color: #8f1d1d; }
+
+/* In This Issue (right column) */
+.ih-contents {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: 8px;
+}
+.ih-contents-head {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5b544a;
+  border-bottom: 1px solid #d6cdbd;
+  padding-bottom: 10px;
+}
+.ih-contents-genre-head {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8f1d1d;
+  margin-bottom: 4px;
+}
+.ih-contents-item {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+/* Podcast + Founder's Letter */
+.ih-cards-2col {
+  box-sizing: border-box;
+  padding: 72px 80px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 56px;
+}
+.ih-card-podcast {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  border-top: 2px solid #1c1a17;
+  padding-top: 24px;
+  text-decoration: none;
+  color: #1c1a17;
+}
+.ih-card-podcast:hover { color: #1c1a17; }
+.ih-podcast-img {
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+  object-fit: cover;
+  display: block;
+}
+.ih-podcast-img-placeholder {
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+  background: #d9cfbd;
+}
+.ih-card-podcast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ih-card-letter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 2px solid #1c1a17;
+  padding-top: 24px;
+  text-decoration: none;
+  color: #1c1a17;
+}
+.ih-card-letter:hover { color: #1c1a17; }
+.ih-card-label {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8f1d1d;
+}
+.ih-card-title {
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+.ih-card-byline {
+  font-size: 18px;
+  font-style: italic;
+  color: #5b544a;
+}
+.ih-card-excerpt {
+  font-size: 20px;
+  line-height: 1.55;
+  color: #3a352e;
+}
+.ih-card-podcast .ih-card-excerpt {
+  font-size: 18px;
+  line-height: 1.5;
+  color: #3a352e;
+}
+.ih-card-listen {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1c1a17;
+}
+
+/* Archive section */
+.ih-archive-section {
+  box-sizing: border-box;
+  padding: 72px 80px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.ih-archive-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-top: 2px solid #1c1a17;
+  padding-top: 24px;
+}
+.ih-archive-heading {
+  font-size: 40px;
+  font-weight: 500;
+  font-family: 'EB Garamond', Georgia, serif;
+  margin: 0;
+}
+.ih-archive-browse {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ih-archive-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 24px;
+}
+/* Dark card (#this-week) */
+.ih-card-dark {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #1c1a17;
+  padding: 24px;
+  text-decoration: none;
+}
+.ih-card-dark:hover { background: #2a2724; }
+.ih-card-dark-label {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e8a0a0;
+}
+.ih-card-dark-title {
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: #f6f1e7;
+}
+.ih-card-dark-author {
+  font-size: 17px;
+  font-style: italic;
+  color: #e3dccd;
+}
+/* Light archive card */
+.ih-card-light {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #efe8da;
+  padding: 24px;
+  text-decoration: none;
+}
+.ih-card-light:hover { background: #e8e0d1; }
+.ih-card-light-label {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #5b544a;
+}
+.ih-card-light-title {
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: #1c1a17;
+}
+.ih-card-light-author {
+  font-size: 17px;
+  font-style: italic;
+  color: #3a352e;
+}
+
+/* Gallery band */
+.ih-gallery-outer {
+  margin-top: 80px;
+  background: #1c1a17;
+  padding: 40px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.ih-gallery-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.ih-gallery-heading {
+  font-size: 30px;
+  font-weight: 500;
+  color: #f6f1e7;
+}
+.ih-gallery-see {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f6f1e7;
+}
+.ih-gallery-see:hover { color: #e3dccd; }
+.ih-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+.ih-gallery-img-wrap { display: block; line-height: 0; }
+.ih-gallery-img-wrap img { width: 100%; height: 200px; object-fit: cover; display: block; }
+.ih-gallery-placeholder {
+  height: 200px;
+  background: #3b3630;
+}
+
+/* Patrons */
+.ih-patrons-section {
+  box-sizing: border-box;
+  padding: 40px 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 56px;
+  border-bottom: 1px solid #d6cdbd;
+}
+.ih-patrons-body { display: flex; flex-direction: column; gap: 8px; max-width: 900px; }
+.ih-patrons-head-label {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5b544a;
+}
+.ih-patrons-names-text {
+  font-size: 18px;
+  line-height: 1.5;
+  color: #3a352e;
+}
+.ih-colophon-link {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 14px;
+  color: #3a352e;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.ih-colophon-link:hover { color: #8f1d1d; }
+
+/* ‚îÄ‚îÄ ARCHIVE PAGE (/archive/) ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+/* Archive page uses Ghost's default channel template; we style the post feed */
+.ih-archive-feed { max-width: 860px; margin: 0 auto; padding: 0 24px 64px; }
+.ih-archive-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #d6cdbd;
+  text-decoration: none;
+  color: #1c1a17;
+}
+.ih-archive-entry:hover { color: #8f1d1d; }
+.ih-archive-entry-label {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #5b544a;
+  min-width: 120px;
+}
+.ih-archive-entry-title { font-size: 20px; font-weight: 500; }
+.ih-archive-entry-author { font-size: 17px; font-style: italic; color: #3a352e; margin-left: 6px; }
+.ih-archive-entry-date {
+  font-family: 'Libre Franklin', sans-serif;
+  font-size: 12px;
+  color: #5b544a;
+  margin-left: auto;
+}
+
+/* ‚îÄ‚îÄ CONTRIBUTOR BOOK SHELF ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+/* Post pages: bio + books by contributor */
+.inkhorn-poem {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* ‚îÄ‚îÄ ART COLLECTION PAGE ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ*/
+.ih-art-grid-wrapper { max-width: 1100px; margin: 0 auto; padding: 0 24px 48px; }
+.ih-art-grid { column-count: 3; column-gap: 16px; }
+.ih-art-item { break-inside: avoid; margin-bottom: 16px; display: block; line-height: 0; }
+.ih-art-item img { width: 100%; height: auto; display: block; }
+
+/* ‚îÄ‚îÄ RESPONSIVE ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+@media (max-width: 900px) {
+  #ih-masthead { padding: 18px 20px 0; gap: 12px; }
+  .ih-mast-top { align-items: center; }
+  .ih-wordmark { font-size: 26px; letter-spacing: 0.12em; }
+  .ih-tagline { font-size: 16px; }
+  .ih-mast-actions-desktop { display: none; }
+  .ih-mast-actions-phone {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 13px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #8f1d1d;
+  }
+  .ih-mast-actions-phone .ih-subscribe-btn { padding: 12px 16px; }
+  .ih-menu-btn { display: flex; }
+  .ih-nav { display: none; } /* replaced by overlay */
+
+  #ih-footer { padding: 22px 20px; flex-direction: column; gap: 14px; align-items: flex-start; }
+  .ih-footer-links { flex-wrap: wrap; gap: 20px; }
+
+  .ih-hero { padding: 24px 20px 0; grid-template-columns: 1fr; gap: 24px; }
+  .ih-hero-left { flex-direction: column; }
+  .ih-cover-box, .ih-cover-box-placeholder { width: 100%; height: auto; }
+  .ih-cover-box-placeholder { height: 400px; }
+  .ih-hero-title { font-size: 38px; }
+  .ih-hero-desc { font-size: 18px; }
+
+  .ih-cards-2col { padding: 36px 20px 0; grid-template-columns: 1fr; gap: 0; }
+  .ih-card-podcast { flex-direction: column; padding: 18px 0; gap: 12px; }
+  .ih-podcast-img, .ih-podcast-img-placeholder { width: 96px; height: 96px; }
+  /* phone podcast: image + label side by side */
+  .ih-podcast-phone-top { display: flex; gap: 16px; align-items: center; }
+  .ih-card-letter { padding: 18px 0; }
+  .ih-card-title { font-size: 28px; }
+  .ih-card-excerpt { font-size: 18px; }
+
+  .ih-archive-section { padding: 32px 20px 0; gap: 14px; }
+  .ih-archive-heading { font-size: 32px; }
+  .ih-archive-grid { grid-template-columns: 1fr; gap: 0; }
+  .ih-card-dark { padding: 18px; }
+  .ih-card-dark-title { font-size: 22px; }
+  .ih-card-light { padding: 14px 0; background: none; }
+  .ih-card-light:hover { background: none; }
+  /* phone: light cards as list rows */
+  .ih-card-light-title { font-size: 20px; }
+  .ih-card-light-title-row { display: flex; align-items: baseline; gap: 0; }
+  .ih-card-light-author-inline { font-style: italic; color: #3a352e; font-size: 17px; }
+  .ih-archive-browse-phone { padding: 10px 0; }
+
+  .ih-gallery-outer { margin-top: 32px; padding: 28px 20px; }
+  .ih-gallery-heading { font-size: 26px; }
+  .ih-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .ih-gallery-img-wrap img, .ih-gallery-placeholder { height: 160px; }
+
+  .ih-patrons-section { padding: 28px 20px; flex-direction: column; gap: 10px; }
+  .ih-patrons-names-text { font-size: 17px; }
+
+  .ih-art-grid { column-count: 2; }
+}
+@media (max-width: 480px) {
+  .ih-art-grid-wrapper { padding: 0 16px 32px; }
+  .ih-art-grid { column-count: 1; }
+}
+</style>
+

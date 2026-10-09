@@ -1,0 +1,14 @@
+{{!-- edition-contents.hbs — numbered running order for the edition named by the
+  current catalog page's season tag. Call it from inside the page's context
+  (the page must be fetched with include="tags"). Tags are matched by slug. --}}
+<ol class="ih-contents-list">
+{{#foreach tags}}
+{{#match slug "=" "autumn-2026"}}
+{{> "editions/autumn-2026"}}
+{{/match}}
+{{#match slug "=" "winter-2026"}}
+{{> "editions/winter-2026"}}
+{{/match}}
+{{/foreach}}
+</ol>
+<p class="ih-contents-staff">Edited by Terry Heath. Readers: Cheryl Chong, DS Maolalai, Warren Read.</p>

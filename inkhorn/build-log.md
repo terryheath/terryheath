@@ -110,3 +110,7 @@
 - Step 4: rescheduled Winter #19 "Father’s Day" (6aa2f5227aff75000107d950) to 2026-12-01T16:18:00.000Z (08:18 PST)
 - Step 4: rescheduled Winter #21 "Look: I am nothing says Lot’s daughter" (6aa2fe657aff75000107d96b) to 2026-12-01T16:20:00.000Z (08:20 PST)
 - Step 3 decision: Lineage (code block) and Look: I am nothing (callout) held epigraph nodes at the top; the supplied html already contains both as blockquotes, so the old nodes were NOT re-added (would duplicate and revert copyedits). Old bodies are in backups/2026-10-09/posts.json.
+- Step 8: Autumn catalog page 6abdaa05f68cb40001f26707 body replaced with one paragraph; excerpt now says twenty-five (codeinjection_head untouched; old body in backups)
+- Step 8: created Winter catalog page "Inkhorn Review No. 2 · Winter 2026" (6ac9560182c1da000109e617) scheduled 2026-12-01T15:59:00.000Z (07:59 PST), featured, tags #catalog, inkhorn-2, winter-2026; no cover image yet; https://inkhornreview.com/p/d46619a6-c382-4e44-bd55-1b429c0de63d/
+- Step 8: added tag autumn-2026 to Autumn catalog page (6abdaa05f68cb40001f26707) so edition-contents can pick the Autumn file by season tag; page URL unchanged
+- Step 6: theme 1.1.0 built and deployed with inkhorn/theme/deploy.sh (edition.hbs, edition-hero/contents/item partials, editions/autumn-2026 + winter-2026, home.hbs query order published_at desc, CSS). Used literal {{#get}} per line (the allowed fallback), so partial-parameter interpolation was not needed.

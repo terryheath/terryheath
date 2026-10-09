@@ -1,0 +1,62 @@
+{{!-- edition-hero.hbs — hero + contents panel shared by the home page and the
+  edition pages. Call it inside a catalog page's context (or pass title,
+  feature_image and custom_excerpt explicitly).
+  Params: subscribe="true" shows the compact subscribe box (home only);
+          forthcoming="true" replaces the contents with "Forthcoming". --}}
+{{{codeinjection_head}}}
+
+<section class="ih-hero">
+    <div class="ih-hero-left">
+        {{#if feature_image}}
+            <div class="ih-cover-box">
+                <img src="{{img_url feature_image size="l"}}" alt="{{title}} cover">
+            </div>
+        {{else}}
+            <div class="ih-cover-box-placeholder"></div>
+        {{/if}}
+
+        <div class="ih-hero-info">
+            <div class="ih-eyebrow ih-js-status-label" style="display:none"></div>
+            <h1 class="ih-hero-title">{{title}}</h1>
+            {{#if custom_excerpt}}
+                <p class="ih-hero-desc">{{custom_excerpt}}</p>
+            {{/if}}
+
+            {{#unless forthcoming}}
+            <div class="ih-hero-buy">
+                <div class="ih-hero-price" id="ih-hero-price"></div>
+                <a href="{{url}}" class="ih-hero-buy-btn" id="ih-hero-buy-btn">See this issue</a>
+                <p class="ih-hero-buy-note">Print ships to U.S.&nbsp;addresses. Ebook in any country.</p>
+            </div>
+            {{/unless}}
+
+            {{#if subscribe}}{{> "subscribe-home"}}{{/if}}
+        </div>
+    </div>
+
+    <aside class="ih-contents">
+        <div class="ih-contents-head">In This Issue</div>
+        <div class="ih-contents-body">
+            {{#if forthcoming}}
+                <p class="ih-contents-forthcoming">Forthcoming</p>
+            {{else}}
+                {{> "edition-contents"}}
+            {{/if}}
+        </div>
+    </aside>
+</section>
+
+<script>
+(function(){
+    var el = document.getElementById('ih-book');
+    if (!el) return;
+    try {
+        var d = JSON.parse(el.textContent);
+        var status = document.querySelector('.ih-js-status-label');
+        if (status && d.statusLabel) {
+            status.textContent = d.statusLabel;
+            status.style.display = '';
+        }
+    } catch(x){}
+})();
+</script>
