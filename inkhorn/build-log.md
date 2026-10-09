@@ -114,3 +114,4 @@
 - Step 8: created Winter catalog page "Inkhorn Review No. 2 · Winter 2026" (6ac9560182c1da000109e617) scheduled 2026-12-01T15:59:00.000Z (07:59 PST), featured, tags #catalog, inkhorn-2, winter-2026; no cover image yet; https://inkhornreview.com/p/d46619a6-c382-4e44-bd55-1b429c0de63d/
 - Step 8: added tag autumn-2026 to Autumn catalog page (6abdaa05f68cb40001f26707) so edition-contents can pick the Autumn file by season tag; page URL unchanged
 - Step 6: theme 1.1.0 built and deployed with inkhorn/theme/deploy.sh (edition.hbs, edition-hero/contents/item partials, editions/autumn-2026 + winter-2026, home.hbs query order published_at desc, CSS). Used literal {{#get}} per line (the allowed fallback), so partial-parameter interpolation was not needed.
+- Step 6: theme 1.1.1 deployed; renamed edition-item param author -> byline to clear gscan GS001-DEPR-AUTH shown in Admin.

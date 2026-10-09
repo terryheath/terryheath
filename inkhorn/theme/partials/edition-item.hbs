@@ -1,4 +1,4 @@
 {{!-- edition-item.hbs — one line of an edition's running order.
-  Params: n, title, author, linked="true" (call it inside the post context so {{url}} is the post URL; omit for an unlinked fallback line).
+  Params: n, title, byline, linked="true" (call it inside the post context so {{url}} is the post URL; omit for an unlinked fallback line).
   The edition files look the post up with a literal {{#get}} and pass its url as link. --}}
-<li class="ih-contents-item"><span class="ih-contents-n">{{n}}.</span><span class="ih-contents-text">{{#if linked}}<a href="{{url}}">{{title}}</a>{{else}}<span class="ih-contents-unlinked">{{title}}</span>{{/if}}, <span class="ih-contents-author">{{author}}</span></span></li>
+<li class="ih-contents-item"><span class="ih-contents-n">{{n}}.</span><span class="ih-contents-text">{{#if linked}}<a href="{{url}}">{{title}}</a>{{else}}<span class="ih-contents-unlinked">{{title}}</span>{{/if}}, <span class="ih-contents-author">{{byline}}</span></span></li>

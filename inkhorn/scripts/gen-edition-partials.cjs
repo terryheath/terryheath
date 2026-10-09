@@ -11,7 +11,7 @@ for (const ed of ['autumn-2026', 'winter-2026']) {
   const lines = pieces.filter((r) => r.edition === ed).sort((a, b) => a.position - b.position).map((r) => {
     const slug = slugFor(r);
     if (!slug) throw new Error('no slug for ' + r.title);
-    const attrs = `n="${r.position}" title="${r.title}" author="${r.author}"`;
+    const attrs = `n="${r.position}" title="${r.title}" byline="${r.author}"`;
     return `{{#get "posts" filter="slug:${slug}" limit="1"}}{{#foreach posts}}{{> "edition-item" ${attrs}  linked="true"}}{{/foreach}}{{else}}{{> "edition-item" ${attrs}}}{{/get}}`;
   });
   const out = `{{!-- Generated from inkhorn/data/editions-2026.json by inkhorn/scripts/gen-edition-partials.cjs. Print order. --}}\n${lines.join('\n')}\n`;
