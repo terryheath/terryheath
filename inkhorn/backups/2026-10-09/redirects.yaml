@@ -1,0 +1,13 @@
+301:
+  /print/: /books/
+  ^/september-2026/(.*)$: /autumn-2026/$1
+  ^/autumn-2026/(page/[0-9]+/)?$: /archive/
+  /tag/autumn-2026/: /archive/
+  /tag/poetry/: /poetry/
+  /tag/fiction/: /fiction/
+  /tag/nonfiction/: /nonfiction/
+  /tag/micro/: /micro/
+  /tag/art/: /art/
+  /tag/podcast/: /podcast/
+  /tag/letter/: /founder-letter/
+  /colophon/: /founder-letter/
