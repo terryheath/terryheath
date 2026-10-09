@@ -276,7 +276,7 @@ collections:
   /winter-2026/:
     permalink: /winter-2026/{slug}/
     template: edition
-    filter: primary_tag:winter-2026
+    filter: primary_tag:winter-2026,tag:inkhorn-2
     data: tag.winter-2026
     order: published_at asc
     limit: 999
