@@ -4,3 +4,109 @@
 - Step 1: backup exported to inkhorn/backups/2026-10-09/ (62 posts, 11 pages, 98 tags; repo redirects.yaml copied).
 - Step 1: live routes.yaml downloaded (200) and written to inkhorn/routes.yaml (+tag:hash-archive on fiction, nonfiction, poetry, micro).
 - Step 1: live theme download and live redirects download refused by integration key (403). Needs staff session.
+- Step 2: deleted draft "[Edit before publishing] The Winter Issue Starts in January — One Piece a Week" (post 6abd66e7f68cb40001f266e2); body is in backups/2026-10-09/posts.json
+- Step 5: created tag inkhorn-2 "Inkhorn Review No. 2" (6ac9555f82c1da000109e41d)
+- Step 5: updated tag amanda-vega: description | old description: "Amanda Vega is a writer based in South Carolina. Her work explores family, folklore, domestic life, memory, and the uncanny."
+- Step 5: updated tag veronica-tucker: description | old description: "Veronica Tucker is an emergency medicine physician, writer, and mother of three living in the Lakes Region of New Hampshire. Her writing has appeared in The Offing, ONE ART, American Poetry Journal, and elsewhere, and her work has received Pushcart Prize and Best of the Net nominations. Her chapbook, *The House as Witness*, was published by Quillkeepers Press in 2026."
+- Step 5: created contributor tag shivani-sivagurunathan "Shivani Sivagurunathan" with bio (6ac9556082c1da000109e421)
+- Step 5: updated tag patricia-russo: description | old description: "Patricia Russo's work has appeared in One Art, Identity Theory, Michigan City Review, The Bloomin' Onion, and Verity La."
+- Step 5: updated tag j-a-keefe: description | old description: "Originally from London, J. A. Keefe has lived and worked in Valencia, Spain for many years."
+- Step 5: created contributor tag william-garvey "William Garvey" (NO BIO) (6ac9556082c1da000109e425)
+- Step 5: updated tag allyson-petrek: description | old description: "Allyson Petrek lives in Cincinnati, Ohio with her husband and two children. A Pushcart Prize nominee, she has won the TulipTree Review’s 2025 Wild Women contest and the 2024 Books by the Banks festival contest. Her stories and poems appear in various journals."
+- Step 5: created contributor tag cecil-morris "Cecil Morris" (NO BIO) (6ac9556082c1da000109e428)
+- Step 5: updated tag terry-sanville: description | old description: "Terry Sanville lives in San Luis Obispo, California with his artist-poet wife (his in-house editor) and two plump cats (his in-house critics). His short stories have been accepted more than 600 times by journals, magazines, and anthologies. Terry is a retired urban planner and an accomplished jazz and blues guitarist."
+- Step 5: updated tag anna-scott: description | old description: "Anna Scott is a poet from Michigan living in the Mountain West. She is the 2023 recipient of the American Academy of Poets Laureen Rita Schipsi Prize and the Johns Hopkins Danielle Alyse Basford Writing Prize. Her work has appeared in Timber, Feral, poets.org, and elsewhere."
+- Step 5: updated tag beth-sherman: description | old description: "Beth Sherman is the author of How to Get There from Here, a novella-in-flash (Ad Hoc Fiction). She has had more than 250 stories published in literary magazines. Her work is featured in Best Microfiction 2024 and 2026 and Best Small Fictions 2025."
+- Step 5: updated tag barbara-daniels: description | old description: "Barbara Daniels' most recent book, *Talk to the Lioness*, was published by Casa de Cinco Hermanas Press. Her poetry has appeared in Main Street Rag, Free State Review, Philadelphia Stories, and many other journals. She received four fellowships from the New Jersey State Council on the Arts."
+- Step 5: updated tag mark-sabourin: description | old description: "Mark Sabourin has set aside his career as a business journalist to focus on fiction. He has appeared in The Antigonish Review, Fine Lines, Across the Margin, Drift & Dribble, and Sudden Flash. He shares a home near the town of Campbellford, Ontario, Canada, with his partner Maria."
+- Step 5: updated tag l-m-scarpitto: description | old description: "L.M. Scarpitto is an American poet whose work explores the human experience through nature, spirituality, and philosophical observation. Her work has appeared in various publications, with much of its inspiration drawn from her family, community, and academic background in human psychology."
+- Step 5: Emily Thompson-Mueller (emily-thompson-mueller) has no bio in JSON; description left alone (existing kept)
+- Step 5: updated tag rikki-santer: description | old description: "Rikki Santer's poetry collection, *Resurrection Letter* was grand prize short-listed for the Eric Hoffer Book Award and *Shepherd's Hour*, won the Paul Nemser Book Prize from Lily Poetry Review Books. In 2023, she was named Ohio Poet of the Year, in 2026 she served as Artist-in-Residence at the Fran Ryan Center in Columbus, Ohio and is a member of the teaching artist roster of the Ohio Arts Council. Her fifteenth poetry collection, *Could Be*, was published this spring by Sheila-Na-Gig Press."
+- Step 5: updated tag huina-zheng: description | old description: "Huina Zheng either writes as an admission coach at work or writes for fun after work. She lives in Guangzhou, China, with her family."
+- Step 5: created contributor tag frank-william-finney "Frank William Finney" with bio (6ac9556282c1da000109e432)
+- Step 5: created contributor tag justin-ocelot "Justin Ocelot" (NO BIO) (6ac9556282c1da000109e434)
+- Step 5: updated tag robin-kathaas: description | old description: "Robin Kathaas is a poet who was born and raised in Belgium, but now lives, laughs, and loves in Brighton. Their cat is more interesting than they are. They can be found on Instagram at @robin.kathaas."
+- Step 5: created contributor tag ashley-mangtani "Ashley Mangtani" with bio (6ac9556282c1da000109e437)
+- Step 5: updated tag jackie-mcclure: description | old description: "Jackie McClure writes poetry and fiction aiming to illuminate the commonplace in our shared landscapes. Recent poetry can be found in Split Rock Review, Wild Roof Journal, Mocking Heart Review, and on her Substack site at Pouring Word Tea. She lives in the northwest corner of Washington State."
+- Step 5: created contributor tag sarah-parfitt "Sarah Parfitt" (NO BIO) (6ac9556282c1da000109e43a)
+- Step 5: created contributor tag bull-garlington "Bull Garlington" (NO BIO) (6ac9556382c1da000109e43c)
+- Step 5: updated tag alyse-levalley: description | old description: "Alyse LeValley is a teacher and writer living in central California."
+- Step 5: created contributor tag honni-van-rijswijk "Honni van Rijswijk" with bio (6ac9556382c1da000109e43f)
+- Step 5: created contributor tag caroline-webster "Caroline Webster" with bio (6ac9556382c1da000109e441)
+- Step 5: created contributor tag jack-godby "Jack Godby" with bio (6ac9556382c1da000109e443)
+- Step 5: Aardhra Chandran (aardhra-chandran) has no bio in JSON; description left alone (existing kept)
+- Step 5: updated tag victoria-k-butler: description | old description: "Victoria studied journalism and English literature at San Francisco State University, where she learned to love stories that question the way we see the world. Now, she's a PR pro by trade, fiction writer by hobby. You can find her work in Press Pause Press, Glint Literary Journal, and forthcoming in Inglenook Literary."
+- Step 5: created contributor tag david-anson-lee "David Anson Lee" with bio (6ac9556382c1da000109e446)
+- Step 5: created contributor tag patrick-parks "Patrick Parks" with bio (6ac9556382c1da000109e448)
+- Step 5: created contributor tag s-marie-jones "S. Marie Jones" (NO BIO) (6ac9556482c1da000109e44a)
+- Step 5: created contributor tag frank-haberle "Frank Haberle" with bio (6ac9556482c1da000109e44c)
+- Step 5: created contributor tag sanya-hundal-bery "Sanya Hundal Bery" (NO BIO) (6ac9556482c1da000109e44e)
+- Step 5: created contributor tag elliott-fielding "Elliott Fielding" (NO BIO) (6ac9556482c1da000109e450)
+- Step 5: William Doreski (william-doreski) has no bio in JSON; description left alone (existing kept)
+- Step 5: created contributor tag michele-catalano "Michele Catalano" (NO BIO) (6ac9556482c1da000109e452)
+- Step 5: created contributor tag sambhu-r "Sambhu R." (NO BIO) (6ac9556482c1da000109e454)
+- Step 5: created contributor tag sam-agar "Sam Agar" (NO BIO) (6ac9556482c1da000109e456)
+- Step 5: created contributor tag jay-caselberg "Jay Caselberg" (NO BIO) (6ac9556482c1da000109e458)
+- Step 5: James Lewis Huss (james-lewis-huss) has no bio in JSON; description left alone (existing kept)
+- Step 5: created contributor tag nan-j-bauer "Nan J Bauer" (NO BIO) (6ac9556582c1da000109e45a)
+- Step 5: updated tag don-j-kraemer: name (name "Don J Kraemer" -> "Don J. Kraemer")
+- Step 5: Don J. Kraemer (don-j-kraemer) has no bio in JSON; description left alone (existing kept)
+- Step 5: updated tag elizabeth-f-a-meaney: description | old description: "Elizabeth F.A. Meaney is a dual citizen of Ireland and the U.S. who teaches English in France. She has an MFA in Poetry and has published three novels."
+- Step 5: Carol Shillibeer (carol-shillibeer) has no bio in JSON; description left alone (existing kept)
+- Step 5: created contributor tag karen-walker "Karen Walker" with bio (6ac9556582c1da000109e45e)
+- Step 5: created contributor tag xingyu-zhao "Xingyu Zhao" (NO BIO) (6ac9556582c1da000109e460)
+- Step 5: created contributor tag ulysses-holiday "Ulysses Holiday" with bio (6ac9556582c1da000109e462)
+- Step 3: updated autumn-2026 #1 "Five Chairs" (6a9b4d3176a9fb00019387aa, published) https://inkhornreview.com/autumn-2026/five-chairs/; text match false; empty paras read-back/source 0/0
+- Step 3: updated autumn-2026 #2 "The Lobster Tank" (6a95c58b7a24720001901542, published) https://inkhornreview.com/autumn-2026/the-lobster-tank/; text match false; empty paras read-back/source 19/19
+- Step 3: updated autumn-2026 #4 "Every Word Bitter" (6a9a1a1376a9fb000193867f, published) https://inkhornreview.com/autumn-2026/every-word-bitter/; text match false; empty paras read-back/source 4/4
+- Step 3: updated autumn-2026 #5 "Death and the Maiden" (6a9a1f5176a9fb00019386b7, published) https://inkhornreview.com/autumn-2026/death-and-the-maiden/; text match false; empty paras read-back/source 0/0
+- Step 3: updated autumn-2026 #7 "Tolls" (6ab862b40676d5000137c8aa, published) https://inkhornreview.com/micro/tolls/; text match true; empty paras read-back/source 0/0
+- Step 3: updated autumn-2026 #9 "Dance Partner" (6a98dc6076a9fb000193845d, published) https://inkhornreview.com/autumn-2026/dance-partner/; text match false; empty paras read-back/source 0/0
+- Step 3: updated autumn-2026 #10 "Twenty-Four" (6a95a8ab3510170001b81ad3, published) https://inkhornreview.com/autumn-2026/twenty-four/; text match false; empty paras read-back/source 10/10
+- Step 3: updated autumn-2026 #11 "Fledgling" (6ab863a60676d5000137c8bd, published) https://inkhornreview.com/micro/fledgling/ +tags inkhorn-1; text match false; empty paras read-back/source 0/0
+- Step 3: updated autumn-2026 #12 "I was taught" (6a9a16bd76a9fb000193865e, published) https://inkhornreview.com/autumn-2026/i-was-taught/ +tags inkhorn-1; text match false; empty paras read-back/source 4/4
+- Step 3: updated autumn-2026 #13 "A Flight from Manila" (6a966f7176a9fb00019383a6, published) https://inkhornreview.com/autumn-2026/a-flight-from-manila/; text match false; empty paras read-back/source 0/0
+- Step 3: updated autumn-2026 #14 "The Crow" (6a9b549876a9fb000193883a, published) https://inkhornreview.com/autumn-2026/the-crow/; text match false; empty paras read-back/source 21/21
+- Step 3: updated autumn-2026 #15 "Lungs of Truth" (6a9c62fd76a9fb0001938a1d, published) https://inkhornreview.com/micro/lungs-of-truth/ +tags inkhorn-1; text match false; empty paras read-back/source 0/0
+- Step 3: updated autumn-2026 #16 "Lineage" (6a9664f476a9fb0001938356, published) https://inkhornreview.com/autumn-2026/lineage/; text match false; empty paras read-back/source 14/14
+- Step 3: updated autumn-2026 #17 "He Thought I Would Come Back" (6a98dadc76a9fb0001938442, published) https://inkhornreview.com/autumn-2026/he-thought-i-would-come-back/; text match false; empty paras read-back/source 0/0
+- Step 3: updated autumn-2026 #20 "Dead Lines (24 Weeks)" (6a966c1576a9fb0001938389, published) https://inkhornreview.com/autumn-2026/dead-lines-24-weeks/; text match true; empty paras read-back/source 0/0
+- Step 3: updated autumn-2026 #22 "Along with Lemon and Ginger" (6a98d60c76a9fb00019383f5, published) https://inkhornreview.com/autumn-2026/along-with-lemon-and-ginger/; text match false; empty paras read-back/source 3/3
+- Step 3: updated autumn-2026 #25 "Amalia and the Crows" (6a9514f23510170001b81a7d, published) https://inkhornreview.com/autumn-2026/amalia-and-the-crows/; text match false; empty paras read-back/source 0/0
+- Step 3: updated winter-2026 #4 "Silt" (6aa30d857aff75000107d9b5, scheduled) https://inkhornreview.com/p/450d4c82-a00a-4b26-8d95-04c35061524f/ +tags hash-archive,inkhorn-2; text match false; empty paras read-back/source 9/9
+- Step 3: updated winter-2026 #5 "Pigment" (6a9a1c1576a9fb000193869e, published) https://inkhornreview.com/autumn-2026/pigment/ +tags inkhorn-2; text match false; empty paras read-back/source 0/0
+- Step 3: updated winter-2026 #12 "Metal Storm" (6a95aee27a247200019014d1, published) https://inkhornreview.com/autumn-2026/metal-storm/ +tags inkhorn-2; text match false; empty paras read-back/source 8/8
+- Step 3: updated winter-2026 #17 "How Now Brown Cow" (6a9b511d76a9fb00019387fd, published) https://inkhornreview.com/autumn-2026/how-now-brown-cow/ +tags inkhorn-2; text match false; empty paras read-back/source 1/1
+- Step 3: updated winter-2026 #19 "Father’s Day" (6aa2f5227aff75000107d950, scheduled) https://inkhornreview.com/p/a8b99419-1245-4b9b-99a8-41063df2549c/ +tags hash-archive,inkhorn-2; text match false; empty paras read-back/source 3/3
+- Step 3: updated winter-2026 #20 "The Incredible Shrinking Coffee Shop of Paris" (6a98de6676a9fb000193847e, published) https://inkhornreview.com/autumn-2026/the-incredible-shrinking-coffee-shop-of-paris/ +tags inkhorn-2; text match false; empty paras read-back/source 0/0
+- Step 3: updated winter-2026 #21 "Look: I am nothing says Lot’s daughter" (6aa2fe657aff75000107d96b, scheduled) https://inkhornreview.com/p/1738ce26-ccdc-49d7-8db6-656c511e00ca/ +tags hash-archive,inkhorn-2; text match false; empty paras read-back/source 1/1
+- Step 4: created autumn-2026 #3 "Motherland" (6ac955a482c1da000109e4a1) published published now https://inkhornreview.com/autumn-2026/motherland/; text match true; empty paras 0/0
+- Step 4: created autumn-2026 #6 "Mirror" (6ac955a482c1da000109e4ac) published published now https://inkhornreview.com/autumn-2026/mirror/; text match true; empty paras 0/0
+- Step 4: created autumn-2026 #8 "Our Daughter Haunts Us Now" (6ac955a582c1da000109e4b7) published published now https://inkhornreview.com/autumn-2026/our-daughter-haunts-us-now/; text match true; empty paras 0/0
+- Step 4: created autumn-2026 #18 "Free Ride" (6ac955a782c1da000109e4cb) published published now https://inkhornreview.com/autumn-2026/free-ride/; text match true; empty paras 10/10
+- Step 4: created autumn-2026 #19 "Neon and Jade" (6ac955a982c1da000109e4de) published published now https://inkhornreview.com/autumn-2026/neon-and-jade/; text match true; empty paras 0/0
+- Step 4: published previously created draft autumn-2026 #21 "The Perpetual Amity of Thurn Would Like Its Ladder Back" (6ac955ab82c1da000109e4ef)
+- Step 4: created autumn-2026 #23 "Basins" (6ac955cb82c1da000109e54f) published published now https://inkhornreview.com/autumn-2026/basins/; text match true; empty paras 0/0
+- Step 4: created autumn-2026 #24 "My Heart is a Bird" (6ac955cc82c1da000109e55a) published published now https://inkhornreview.com/autumn-2026/my-heart-is-a-bird/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #1 "Correspondence with Genevieve" (6ac955ce82c1da000109e56d) scheduled 2026-12-01T16:00:00.000Z https://inkhornreview.com/p/72df71a6-b1b0-4fcf-85fe-0d706d4e2457/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #2 "Liquor, Ashes" (6ac955cf82c1da000109e579) scheduled 2026-12-01T16:01:00.000Z https://inkhornreview.com/p/79942861-f900-4783-80fb-4ce714546e32/; text match true; empty paras 5/5
+- Step 4: created winter-2026 #3 "On the Disappearance of Little Old Ladies" (6ac955d082c1da000109e582) scheduled 2026-12-01T16:02:00.000Z https://inkhornreview.com/p/da06de0c-6320-4123-95b3-a5807bd3696a/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #6 "The Dog Had Been Dead for Years" (6ac955d082c1da000109e58b) scheduled 2026-12-01T16:05:00.000Z https://inkhornreview.com/p/a90f8591-a420-4bea-8f10-62f662754f7e/; text match true; empty paras 10/10
+- Step 4: created winter-2026 #7 "The Bucket" (6ac955d182c1da000109e594) scheduled 2026-12-01T16:06:00.000Z https://inkhornreview.com/p/b9f486ac-3d35-4bce-b4e3-3a4aae51bb93/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #8 "Viking Burial" (6ac955d182c1da000109e59d) scheduled 2026-12-01T16:07:00.000Z https://inkhornreview.com/p/6d4be5c4-dd1e-4151-8960-668ee8b243c5/; text match true; empty paras 4/4
+- Step 4: created winter-2026 #9 "Bend" (6ac955d282c1da000109e5a6) scheduled 2026-12-01T16:08:00.000Z https://inkhornreview.com/p/daf5b480-cd46-4e59-8740-9d5934da98a5/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #10 "Twenty-Seven" (6ac955d282c1da000109e5af) scheduled 2026-12-01T16:09:00.000Z https://inkhornreview.com/p/63cd0f6d-a0ae-4418-9ad1-04833aa6828c/; text match true; empty paras 16/16
+- Step 4: created winter-2026 #11 "Half-Remembered Goodbyes" (6ac955d482c1da000109e5b8) scheduled 2026-12-01T16:10:00.000Z https://inkhornreview.com/p/40cdc1bc-fe69-4dc7-8818-ccd994c75b89/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #13 "Sled Dogs" (6ac955d482c1da000109e5c1) scheduled 2026-12-01T16:12:00.000Z https://inkhornreview.com/p/80d06759-5d10-433e-8a58-377dd1fad011/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #14 "I Am Either Hallucinating This Morning or Living It" (6ac955d582c1da000109e5ca) scheduled 2026-12-01T16:13:00.000Z https://inkhornreview.com/p/6bfbcc25-cd6e-4446-b64b-cf69fb541f4a/; text match true; empty paras 14/14
+- Step 4: created winter-2026 #15 "There is safety in birdsong" (6ac955d582c1da000109e5d3) scheduled 2026-12-01T16:14:00.000Z https://inkhornreview.com/p/ee6fddf6-f584-420d-ac5d-d9b9cc330fdf/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #16 "Pine Needles" (6ac955d582c1da000109e5dc) scheduled 2026-12-01T16:15:00.000Z https://inkhornreview.com/p/b0477705-513d-4b39-ae70-9f616c811c9e/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #18 "In a Stranger’s Kitchen" (6ac955d682c1da000109e5e5) scheduled 2026-12-01T16:17:00.000Z https://inkhornreview.com/p/87b5c42a-b30c-42b7-9404-c067b57124f4/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #22 "A black ribbon? Really?" (6ac955d682c1da000109e5ee) scheduled 2026-12-01T16:21:00.000Z https://inkhornreview.com/p/2bd31f1c-ee99-4e32-9189-98328ec70225/; text match true; empty paras 0/0
+- Step 4: created winter-2026 #23 "Gaotie" (6ac955d782c1da000109e5f7) scheduled 2026-12-01T16:22:00.000Z https://inkhornreview.com/p/62d9d1c9-4b00-4ae5-a574-8f16d4966f54/; text match true; empty paras 1/1
+- Step 4: created winter-2026 #24 "That one time in December" (6ac955d782c1da000109e600) scheduled 2026-12-01T16:23:00.000Z https://inkhornreview.com/p/b81a4384-65d7-418a-bffd-c93bbe895db8/; text match true; empty paras 2/2
+- Step 4: created winter-2026 #25 "Re: What Happened to Your Father at the Omaha Zoo." (6ac955d782c1da000109e609) scheduled 2026-12-01T16:24:00.000Z https://inkhornreview.com/p/e596ec17-950a-4be2-acc8-e059a274e044/; text match true; empty paras 0/0
+- Step 4: rescheduled Winter #4 "Silt" (6aa30d857aff75000107d9b5) to 2026-12-01T16:03:00.000Z (08:03 PST)
+- Step 4: rescheduled Winter #19 "Father’s Day" (6aa2f5227aff75000107d950) to 2026-12-01T16:18:00.000Z (08:18 PST)
+- Step 4: rescheduled Winter #21 "Look: I am nothing says Lot’s daughter" (6aa2fe657aff75000107d96b) to 2026-12-01T16:20:00.000Z (08:20 PST)
+- Step 3 decision: Lineage (code block) and Look: I am nothing (callout) held epigraph nodes at the top; the supplied html already contains both as blockquotes, so the old nodes were NOT re-added (would duplicate and revert copyedits). Old bodies are in backups/2026-10-09/posts.json.
