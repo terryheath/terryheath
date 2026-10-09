@@ -42,31 +42,31 @@ Posts, tags, catalog pages and theme are done and live. **Two things are not liv
 
 | # | Title | Author | Action | Status / time (PT) | URL |
 |---|---|---|---|---|---|
-| 1 | Correspondence with Genevieve | Honni van Rijswijk | created | scheduled Dec 1, 2026, 8:00 AM | /p/72df71a6-b1b0-4fcf-85fe-0d706d4e2457/ |
-| 2 | Liquor, Ashes | Caroline Webster | created | scheduled Dec 1, 2026, 8:01 AM | /p/79942861-f900-4783-80fb-4ce714546e32/ |
-| 3 | On the Disappearance of Little Old Ladies | Jack Godby | created | scheduled Dec 1, 2026, 8:02 AM | /p/da06de0c-6320-4123-95b3-a5807bd3696a/ |
-| 4 | Silt | Aardhra Chandran | body + excerpt updated | scheduled Dec 1, 2026, 8:03 AM | /p/450d4c82-a00a-4b26-8d95-04c35061524f/ |
+| 1 | Correspondence with Genevieve | Honni van Rijswijk | created | scheduled Dec 1, 2026, 4:00 AM | /p/72df71a6-b1b0-4fcf-85fe-0d706d4e2457/ |
+| 2 | Liquor, Ashes | Caroline Webster | created | scheduled Dec 1, 2026, 4:01 AM | /p/79942861-f900-4783-80fb-4ce714546e32/ |
+| 3 | On the Disappearance of Little Old Ladies | Jack Godby | created | scheduled Dec 1, 2026, 4:02 AM | /p/da06de0c-6320-4123-95b3-a5807bd3696a/ |
+| 4 | Silt | Aardhra Chandran | body + excerpt updated | scheduled Dec 1, 2026, 4:03 AM | /p/450d4c82-a00a-4b26-8d95-04c35061524f/ |
 | 5 | Pigment | Victoria K. Butler | body + excerpt updated | published | /autumn-2026/pigment/ |
-| 6 | The Dog Had Been Dead for Years | David Anson Lee | created | scheduled Dec 1, 2026, 8:05 AM | /p/a90f8591-a420-4bea-8f10-62f662754f7e/ |
-| 7 | The Bucket | Patrick Parks | created | scheduled Dec 1, 2026, 8:06 AM | /p/b9f486ac-3d35-4bce-b4e3-3a4aae51bb93/ |
-| 8 | Viking Burial | S. Marie Jones | created | scheduled Dec 1, 2026, 8:07 AM | /p/6d4be5c4-dd1e-4151-8960-668ee8b243c5/ |
-| 9 | Bend | Frank Haberle | created | scheduled Dec 1, 2026, 8:08 AM | /p/daf5b480-cd46-4e59-8740-9d5934da98a5/ |
-| 10 | Twenty-Seven | Sanya Hundal Bery | created | scheduled Dec 1, 2026, 8:09 AM | /p/63cd0f6d-a0ae-4418-9ad1-04833aa6828c/ |
-| 11 | Half-Remembered Goodbyes | Elliott Fielding | created | scheduled Dec 1, 2026, 8:10 AM | /p/40cdc1bc-fe69-4dc7-8818-ccd994c75b89/ |
+| 6 | The Dog Had Been Dead for Years | David Anson Lee | created | scheduled Dec 1, 2026, 4:05 AM | /p/a90f8591-a420-4bea-8f10-62f662754f7e/ |
+| 7 | The Bucket | Patrick Parks | created | scheduled Dec 1, 2026, 4:06 AM | /p/b9f486ac-3d35-4bce-b4e3-3a4aae51bb93/ |
+| 8 | Viking Burial | S. Marie Jones | created | scheduled Dec 1, 2026, 4:07 AM | /p/6d4be5c4-dd1e-4151-8960-668ee8b243c5/ |
+| 9 | Bend | Frank Haberle | created | scheduled Dec 1, 2026, 4:08 AM | /p/daf5b480-cd46-4e59-8740-9d5934da98a5/ |
+| 10 | Twenty-Seven | Sanya Hundal Bery | created | scheduled Dec 1, 2026, 4:09 AM | /p/63cd0f6d-a0ae-4418-9ad1-04833aa6828c/ |
+| 11 | Half-Remembered Goodbyes | Elliott Fielding | created | scheduled Dec 1, 2026, 4:10 AM | /p/40cdc1bc-fe69-4dc7-8818-ccd994c75b89/ |
 | 12 | Metal Storm | William Doreski | body + excerpt updated | published | /autumn-2026/metal-storm/ |
-| 13 | Sled Dogs | Michele Catalano | created | scheduled Dec 1, 2026, 8:12 AM | /p/80d06759-5d10-433e-8a58-377dd1fad011/ |
-| 14 | I Am Either Hallucinating This Morning or Living It | Sambhu R. | created | scheduled Dec 1, 2026, 8:13 AM | /p/6bfbcc25-cd6e-4446-b64b-cf69fb541f4a/ |
-| 15 | There is safety in birdsong | Sam Agar | created | scheduled Dec 1, 2026, 8:14 AM | /p/ee6fddf6-f584-420d-ac5d-d9b9cc330fdf/ |
-| 16 | Pine Needles | Jay Caselberg | created | scheduled Dec 1, 2026, 8:15 AM | /p/b0477705-513d-4b39-ae70-9f616c811c9e/ |
+| 13 | Sled Dogs | Michele Catalano | created | scheduled Dec 1, 2026, 4:12 AM | /p/80d06759-5d10-433e-8a58-377dd1fad011/ |
+| 14 | I Am Either Hallucinating This Morning or Living It | Sambhu R. | created | scheduled Dec 1, 2026, 4:13 AM | /p/6bfbcc25-cd6e-4446-b64b-cf69fb541f4a/ |
+| 15 | There is safety in birdsong | Sam Agar | created | scheduled Dec 1, 2026, 4:14 AM | /p/ee6fddf6-f584-420d-ac5d-d9b9cc330fdf/ |
+| 16 | Pine Needles | Jay Caselberg | created | scheduled Dec 1, 2026, 4:15 AM | /p/b0477705-513d-4b39-ae70-9f616c811c9e/ |
 | 17 | How Now Brown Cow | James Lewis Huss | body + excerpt updated | published | /autumn-2026/how-now-brown-cow/ |
-| 18 | In a Stranger’s Kitchen | Nan J Bauer | created | scheduled Dec 1, 2026, 8:17 AM | /p/87b5c42a-b30c-42b7-9404-c067b57124f4/ |
-| 19 | Father’s Day | Don J. Kraemer | body + excerpt updated | scheduled Dec 1, 2026, 8:18 AM | /p/a8b99419-1245-4b9b-99a8-41063df2549c/ |
+| 18 | In a Stranger’s Kitchen | Nan J Bauer | created | scheduled Dec 1, 2026, 4:17 AM | /p/87b5c42a-b30c-42b7-9404-c067b57124f4/ |
+| 19 | Father’s Day | Don J. Kraemer | body + excerpt updated | scheduled Dec 1, 2026, 4:18 AM | /p/a8b99419-1245-4b9b-99a8-41063df2549c/ |
 | 20 | The Incredible Shrinking Coffee Shop of Paris | Elizabeth F.A. Meaney | body + excerpt updated | published | /autumn-2026/the-incredible-shrinking-coffee-shop-of-paris/ |
-| 21 | Look: I am nothing says Lot’s daughter | Carol Shillibeer | body + excerpt updated | scheduled Dec 1, 2026, 8:20 AM | /p/1738ce26-ccdc-49d7-8db6-656c511e00ca/ |
-| 22 | A black ribbon? Really? | Karen Walker | created | scheduled Dec 1, 2026, 8:21 AM | /p/2bd31f1c-ee99-4e32-9189-98328ec70225/ |
-| 23 | Gaotie | Xingyu Zhao | created | scheduled Dec 1, 2026, 8:22 AM | /p/62d9d1c9-4b00-4ae5-a574-8f16d4966f54/ |
-| 24 | That one time in December | Sanya Hundal Bery | created | scheduled Dec 1, 2026, 8:23 AM | /p/b81a4384-65d7-418a-bffd-c93bbe895db8/ |
-| 25 | Re: What Happened to Your Father at the Omaha Zoo. | Ulysses Holiday | created | scheduled Dec 1, 2026, 8:24 AM | /p/e596ec17-950a-4be2-acc8-e059a274e044/ |
+| 21 | Look: I am nothing says Lot’s daughter | Carol Shillibeer | body + excerpt updated | scheduled Dec 1, 2026, 4:20 AM | /p/1738ce26-ccdc-49d7-8db6-656c511e00ca/ |
+| 22 | A black ribbon? Really? | Karen Walker | created | scheduled Dec 1, 2026, 4:21 AM | /p/2bd31f1c-ee99-4e32-9189-98328ec70225/ |
+| 23 | Gaotie | Xingyu Zhao | created | scheduled Dec 1, 2026, 4:22 AM | /p/62d9d1c9-4b00-4ae5-a574-8f16d4966f54/ |
+| 24 | That one time in December | Sanya Hundal Bery | created | scheduled Dec 1, 2026, 4:23 AM | /p/b81a4384-65d7-418a-bffd-c93bbe895db8/ |
+| 25 | Re: What Happened to Your Father at the Omaha Zoo. | Ulysses Holiday | created | scheduled Dec 1, 2026, 4:24 AM | /p/e596ec17-950a-4be2-acc8-e059a274e044/ |
 
 Notes on posts:
 - Texts match the supplied `html` (checked by read-back). Poem stanza breaks (empty paragraphs) survived Ghost's import.
