@@ -105,7 +105,7 @@ Inkhorn publishes **4 issues per year** on a quarterly schedule. Seasons and the
 - **spring** — March
 - **summer** — June
 
-Issue slugs are `{season}-{year}` in lowercase, where year is the calendar year the issue releases (e.g. `autumn-2026`, `winter-2027`, `spring-2027`, `summer-2027`). Always use "autumn", never "fall".
+Issue slugs are `{season}-{year}` in lowercase, where year is the calendar year the issue releases (e.g. `autumn-2026`, `winter-2026`, `spring-2027`, `summer-2027`). Winter 2026 is `winter-2026` (it releases December 1, 2026); the older `winter-2027` block stays in routes.yaml untouched. Always use "autumn", never "fall".
 
 For each new issue, add to `routes.yaml`:
 
@@ -125,11 +125,11 @@ For each new issue, add to `routes.yaml`:
      order: published_at asc
    ```
 
-2. One collection block (in the `collections:` section, before `/micro/`):
+2. One collection block (in the `collections:` section, before `/micro/`). Edition pages use `edition.hbs` (`template: edition`), not `tag.hbs`:
    ```yaml
    /{season}-{year}/:
      permalink: /{season}-{year}/{slug}/
-     template: tag
+     template: edition
      filter: primary_tag:{season}-{year}
      data: tag.{season}-{year}
      order: published_at asc
@@ -171,6 +171,8 @@ Trigger manually via Railway (podcast-import service → Run now), or trigger th
 - **Drip posts must never have a newsletter attached.** Ghost 6.61 email segmenter bug. schedule-drip.js sets no newsletter; verify in Ghost Admin after scheduling.
 - **PRINT_META and EBOOK_LINKS live in ghost-footer-injection.html.** Update both per issue. EBOOK_URLS in digest.js must be kept in sync with EBOOK_LINKS.
 - **The address service (inkhorn/address-service/) runs on Railway.** It verifies Ghost member tokens via JWKS and writes SHIP blocks to member notes. GHOST_ADMIN_KEY lives in Railway env vars only — never in the repo.
+- **Editions and running order.** An edition is a Featured `#catalog` page (tags `#catalog`, `inkhorn-N`, and the season tag, e.g. `winter-2026`) plus a running-order file in the theme: `inkhorn/theme/partials/editions/{season}-{year}.hbs`, one line per piece in print order, generated from `inkhorn/data/editions-2026.json` by `node inkhorn/scripts/gen-edition-partials.cjs`. The home page shows whichever Featured `#catalog` page was published most recently (`order="published_at desc"`), so publishing the Winter catalog page, featured, switches the home page to Winter with no manual step. `/autumn-2026/` and `/winter-2026/` render `edition.hbs` (shared `edition-hero` and `edition-contents` partials) and show nothing but the hero and numbered contents; before its catalog page is published an edition page shows "Forthcoming". Pieces not in a running-order file stay in the general archive only (`#archive`). `node inkhorn/scripts/check-editions.cjs` is the read-only checker. A new edition needs: its `inkhorn-N` tag, a running-order file, a branch in `partials/edition-contents.hbs`, routes, and a catalog page.
+- **Site-wide header and footer code injection are empty and not used.** Edition and running-order work lives in the theme, `routes.yaml` and `redirects.yaml`. Per-page and per-tag `codeinjection_head` fields (catalog page `ih-book` JSON, contributor bookshelf payloads, the cover-art credit) are still in use; leave them alone. The legacy `ghost-header-injection.html` and `ghost-footer-injection.html` are not live.
 - **Tier slugs are `print` and `digital`.** Portal deep-link URLs: `#/portal/signup/print/yearly` and `#/portal/signup/digital/yearly`.
 
 ## Working style

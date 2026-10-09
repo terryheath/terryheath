@@ -20,6 +20,21 @@ routes:
     controller: channel
     filter: tag:autumn-2026+tag:nonfiction
     order: published_at asc
+  /winter-2026/poetry/:
+    controller: channel
+    filter: tag:winter-2026+tag:poetry
+    order: published_at asc
+
+  /winter-2026/fiction/:
+    controller: channel
+    filter: tag:winter-2026+tag:fiction
+    order: published_at asc
+
+  /winter-2026/nonfiction/:
+    controller: channel
+    filter: tag:winter-2026+tag:nonfiction
+    order: published_at asc
+
   /winter-2027/poetry/:
     controller: channel
     filter: tag:winter-2027+tag:poetry
@@ -252,9 +267,17 @@ routes:
 collections:
   /autumn-2026/:
     permalink: /autumn-2026/{slug}/
-    template: tag
+    template: edition
     filter: primary_tag:autumn-2026
     data: tag.autumn-2026
+    order: published_at asc
+    limit: 999
+
+  /winter-2026/:
+    permalink: /winter-2026/{slug}/
+    template: edition
+    filter: primary_tag:winter-2026
+    data: tag.winter-2026
     order: published_at asc
     limit: 999
 
