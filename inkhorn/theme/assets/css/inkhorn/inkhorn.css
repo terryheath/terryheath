@@ -447,6 +447,34 @@ a:hover { color: #8f1d1d; }
 .ih-edition-page { padding-bottom: 72px; }
 .ih-edition-page #ih-season-art-target { padding: 24px 80px 0; }
 
+/* The Issues (top of /archive/) and "All issues" back link */
+.ih-issues { margin: 8px 0 32px; }
+.ih-issues .ih-season-heading { margin-top: 0; }
+.ih-issue-entry {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 16px 0;
+    border-bottom: 1px solid #e6dfd0;
+}
+.ih-issue-cover { width: 96px; flex-shrink: 0; box-shadow: 0 8px 18px rgba(28,26,23,0.16); }
+.ih-issue-cover img { display: block; width: 100%; height: auto; }
+.ih-issue-cover-empty { height: 136px; background: #efe6d3; border: 1px solid #cbbfa8; box-shadow: none; }
+.ih-issue-info { min-width: 0; }
+.ih-issue-title { font-family: 'EB Garamond', Georgia, serif; font-size: 26px; line-height: 1.15; }
+.ih-issue-excerpt { margin-top: 6px; font-size: 17px; line-height: 1.45; color: #3a352e; }
+.ih-issue-forthcoming { font-style: italic; color: #5b544a; }
+.ih-contents-back {
+    margin: 14px 0 0;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.ih-contents-back a { color: #8f1d1d; text-decoration: none; }
+.ih-contents-back a:hover { text-decoration: underline; }
+
 /* Podcast + Founder's Letter cards */
 .ih-cards-2col {
     box-sizing: border-box;

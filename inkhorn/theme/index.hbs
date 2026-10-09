@@ -13,6 +13,22 @@
     <div class="ih-archive-page-header">
         <h1 class="ih-archive-page-heading">The Archive</h1>
     </div>
+
+    {{!-- The Issues: every #catalog page, newest first. A forthcoming issue has no
+         published catalog page for {{#get}} to find, so it gets its own fallback line
+         below (add one per new edition). --}}
+    <section class="ih-issues">
+        <div class="ih-season-heading">The Issues</div>
+        {{#get "pages" filter="tag:hash-catalog+tag:winter-2026" limit="1" as |winterCatalog|}}
+            {{#unless winterCatalog}}{{> "issue-entry" title="Inkhorn Review No. 2 · Winter 2026"}}{{/unless}}
+        {{/get}}
+        {{#get "pages" filter="tag:hash-catalog" order="published_at desc" include="tags" limit="all"}}
+            {{#foreach pages}}
+                {{#foreach tags}}{{#match slug "~" "-20"}}{{> "issue-entry" href=(concat "/" slug "/") title=../title feature_image=../feature_image custom_excerpt=../custom_excerpt}}{{/match}}{{/foreach}}
+            {{/foreach}}
+        {{/get}}
+    </section>
+
     {{> "genre-filter-row"}}
 
     <div class="ih-archive-post-list" id="ih-archive-list">

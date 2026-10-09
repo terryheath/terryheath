@@ -1,0 +1,9 @@
+{{!-- issue-entry.hbs — one issue on the archive page.
+  Params: title, feature_image, custom_excerpt, href (omit for a forthcoming issue, which shows "Forthcoming" and no link). --}}
+<div class="ih-issue-entry">
+    {{#if feature_image}}<div class="ih-issue-cover"><img src="{{img_url feature_image size="s"}}" alt="{{title}} cover" loading="lazy"></div>{{else}}<div class="ih-issue-cover ih-issue-cover-empty"></div>{{/if}}
+    <div class="ih-issue-info">
+        <div class="ih-issue-title">{{#if href}}<a href="{{href}}" class="ih-archive-entry-link">{{title}}</a>{{else}}{{title}}{{/if}}</div>
+        {{#if href}}{{#if custom_excerpt}}<div class="ih-issue-excerpt">{{custom_excerpt}}</div>{{/if}}{{else}}<div class="ih-issue-excerpt ih-issue-forthcoming">Forthcoming</div>{{/if}}
+    </div>
+</div>

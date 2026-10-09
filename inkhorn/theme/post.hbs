@@ -22,14 +22,13 @@
         {{!-- Publication page links + genre label --}}
         {{!-- For each publication tag (inkhorn-N, whiterabbit-N, anthology-N, awards-N)
              fetch the matching page (server-side via {{#get}}) and link to it.
-             Appends " — buy the print edition →" when the page carries #catalog. --}}
+             Appends " — buy the print edition →" when the page carries #catalog.
+             (inkhorn-N tags are handled separately below: they link to the edition page.) --}}
         <div class="ih-post-issue-label">
+            {{!-- Inkhorn issue link: inkhorn-2 wins over inkhorn-1; neither tag, no link.
+                 Matched by tag name ({{#has}} compares names, not slugs). --}}
+            {{#has tag="Inkhorn Review No. 2"}}<a href="/winter-2026/" class="ih-post-issue-link">Inkhorn Review No.&nbsp;2 &middot; Winter 2026</a>{{else}}{{#has tag="Inkhorn Review No. 1"}}<a href="/autumn-2026/" class="ih-post-issue-link">Inkhorn Review No.&nbsp;1 &middot; Autumn 2026</a>{{/has}}{{/has}}
             {{#foreach tags}}
-            {{#match slug "~^" "inkhorn-"}}
-                {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
-                {{#foreach pages}}<a href="{{url}}" class="ih-post-issue-link">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}" class="ih-post-issue-link">buy the print edition &rarr;</a>{{/match}}{{/foreach}}{{/foreach}}
-                {{/get}}
-            {{/match}}
             {{#match slug "~^" "whiterabbit-"}}
                 {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
                 {{#foreach pages}}<a href="{{url}}" class="ih-post-issue-link">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}" class="ih-post-issue-link">buy the print edition &rarr;</a>{{/match}}{{/foreach}}{{/foreach}}

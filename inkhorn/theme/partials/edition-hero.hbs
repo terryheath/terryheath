@@ -2,7 +2,8 @@
   edition pages. Call it inside a catalog page's context (or pass title,
   feature_image and custom_excerpt explicitly).
   Params: subscribe="true" shows the compact subscribe box (home only);
-          forthcoming="true" replaces the contents with "Forthcoming". --}}
+          forthcoming="true" replaces the contents with "Forthcoming";
+          back="true" adds the "All issues" link (edition pages). --}}
 {{{codeinjection_head}}}
 
 <section class="ih-hero">
@@ -42,6 +43,7 @@
             {{else}}
                 {{> "edition-contents"}}
             {{/if}}
+            {{#if back}}<p class="ih-contents-back"><a href="/archive/">All issues</a></p>{{/if}}
         </div>
     </aside>
 </section>

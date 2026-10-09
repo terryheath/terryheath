@@ -2,6 +2,7 @@
 
 {{!--
   edition.hbs — edition archive page (/autumn-2026/, /winter-2026/).
+  (Uses {{#with tag}}, not {{#tag}}: the tag helper does not open for a static route with data.)
   Hero and numbered contents only, built from the same partials as the home page.
   The edition's catalog page is found by season tag; until it is published the
   page shows the hero with "Forthcoming" in place of the contents.
@@ -10,18 +11,20 @@
 <main class="site-main">
 <div class="inkhorn-home ih-edition-page">
 
-{{#tag}}
-  {{#get "pages" filter="tag:hash-catalog+tag:{{slug}}" include="tags" limit="1"}}
-    {{#foreach pages}}
-      {{> "edition-hero"}}
-    {{/foreach}}
-  {{else}}
-    {{> "edition-hero" title=name feature_image=feature_image custom_excerpt=description forthcoming="true"}}
+{{#with tag}}
+  {{#get "pages" filter="tag:hash-catalog+tag:{{slug}}" include="tags" limit="1" as |catalogPages|}}
+    {{#if catalogPages}}
+      {{#foreach catalogPages}}
+        {{> "edition-hero" back="true"}}
+      {{/foreach}}
+    {{else}}
+      {{> "edition-hero" title=@root.tag.name feature_image=@root.tag.feature_image custom_excerpt=@root.tag.description forthcoming="true" back="true"}}
+    {{/if}}
   {{/get}}
 
   <div id="ih-season-art-target"></div>
   <script>(function(){var s=document.getElementById('ih-season-art'),t=document.getElementById('ih-season-art-target');if(s&&t)t.innerHTML=s.innerHTML;})();</script>
-{{/tag}}
+{{/with}}
 
 </div>
 </main>
