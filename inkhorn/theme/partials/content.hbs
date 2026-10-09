@@ -1,0 +1,57 @@
+{{!--
+  content.hbs — Dawn fallback for page.hbs (page template for generic pages).
+  Not used by post.hbs or home.hbs which have their own full layouts.
+--}}
+<article class="single {{post_class}}">
+
+    <header class="single-header gh-canvas">
+        <h1 class="single-title">{{title}}</h1>
+        {{#if custom_excerpt}}
+            <div class="single-excerpt">{{custom_excerpt}}</div>
+        {{/if}}
+        <div class="gh-meta-share">
+            <a href="#/share" class="gh-button-share">{{t "Share"}} {{> "icons/share"}}</a>
+        </div>
+        {{#if feature_image}}
+            <figure class="single-media kg-width-{{width}}">
+                <div class="u-placeholder horizontal">
+                    <img
+                        class="u-object-fit gh-feature-image"
+                        srcset="{{> srcset}}"
+                        sizes="(min-width: 1200px) 920px, 92vw"
+                        src="{{img_url feature_image size="l"}}"
+                        alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}"
+                    >
+                </div>
+                {{#if feature_image_caption}}<figcaption>{{feature_image_caption}}</figcaption>{{/if}}
+            </figure>
+        {{/if}}
+    </header>
+
+    <div class="single-content gh-content gh-canvas">
+        {{content}}
+    </div>
+
+    {{#is "post"}}
+    <div class="gh-canvas">
+    <footer class="single-footer">
+        <div class="single-footer-left">
+        {{#prev_post}}
+            <div class="navigation navigation-previous">
+                <a class="navigation-link" href="{{url}}" aria-label="{{t "Previous post"}}">{{> "icons/arrow-left"}}</a>
+            </div>
+        {{/prev_post}}
+        </div>
+        <div class="single-footer-middle"></div>
+        <div class="single-footer-right">
+        {{#next_post}}
+            <div class="navigation navigation-next">
+                <a class="navigation-link" href="{{url}}" aria-label="{{t "Next post"}}">{{> "icons/arrow-right"}}</a>
+            </div>
+        {{/next_post}}
+        </div>
+    </footer>
+    </div>
+    {{/is}}
+
+</article>

@@ -1,0 +1,12 @@
+{{#get "posts" limit="4" filter="primary_tag:{{primary_tag.slug}}+id:-{{id}}" as |related|}}
+{{#if related}}
+    <section class="related-wrapper">
+        <h3 class="related-title">More from {{primary_tag.name}}</h3>
+        <div class="related-feed">
+            {{#foreach related}}
+                {{> "loop"}}
+            {{/foreach}}
+        </div>
+    </section>
+{{/if}}
+{{/get}}

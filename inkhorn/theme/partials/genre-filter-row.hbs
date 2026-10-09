@@ -1,0 +1,16 @@
+<nav class="ih-genre-filter-row">
+    <a href="/archive/" class="ih-genre-filter-link" data-path="/archive/">All</a>
+    <a href="/poetry/" class="ih-genre-filter-link" data-path="/poetry/">Poetry</a>
+    <a href="/fiction/" class="ih-genre-filter-link" data-path="/fiction/">Fiction</a>
+    <a href="/nonfiction/" class="ih-genre-filter-link" data-path="/nonfiction/">Nonfiction</a>
+    <a href="/micro/" class="ih-genre-filter-link" data-path="/micro/">Micro</a>
+</nav>
+<script>
+(function(){
+    var p = window.location.pathname;
+    document.querySelectorAll('.ih-genre-filter-link[data-path]').forEach(function(a){
+        var base = a.getAttribute('data-path');
+        if (p === base || p.startsWith(base + 'page/')) a.classList.add('ih-genre-filter-active');
+    });
+})();
+</script>

@@ -1,0 +1,27 @@
+{{!-- subscribe-block.hbs — tier data from Ghost, never hardcoded --}}
+{{#get "tiers" filter="type:paid" order="yearly_price desc"}}
+  {{#if tiers}}
+  <div class="ih-subscribe-block">
+      <div class="ih-sub-head">Subscribe</div>
+      {{#foreach tiers}}
+      <div class="ih-sub-tier">
+          <div class="ih-sub-tier-row">
+              <div class="ih-sub-tier-name">{{name}}</div>
+              <div class="ih-sub-tier-price">{{price yearly_price currency=currency}}/year</div>
+          </div>
+          {{#if description}}<div class="ih-sub-tier-desc">{{description}}</div>{{/if}}
+          {{#if benefits}}
+          <ul class="ih-sub-tier-benefits">
+              {{#foreach benefits}}<li>{{this}}</li>{{/foreach}}
+          </ul>
+          {{/if}}
+          {{#match slug "print"}}
+              <a href="#/portal/signup/{{slug}}/yearly" data-portal="signup" class="ih-sub-btn-print">Subscribe to {{name}}</a>
+          {{else}}
+              <a href="#/portal/signup/{{slug}}/yearly" data-portal="signup" class="ih-sub-btn-digital">Subscribe to {{name}}</a>
+          {{/match}}
+      </div>
+      {{/foreach}}
+  </div>
+  {{/if}}
+{{/get}}
