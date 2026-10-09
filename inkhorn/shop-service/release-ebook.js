@@ -61,18 +61,21 @@ async function main() {
   let startingAfter = undefined;
 
   while (hasMore) {
-    const params = {
-      limit: 100,
-      payment_status: 'paid',
-      expand: ['data.line_items', 'data.line_items.data.price.product'],
-    };
+    const params = { limit: 100 };
     if (startingAfter) params.starting_after = startingAfter;
 
     const page = await stripe.checkout.sessions.list(params);
 
     for (const session of page.data) {
+      if (session.payment_status !== 'paid') continue;
+
       // Does this session contain the ebook sku?
-      const lineItems = (session.line_items && session.line_items.data) || [];
+      // Fetch line items separately to avoid Stripe's 4-level expand limit.
+      const lineItemsPage = await stripe.checkout.sessions.listLineItems(session.id, {
+        limit: 100,
+        expand: ['data.price.product'],
+      });
+      const lineItems = lineItemsPage.data || [];
       const hasEbook = lineItems.some(li => {
         const prod = li.price && li.price.product;
         return prod && typeof prod === 'object' &&

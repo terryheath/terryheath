@@ -80,7 +80,7 @@ Notes on posts:
 ## Tags created or changed
 
 - Created `inkhorn-2` ("Inkhorn Review No. 2", public).
-- Created 29 contributor tags (name is the exact byline, slug follows the site pattern). See `build-log.md`, Step 5.
+- Created 25 contributor tags (name is the exact byline, slug follows the site pattern). See `build-log.md`, Step 5.
 - Renamed "Don J Kraemer" to "Don J. Kraemer" (slug `don-j-kraemer` kept).
 - Set bio (+ nomination line) as the description on every contributor tag whose record has a bio; the previous descriptions are copied into `build-log.md` and `backups/2026-10-09/tags.json`.
 - Contributor tag `codeinjection_head` fields untouched.
