@@ -124,3 +124,26 @@
 - Winter tag: appended winter-2026 (last, non-primary) to "How Now Brown Cow" (6a9b511d76a9fb00019387fd); primary autumn-2026, url https://inkhornreview.com/autumn-2026/how-now-brown-cow/, 2nd tag james-lewis-huss
 - Winter tag: winter-2026 appended as last tag on Pigment, Metal Storm, Incredible Shrinking Coffee Shop of Paris, How Now Brown Cow (URLs/bylines unchanged); /winter-2026/ now 200 with hero and Forthcoming.
 - Theme 1.2.0 deployed: "The Issues" section on /archive/ (partials/issue-entry.hbs; hardcoded Forthcoming entry for Winter until its catalog page publishes), "All issues" link on edition pages, post.hbs issue link now /autumn-2026/ (inkhorn-1) or /winter-2026/ (inkhorn-2 wins), edition.hbs uses {{#with tag}} and as |x| pattern; {{else}} on {{#get}} does not fire so edition lines use as |found| + {{#if}}.
+- Step 4: rescheduled Winter #1 "Correspondence with Genevieve" (6ac955ce82c1da000109e56d) to 2026-12-01T12:00:00.000Z (04:00 PST)
+- Step 4: rescheduled Winter #2 "Liquor, Ashes" (6ac955cf82c1da000109e579) to 2026-12-01T12:01:00.000Z (04:01 PST)
+- Step 4: rescheduled Winter #3 "On the Disappearance of Little Old Ladies" (6ac955d082c1da000109e582) to 2026-12-01T12:02:00.000Z (04:02 PST)
+- Step 4: rescheduled Winter #4 "Silt" (6aa30d857aff75000107d9b5) to 2026-12-01T12:03:00.000Z (04:03 PST)
+- Step 4: rescheduled Winter #6 "The Dog Had Been Dead for Years" (6ac955d082c1da000109e58b) to 2026-12-01T12:05:00.000Z (04:05 PST)
+- Step 4: rescheduled Winter #7 "The Bucket" (6ac955d182c1da000109e594) to 2026-12-01T12:06:00.000Z (04:06 PST)
+- Step 4: rescheduled Winter #8 "Viking Burial" (6ac955d182c1da000109e59d) to 2026-12-01T12:07:00.000Z (04:07 PST)
+- Step 4: rescheduled Winter #9 "Bend" (6ac955d282c1da000109e5a6) to 2026-12-01T12:08:00.000Z (04:08 PST)
+- Step 4: rescheduled Winter #10 "Twenty-Seven" (6ac955d282c1da000109e5af) to 2026-12-01T12:09:00.000Z (04:09 PST)
+- Step 4: rescheduled Winter #11 "Half-Remembered Goodbyes" (6ac955d482c1da000109e5b8) to 2026-12-01T12:10:00.000Z (04:10 PST)
+- Step 4: rescheduled Winter #13 "Sled Dogs" (6ac955d482c1da000109e5c1) to 2026-12-01T12:12:00.000Z (04:12 PST)
+- Step 4: rescheduled Winter #14 "I Am Either Hallucinating This Morning or Living It" (6ac955d582c1da000109e5ca) to 2026-12-01T12:13:00.000Z (04:13 PST)
+- Step 4: rescheduled Winter #15 "There is safety in birdsong" (6ac955d582c1da000109e5d3) to 2026-12-01T12:14:00.000Z (04:14 PST)
+- Step 4: rescheduled Winter #16 "Pine Needles" (6ac955d582c1da000109e5dc) to 2026-12-01T12:15:00.000Z (04:15 PST)
+- Step 4: rescheduled Winter #18 "In a Stranger’s Kitchen" (6ac955d682c1da000109e5e5) to 2026-12-01T12:17:00.000Z (04:17 PST)
+- Step 4: rescheduled Winter #19 "Father’s Day" (6aa2f5227aff75000107d950) to 2026-12-01T12:18:00.000Z (04:18 PST)
+- Step 4: rescheduled Winter #21 "Look: I am nothing says Lot’s daughter" (6aa2fe657aff75000107d96b) to 2026-12-01T12:20:00.000Z (04:20 PST)
+- Step 4: rescheduled Winter #22 "A black ribbon? Really?" (6ac955d682c1da000109e5ee) to 2026-12-01T12:21:00.000Z (04:21 PST)
+- Step 4: rescheduled Winter #23 "Gaotie" (6ac955d782c1da000109e5f7) to 2026-12-01T12:22:00.000Z (04:22 PST)
+- Step 4: rescheduled Winter #24 "That one time in December" (6ac955d782c1da000109e600) to 2026-12-01T12:23:00.000Z (04:23 PST)
+- Step 4: rescheduled Winter #25 "Re: What Happened to Your Father at the Omaha Zoo." (6ac955d782c1da000109e609) to 2026-12-01T12:24:00.000Z (04:24 PST)
+- Reschedule: Winter catalog page 6ac9560182c1da000109e617 now scheduled 2026-12-01T12:30:00.000Z (Dec 1, 2026, 4:30 AM PT)
+- Reschedule check: 21 scheduled Winter posts, first Dec 1, 2026, 4:00 AM, last Dec 1, 2026, 4:24 AM, catalog Dec 1, 2026, 4:30 AM; all posts earlier than catalog: true; posts with newsletter: 0

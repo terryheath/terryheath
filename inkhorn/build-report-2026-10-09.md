@@ -71,7 +71,7 @@ Posts, tags, catalog pages and theme are done and live. **Two things are not liv
 Notes on posts:
 - Texts match the supplied `html` (checked by read-back). Poem stanza breaks (empty paragraphs) survived Ghost's import.
 - Eight Autumn pieces were created and published on 2026-10-09 with no newsletter.
-- All 21 unpublished Winter posts are scheduled for 2026-12-01, 08:00 PST (16:00 UTC) plus one minute per print position; the four Winter pieces already live leave gaps at 08:04, 08:11, 08:16 and 08:19. No newsletter on any of them.
+- All 21 unpublished Winter posts are scheduled for 2026-12-01, 04:00 PST (12:00 UTC) plus one minute per print position (rescheduled from 08:00 later on 2026-10-09); the four Winter pieces already live leave gaps at 04:04, 04:11, 04:16 and 04:19. No newsletter on any of them.
 - Tags on new posts, in order: season, contributor, genre, `#archive`, `inkhorn-1` or `inkhorn-2`. Existing posts only had tags appended (`inkhorn-1` on I was taught, Fledgling, Lungs of Truth; `inkhorn-2` on all 25 Winter pieces; `#archive` on the three already-scheduled Winter pieces). No titles, slugs, dates or primary tags were changed.
 - Father's Day byline fixed to "Don J. Kraemer" (post excerpt and tag name; tag slug unchanged).
 - Draft "[Edit before publishing] The Winter Issue Starts in January — One Piece a Week" deleted (body in the backup).
@@ -89,7 +89,7 @@ Notes on posts:
 ## Pages
 
 - Autumn catalog page: body replaced with one paragraph, excerpt now says "Twenty-five pieces", `ih-book` JSON untouched.
-- Winter catalog page "Inkhorn Review No. 2 · Winter 2026" created: tags `#catalog`, `inkhorn-2`, `winter-2026`, Featured, excerpt "Twenty-five pieces.", scheduled 2026-12-01 07:59 PST. When it publishes it becomes the home page edition automatically.
+- Winter catalog page "Inkhorn Review No. 2 · Winter 2026" created: tags `#catalog`, `inkhorn-2`, `winter-2026`, Featured, excerpt "Twenty-five pieces.", scheduled 2026-12-01 04:30 PST (moved from 07:59, after the last piece at 04:24). When it publishes it becomes the home page edition automatically.
 
 ## Theme (version 1.1.0, deployed)
 

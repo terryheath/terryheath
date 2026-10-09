@@ -27,8 +27,8 @@ const description = (p) => (p.bio ? p.bio + (p.nomination_line ? ' ' + p.nominat
 const norm = (s) => s.replace(/<[^>]+>/g, ' ').replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 const emptyParas = (h) => (h.match(/<p>(\s|<br\s*\/?>)*<\/p>/g) || []).length;
 
-// Schedule: position n -> 2026-12-01 08:00 PST (16:00Z) + (n-1) minutes
-const winterTime = (pos) => new Date(Date.UTC(2026, 11, 1, 16, 0 + (pos - 1))).toISOString();
+// Schedule: position n -> 2026-12-01 04:00 PST (12:00Z) + (n-1) minutes
+const winterTime = (pos) => new Date(Date.UTC(2026, 11, 1, 12, 0 + (pos - 1))).toISOString();
 
 async function all(resource, opts) {
   const out = [];
@@ -154,7 +154,7 @@ function findPost(posts, rec) {
       const when = winterTime(Number(rec.position));
       if (post.status === 'scheduled' && new Date(post.published_at).toISOString() === when) continue;
       if (APPLY) await api.posts.edit({ id: post.id, updated_at: post.updated_at, status: 'scheduled', published_at: when });
-      log(`Step 4: rescheduled Winter #${rec.position} "${rec.title}" (${post.id}) to ${when} (08:${String(Number(rec.position) - 1).padStart(2, '0')} PST)`);
+      log(`Step 4: rescheduled Winter #${rec.position} "${rec.title}" (${post.id}) to ${when} (04:${String(Number(rec.position) - 1).padStart(2, "0")} PST)`);
     }
     return;
   }
