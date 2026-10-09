@@ -20,6 +20,10 @@ routes:
     controller: channel
     filter: tag:autumn-2026+tag:nonfiction
     order: published_at asc
+  /winter-2026/:
+    template: edition
+    data: tag.winter-2026
+
   /winter-2026/poetry/:
     controller: channel
     filter: tag:winter-2026+tag:poetry
@@ -273,10 +277,10 @@ collections:
     order: published_at asc
     limit: 999
 
-  /winter-2026/:
+  /winter-2026/all/:
     permalink: /winter-2026/{slug}/
     template: edition
-    filter: primary_tag:winter-2026,tag:inkhorn-2
+    filter: primary_tag:winter-2026
     data: tag.winter-2026
     order: published_at asc
     limit: 999
