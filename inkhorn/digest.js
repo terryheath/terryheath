@@ -13,6 +13,8 @@
 import GhostAdminAPI from '@tryghost/admin-api';
 import { createHmac } from 'crypto';
 import { postToBluesky } from './social-bluesky.js';
+import { esc, HR, sectionHeading, itemRow } from './digest-html.js';
+import { runWelcome } from './welcome.js';
 
 const GHOST_API_URL   = process.env.GHOST_API_URL;
 const GHOST_ADMIN_KEY = process.env.GHOST_ADMIN_KEY;
@@ -82,16 +84,6 @@ const DEPT_ORDER = [
 
 // ── HTML helpers ──────────────────────────────────────────────────────────────
 
-function esc(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-const HR = '<hr style="border:none;border-top:1px solid #e0e0e0;margin:28px 0 24px">';
-
 function issueBlock(issueSlug, tag) {
   // Prefer tag name over computed title (tag.name = "Inkhorn Review No. 1" etc.)
   const title = tag?.name || formatIssueTitle(issueSlug);
@@ -127,36 +119,6 @@ function issueBlock(issueSlug, tag) {
     `style="color:#1a1a1a;font-weight:700;text-decoration:none">Read the issue &rarr;</a></p>\n`;
 
   return html;
-}
-
-function sectionHeading(label) {
-  return (
-    `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px"><tr>` +
-    `<td style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;` +
-    `color:#888;padding-bottom:6px;border-bottom:2px solid #1a1a1a">` +
-    `${esc(label)}</td></tr></table>\n`
-  );
-}
-
-function itemRow(post, opts = {}) {
-  const titleLink = `<a href="${esc(post.url)}" style="color:#1a1a1a;font-weight:600;text-decoration:none">${esc(post.title || 'Untitled')}</a>`;
-  const byline    = post.custom_excerpt
-    ? `<br><span style="font-size:14px;font-style:italic;color:#555">${esc(post.custom_excerpt)}</span>`
-    : '';
-
-  if (opts.thumb && post.feature_image) {
-    return (
-      `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px"><tr>\n` +
-      `<td width="72" valign="top" style="padding-right:12px">\n` +
-      `<img src="${esc(post.feature_image)}" width="72" height="72" alt="" ` +
-      `style="display:block;object-fit:cover;border-radius:3px">\n` +
-      `</td>\n` +
-      `<td valign="middle" style="font-size:15px;line-height:1.4">${titleLink}${byline}</td>\n` +
-      `</tr></table>\n`
-    );
-  }
-
-  return `<p style="margin:0 0 10px;font-size:15px;line-height:1.4">${titleLink}${byline}</p>\n`;
 }
 
 function digestFooter() {
@@ -425,8 +387,7 @@ async function main() {
   }
 
   if (!sent?.email) {
-    console.error('\nFAILURE: email field is null after publish — newsletter was not associated, no emails queued.');
-    process.exit(1);
+    throw new Error('email field is null after publish — newsletter was not associated, no emails queued.');
   }
 
   console.log('\nSend confirmed by API.');
@@ -453,7 +414,22 @@ async function main() {
   }
 }
 
-main().catch(err => {
-  console.error(err);
+// The digest and the welcome-email step run independently: a failure in one
+// must not stop the other. Exit non-zero if either failed.
+const failed = [];
+try {
+  await main();
+} catch (err) {
+  console.error('\nDIGEST FAILED:', err);
+  failed.push('digest');
+}
+try {
+  await runWelcome({ api, ghostApiUrl: GHOST_API_URL, siteUrl: SITE_URL, dryRun: DRY_RUN });
+} catch (err) {
+  console.error('\nWELCOME STEP FAILED:', err);
+  failed.push('welcome');
+}
+if (failed.length) {
+  console.error(`\nFailed: ${failed.join(', ')}`);
   process.exit(1);
-});
+}

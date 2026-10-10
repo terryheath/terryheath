@@ -105,6 +105,7 @@ function findPost(posts, rec) {
       else want.push('inkhorn-1');
       const have = post.tags.map((t) => t.slug);
       const add = want.filter((s) => !have.includes(s));
+      // post.tags is the full list (internal tags included, e.g. #welcome-used); keep all of it.
       const tagList = post.tags.map((t) => ({ id: t.id })).concat(add.map((s) => ({ id: bySlug[s].id })));
       if (APPLY) {
         const edited = await api.posts.edit(
