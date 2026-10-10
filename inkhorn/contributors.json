@@ -85,5 +85,38 @@
     "isbns": [
       "1962812049"
     ]
+  },
+  "Shivani Sivagurunathan": {
+    "isbns": [
+      "9789814914116",
+      "9789832737674"
+    ],
+    "titles": [
+      "Being Born",
+      "Long Distance"
+    ]
+  },
+  "Emily Thompson-Mueller": {
+    "isbns": [],
+    "titles": [
+      "Ugly Good"
+    ]
+  },
+  "Bill Garvey": {
+    "slug": "william-garvey",
+    "isbns": [
+      "9781739042523",
+      "9781998441433"
+    ]
+  },
+  "Cecil Morris": {
+    "isbns": [
+      "9781964277370"
+    ]
+  },
+  "Frank William Finney": {
+    "isbns": [
+      "9798901468852"
+    ]
   }
 }

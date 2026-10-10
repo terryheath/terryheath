@@ -275,7 +275,7 @@ async function main() {
   const resolved = {};
 
   for (const [name, data] of Object.entries(contributors)) {
-    const slug = slugify(name);
+    const slug = data.slug || slugify(name);
     const books = [];
     console.log(`\n${name}  (slug: ${slug})`);
     console.log("─".repeat(50));

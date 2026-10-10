@@ -916,16 +916,17 @@ a:hover { color: #8f1d1d; }
 }
 .ih-contributor-name {
     display: inline-block;
-    font-size: 1.05rem;
+    font-size: 1.8rem;
     font-weight: 600;
     color: #1c1a17;
     text-decoration: none;
     margin-bottom: 0.6rem;
 }
+.ih-contributor-name a { font-size: inherit; }
 .ih-contributor-name:hover { color: #8f1d1d; }
 .ih-contributor-bio {
     margin: 0 0 1.5rem;
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     line-height: 1.65;
 }
 .ih-contributor-shelf-head {
