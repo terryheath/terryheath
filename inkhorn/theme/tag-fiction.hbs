@@ -13,7 +13,7 @@
     {{> "genre-filter-row"}}
 
     <div class="ih-archive-post-list" id="ih-archive-list">
-        {{#get "posts" filter="tag:fiction+tag:hash-archive" order="published_at desc" limit="999"}}
+        {{#get "posts" filter="tag:fiction" order="published_at desc" limit="999"}}
         {{#foreach posts}}
         <div class="ih-archive-entry"
              data-month="{{date published_at format="YYYY-MM"}}"

@@ -5,7 +5,7 @@ routes:
 
   /archive/:
     controller: channel
-    filter: tag:hash-archive
+    filter: tag:[fiction,nonfiction,poetry,micro]
     order: published_at desc
 
   /autumn-2026/poetry/:
@@ -440,7 +440,7 @@ collections:
   /fiction/:
     permalink: /fiction/{slug}/
     template: tag-fiction
-    filter: primary_tag:fiction+tag:hash-archive
+    filter: primary_tag:fiction
     data: tag.fiction
     order: published_at desc
     limit: 999
@@ -448,7 +448,7 @@ collections:
   /nonfiction/:
     permalink: /nonfiction/{slug}/
     template: tag-nonfiction
-    filter: primary_tag:nonfiction+tag:hash-archive
+    filter: primary_tag:nonfiction
     data: tag.nonfiction
     order: published_at desc
     limit: 999
@@ -456,7 +456,7 @@ collections:
   /poetry/:
     permalink: /poetry/{slug}/
     template: tag-poetry
-    filter: primary_tag:poetry+tag:hash-archive
+    filter: primary_tag:poetry
     data: tag.poetry
     order: published_at desc
     limit: 999
@@ -488,7 +488,7 @@ collections:
   /micro/:
     permalink: /micro/{slug}/
     template: tag-micro
-    filter: primary_tag:micro+tag:hash-archive
+    filter: primary_tag:micro
     data: tag.micro
     order: published_at desc
     limit: 999

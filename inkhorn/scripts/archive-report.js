@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // inkhorn/scripts/archive-report.js
-// Lists every #archive post with title, contributor, primary_tag, free/paid,
+// Lists every journal piece (genre-tagged post) with title, contributor, primary_tag, free/paid,
 // status, and published date. Output to terminal and CSV.
 //
 // Usage:
@@ -54,10 +54,10 @@ function genreLabel(post) {
 }
 
 async function main() {
-  console.log('Fetching #archive posts…');
+  console.log('Fetching journal pieces (genre-tagged)…');
 
   const posts = await api.posts.browse({
-    filter:  'tag:hash-archive',
+    filter:  'tag:[fiction,nonfiction,poetry,micro]',
     include: 'tags',
     limit:   'all',
     order:   'published_at desc',

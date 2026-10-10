@@ -9,7 +9,7 @@
 //
 // --start/--time are Pacific time. The script converts to UTC for Ghost.
 // Reads the slug order from inkhorn/drip/<issue-tag>.txt (one slug per line).
-// Sets each post: visibility=paid, tags +#archive +#this-week, schedules one week apart.
+// Sets each post: visibility=paid, tags +#this-week, schedules one week apart.
 // NO newsletter is attached (Ghost 6.61 email segmenter bug — drip is site-only).
 //
 // Credentials (macOS):
@@ -132,11 +132,10 @@ async function main() {
     const post = posts[i];
     const publishedAt = new Date(scheduleTime.getTime() + i * ONE_WEEK_MS).toISOString();
 
-    // Build updated tag list: add #archive and #this-week, keep existing tags
+    // Build updated tag list: add #this-week, keep existing tags
     const existingTagNames = (post.tags || []).map(t => ({ name: t.name }));
     const tagNames = [
       ...existingTagNames,
-      { name: '#archive' },
       { name: '#this-week' },
     ];
     // Deduplicate by name

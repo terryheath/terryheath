@@ -210,7 +210,7 @@ async function main() {
   const lastDigestAt = await getLastDigestAt();
   console.log('Last digest published_at:', lastDigestAt ?? '(none — first run)');
 
-  // Never include paid (#archive, visibility:paid) posts in the digest.
+  // Never include paid (visibility:paid) posts in the digest.
   const postsFilter = lastDigestAt
     ? `status:published+tag:-hash-digest+visibility:-paid+published_at:>'${lastDigestAt}'`
     : 'status:published+tag:-hash-digest+visibility:-paid';

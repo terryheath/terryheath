@@ -6,7 +6,6 @@
 // Does:
 //  1. Rewrites existing Patron tier → Print ($59/year)
 //  2. Creates Digital tier ($20/year)
-//  3. Bulk-adds #archive to all autumn-2026 and micro posts
 //  4. Creates draft announcement post tagged #this-week
 //  5. Creates draft "patrons" page
 //  6. Creates draft "ebooks" page (visibility: paid)
@@ -137,39 +136,6 @@ async function setupTiers() {
   console.log('  Digital tier done.');
 }
 
-// ── 2. Bulk-add #archive tag ──────────────────────────────────────────────────
-async function addArchiveTag() {
-  console.log('\n── Adding #archive to autumn-2026 and micro posts ──');
-
-  // Fetch all autumn-2026 posts
-  let page = 1;
-  let allPosts = [];
-  while (true) {
-    const data = await api('GET',
-      `/posts/?filter=${encodeURIComponent('primary_tag:[autumn-2026,micro]')}&include=tags&limit=250&page=${page}&fields=id,title,updated_at`
-    );
-    const posts = data.posts || [];
-    allPosts.push(...posts);
-    if (posts.length < 250) break;
-    page++;
-  }
-  console.log(`  Found ${allPosts.length} posts to tag.`);
-
-  let updated = 0;
-  let skipped = 0;
-  for (const post of allPosts) {
-    const hasArchive = (post.tags || []).some(t => t.slug === 'hash-archive');
-    if (hasArchive) { skipped++; continue; }
-
-    const tags = [...(post.tags || []).map(t => ({ name: t.name })), { name: '#archive' }];
-    await api('PUT', `/posts/${post.id}/`, {
-      posts: [{ tags, updated_at: post.updated_at }],
-    });
-    updated++;
-  }
-  console.log(`  Tagged: ${updated}, already tagged: ${skipped}`);
-}
-
 // ── 3. #this-week announcement post ──────────────────────────────────────────
 async function createThisWeekPost() {
   console.log('\n── Creating #this-week announcement draft ──');
@@ -284,7 +250,6 @@ async function createPrintEditionPage() {
 async function main() {
   console.log('Running print-first setup…');
   await setupTiers();
-  await addArchiveTag();
   await createThisWeekPost();
   await createPatronsPage();
   await createEbooksPage();

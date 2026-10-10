@@ -56,9 +56,9 @@
 {{/get}}
 
 {{!-- ── THE ARCHIVE ──────────────────────────────────────────────────── --}}
-{{!-- #this-week card + 4 newest public #archive posts --}}
+{{!-- #this-week card + 4 newest public journal pieces (genre-tagged) --}}
 {{#get "posts" filter="tag:hash-this-week+visibility:public,tag:hash-this-week+visibility:paid" limit="1" order="published_at desc" as |thisWeekPosts|}}
-{{#get "posts" filter="tag:hash-archive+visibility:public" limit="4" order="published_at desc" include="tags" as |archivePosts|}}
+{{#get "posts" filter="tag:[fiction,nonfiction,poetry,micro]+visibility:public" limit="4" order="published_at desc" include="tags" as |archivePosts|}}
 
 {{#if archivePosts}}
 <section class="ih-archive-section">
@@ -81,7 +81,7 @@
         {{/foreach}}
         {{/if}}
 
-        {{!-- Light cards: 4 newest public #archive posts --}}
+        {{!-- Light cards: 4 newest public journal pieces (genre-tagged) --}}
         {{#foreach archivePosts}}
         <div class="ih-card-light">
             <div class="ih-card-light-label">Free{{#foreach tags}}{{#match slug "=" "poetry"}} &middot; <a href="/poetry/" class="ih-card-light-genre-link">Poetry</a>{{/match}}{{#match slug "=" "fiction"}} &middot; <a href="/fiction/" class="ih-card-light-genre-link">Fiction</a>{{/match}}{{#match slug "=" "nonfiction"}} &middot; <a href="/nonfiction/" class="ih-card-light-genre-link">Nonfiction</a>{{/match}}{{#match slug "=" "micro"}} &middot; <a href="/micro/" class="ih-card-light-genre-link">Micro</a>{{/match}}{{#match slug "=" "art"}} &middot; <a href="/art/" class="ih-card-light-genre-link">Art</a>{{/match}}{{/foreach}}</div>

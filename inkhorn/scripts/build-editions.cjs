@@ -101,7 +101,7 @@ function findPost(posts, rec) {
       if (!post) { console.log('NOT FOUND', rec.title); continue; }
       const season = rec.edition;
       const want = [];
-      if (season === 'winter-2026') want.push('hash-archive', 'inkhorn-2');
+      if (season === 'winter-2026') want.push('inkhorn-2');
       else want.push('inkhorn-1');
       const have = post.tags.map((t) => t.slug);
       const add = want.filter((s) => !have.includes(s));
@@ -133,7 +133,7 @@ function findPost(posts, rec) {
       const t = (s) => { const x = bySlug[s] || byName[s]; if (!x) throw new Error('missing tag ' + s); return { id: x.id }; };
       const contributor = byName[rec.author] || bySlug[slugify(rec.author)];
       if (!contributor) throw new Error('missing contributor tag ' + rec.author);
-      const tagList = [t(rec.edition), { id: contributor.id }, t(rec.genre), t('hash-archive'), t(rec.edition === 'autumn-2026' ? 'inkhorn-1' : 'inkhorn-2')];
+      const tagList = [t(rec.edition), { id: contributor.id }, t(rec.genre), t(rec.edition === 'autumn-2026' ? 'inkhorn-1' : 'inkhorn-2')];
       const autumn = rec.edition === 'autumn-2026';
       if (!APPLY) { console.log('would create', rec.edition, rec.position, rec.title); continue; }
       const data = { title: rec.title, slug: rec.slug, html: rec.html, custom_excerpt: rec.custom_excerpt, tags: tagList, status: 'draft' };
