@@ -17,7 +17,7 @@ Posts, tags, catalog pages and theme are done and live. **Two things are not liv
 | 3 | Motherland | Shivani Sivagurunathan | created | published | /autumn-2026/motherland/ |
 | 4 | Every Word Bitter | Patricia Russo | body + excerpt updated | published | /autumn-2026/every-word-bitter/ |
 | 5 | Death and the Maiden | J. A. Keefe | body + excerpt updated | published | /autumn-2026/death-and-the-maiden/ |
-| 6 | Mirror | William Garvey | created | published | /autumn-2026/mirror/ |
+| 6 | Mirror | Bill Garvey | created | published | /autumn-2026/mirror/ |
 | 7 | Tolls | Allyson Petrek | body + excerpt updated | published | /micro/tolls/ |
 | 8 | Our Daughter Haunts Us Now | Cecil Morris | created | published | /autumn-2026/our-daughter-haunts-us-now/ |
 | 9 | Dance Partner | Terry Sanville | body + excerpt updated | published | /autumn-2026/dance-partner/ |
@@ -114,7 +114,7 @@ Checked on the live home page: 25 numbered lines, every one linked, staff line u
 
 ## Contributors still needing a bio (no bio in the JSON)
 
-William Garvey, Cecil Morris, Emily Thompson-Mueller, Justin Ocelot, Sarah Parfitt, Bull Garlington, Aardhra Chandran, S. Marie Jones, Sanya Hundal Bery, Elliott Fielding, William Doreski, Michele Catalano, Sambhu R., Sam Agar, Jay Caselberg, James Lewis Huss, Nan J Bauer, Don J. Kraemer, Carol Shillibeer, Xingyu Zhao.
+Bill Garvey, Cecil Morris, Emily Thompson-Mueller, Justin Ocelot, Sarah Parfitt, Bull Garlington, Aardhra Chandran, S. Marie Jones, Sanya Hundal Bery, Elliott Fielding, William Doreski, Michele Catalano, Sambhu R., Sam Agar, Jay Caselberg, James Lewis Huss, Nan J Bauer, Don J. Kraemer, Carol Shillibeer, Xingyu Zhao.
 (Emily Thompson-Mueller, Aardhra Chandran, William Doreski, James Lewis Huss, Don J. Kraemer and Carol Shillibeer already have an older description on their tag, which I left alone.)
 
 ## Still to do by hand

@@ -1,7 +1,7 @@
 {
     "name": "inkhorn",
     "description": "Inkhorn Review Ghost theme",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "private": true,
     "engines": {
         "ghost": ">=5.0.0"

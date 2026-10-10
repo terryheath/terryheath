@@ -11,7 +11,7 @@
 - Step 5: created contributor tag shivani-sivagurunathan "Shivani Sivagurunathan" with bio (6ac9556082c1da000109e421)
 - Step 5: updated tag patricia-russo: description | old description: "Patricia Russo's work has appeared in One Art, Identity Theory, Michigan City Review, The Bloomin' Onion, and Verity La."
 - Step 5: updated tag j-a-keefe: description | old description: "Originally from London, J. A. Keefe has lived and worked in Valencia, Spain for many years."
-- Step 5: created contributor tag william-garvey "William Garvey" (NO BIO) (6ac9556082c1da000109e425)
+- Step 5: created contributor tag william-garvey "Bill Garvey" (NO BIO) (6ac9556082c1da000109e425)
 - Step 5: updated tag allyson-petrek: description | old description: "Allyson Petrek lives in Cincinnati, Ohio with her husband and two children. A Pushcart Prize nominee, she has won the TulipTree Review’s 2025 Wild Women contest and the 2024 Books by the Banks festival contest. Her stories and poems appear in various journals."
 - Step 5: created contributor tag cecil-morris "Cecil Morris" (NO BIO) (6ac9556082c1da000109e428)
 - Step 5: updated tag terry-sanville: description | old description: "Terry Sanville lives in San Luis Obispo, California with his artist-poet wife (his in-house editor) and two plump cats (his in-house critics). His short stories have been accepted more than 600 times by journals, magazines, and anthologies. Terry is a retired urban planner and an accomplished jazz and blues guitarist."
@@ -147,3 +147,22 @@
 - Step 4: rescheduled Winter #25 "Re: What Happened to Your Father at the Omaha Zoo." (6ac955d782c1da000109e609) to 2026-12-01T12:24:00.000Z (04:24 PST)
 - Reschedule: Winter catalog page 6ac9560182c1da000109e617 now scheduled 2026-12-01T12:30:00.000Z (Dec 1, 2026, 4:30 AM PT)
 - Reschedule check: 21 scheduled Winter posts, first Dec 1, 2026, 4:00 AM, last Dec 1, 2026, 4:24 AM, catalog Dec 1, 2026, 4:30 AM; all posts earlier than catalog: true; posts with newsletter: 0
+- Garvey: renamed tag "Bill Garvey" -> "Bill Garvey" (6ac9556082c1da000109e425, slug william-garvey kept)
+- Garvey: Mirror post (6ac955a482c1da000109e4ac) custom_excerpt "by Bill Garvey" -> "by Bill Garvey"
+- Garvey: Ghost scan for "Bill Garvey" after the change found: nothing
+- Bio: Bill Garvey (william-garvey) old description: null
+- Bio: Bill Garvey (william-garvey, tag name "Bill Garvey") description set
+- Bio: Bull Garlington (bull-garlington) old description: null
+- Bio: Bull Garlington (bull-garlington, tag name "Bull Garlington") description set
+- Bio: Cecil Morris (cecil-morris) old description: null
+- Bio: Cecil Morris (cecil-morris, tag name "Cecil Morris") description set
+- Bio: Justin Ocelot (justin-ocelot) old description: null
+- Bio: Justin Ocelot (justin-ocelot, tag name "Justin Ocelot") description set
+- Bio: Sarah Parfitt (sarah-parfitt) old description: null
+- Bio: Sarah Parfitt (sarah-parfitt, tag name "Sarah Parfitt") description set
+- Bio: Emily Thompson-Mueller (emily-thompson-mueller) old description: "Emily Thompson-Mueller is a writer and  recovering horse girl from Louisiana. Her collection Ugly Good won the 2021 Studio in the Woods Residency Award. She pursues an MFA at Bennington Writing Seminars."
+- Bio: Emily Thompson-Mueller (emily-thompson-mueller, tag name "Emily Thompson-Mueller") description set
+- Bio: Goran Hodžić (goran-hodzic) old description: "Bosnian-born, Goran Hodžić immigrated to the United States in 1993 as a political refugee. He paints from his studio near Seattle, Washington."
+- Bio: Goran Hodžić (goran-hodzic, tag name "Goran Hodzic") description set
+- Stanza check (published + scheduled poems tagged inkhorn-1/2, 24 poems): stored lexical, source JSON and public pages agree on stanza counts for every poem. Public markup is one <p> per stanza with an empty <p></p> between, rendered with the normal 1.4em paragraph gap; no <p><br></p> double gaps. No fix needed. Single-paragraph poems per the JSON: Mirror, Our Daughter Haunts Us Now, Dead Lines (24 Weeks), Pine Needles.
+- Garvey/bios: theme 1.3.1 deployed after Mirror author change to Bill Garvey.
