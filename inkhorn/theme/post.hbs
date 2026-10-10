@@ -78,6 +78,9 @@
 
     </header>
 
+    {{!-- Podcast episodes: platform links under the title block, above the audio player --}}
+    {{#has tag="Podcast"}}{{> "podcast-pills"}}{{/has}}
+
     {{!-- ── POST CONTENT ─────────────────────────────────────────────────── --}}
     <section class="ih-post-content gh-content">
         {{content}}
