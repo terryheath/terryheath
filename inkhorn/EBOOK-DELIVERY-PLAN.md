@@ -128,3 +128,15 @@ The password is a Railway variable (`ADMIN_PASSWORD`), sent over HTTPS only, wit
 - Set `ADMIN_PASSWORD` in Railway and add `charge.refunded` to the Stripe endpoint if you choose refund revocation.
 - Cancel the BookFunnel account once the first order has gone through the new flow.
 - No SES domain verification is needed: `inkhornreview.com` is already verified with DKIM and out of the sandbox.
+
+## As built (2026-10-11)
+
+Built as approved, with these specifics:
+- Files: private S3 bucket `inkhornreview-ebooks-private` in AWS account `888671692472`, us-east-2, public access blocked, versioning on, SSE-S3. Read access only for `bookwish-ses-sender`.
+- Download state: SQLite on a Railway volume at `/data` on `inkhorn-shop-service`. Links are `<id>.<signature>` (HMAC with `LINK_SECRET`), so a link can be re-sent unchanged and nothing in the database can rebuild one.
+- Links open a landing page; only the Download button (a POST) counts. Admin shows each order's download history, with a refund warning once downloaded. No automatic refund revocation.
+- Preorder release time comes from the Ghost catalog page (scheduled `published_at`), checked every minute; Stripe metadata `release_at` is the fallback.
+- Host: `download.inkhornreview.com` (Railway custom domain; Cloudflare CNAME + `_railway-verify` TXT, DNS only).
+- SES bounce and complaint notices for `inkhornreview.com` go to SNS topic `inkhorn-ses-feedback`, subscribed by hello@inkhornreview.com.
+- BookFunnel removed: Stripe `download_url` cleared, `release-ebook.js` and the `ebooks` page template deleted, the draft `ebooks` Ghost page deleted.
+- Tested in Stripe's `stripe-mock` with locally signed webhooks (no sandbox could be created without a browser I could drive), plus the real S3 path.
