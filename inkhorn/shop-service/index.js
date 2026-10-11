@@ -15,7 +15,12 @@ const app = express();
 app.set('trust proxy', true);
 
 // ── STRIPE ──────────────────────────────────────────────────────────────────
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+// STRIPE_API_HOST/PORT/PROTOCOL point the client at a local stripe-mock (development only)
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY, process.env.STRIPE_API_HOST ? {
+  host: process.env.STRIPE_API_HOST,
+  port: process.env.STRIPE_API_PORT || 12111,
+  protocol: process.env.STRIPE_API_PROTOCOL || 'http',
+} : undefined);
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 app.use(cors({ origin: cfg.corsOrigin }));
@@ -33,7 +38,7 @@ app.use('/admin', adminRouter({ stripe }));
 // ── PRODUCT CACHE ─────────────────────────────────────────────────────────────
 let productCache = null;
 let productCacheTime = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = cfg.cacheMs; // 5 minutes by default
 
 async function getProducts() {
   const now = Date.now();

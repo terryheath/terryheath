@@ -8,8 +8,9 @@
 //  2. Creates Digital tier ($20/year)
 //  4. Creates draft announcement post tagged #this-week
 //  5. Creates draft "patrons" page
-//  6. Creates draft "ebooks" page (visibility: paid)
-//  7. Creates draft "print-edition" page
+//  6. Creates draft "print-edition" page
+//
+// Ebook delivery is handled by shop-service (per-order download links), not by a page.
 
 import { createHmac } from 'crypto';
 
@@ -187,46 +188,7 @@ async function createPatronsPage() {
   console.log('  patrons page created as draft.');
 }
 
-// ── 5. Ebooks page ────────────────────────────────────────────────────────────
-async function createEbooksPage() {
-  console.log('\n── Creating ebooks page ──');
-  const existing = await api('GET', `/pages/?filter=slug:ebooks&limit=1&fields=id`);
-  if ((existing.pages || []).length > 0) {
-    console.log('  ebooks page already exists — skipping.');
-    return;
-  }
-
-  const html = `<!--kg-card-begin: html-->
-<div style="max-width:700px;margin:0 auto;padding:40px 24px">
-  <h1 style="font-size:2rem;font-weight:500;margin-bottom:8px">Subscriber Ebooks</h1>
-  <p style="color:#5b544a;margin-bottom:40px">Download your copies below. Links are provided by BookFunnel and expire after a set time — re-visit this page to get a fresh link.</p>
-
-  <div style="display:flex;flex-direction:column;gap:32px">
-    <div style="display:flex;gap:24px;align-items:flex-start;padding-bottom:32px;border-bottom:1px solid #d6cdbd">
-      <img src="/content/images/2026/09/inkhorn-cover.jpg" alt="Autumn 2026 cover" style="width:120px;height:auto;flex-shrink:0">
-      <div>
-        <div style="font-size:1.2rem;font-weight:500;margin-bottom:4px">Inkhorn Review — Autumn 2026</div>
-        <div style="color:#5b544a;font-size:0.95rem;margin-bottom:16px">EPUB · PDF</div>
-        <a href="#" style="background:#8f1d1d;color:#fff;padding:10px 20px;font-family:sans-serif;font-size:14px;font-weight:600;text-decoration:none;display:inline-block">[Paste BookFunnel link] Download →</a>
-      </div>
-    </div>
-  </div>
-</div>
-<!--kg-card-end: html-->`;
-
-  await api('POST', '/pages/', {
-    pages: [{
-      title:      'Subscriber Ebooks',
-      slug:       'ebooks',
-      status:     'draft',
-      visibility: 'paid',
-      html,
-    }],
-  });
-  console.log('  ebooks page created as draft (visibility: paid).');
-}
-
-// ── 6. Print Edition page ─────────────────────────────────────────────────────
+// ── 5. Print Edition page ─────────────────────────────────────────────────────
 async function createPrintEditionPage() {
   console.log('\n── Creating print-edition page ──');
   const existing = await api('GET', `/pages/?filter=slug:print-edition&limit=1&fields=id`);
@@ -252,7 +214,6 @@ async function main() {
   await setupTiers();
   await createThisWeekPost();
   await createPatronsPage();
-  await createEbooksPage();
   await createPrintEditionPage();
   console.log('\nDone. Check Ghost Admin to review and publish draft pages/posts.');
   console.log('Remember to:');

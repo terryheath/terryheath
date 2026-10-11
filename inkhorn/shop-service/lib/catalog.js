@@ -7,7 +7,7 @@
 const crypto = require('crypto');
 const cfg = require('./config');
 
-const TTL = 5 * 60 * 1000;
+const TTL = cfg.cacheMs;
 let cache = null;
 let cacheAt = 0;
 

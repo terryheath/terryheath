@@ -276,3 +276,81 @@ Shape of `GET /automations/:id` (long strings truncated, ids kept):
 This matches the source-derived shape. Send-email actions also carry a read-only `stats` object. `email_lexical` is a JSON string; its root children are all `paragraph` nodes (types seen: `extended-text`, `link`, `paragraph`, `root`).
 
 **Markers not found.** None of the five emails contains `<!--welcome:archive-->` or `<!--welcome:podcast-->`. There is no `html` card node and no `<!--` anywhere in any `email_lexical`. Email 2 ("Two pieces to start with") is plain paragraphs with two links, and email 3 ("The life behind the work") has one link under "Here is the latest conversation." and a second link to the podcast page. The write was not attempted.
+
+## Re-enrolment findings (2026-10-10)
+
+Findings only, from Ghost v6.67.0 source and read-only GETs on the live pod (staff token). No member was created, changed or deleted. Paths below are under `ghost/core/core/server/` unless stated.
+
+### Deploy check (digest service)
+
+Railway deployment `7faec6d0-7e58-4057-85d3-bd7929c82561` is **SUCCESS**, commit `d1c743a5…`, created 2026-10-10 11:52 PDT, builder Railpack (Node 24.21). It is the latest deployment; the previous one (`ef0d4a9d…`) shows REMOVED. The service config reads start command `node inkhorn/digest.js`, cron `0 14 * * 0`, restart policy NEVER. The deployment is `buildOnly` with an instance in state CREATED, which is how a cron service sits between runs. The next run (Sunday 2026-10-11 14:00 UTC) will use this build.
+
+### a. How public signup behaves on this pod
+
+Settings read live: `members_signup_access: "all"`, `members_enabled: true`, `members_invite_only: false`, `blocked_email_domains: []`, `email_verification_required: false`, `comments_enabled: "off"`, `labs.automations: true`.
+
+1. **The member is not created at the form.** The form posts to `/members/api/send-magic-link` (`web/members/app.js:84`). `sendMagicLink` → `_handleSignup` (`services/members/members-api/controllers/router-controller.js:1073`) checks `members_signup_access` and the blocked-domain list, then calls `sendEmailWithMagicLink`. That only emails a signup link (`members-api.js:228`). If a member with that email already exists, the type silently becomes `signin`.
+2. **The member is created when the person clicks the link.** `createSessionFromMagicLink` (`services/members/middleware.js:415`) → `exchangeTokenForSession` → `getMemberDataFromMagicLinkToken` (`members-api.js:272`). For an unknown email with token type `signup`/`subscribe` it runs `users.create({name, email, labels, newsletters, attribution, geolocation})` and adds a login event. A script cannot complete this step without access to each mailbox.
+3. **That creation starts the free welcome flow.** `users.create` is called with no `context`, so `_resolveContextSource` returns `member` (`member-repository.js:296`: `import`, `system`, `api` (any API key), `admin` (a staff user), otherwise `member`). `WELCOME_EMAIL_SOURCES = ['member']` (`:57`), and the create path at `:524` calls `triggerMemberSignupAutomation`. With `labs.automations` on, the legacy trigger returns early (`:239`) and the new `automationsApi.trigger({event:'member_sign_up'})` enqueues a run. Only this path starts the flow; `POST /members` and `PUT /members/:id` from the Admin API have source `admin` or `api` and never do.
+4. **Newsletters on that signup.** The signup passes `newsletters` from the form if given, else undefined; `create` then subscribes the member to every active newsletter with `subscribe_on_signup:true` and `visibility:members` (`member-repository.js:492`, `:659`). On this pod that is **Weekly Digest only**. The poll sends a flow email only if `enable_updates_and_announcements` is true, or is null and the member has at least one newsletter (`services/automations/poll.ts:69,213`); otherwise the step ends as `member unsubscribed`. The first flow action is a send with no wait, so email 1 goes out as soon as the poll runs.
+5. **Email to the person besides the flow:** exactly one, the signup confirmation (magic link), sent at step 1. Flow email 1 ("Welcome to Inkhorn Review") follows immediately at creation; emails 2–5 follow at +72 h, +96 h, +168 h, +168 h.
+6. **Email to staff (not the person):** each free creation emits `MemberCreatedEvent`; `staff-service.js:124` → `notifyFreeMemberSignup` sends "🥳 Free member signup: …" to users who are `status:active` with `free_member_signup_notification:true` **and** role Owner or Administrator (`models/user.js:552–580`). Live: `terry` (Owner) and `terry-heath` (Administrator) both qualify; `terry-2` is locked and `inkhorn` is Contributor, so neither does. That is 2 staff emails per re-signup.
+
+### b. Limits on many signups from one place
+
+From `web/shared/middleware/brute.js` and `shared/config/defaults.json` (`spam` block). Any pod-level overrides (env vars such as `spam__member_login__freeRetries`) are not readable through the API and were not checked.
+
+- `membersAuthEnumeration`, keyed by IP, uses `member_login`: `freeRetries 8`, `minWait 600000` (10 min), `maxWait 43200000` (12 h), `lifetime 43200` (12 h). After about 8 requests from one IP in 12 hours, each further request is delayed and rejected with 429, with the wait growing from 10 min toward 12 h.
+- `membersAuth`, keyed by `<email>login` plus IP, uses `user_login`: `freeRetries 4`, `minWait` 10 min, `maxWait` 7 days. It limits repeat requests for the same address.
+- The middleware chain also requires an integrity token (`GET /members/api/integrity-token`, then `verifyIntegrityToken`) and has a honeypot field: a filled `honeypot` returns 201 and sends nothing.
+- `blocked_email_domains` is empty, and the default config list is empty, so no domain is blocked. `members_signup_access: all`, so no tier restriction applies.
+- Sending: the confirmation and flow emails use the pod's configured transactional mail path. That configuration is not readable here, so any provider send cap or sandbox limit is unknown.
+- A successful link click resets the per-email counter (`middleware.js:431`) but deliberately not the IP enumeration counter.
+
+### c. Free members and what deletion removes (live, read-only)
+
+160 free, 1 paid, 1 comped, 0 gift (162 total). No comments exist (`/comments/` total 0). Notes: 0 non-empty on any member. Free members: created 2026-08-31 to 2026-10-10 (22 in the last 7 days, 97 in the last 30); about 100 carry an `Import …` label. Top domains: gmail 102, yahoo 12, aol 6, hotmail 4.
+
+On the 160 free members:
+
+| Attached to the member | Count | On delete |
+|---|---|---|
+| Newsletter subscriptions (`members_newsletters`) | 154 have ≥1: Weekly Digest 135, Life on Words 19, Weekly Micro 12, Founder's Letter 9, Issue Announcements 9. 19 are subscribed but **not** to Weekly Digest | Deleted (cascade) |
+| No newsletters (unsubscribed or never subscribed) | 6 (`subscribed:false`) | Nothing to delete, but the "unsubscribed" state is only the absence of rows, and `members_subscribe_events` (cascade) goes too |
+| `enable_updates_and_announcements` | null on all 160 | Gone with the row |
+| Labels (`members_labels`) | 101 have ≥1: `Import 2026-09-15 09:40` 65, `Fall 2026` 33, `Import 2026-09-26 17:11` 18, `Import 2026-09-23 16:42` 17, `Life on Words Guest` 17, `Winter 2026` 3, `Micro` 2, `Team` 1, `Import 2026-09-15 09:26/…` small counts | Deleted (cascade). Label definitions survive |
+| Notes | 0 | n/a |
+| Complimentary / paid | 0 of the 160 | The comped member and the paid member are outside the 160 |
+| Email history | `email_count` > 0 on 138 (sum 267 sent, 194 opened); 22 never emailed | The member's counters, `members_click_events` and the other event tables are deleted. `email_recipients` and `automated_email_recipients` have no FK to members and stay as orphan rows |
+| Comments | 0 | n/a. For future reference comments and reports go `SET NULL`; likes cascade |
+| Email suppression | 0 suppressed | The suppression list is keyed by email, not by member, and is unaffected |
+| Automation runs | The new flow has no runs yet | `welcome_email_automation_runs` cascade; `automation_runs.member_id` SET NULL, and a step with no member ends as `member unsubscribed` |
+
+Cascade list from `data/schema/schema.js`: `members_created_events`, `members_status_events`, `members_login_events`, `members_subscribe_events`, `members_email_change_events`, `members_click_events`, `members_feedback`, `email_spam_complaint_events`, `members_stripe_customers`, `subscriptions`, `members_products`, `offer_redemptions`, and the metafield tables all cascade; `donation_payment_events`, `comments`, `comment_reports`, `recommendation_*` and `gifts` set null.
+
+Other effects of a delete: `id`, `uuid` and `transient_id` are new on re-creation, so every unsubscribe link and tracking link in already-sent mail (all keyed to the old uuid) stops resolving to a member. `created_at` becomes the re-signup time, and the created/status events that feed the Members growth chart are deleted, so history shifts. Signup attribution is lost. A deleted member who re-signs up with no `newsletters` in the request is subscribed to Weekly Digest, including the 6 who currently have none and the 19 who are on other lists only. The old unsubscribed state is not preserved anywhere.
+
+### d. Everything keyed to a Ghost member or reading member data
+
+Repo and Railway project "Inkhorn Cron" (services: podcast-import, inkhorn-shop-service, shelves-job, patreon-sync, terryheath-digest, address-service, digest, scheduler-check, og-webhook).
+
+- **address-service** (`inkhorn/address-service/index.js`): authenticates the visitor with a Ghost member JWT (`/members/.well-known/jwks.json`), looks the member up by email, and stores the shipping address in the member's `note` plus the label `address-on-file`. After a delete and re-signup the note and label are gone and `hasAddress` reads false, and no label or note of this kind exists on any current member, so nothing is lost today. Print-tier only. An old session cookie would also fail to resolve until the person signs in again.
+- **scripts/export-mailing-list.js**: reads Print-tier members' `note` and labels. Same exposure: a re-created Print member would lose their SHIP block. No Print member is among the 160 free.
+- **subscribe-newsletter.js**: bulk-subscribes every member carrying a label to a newsletter. Run after a re-signup it would find none of the old labels (for example `heath-on-words`) on the re-created members, and so skip them.
+- **shop-service**: Stripe Checkout and SES only. It makes no Ghost member calls.
+- **patreon-sync.js**: reads Patreon, writes the `patreon-supporters` page. No Ghost member data.
+- **terryheath-digest.js**: posts to the terryheath.com Ghost from Inkhorn public posts. No member data.
+- **scheduler-check.js, podcast-import, shelves-job, og-webhook**: posts, tags and pages only.
+- **welcome.js / the flow**: runs are keyed to the member id; see the table above.
+- **Theme**: `@member` is read only to switch UI (`default.hbs`, `page-address.hbs`, `cover.hbs`, `content-cta.hbs`, `comments.hbs`). Nothing is stored.
+- **Ghost webhooks** (`/integrations/?include=webhooks`): only `post.published` hooks exist (Inkhorn, to Railway og-webhook; OG Image Setter, to a Cloud Run host). No `member.*` webhook is registered, so nothing outside Ghost is told about a member delete or add. Zapier and Transistor are built-in integrations with no member-event webhooks.
+- **Not in the repo or on Railway (not checked):** Mailgun/provider-side suppressions, Stripe customer records for the paid and comped members, any external mailing list.
+- The repo's `scripts/backup-ghost.cjs` has no member export, so no snapshot exists today.
+
+### e. What a snapshot could and could not restore through the Admin API
+
+`POST /members/` (`serializers`/`member-repository.js:445`) accepts and stores: `email`, `name`, `note`, `subscribed`, `geolocation`, `created_at`, `newsletters` (ids), `email_disabled`, `status`, `products`, and `labels` (names; missing labels are created). The request has source `admin` (staff token) or `api` (integration key), so it does **not** start the welcome flow and sends no email (`send_email` defaults off).
+
+- **Restorable from a snapshot:** email, name, labels, notes, newsletter subscriptions exactly as they were (including explicit "none"), the `subscribed` flag, geolocation, `created_at`, suppression-based `email_disabled`, comped status via `products` (needs Stripe).
+- **Not restorable:** member `id`, `uuid` and `transient_id` (all regenerated), so old email links stay dead; `last_seen_at`; `email_count`, `email_opened_count` and open rate, and every per-member event (created, login, status, subscribe, click, feedback); signup attribution and the original growth-chart history; `enable_comment_notifications` and `enable_updates_and_announcements` (not in the create allow-list; whether a later edit accepts them was not verified); any in-flight automation runs; Stripe subscriptions and customers (for the paid member, and a delete without `cancel` leaves the Stripe subscription running).
+- The orphaned `email_recipients` rows would not re-attach to a restored member.

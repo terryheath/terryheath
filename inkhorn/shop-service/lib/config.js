@@ -32,6 +32,9 @@ module.exports = {
 
   automaticTax: env.STRIPE_AUTOMATIC_TAX !== 'off',
 
+  // How long product and catalog lookups are cached (milliseconds)
+  cacheMs: Number(env.CATALOG_TTL_MS) || 5 * 60 * 1000,
+
   linkDays: 30,
   maxDownloads: 5,
 
