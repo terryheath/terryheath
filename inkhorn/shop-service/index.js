@@ -3,25 +3,32 @@
 const express = require('express');
 const cors = require('cors');
 const Stripe = require('stripe');
-const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
+
+const cfg = require('./lib/config');
+const catalog = require('./lib/catalog');
+const orders = require('./lib/orders');
+const downloads = require('./lib/downloads');
+const adminRouter = require('./lib/admin');
+const { startReleaseJob } = require('./lib/release');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.set('trust proxy', true);
 
 // ── STRIPE ──────────────────────────────────────────────────────────────────
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ── SES ─────────────────────────────────────────────────────────────────────
-const ses = new SESClient({ region: process.env.AWS_REGION || 'us-east-2' });
-
 // ── CORS ─────────────────────────────────────────────────────────────────────
-app.use(cors({ origin: 'https://inkhornreview.com' }));
+app.use(cors({ origin: cfg.corsOrigin }));
 
 // ── BODY PARSING ─────────────────────────────────────────────────────────────
 // Raw body for Stripe webhook signature verification
 app.use('/webhook', express.raw({ type: 'application/json' }));
 // JSON body for all other routes
 app.use(express.json());
+
+// ── DOWNLOADS AND ADMIN ──────────────────────────────────────────────────────
+app.use('/d', downloads);
+app.use('/admin', adminRouter({ stripe }));
 
 // ── PRODUCT CACHE ─────────────────────────────────────────────────────────────
 let productCache = null;
@@ -43,9 +50,13 @@ async function getProducts() {
 
   const result = {};
   for (const prod of products.data) {
-    const { sku, format, download_url } = prod.metadata || {};
+    const meta = prod.metadata || {};
+    const { sku, format, file_epub } = meta;
     if (!sku || !format) continue;
-    if (format === 'ebook' && !download_url && prod.metadata.preorder !== 'true') continue; // offer ebook if download_url is set or it is a preorder
+
+    const preorder = await catalog.isPreorder(sku, meta);
+    // An ebook is offered once its file is in place, or while it is a preorder
+    if (format === 'ebook' && !file_epub && !preorder) continue;
 
     if (!result[sku]) result[sku] = { sku, formats: [] };
 
@@ -58,7 +69,7 @@ async function getProducts() {
       price_id: price.id,
       price_cents: price.unit_amount,
       currency: price.currency,
-      preorder: prod.metadata.preorder === 'true',
+      preorder,
     });
   }
 
@@ -118,6 +129,9 @@ app.post('/checkout', async (req, res) => {
       if (!sku || !format || !quantity || quantity < 1) {
         return res.status(400).json({ error: 'Each item requires sku, format, quantity' });
       }
+      if (format === 'ebook' && quantity > 1) {
+        return res.status(400).json({ error: 'Ebooks are limited to one copy per order.' });
+      }
 
       const prod = products[sku];
       if (!prod) return res.status(400).json({ error: `Unknown sku: ${sku}` });
@@ -130,19 +144,7 @@ app.post('/checkout', async (req, res) => {
         printQty += quantity;
       }
 
-      const lineItem = {
-        price: fmt.price_id,
-        quantity,
-      };
-
-      if (fmt.preorder) {
-        lineItem.price_data = undefined; // use price_id
-        // Add preorder note via adjustable_quantity or description — we'll use the description approach
-        // Stripe Checkout doesn't support custom descriptions per line item directly
-        // We pass preorder via metadata on the session instead
-      }
-
-      lineItems.push(lineItem);
+      lineItems.push({ price: fmt.price_id, quantity });
     }
 
     // Shipping line item
@@ -165,10 +167,9 @@ app.post('/checkout', async (req, res) => {
     const sessionParams = {
       mode: 'payment',
       line_items: lineItems,
-      automatic_tax: { enabled: true },
       billing_address_collection: 'auto',
-      success_url: 'https://inkhornreview.com/order-complete/?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://inkhornreview.com/cart/',
+      success_url: `${cfg.siteUrl}/order-complete/?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${cfg.siteUrl}/cart/`,
       metadata: {
         items: JSON.stringify(items.map(i => ({
           sku: i.sku,
@@ -182,6 +183,7 @@ app.post('/checkout', async (req, res) => {
         }) ? 'true' : 'false',
       },
     };
+    if (cfg.automaticTax) sessionParams.automatic_tax = { enabled: true };
 
     if (hasPrint) {
       sessionParams.shipping_address_collection = { allowed_countries: ['US'] };
@@ -196,6 +198,7 @@ app.post('/checkout', async (req, res) => {
 });
 
 // ── GET /order ─────────────────────────────────────────────────────────────────
+// Shown on the order-complete page. Never returns a download link: those are only emailed.
 app.get('/order', async (req, res) => {
   try {
     const { session_id } = req.query;
@@ -210,25 +213,19 @@ app.get('/order', async (req, res) => {
     }
 
     const items = [];
-    for (const li of session.line_items.data) {
-      const price = li.price;
-      const product = price && price.product;
-      if (!product || typeof product === 'string') continue;
-
-      const { sku, format, download_url } = product.metadata || {};
-      if (!sku || !format) continue; // skip shipping line item
-
+    for (const line of orders.productLines(session)) {
+      const meta = line.product.metadata || {};
       const item = {
-        name: product.name,
-        format,
-        quantity: li.quantity,
-        preorder: product.metadata.preorder === 'true',
+        name: line.name,
+        format: line.format,
+        quantity: line.quantity,
+        preorder: await catalog.isPreorder(line.sku, meta),
       };
-
-      if (format === 'ebook' && download_url) {
-        item.download_url = download_url;
+      if (line.format === 'ebook') {
+        const releaseAt = await catalog.releaseAt(line.sku, meta.release_at);
+        item.delivery = releaseAt ? 'on_release' : 'emailed';
+        if (releaseAt) item.release_label = catalog.formatDate(releaseAt);
       }
-
       items.push(item);
     }
 
@@ -244,147 +241,36 @@ app.get('/order', async (req, res) => {
 });
 
 // ── POST /webhook ─────────────────────────────────────────────────────────────
+// Answers 200 only once the order is recorded and its emails are handled.
+// On any failure it answers 500 so Stripe retries; repeats are harmless.
 app.post('/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
     try {
-      // Retrieve with line items expanded
-      const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+      const fullSession = await stripe.checkout.sessions.retrieve(event.data.object.id, {
         expand: ['line_items', 'line_items.data.price.product'],
       });
-
-      await handleOrderCompleted(fullSession);
+      await orders.handleCompletedSession(fullSession);
     } catch (err) {
-      console.error('handleOrderCompleted error:', err.message);
+      console.error('checkout.session.completed handling failed:', err.message);
+      return res.status(500).json({ error: 'processing failed, please retry' });
     }
   }
 
   res.json({ received: true });
 });
 
-// ── EMAIL HELPERS ─────────────────────────────────────────────────────────────
-async function handleOrderCompleted(session) {
-  const buyerEmail = session.customer_details && session.customer_details.email;
-  if (!buyerEmail) {
-    console.warn('No buyer email on session', session.id);
-    return;
-  }
-
-  const orderLines = [];
-  let hasEbook = false;
-  const shipping = session.shipping_details;
-
-  for (const li of (session.line_items && session.line_items.data) || []) {
-    const price = li.price;
-    const product = price && price.product;
-    if (!product || typeof product === 'string') continue;
-
-    const { sku, format, download_url } = product.metadata || {};
-    if (!sku || !format) continue; // skip shipping
-
-    const isPreorder = product.metadata.preorder === 'true';
-    const line = {
-      name: product.name,
-      format,
-      quantity: li.quantity,
-      preorder: isPreorder,
-      download_url: format === 'ebook' && download_url ? download_url : null,
-    };
-    orderLines.push(line);
-    if (format === 'ebook') hasEbook = true;
-  }
-
-  const totalFormatted = ((session.amount_total || 0) / 100).toFixed(2);
-
-  // ── Buyer email ──────────────────────────────────────────────────────────
-  let buyerBody = `Thank you for your order from Inkhorn Review!\n\n`;
-  buyerBody += `Order summary:\n`;
-  for (const line of orderLines) {
-    let preorderNote = '';
-    if (line.preorder && line.format === 'ebook') {
-      preorderNote = ' [Preorder — your ebook will be emailed to you on release day]';
-    } else if (line.preorder) {
-      preorderNote = ' [Preorder — ships on release]';
-    }
-    buyerBody += `  - ${line.name} (${line.format})${preorderNote} x${line.quantity}\n`;
-    if (line.download_url) {
-      buyerBody += `    Download: ${line.download_url}\n`;
-    }
-  }
-  buyerBody += `\nTotal: $${totalFormatted}\n`;
-
-  if (orderLines.some(l => l.format === 'print')) {
-    buyerBody += `\nYour print order ships to U.S. addresses only. `;
-    if (orderLines.some(l => l.preorder && l.format === 'print')) {
-      buyerBody += `Preordered items ship on the release date.\n`;
-    }
-  }
-
-  buyerBody += `\nThank you for supporting independent literary publishing.\n\nInkhorn Review\nhttps://inkhornreview.com`;
-
-  await sendEmail({
-    to: buyerEmail,
-    subject: 'Your Inkhorn Review order',
-    body: buyerBody,
-  });
-
-  // ── Staff email ──────────────────────────────────────────────────────────
-  let staffBody = `New order on Inkhorn Review\n\nSession: ${session.id}\n\n`;
-  staffBody += `Items:\n`;
-  for (const line of orderLines) {
-    staffBody += `  - ${line.name} (${line.format})${line.preorder ? ' [PREORDER]' : ''} x${line.quantity}\n`;
-  }
-
-  staffBody += `\nTotal: $${totalFormatted} ${(session.currency || '').toUpperCase()}\n`;
-
-  if (shipping && shipping.name) {
-    staffBody += `\nShipping to:\n`;
-    staffBody += `  ${shipping.name}\n`;
-    if (shipping.address) {
-      const a = shipping.address;
-      staffBody += `  ${a.line1}${a.line2 ? ', ' + a.line2 : ''}\n`;
-      staffBody += `  ${a.city}, ${a.state} ${a.postal_code}\n`;
-      staffBody += `  ${a.country}\n`;
-    }
-  }
-
-  staffBody += `\nBuyer: ${buyerEmail}\n`;
-  staffBody += `\nhttps://dashboard.stripe.com/payments/${session.payment_intent}`;
-
-  await sendEmail({
-    to: 'hello@inkhornreview.com',
-    subject: `New order — ${orderLines.map(l => l.name).join(', ')}`,
-    body: staffBody,
-  });
-}
-
-async function sendEmail({ to, subject, body }) {
-  const command = new SendEmailCommand({
-    Source: 'Inkhorn Review <orders@inkhornreview.com>',
-    Destination: { ToAddresses: [to] },
-    Message: {
-      Subject: { Data: subject, Charset: 'UTF-8' },
-      Body: { Text: { Data: body, Charset: 'UTF-8' } },
-    },
-  });
-  await ses.send(command);
-}
-
 // ── START ─────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`inkhorn-shop-service listening on port ${PORT}`);
+app.listen(cfg.port, () => {
+  console.log(`inkhorn-shop-service listening on port ${cfg.port}`);
+  startReleaseJob();
 });

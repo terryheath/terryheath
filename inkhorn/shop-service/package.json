@@ -1,12 +1,16 @@
 {
   "name": "inkhorn-shop-service",
-  "version": "1.0.0",
-  "description": "Inkhorn Review shop: checkout, order retrieval, webhook, SES emails",
+  "version": "2.0.0",
+  "description": "Inkhorn Review shop: checkout, order retrieval, webhook, SES emails, ebook delivery",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node --disable-warning=ExperimentalWarning index.js"
+  },
+  "engines": {
+    "node": ">=22.13"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1145.0",
     "@aws-sdk/client-ses": "^3.1145.0",
     "@aws-sdk/credential-providers": "^3.1145.0",
     "cors": "^2.8.5",

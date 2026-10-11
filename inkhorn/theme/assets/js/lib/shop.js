@@ -17,7 +17,11 @@
   }
 
   function getCart() {
-    try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch (_) { return []; }
+    var cart;
+    try { cart = JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch (_) { cart = []; }
+    // Ebooks are limited to one copy per order
+    cart.forEach(function (item) { if (item.format === 'ebook') item.quantity = 1; });
+    return cart;
   }
 
   function saveCart(cart) {
@@ -214,6 +218,7 @@
         } else {
           html += '<p class="ih-book-ebook-note">Delivered by email. Available in any country.</p>';
         }
+        html += '<p class="ih-book-ebook-note">Ebooks can\u2019t be refunded once downloaded.</p>';
       }
 
       html += '</div>';
@@ -264,7 +269,7 @@
             }
           }
           if (existing) {
-            existing.quantity += qty;
+            if (fmt !== 'ebook') existing.quantity += qty;
           } else {
             var addedFmt = prod.formats.filter(function(f) { return f.format === fmt; })[0];
             var addedPreorder = addedFmt ? !!addedFmt.preorder : false;
@@ -488,15 +493,16 @@
             html += '<div class="ih-order-item">';
             html += '<div class="ih-order-item-name">' + e(item.name) + ' (' + e(item.format) + ')';
             if (item.preorder) {
-              var preorderMsg = item.format === 'ebook' ? 'Preorder — your ebook will be emailed to you on release day' : 'Preorder — ships on release';
+              var preorderMsg = item.format === 'ebook' ? 'Preorder' : 'Preorder — ships on release';
               html += ' <span class="ih-order-preorder">' + preorderMsg + '</span>';
             }
             html += '</div>';
             if (item.quantity > 1) html += '<div class="ih-order-item-qty">Qty: ' + item.quantity + '</div>';
-            if (item.download_url && !item.preorder) {
-              html += '<div class="ih-download-link-wrap">';
-              html += '<a class="ih-download-link" href="' + e(item.download_url) + '" target="_blank" rel="noopener">Download Ebook &rarr;</a>';
-              html += '</div>';
+            if (item.format === 'ebook') {
+              var note = item.delivery === 'on_release' && item.release_label
+                ? 'Your ebook will be emailed to you on ' + item.release_label + '.'
+                : 'Your download link is being emailed to you.';
+              html += '<div class="ih-order-item-qty">' + e(note) + '</div>';
             }
             html += '</div>';
           }
