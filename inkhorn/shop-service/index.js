@@ -33,7 +33,14 @@ app.use(express.json());
 
 // ── DOWNLOADS AND ADMIN ──────────────────────────────────────────────────────
 app.use('/d', downloads);
-app.use('/admin', adminRouter({ stripe }));
+app.use('/admin', adminRouter({
+  stripe,
+  // every active ebook product with its file key, for the admin file check
+  listEbookProducts: async () => {
+    const list = await stripe.products.list({ active: true, limit: 100 });
+    return list.data.filter(p => (p.metadata || {}).format === 'ebook').map(p => ({ name: p.name, file_epub: (p.metadata || {}).file_epub }));
+  },
+}));
 
 // ── PRODUCT CACHE ─────────────────────────────────────────────────────────────
 let productCache = null;

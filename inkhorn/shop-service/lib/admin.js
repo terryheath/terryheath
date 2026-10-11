@@ -7,6 +7,7 @@ const { db } = require('./db');
 const links = require('./links');
 const orders = require('./orders');
 const { runRelease } = require('./release');
+const { headFile } = require('./storage');
 const { esc, page, rateLimit } = require('./web');
 
 function pt(iso) {
@@ -32,7 +33,7 @@ function recordFailure(ip) {
   else f.n++;
 }
 
-function adminRouter({ stripe }) {
+function adminRouter({ stripe, listEbookProducts }) {
   const router = express.Router();
 
   router.use((req, res, next) => {
@@ -90,8 +91,28 @@ function adminRouter({ stripe }) {
 <h2>Import an order from Stripe</h2>
 <p class="small">For an order the webhook never recorded. It creates the links but sends no email.</p>
 <form method="post" action="/admin/import"><input type="text" name="session_id" placeholder="cs_live_… or cs_test_…"> <button>Import</button></form>
+<h2>Ebook files</h2>
+<p class="small"><a href="/admin/files">Check that every ebook's file is readable</a> (does not count a download).</p>
 <h2>Release check</h2>
 <form method="post" action="/admin/release-run"><button>Run release check now</button></form>`));
+  });
+
+  router.get('/files', async (req, res) => {
+    let rows = '';
+    try {
+      for (const p of await listEbookProducts()) {
+        let status;
+        if (!p.file_epub) status = '<strong>no file_epub set</strong>';
+        else {
+          try {
+            const h = await headFile(p.file_epub);
+            status = h ? `readable (${(h.size / 1048576).toFixed(2)} MB, ${esc(pt(h.modified))})` : '<strong>NOT FOUND</strong>';
+          } catch (err) { status = `<strong>error: ${esc(err.name)}</strong>`; }
+        }
+        rows += `<tr><td>${esc(p.name)}</td><td>${esc(p.file_epub || '')}</td><td>${status}</td></tr>`;
+      }
+    } catch (err) { rows = `<tr><td colspan="3">Could not load products: ${esc(err.message)}</td></tr>`; }
+    res.type('html').send(page('Ebook files', `${LAYOUT_CSS}<p><a href="/admin">&larr; Admin</a></p><h1>Ebook files</h1><table><tr><th>Product</th><th>File key</th><th>Status</th></tr>${rows}</table>`));
   });
 
   router.get('/search', (req, res) => {

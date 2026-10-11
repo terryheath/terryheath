@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, GetObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const cfg = require('./config');
 
 let s3;
@@ -29,4 +29,26 @@ async function openFile(key) {
   }
 }
 
-module.exports = { openFile };
+// Checks that a file exists and is readable, without downloading it: { size, modified } or null.
+async function headFile(key) {
+  if (!key || key.includes('..') || key.startsWith('/')) return null;
+
+  if (cfg.storageDir) {
+    const file = path.join(cfg.storageDir, key);
+    if (!fs.existsSync(file)) return null;
+    const st = fs.statSync(file);
+    return { size: st.size, modified: st.mtime };
+  }
+
+  if (!cfg.s3Bucket) throw new Error('S3_BUCKET is not set');
+  s3 = s3 || new S3Client({ region: cfg.awsRegion });
+  try {
+    const out = await s3.send(new HeadObjectCommand({ Bucket: cfg.s3Bucket, Key: key }));
+    return { size: out.ContentLength, modified: out.LastModified };
+  } catch (err) {
+    if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) return null;
+    throw err;
+  }
+}
+
+module.exports = { openFile, headFile };
