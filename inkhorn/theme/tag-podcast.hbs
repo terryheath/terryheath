@@ -10,6 +10,9 @@
 <main class="site-main">
 
     <section class="ih-podcast-page">
+        <h1 class="ih-podcast-page-heading">Life on Words</h1>
+        <p class="ih-podcast-page-kicker">The interview series of <a href="https://inkhornreview.com/">Inkhorn Review</a></p>
+        {{#if tag.description}}<p class="ih-podcast-page-desc">{{tag.description}}</p>{{/if}}
         {{> "podcast-pills"}}
     </section>
 
@@ -28,5 +31,41 @@
         {{/foreach}}
     </div>
     {{pagination}}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "PodcastSeries",
+  "name": "Life on Words",
+  "url": "https://inkhornreview.com/podcast/",
+  "description": {{{json tag.description}}},
+  "image": {{{json tag.feature_image}}},
+  "webFeed": "https://api.riverside.com/hosting/V48At7Hk.rss",
+  "author": {
+    "@type": "Person",
+    "name": "Terry Heath",
+    "url": "https://terryheath.com"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Inkhorn Review",
+    "url": "https://inkhornreview.com",
+    "logo": {{{json @site.logo}}}
+  },
+  "isPartOf": {
+    "@type": "Periodical",
+    "name": "Inkhorn Review",
+    "url": "https://inkhornreview.com"
+  },
+  "sameAs": [
+    "https://podcasts.apple.com/us/podcast/life-on-words/id6796221237",
+    "https://open.spotify.com/show/033Yk3F8x8QWBLK496Wbqd",
+    "https://www.youtube.com/@lifeon_words",
+    "https://music.amazon.com/podcasts/ac2d231d-d1ec-48df-ada2-bf8937940093/life-on-words",
+    "https://www.iheart.com/podcast/269-life-on-words-339902963",
+    "https://link.deezer.com/s/34grV0FJrr7Kxofm1RrOL"
+  ]
+}
+</script>
 
 </main>
