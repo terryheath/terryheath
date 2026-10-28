@@ -14,8 +14,8 @@ Inkhorn Review's stack:
 
 ## The sites
 
-- **lifeonwords.com** — Life on Words, a literary podcast. Ghost instance on PikaPods. The podcast import pipeline in this repo feeds it.
-- **inkhornreview.com** — Inkhorn Review, a quarterly literary journal (4 issues/year: autumn/September, winter/December, spring/March, summer/June). Ghost instance on PikaPods. Routes, contributor shelves, and code injection in this repo support it.
+- **lifeonwords.com** — Domain only. Its old Ghost pod (`silky-mushroom`) is empty and is not a publishing target. Life on Words is a **column of Inkhorn Review**, living at `inkhornreview.com/life-on-words/`; the podcast import pipeline publishes there. Do not treat lifeonwords.com as a site that holds episodes.
+- **inkhornreview.com** — Inkhorn Review, a quarterly literary magazine (4 issues/year: autumn/October, winter/January, spring/April, summer/July). Ghost instance on PikaPods. Routes, contributor shelves, and code injection in this repo support it. Issues 2 and 3 are both "winter" (`winter-2026`, `winter-2027`) to shift onto this schedule.
 - **terryheath.com** — Personal site. Ghost on PikaPods (`smoky-hyena.pikapod.net`). The weekly digest in this repo feeds it.
 
 ## What's in here
@@ -100,12 +100,16 @@ Fetches all scheduled posts, sorts them by current published_at order, and space
 ### Extending routes.yaml with more issues
 
 Inkhorn publishes **4 issues per year** on a quarterly schedule. Seasons and their release months:
-- **autumn** — September
-- **winter** — December
-- **spring** — March
-- **summer** — June
+- **autumn** — October
+- **winter** — January
+- **spring** — April
+- **summer** — July
 
-Issue slugs are `{season}-{year}` in lowercase, where year is the calendar year the issue releases (e.g. `autumn-2026`, `winter-2026`, `spring-2027`, `summer-2027`). Winter 2026 is `winter-2026` (it releases December 1, 2026); the older `winter-2027` block stays in routes.yaml untouched. Always use "autumn", never "fall".
+Issues 2 and 3 are both named "winter" (`winter-2026`, `winter-2027`) to move onto this schedule; `winter-2026` currently sits at December 1, 2026 and will move if the January cadence starts with it.
+
+Issue slugs are `{season}-{year}` in lowercase, where year is the calendar year the issue releases (e.g. `autumn-2026`, `winter-2026`, `spring-2027`, `summer-2027`). Always use "autumn", never "fall".
+
+An issue's **release date is its catalog page's `published_at`**, not the season's nominal month and not any post's own date. Autumn 2026's catalog page published 2026-10-01, so that is Autumn's release date. Anything date-driven (the paywall window below) reads it from there.
 
 For each new issue, add to `routes.yaml`:
 
@@ -176,6 +180,11 @@ Trigger manually via Railway (podcast-import service → Run now), or trigger th
 - **Cloudflare** — Wrangler OAuth (run `npx wrangler login` if expired). The old DNS-only API token lived in GCP project `whiterabbit-prod`, now deleted.
 
 ## Hard-won constraints — DO NOT relearn these
+
+- **The paywall is keyed to `inkhorn-N`, not the season tag.** An issue is the set of posts carrying its `inkhorn-N` tag; those are `visibility: paid` from release until 90 days after the issue's catalog-page `published_at`, then they go `public`. Posts carrying a season tag but **no** `inkhorn-N` are the free archive seed and stay `public` permanently — 14 of these sit under `autumn-2026`. Life on Words episodes and the founder's letter are never gated. Art is public. Gating by season tag is wrong twice over: it sweeps in the seed, and it catches any piece mis-tagged with a second season.
+- **Life on Words is a column at `/life-on-words/`, numbered.** The collection filters `primary_tag:podcast` (the tag slug stays `podcast`; only the URL is branded) and `^/podcast/(.*)$` redirects to it. Each episode carries a tag slugged `low-N` named "Life on Words No. N" — the `inkhorn-N` convention, where the tag NAME is the display string so the theme prints it unparsed. `riverside-to-ghost.js` assigns it from the highest existing `low-N` read from Ghost, and appends it **last**, because `post.hbs` reads public tag position 2 as the contributor for the byline. Episodes 1–10 were backfilled by hand.
+- **Ghost refuses published → scheduled.** Pulling a published post back onto a schedule needs two writes: published → draft, then draft → scheduled with a future `published_at`. Safe for Inkhorn issue posts only because none of them carry a newsletter; check `newsletter_id` before doing this to anything else, since draft → published is the transition that sends email.
+- **Season collections in routes.yaml use `template: edition`.** All 21 do. They were created on `template: tag`, which silently skipped the edition hero and numbered contents; fixed 2026-10-27. Genre collections keep their own `tag-*` templates and `/digest/` keeps `index`.
 
 - **Railway is the scheduler; GitHub Actions workflows are manual-dispatch fallbacks only.** Do not add `schedule:` triggers back to the workflows.
 - **digest.js derives its watermark from Ghost** (most recent published `#digest` post's `published_at`). There is no `digest-state.json`. Do not reintroduce a local state file.
