@@ -15,7 +15,10 @@
               {{#foreach benefits}}<li>{{this}}</li>{{/foreach}}
           </ul>
           {{/if}}
-          {{#match slug "print"}}
+          {{!-- The Print tier is Ghost's built-in default product and its slug
+                is immutable: it is "default-product", never "print". Matching
+                "print" here silently sent Print down the digital branch. --}}
+          {{#match slug "=" "default-product"}}
               <a href="#/portal/signup/{{slug}}/yearly" data-portal="signup" class="ih-sub-btn-print">Subscribe to {{name}}</a>
           {{else}}
               <a href="#/portal/signup/{{slug}}/yearly" data-portal="signup" class="ih-sub-btn-digital">Subscribe to {{name}}</a>
