@@ -7,9 +7,10 @@
  * Required env:
  *   GHOST_API_URL      https://accelerated-basilisk.pikapod.net  (Inkhorn Review)
  *                      Episodes are a column of Inkhorn Review, not a separate
- *                      site. They land in the /life-on-words/ collection by way
- *                      of the "Podcast" tag. The old lifeonwords.com pod
- *                      (silky-mushroom) is no longer the target.
+ *                      site: they land in the /life-on-words/ collection by way
+ *                      of the "Podcast" tag. Nothing here publishes to the old
+ *                      lifeonwords.com pod, which is empty. An earlier version
+ *                      of this comment named that pod and was wrong.
  *   GHOST_ADMIN_KEY    the "id:secret" Admin API key
  *
  * Optional env:
