@@ -7,6 +7,7 @@
   /tag/nonfiction/: /nonfiction/
   /tag/micro/: /micro/
   /tag/art/: /art/
-  /tag/podcast/: /podcast/
+  /tag/podcast/: /life-on-words/
+  ^/podcast/(.*)$: /life-on-words/$1
   /tag/letter/: /founder-letter/
   /colophon/: /founder-letter/

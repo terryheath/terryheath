@@ -44,6 +44,11 @@
                 {{#foreach pages}}<a href="{{url}}" class="ih-post-issue-link">{{title}}</a>{{#foreach tags}}{{#match slug "=" "hash-catalog"}}&ensp;&mdash;&ensp;<a href="{{../url}}" class="ih-post-issue-link">buy the print edition &rarr;</a>{{/match}}{{/foreach}}{{/foreach}}
                 {{/get}}
             {{/match}}
+            {{!-- Life on Words episode number. Tag slug low-N, tag name
+                 "Life on Words No. N" — same convention as inkhorn-N, so the
+                 tag name is the display string and nothing is parsed here.
+                 Assigned by riverside-to-ghost.js at import. --}}
+            {{#match slug "~^" "low-"}}<a href="/life-on-words/" class="ih-post-issue-link">{{name}}</a>{{/match}}
             {{/foreach}}
             {{!-- Genre: micro wins; else first of poetry/fiction/nonfiction/art --}}
             {{#has tag="micro"}}<a href="/micro/" class="ih-post-issue-link">Micro</a>{{else}}

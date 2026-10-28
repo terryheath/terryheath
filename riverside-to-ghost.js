@@ -5,7 +5,11 @@
  * Designed to run unattended on a schedule.
  *
  * Required env:
- *   GHOST_API_URL      https://silky-mushroom.pikapod.net
+ *   GHOST_API_URL      https://accelerated-basilisk.pikapod.net  (Inkhorn Review)
+ *                      Episodes are a column of Inkhorn Review, not a separate
+ *                      site. They land in the /life-on-words/ collection by way
+ *                      of the "Podcast" tag. The old lifeonwords.com pod
+ *                      (silky-mushroom) is no longer the target.
  *   GHOST_ADMIN_KEY    the "id:secret" Admin API key
  *
  * Optional env:
@@ -652,22 +656,47 @@ async function importedGuids() {
       filter: 'status:[draft,published,scheduled]'
     });
     for (const p of posts) {
+      // One pass per post: find the guid tag and, if present, the episode-number
+      // tag. A draft carries its low-N forward on upgrade so it is never
+      // renumbered.
+      let guid = null, lowTag = null;
       for (const t of (p.tags || [])) {
-        if (t.name && t.name.startsWith('#rs-')) {
-          const guid = t.name.slice(4);
-          if (p.status === 'draft') {
-            drafts.set(guid, { id: p.id, updated_at: p.updated_at, slug: p.slug });
-          } else {
-            published.add(guid);
-            drafts.delete(guid); // published wins if both exist somehow
-          }
-        }
+        if (t.name && t.name.startsWith('#rs-')) guid = t.name.slice(4);
+        if (/^low-\d+$/.test(t.slug || '')) lowTag = { name: t.name, slug: t.slug };
+      }
+      if (!guid) continue;
+      if (p.status === 'draft') {
+        drafts.set(guid, { id: p.id, updated_at: p.updated_at, slug: p.slug, lowTag });
+      } else {
+        published.add(guid);
+        drafts.delete(guid); // published wins if both exist somehow
       }
     }
     if (!posts.meta || !posts.meta.pagination.next) break;
     page = posts.meta.pagination.next;
   }
   return { published, drafts };
+}
+
+// ---------- Life on Words episode numbers ----------
+
+// Episodes carry a tag with slug low-N and name "Life on Words No. N" — the
+// same convention as the inkhorn-N issue tags, where the tag NAME is the
+// display string so the theme prints it without parsing anything.
+// The next number is the highest existing low-N plus one, read from Ghost so it
+// survives loss of any local state.
+async function highestEpisodeNo() {
+  let page = 1, max = 0;
+  while (true) {
+    const tags = await api.tags.browse({ limit: 100, page, fields: 'slug' });
+    for (const t of tags) {
+      const m = /^low-(\d+)$/.exec(t.slug || '');
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    }
+    if (!tags.meta || !tags.meta.pagination.next) break;
+    page = tags.meta.pagination.next;
+  }
+  return max;
 }
 
 // ---------- refresh one published episode (opt-in) ----------
@@ -726,6 +755,7 @@ async function main() {
   const cutoff = Date.now() - MAX_AGE_DAYS * 86400000;
 
   let created = 0, skipped = 0, guidFileChanged = false;
+  let nextEpisodeNo = await highestEpisodeNo() + 1;
 
   for (const item of feed.items.slice().reverse()) {
     const title = (item.title || '').trim();
@@ -755,6 +785,16 @@ async function main() {
     const guest = guestFromTitle(title);
     const tags = [{ name: 'Podcast' }, { name: guidTag(guid) }];
     if (guest) tags.push({ name: guest });
+
+    // Episode number goes LAST. The theme's byline reads public tag position 2
+    // as the contributor, so nothing may come between "Podcast" and the guest.
+    // An upgraded draft keeps the number it was given when it was created.
+    if (existingDraft && existingDraft.lowTag) {
+      tags.push(existingDraft.lowTag);
+    } else {
+      tags.push({ name: `Life on Words No. ${nextEpisodeNo}`, slug: `low-${nextEpisodeNo}` });
+      nextEpisodeNo++;
+    }
 
     const shotPath = findHeadshot(guest);
     const missingHeadshot = !!guest && !shotPath;
