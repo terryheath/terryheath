@@ -8,8 +8,8 @@ const path = require('path');
 const out = path.join(__dirname, '..', 'agreements');
 const W = 612, H = 792;
 
-function build(paid) {
-  const key = paid ? 'paid' : 'unpaid';
+function build(paid, published) {
+  const key = published ? 'published-paid' : paid ? 'paid' : 'unpaid';
   const doc = new PDFDocument({ size: 'LETTER', margins: { top: 60, bottom: 60, left: 64, right: 64 } });
   doc.pipe(fs.createWriteStream(path.join(out, key + '.pdf')));
   const fields = [];
@@ -70,7 +70,9 @@ function build(paid) {
   p('All other rights remain with you, and all rights revert to you on publication. You may reprint your work wherever you like; we only ask that Inkhorn Review be credited as the first publisher.');
   p('You confirm the work is yours and has not been previously published. A personal blog, newsletter, or public social media post counts as published; work shared only in a workshop or private group is fine.');
   h('Deadline');
-  doc.font('Helvetica').fontSize(10.5).text('Inkhorn Review cannot publish a piece without this signed agreement. It must be signed by the date below, or the piece will be withdrawn from the issue.', { lineGap: 2 }).moveDown(0.4);
+  doc.font('Helvetica').fontSize(10.5).text(published
+    ? 'Your piece has already been published and will stay published. Please sign by the date below. If you have not chosen between cash and the Print subscription by then, you will be paid the cash.'
+    : 'Inkhorn Review cannot publish a piece without this signed agreement. It must be signed by the date below, or the piece will be withdrawn from the issue.', { lineGap: 2 }).moveDown(0.4);
   line('Signing deadline:', 'Signing deadline', 'text', 130, { readonly: true });
   h('For the print edition');
   line('Name as it should appear in print:', 'Name in print', 'text', 280);
@@ -85,6 +87,7 @@ function build(paid) {
   fs.writeFileSync(path.join(out, key + '.fields.json'), JSON.stringify(fields, null, 1));
 }
 fs.mkdirSync(out, { recursive: true });
-build(true);
-build(false);
+build(true, false);
+build(false, false);
+build(true, true);
 console.log('built');

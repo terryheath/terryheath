@@ -8,7 +8,8 @@
  *
  *   --amount 0 sends the unpaid template; > 0 sends the paid template with that amount (total for all titles).
  *   Deadline: release date minus 30 days, or --deadline-days N from today (Winter 2026 uses 14).
- *   --no-pull: the piece is already published, so a missed deadline never unpublishes it (cron records "cash by default").
+ *   --no-pull: the piece is already published, so a missed deadline never unpublishes it (cron records "cash by default"); uses the
+ *   "(Paid, Already Published)" template, which has no withdrawal clause.
  *   --preview: prints only the email subject and body.
  *   --dry: prints what would be sent and changes nothing.
  * Needs the Keychain items docuseal-inkhorn-token, ghost-url-inkhorn, ghost-admin-inkhorn (or env DOCUSEAL_TOKEN, GHOST_*).
@@ -28,7 +29,7 @@ const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i < 0 ?
   const deadline = dlDays ? L.addDays(today, Number(dlDays)) : L.addDays(rel, -30);
   const noPull = !!arg('no-pull');
   const pieces = titles.map((t) => { const p = L.findPiece(issue, t); if (!p) throw new Error(`"${t}" is not in editions-2026.json for ${issue}`); return p; });
-  const templateName = paid ? 'Inkhorn Review Contributor Agreement (Paid)' : 'Inkhorn Review Contributor Agreement';
+  const templateName = paid && noPull ? 'Inkhorn Review Contributor Agreement (Paid, Already Published)' : paid ? 'Inkhorn Review Contributor Agreement (Paid)' : 'Inkhorn Review Contributor Agreement';
   const tpls = await L.ds('GET', '/templates?limit=100');
   const tpl = tpls.data.find((t) => t.name === templateName);
   if (!tpl) throw new Error('template not found in DocuSeal: ' + templateName);
@@ -52,7 +53,7 @@ const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i < 0 ?
   const sub = subs[0];
   for (const p of pieces) {
     tracker.records.push({
-      issue, slug: p.slug, title: p.title, contributor: name, email, template: paid ? 'paid' : 'unpaid', amount: paid ? amount : 0,
+      issue, slug: p.slug, title: p.title, contributor: name, email, template: paid && noPull ? 'published-paid' : paid ? 'paid' : 'unpaid', amount: paid ? amount : 0,
       submission_id: sub.submission_id, submitter_slug: sub.slug, sent: today, deadline, status: 'sent', choice: null, pay_method: null,
       on_deadline: noPull ? 'record-cash-default' : 'pull', reminded: false, pulled: false, comp_granted: false,
     });
