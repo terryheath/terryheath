@@ -200,4 +200,48 @@ function payFor(spec) {
   throw new Error(`unknown work "${spec}" (use poem, micro, flash, prose:WORDS, art, optionally with online)`);
 }
 
-module.exports = { payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
+// Sends one agreement and records it. opts: name, email, titles[], issue (winter-2026), amount, deadlineDays?, noPull?, greeting?,
+// allowUnknown? (pieces not in editions-2026.json get slug null), dry?, preview?. Returns { template, deadline, mail, submission_id, ... }.
+async function sendAgreement(o) {
+  const { name, email, issue, titles, amount = 0 } = o;
+  if (!name || !email || !issue || !titles || !titles.length) throw new Error('name, email, issue and titles are required');
+  const paid = amount > 0;
+  const rel = ymd(releaseDate(issue));
+  const today = todayPacific();
+  const deadline = o.deadlineDays ? addDays(today, Number(o.deadlineDays)) : addDays(rel, -30);
+  const noPull = !!o.noPull;
+  const pieces = titles.map((t) => {
+    const p = findPiece(issue, t);
+    if (p) return p;
+    if (o.allowUnknown) return { title: t, slug: null };
+    throw new Error(`"${t}" is not in editions-2026.json for ${issue}`);
+  });
+  const templateName = paid && noPull ? 'Inkhorn Review Contributor Agreement (Paid, Already Published)' : paid ? 'Inkhorn Review Contributor Agreement (Paid)' : 'Inkhorn Review Contributor Agreement';
+  const values = {
+    'Legal name': name, 'Piece titles': titles.join('; '), 'Issue': issueName(issue), 'Issue release date': pretty(rel), 'Signing deadline': pretty(deadline),
+    ...(paid ? { Amount: '$' + amount } : {}),
+  };
+  const mail = agreementEmail({ paid, amount, greeting: o.greeting || name.split(' ')[0], titles, issue: issueName(issue), release: pretty(rel), deadline: pretty(deadline), published: noPull });
+  const info = { name, email, template: templateName, values, deadline, noPull, mail };
+  if (o.preview || o.dry) return info;
+  const tpls = await ds('GET', '/templates?limit=100');
+  const tpl = tpls.data.find((t) => t.name === templateName);
+  if (!tpl) throw new Error('template not found in DocuSeal: ' + templateName);
+  const api = ghost();
+  const tracker = await loadTracker(api);
+  const dup = tracker.records.find((r) => r.status !== 'expired' && r.issue === issue && pieces.some((p) => norm(p.title) === norm(r.title)));
+  if (dup) { const e = new Error(`already sent for "${dup.title}" (${dup.contributor}, submission ${dup.submission_id}); not sending again`); e.duplicate = dup; throw e; }
+  const subs = await ds('POST', '/submissions', { template_id: tpl.id, send_email: true, message: { subject: mail.subject, body: mail.body }, submitters: [{ role: 'Contributor', email, name, values }] });
+  const sub = subs[0];
+  for (const p of pieces) {
+    tracker.records.push({
+      issue, slug: p.slug, title: p.title, contributor: name, email, template: paid && noPull ? 'published-paid' : paid ? 'paid' : 'unpaid', amount: paid ? amount : 0,
+      submission_id: sub.submission_id, submitter_slug: sub.slug, sent: today, deadline, status: 'sent', choice: null, pay_method: null,
+      on_deadline: noPull ? 'record-cash-default' : 'pull', reminded: false, pulled: false, comp_granted: false,
+    });
+  }
+  await saveTracker(api, tracker);
+  return { ...info, submission_id: sub.submission_id, records: pieces.length };
+}
+
+module.exports = { sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
