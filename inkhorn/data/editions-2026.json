@@ -617,24 +617,6 @@
     {
       "edition": "winter-2026",
       "position": 10,
-      "key": "twenty",
-      "title": "Twenty-Seven",
-      "title_italic_part": null,
-      "author": "Sanya Hundal Bery",
-      "genre": "poetry",
-      "status_now": "new",
-      "slug": "twenty-seven",
-      "current_url": null,
-      "match_scheduled_by_title": null,
-      "custom_excerpt": "by Sanya Hundal Bery",
-      "bio": null,
-      "bio_html": null,
-      "nomination_line": null,
-      "html": "<p>A man on the J train has a rat<br>on his shoulder. It’s been there<br>for as long as he can remember.<br>I tend to it now, he says,<br>since I realized it’ll never leave.</p>\n<p></p>\n<p>If I feed my rat<br>my sadness<br>will it grow to be the<br>most interesting thing about me?</p>\n<p></p>\n<p>The subway man is only Rat Man,<br>but I can be more than that,<br>I think.</p>\n<p></p>\n<p>Delight and I<br>exist so well together. We</p>\n<p></p>\n<p>call my mom when rhododendrons<br>are in bloom, and sit on that rock<br>by the creek. Watch the sun dance<br>across the water, those sweet,<br>blinking jewels! And,</p>\n<p></p>\n<p>it is because it is.<br>Which is what my doctor said<br>when I asked why</p>\n<p></p>\n<p>my right foot is half a size<br>larger than the other.</p>\n<p></p>\n<p>Kiley had told me that rats<br>have rootless incisors. Meaning<br>their teeth grow continuously<br>for their whole lives.</p>\n<p></p>\n<p>My rat was once all teeth.<br>Fang forward in an overdone<br>unbecoming sort of way.</p>\n<p></p>\n<p>I was so sad I was angry<br>and now I am so sad<br>I am trying<br>to be grateful.</p>\n<p></p>\n<p>OK, I’ll trim my rat’s teeth.</p>\n<p></p>\n<p>The Rat Man and I both<br>get off at Canal St.<br>A woman pounds her fist<br>against a dinner plate.</p>\n<p></p>\n<p>Nothing is to be trusted,<br>she yells, the Appalachian<br>Mountains are older than<br>Saturn’s rings.</p>\n<p></p>\n<p>I look it up, and it’s true!<br>It is because it is.</p>\n<p></p>\n<p>Four hundred million years<br>apart and yet<br>both existed before my sadness<br>and both will exist after.</p>\n<p></p>\n<p>But I, only with it.</p>\n<p></p>\n<p>I, only with my sadness and<br>all seven of Saturn’s rings and<br>the Appalachian Mountains,<br>which are also older than<br>the ozone layer and<br>every rat, and their unending teeth and<br>my mom, who calls to say<br>the lemon tree has sprouted<br>a green fruit, which is<br>encouraging. It just needs time,<br>and Maria, who waits for me<br>at the corner, because she always<br>takes off work on my birthday.</p>"
-    },
-    {
-      "edition": "winter-2026",
-      "position": 11,
       "key": "goodbyes",
       "title": "Half-Remembered Goodbyes",
       "title_italic_part": null,
@@ -652,7 +634,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 12,
+      "position": 11,
       "key": "metal",
       "title": "Metal Storm",
       "title_italic_part": null,
@@ -670,7 +652,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 13,
+      "position": 12,
       "key": "sled",
       "title": "Sled Dogs",
       "title_italic_part": null,
@@ -688,7 +670,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 14,
+      "position": 13,
       "key": "halluc",
       "title": "I Am Either Hallucinating This Morning or Living It",
       "title_italic_part": null,
@@ -706,7 +688,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 15,
+      "position": 14,
       "key": "birdsong",
       "title": "There is safety in birdsong",
       "title_italic_part": null,
@@ -724,7 +706,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 16,
+      "position": 15,
       "key": "pine",
       "title": "Pine Needles",
       "title_italic_part": null,
@@ -742,7 +724,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 17,
+      "position": 16,
       "key": "cow",
       "title": "How Now Brown Cow",
       "title_italic_part": null,
@@ -760,7 +742,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 18,
+      "position": 17,
       "key": "kitchen",
       "title": "In a Stranger’s Kitchen",
       "title_italic_part": null,
@@ -778,7 +760,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 19,
+      "position": 18,
       "key": "fathers",
       "title": "Father’s Day",
       "title_italic_part": null,
@@ -796,7 +778,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 20,
+      "position": 19,
       "key": "coffee",
       "title": "The Incredible Shrinking Coffee Shop of Paris",
       "title_italic_part": null,
@@ -814,7 +796,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 21,
+      "position": 20,
       "key": "lot",
       "title": "Look: I am nothing says Lot’s daughter",
       "title_italic_part": "Look: I am nothing",
@@ -832,7 +814,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 22,
+      "position": 21,
       "key": "ribbon",
       "title": "A black ribbon? Really?",
       "title_italic_part": null,
@@ -850,7 +832,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 23,
+      "position": 22,
       "key": "gaotie",
       "title": "Gaotie",
       "title_italic_part": null,
@@ -868,25 +850,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 24,
-      "key": "december",
-      "title": "That one time in December",
-      "title_italic_part": null,
-      "author": "Sanya Hundal Bery",
-      "genre": "poetry",
-      "status_now": "new",
-      "slug": "that-one-time-in-december",
-      "current_url": null,
-      "match_scheduled_by_title": null,
-      "custom_excerpt": "by Sanya Hundal Bery",
-      "bio": null,
-      "bio_html": null,
-      "nomination_line": null,
-      "html": "<p>we drove up to Lake Michigan. The<br>ice sat crisscrossed on the sand.<br>It was so rare, that<br>earnest stage of becoming.<br>The waves too, partially glaciated,<br>but the wake still fluid enough to<br>offer itself to the shore. The whole<br>spectacle, impossible to hold<br>in my salty, East Coast mind. And<br>still, there it was. I said,<br>I think I’ll write about this, I<br>just don’t have all of it yet. You<br>didn’t need to ask have what. Simply<br>reached behind my ears, to gather me<br>in your hands. Then, off you went,<br>barreling towards the water, mouth<br>open. And,</p>\n<p></p>\n<p>you know when you search for<br>that fallen thing under the couch<br>and there’s that one moment<br>right before<br>where its edges lightly brush<br>against your outstretched fingers?</p>\n<p></p>\n<p>Yes, it was just like that.</p>"
-    },
-    {
-      "edition": "winter-2026",
-      "position": 25,
+      "position": 23,
       "key": "komodo",
       "title": "Re: What Happened to Your Father at the Omaha Zoo.",
       "title_italic_part": null,
