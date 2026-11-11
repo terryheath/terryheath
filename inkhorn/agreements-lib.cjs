@@ -61,9 +61,16 @@ const issueName = (issue) => { const [s, y] = issue.split('-'); return `${s[0].t
 // --- editions data ---------------------------------------------------------------------------------
 const editionsPath = path.join(__dirname, 'data', 'editions-2026.json');
 const norm = (t) => t.toLowerCase().replace(/[’']/g, "'").replace(/\s+/g, ' ').trim();
+// Some scheduled pieces have no slug in the editions file; gen-edition-partials resolves them from the 2026-10-09 backup by title.
+const resolvedSlug = (p) => {
+  if (p.slug) return p.slug;
+  const backup = JSON.parse(fs.readFileSync(path.join(__dirname, 'backups', '2026-10-09', 'posts.json'), 'utf8'));
+  return (backup.find((b) => b.status === 'scheduled' && b.title === p.match_scheduled_by_title) || {}).slug || null;
+};
 function findPiece(issue, title) {
   const pieces = JSON.parse(fs.readFileSync(editionsPath, 'utf8')).pieces;
-  return pieces.find((p) => p.edition === issue && norm(p.title) === norm(title)) || null;
+  const p = pieces.find((x) => x.edition === issue && norm(x.title) === norm(title));
+  return p ? { ...p, slug: resolvedSlug(p) } : null;
 }
 
 // Raw Admin API (the admin-api package has no tiers/members-with-tiers/email-preview helpers).
@@ -95,4 +102,91 @@ async function notify(api, subject, html, to = process.env.NOTICE_EMAIL || 'hell
   finally { await api.posts.delete({ id: draft.id }); }
 }
 
-module.exports = { gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
+// The email contributors get with their agreement (DocuSeal replaces {{submitter.link}} with the signing link).
+function agreementEmail({ paid, amount, greeting, titles, issue, release, deadline, published }) {
+  const piece = titles.length > 1 ? 'your pieces ' + titles.map((t) => `"${t}"`).join(' and ') : `"${titles[0]}"`;
+  const subject = `Your Inkhorn Review contributor agreement: ${issue}`;
+  const intro = published
+    ? `Thank you for contributing to Inkhorn Review. ${piece[0] === 'y' ? 'Your pieces' : piece} appeared in our ${issue} issue, and we are putting the terms in writing.`
+    : `Thank you for contributing to Inkhorn Review. ${piece[0] === 'y' ? 'Your pieces are' : piece + ' is'} slated for our ${issue} issue, which releases on ${release}.`;
+  const what = `Please read and sign your contributor agreement. It covers the rights you grant Inkhorn Review (first serial rights, the online archive, anthologies drawn from our own archive, and a reading on our podcast, Life on Words), our promise not to use your work to train AI, and the details we need for print: your name as it should appear, a short bio, and a mailing address. It takes about five minutes.`;
+  const dl = published
+    ? `Please sign by ${deadline}.`
+    : `Please sign by ${deadline}. Inkhorn Review cannot publish a piece without the signed agreement; if it is not signed by then, the piece will be withdrawn from the issue.`;
+  const pay = !paid ? '' : published
+    ? `\n\nIn the agreement you can choose how you would like to be paid your $${amount}: cash (Zelle or PayPal in the U.S., Wise elsewhere), or a one-year Print subscription to Inkhorn Review (four quarterly issues mailed, plus the ebook of each) instead of cash. If you do not choose by ${deadline}, we will pay the cash.`
+    : `\n\nPayment is $${amount}, sent on ${release} by Zelle or PayPal (U.S.) or Wise (elsewhere). In the agreement you will choose between cash and a one-year Print subscription to Inkhorn Review (four quarterly issues mailed, plus the ebook of each) instead of cash.`;
+  const body = `Hello ${greeting},\n\n${intro}\n\n${what}\n\n${dl}${pay}\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\nInkhorn Review\nPublished by Follow the Rabbit LLC`;
+  return { subject, body };
+}
+
+// --- running-order pull: edit editions-2026.json + partials, commit to GitHub, upload the theme --------------------------------
+const REPO = 'terryheath/terryheath';
+async function gh(method, p, body) {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) throw new Error('GITHUB_TOKEN is required to commit');
+  const res = await fetch(`https://api.github.com/repos/${REPO}${p}`, {
+    method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'inkhorn-agreements', 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`GitHub ${method} ${p} -> ${res.status}: ${text.slice(0, 300)}`);
+  return JSON.parse(text);
+}
+// One commit on main containing { 'repo/relative/path': 'content' }.
+async function githubCommit(files, message) {
+  const ref = await gh('GET', '/git/ref/heads/main');
+  const base = await gh('GET', `/git/commits/${ref.object.sha}`);
+  const tree = await gh('POST', '/git/trees', { base_tree: base.tree.sha, tree: Object.entries(files).map(([path, content]) => ({ path, mode: '100644', type: 'blob', content })) });
+  const commit = await gh('POST', '/git/commits', { message, tree: tree.sha, parents: [ref.object.sha], author: { name: 'terryheath', email: '312312378+terryheath@users.noreply.github.com' } });
+  await gh('PATCH', '/git/refs/heads/main', { sha: commit.sha });
+  return commit.sha;
+}
+// Zip of the theme dir exactly as `gulp zip` does (built assets are committed), with some files replaced.
+function themeZip(replacements) {
+  const AdmZip = require('adm-zip');
+  const dir = path.join(__dirname, 'theme');
+  const skip = /^(node_modules|dist)(\/|$)|^(pnpm-debug\.log|pnpm-lock\.yaml|pnpm-workspace\.yaml|AGENTS\.md|CLAUDE\.md)$/;
+  const zip = new AdmZip();
+  (function walk(rel) {
+    for (const e of fs.readdirSync(path.join(dir, rel), { withFileTypes: true })) {
+      const r = rel ? `${rel}/${e.name}` : e.name;
+      if (skip.test(r)) continue;
+      if (e.isDirectory()) walk(r); else if (!(r in replacements)) zip.addFile(r, fs.readFileSync(path.join(dir, r)));
+    }
+  })('');
+  for (const [r, content] of Object.entries(replacements)) zip.addFile(r, Buffer.from(content));
+  return zip.toBuffer();
+}
+// Same two calls deploy.sh makes (upload, then activate), through the Admin API.
+async function uploadTheme(buf) {
+  const url = process.env.GHOST_API_URL || kc('ghost-url-inkhorn');
+  const k = process.env.GHOST_ADMIN_KEY || kc('ghost-admin-inkhorn');
+  const fd = new FormData(); fd.append('file', new Blob([buf], { type: 'application/zip' }), 'inkhorn.zip');
+  let res = await fetch(`${url}/ghost/api/admin/themes/upload/`, { method: 'POST', headers: { Authorization: `Ghost ${jwt(k)}` }, body: fd });
+  if (!res.ok) throw new Error(`theme upload -> ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  res = await fetch(`${url}/ghost/api/admin/themes/inkhorn/activate/`, { method: 'PUT', headers: { Authorization: `Ghost ${jwt(k)}` } });
+  if (!res.ok) throw new Error(`theme activate -> ${res.status}: ${(await res.text()).slice(0, 300)}`);
+}
+// Removes pulled pieces from the running order. Returns the list of removed titles.
+async function applyPulls(pulled, { commit = true, upload = true } = {}) {
+  const data = JSON.parse(fs.readFileSync(editionsPath, 'utf8'));
+  const drop = new Set(pulled.map((r) => `${r.issue}:${r.slug}`));
+  const gone = (p) => drop.has(`${p.edition}:${resolvedSlug(p)}`);
+  const removed = data.pieces.filter(gone).map((p) => p.title);
+  data.pieces = data.pieces.filter((p) => !gone(p));
+  const counters = {};
+  for (const p of data.pieces) p.position = (counters[p.edition] = (counters[p.edition] || 0) + 1);
+  const partials = require('./scripts/gen-edition-partials.cjs').generate(data.pieces);
+  const files = { 'inkhorn/data/editions-2026.json': JSON.stringify(data, null, 2) + '\n' };
+  const themeFiles = {};
+  for (const [ed, text] of Object.entries(partials)) { files[`inkhorn/theme/partials/editions/${ed}.hbs`] = text; themeFiles[`partials/editions/${ed}.hbs`] = text; }
+  let sha = null;
+  if (removed.length) {
+    if (commit) sha = await githubCommit(files, `Running order: pull ${removed.map((t) => `"${t}"`).join(', ')} (agreement not signed by the deadline)\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`);
+    if (upload) await uploadTheme(themeZip(themeFiles));
+  }
+  return { removed, sha, files };
+}
+
+module.exports = { applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };

@@ -6,14 +6,14 @@
  *   1. Updates every record's status from DocuSeal (sent -> signed) and reads the contributor's choice (cash or Print subscription).
  *   2. Three days before a deadline, emails hello@terryheath.com the list of unsigned pieces (once per record).
  *   3. After a deadline (the first run on a later date), for each still-unsigned piece:
- *        - on_deadline "pull" (unpublished pieces): sets the Ghost post to draft and marks the record pulled/expired. It does NOT
- *          touch the theme; the running-order partials are regenerated from the tracker with scripts/apply-pulls.cjs (a git push +
- *          theme upload, which a cron cannot do). The email says which pieces to apply.
+ *        - on_deadline "pull" (unpublished pieces): sets the Ghost post to draft, then removes it from the running order:
+ *          edits data/editions-2026.json and regenerates the partials, commits to GitHub (GITHUB_TOKEN, contents write on
+ *          terryheath/terryheath), and uploads+activates the theme through the Admin API (the same two calls as theme/deploy.sh).
  *        - on_deadline "record-cash-default" (already published pieces): records "cash by default"; nothing is unpublished.
  *      It then emails the list. It never publishes anything.
  *   4. A signed agreement with the subscription choice gets a complimentary Print membership (one year) in Ghost; the email asks
  *      Terry to add them to the print mailing list.
- * Env: DOCUSEAL_TOKEN (DOCUSEAL_URL optional), GHOST_API_URL, GHOST_ADMIN_KEY, GHOST_STAFF_TOKEN, optional NOTICE_EMAIL,
+ * Env: GITHUB_TOKEN, DOCUSEAL_TOKEN (DOCUSEAL_URL optional), GHOST_API_URL, GHOST_ADMIN_KEY, GHOST_STAFF_TOKEN, optional NOTICE_EMAIL,
  *      AGREEMENTS_MODE=dry (print what would happen, change nothing), FORCE=1 (skip the 8am check).
  */
 const L = require('./agreements-lib.cjs');
@@ -94,10 +94,22 @@ async function pullPost(api, r) {
     }
   }
 
+  // Pulled pieces leave the running order: edit editions-2026.json + the partials, commit to GitHub, upload the theme.
+  const toApply = tracker.records.filter((r) => r.pulled && !r.applied && r.on_deadline === 'pull');
+  if (toApply.length && !DRY) {
+    try {
+      const res = await L.applyPulls(toApply);
+      for (const r of toApply) r.applied = true;
+      events.applied = { ...res, count: toApply.length };
+    } catch (e) { console.error('running-order update failed:', e.message); events.applyError = e.message; }
+  }
+
   const list = (rs, extra = () => '') => '<ul>' + rs.map((r) => `<li><strong>${esc(r.title)}</strong> (${esc(r.contributor)}, ${esc(r.email)}, ${esc(r.issue)}; deadline ${r.deadline})${extra(r)}</li>`).join('') + '</ul>';
   const parts = [];
   if (events.reminders.length) parts.push(`<h3>Unsigned, deadline within 3 days</h3>${list(events.reminders)}`);
-  if (events.pulled.length) parts.push(`<h3>Pulled (not signed by the deadline)</h3>${list(events.pulled, (r) => ` — Ghost post ${r.how}`)}<p>The running order is not changed yet: run <code>node inkhorn/scripts/apply-pulls.cjs</code>, push, and upload the theme.</p>`);
+  if (events.pulled.length) parts.push(`<h3>Pulled (not signed by the deadline)</h3>${list(events.pulled, (r) => ` — Ghost post ${r.how}`)}`);
+  if (events.applied) parts.push(`<h3>Running order updated</h3><p>Removed ${events.applied.removed.map((t) => `<em>${esc(t)}</em>`).join(', ')} from the winter running order, committed to GitHub (${events.applied.sha ? events.applied.sha.slice(0, 7) : 'no commit'}) and uploaded the theme.</p>`);
+  if (events.applyError) parts.push(`<h3>Running order NOT updated</h3><p>${esc(events.applyError)}. It will retry at the next run; or run <code>node inkhorn/scripts/apply-pulls.cjs</code> and deploy by hand.</p>`);
   if (events.cashDefault.length) parts.push(`<h3>Already published; no choice made by the deadline — recorded "cash by default"</h3>${list(events.cashDefault)}`);
   if (events.comps.length) parts.push(`<h3>Chose the Print subscription — complimentary Print membership granted</h3>${list(events.comps, (r) => ` — through ${r.comp_expires}`)}<p>Add them to the print mailing list.</p>`);
   if (events.signed.length) parts.push(`<h3>Signed since the last check</h3>${list(events.signed, (r) => r.choice ? ` — choice: ${esc(r.choice)}${r.pay_method ? ' (' + esc(r.pay_method) + ')' : ''}` : '')}`);

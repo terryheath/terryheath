@@ -4,11 +4,12 @@
  *
  * Usage:
  *   node inkhorn/scripts/send-agreement.cjs --name "Full Name" --email a@b.com --titles "Title 1|Title 2" \
- *        --issue winter-2026 --amount 25 [--deadline-days 14] [--no-pull] [--dry]
+ *        --issue winter-2026 --amount 25 [--deadline-days 14] [--no-pull] [--greeting First] [--dry] [--preview]
  *
  *   --amount 0 sends the unpaid template; > 0 sends the paid template with that amount (total for all titles).
  *   Deadline: release date minus 30 days, or --deadline-days N from today (Winter 2026 uses 14).
  *   --no-pull: the piece is already published, so a missed deadline never unpublishes it (cron records "cash by default").
+ *   --preview: prints only the email subject and body.
  *   --dry: prints what would be sent and changes nothing.
  * Needs the Keychain items docuseal-inkhorn-token, ghost-url-inkhorn, ghost-admin-inkhorn (or env DOCUSEAL_TOKEN, GHOST_*).
  */
@@ -35,6 +36,8 @@ const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i < 0 ?
     'Legal name': name, 'Piece titles': titles.join('; '), 'Issue': L.issueName(issue), 'Issue release date': L.pretty(rel), 'Signing deadline': L.pretty(deadline),
     ...(paid ? { Amount: '$' + amount } : {}),
   };
+  const mail = L.agreementEmail({ paid, amount, greeting: arg('greeting', name.split(' ')[0]), titles, issue: L.issueName(issue), release: L.pretty(rel), deadline: L.pretty(deadline), published: noPull });
+  if (arg('preview')) { console.log(`Subject: ${mail.subject}\n\n${mail.body}`); return; }
   console.log(JSON.stringify({ name, email, template: templateName, values, deadline, noPull }, null, 1));
   if (arg('dry')) return;
   const api = L.ghost();
@@ -43,10 +46,7 @@ const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i < 0 ?
   if (dup) throw new Error(`already sent to ${email} for ${dup.title} (submission ${dup.submission_id}); not sending again`);
   const subs = await L.ds('POST', '/submissions', {
     template_id: tpl.id, send_email: true,
-    message: {
-      subject: `Your Inkhorn Review contributor agreement (${L.issueName(issue)})`,
-      body: `Hello ${name.split(' ')[0]},\n\nThank you for contributing to Inkhorn Review. Please read and sign your contributor agreement for ${titles.join('; ')} by ${L.pretty(deadline)}. Inkhorn Review cannot publish a piece without the signed agreement.\n\n{{submitter.link}}\n\nQuestions? Reply to this email.\n\nInkhorn Review`,
-    },
+    message: mail,
     submitters: [{ role: 'Contributor', email, name, values }],
   });
   const sub = subs[0];
