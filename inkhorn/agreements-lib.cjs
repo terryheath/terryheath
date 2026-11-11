@@ -225,7 +225,7 @@ async function sendAgreement(o) {
   const info = { name, email, template: templateName, values, deadline, noPull, mail };
   if (o.preview || o.dry) return info;
   const tpls = await ds('GET', '/templates?limit=100');
-  const tpl = tpls.data.find((t) => t.name === templateName);
+  const tpl = tpls.data.filter((t) => t.name === templateName).sort((a, b) => b.id - a.id)[0]; // newest version of the name
   if (!tpl) throw new Error('template not found in DocuSeal: ' + templateName);
   const api = ghost();
   const tracker = await loadTracker(api);
