@@ -96,7 +96,7 @@ async function fetchPool() {
   // even if tagging the piece failed.
   const emailed = new Set();
   try {
-    const emails = await api.posts.browse({ filter: `tag:hash-weekly-email`, limit: 'all', fields: 'id,canonical_url' });
+    const emails = await api.posts.browse({ filter: `tag:hash-weekly-email+status:[published,sent]`, limit: 'all', fields: 'id,canonical_url' });
     for (const e of emails) if (e.canonical_url) emailed.add(e.canonical_url);
   } catch (err) {
     console.warn('Could not read #weekly-email posts:', err.message);
@@ -180,6 +180,14 @@ async function main() {
   if (!FORCE && !(now.weekday === 'Sun' && now.hour === 7)) {
     console.log('Not Sunday 7am Pacific: nothing to do.');
     return;
+  }
+
+  // At most one send per Sunday, whatever the cron does: the cron fires at both 14:00 and 15:00 UTC, and only one of those is 7am
+  // Pacific, but if a weekly email already went out in the last 20 hours this run stops too.
+  if (MODE === 'send') {
+    const since = new Date(Date.now() - 20 * 3600 * 1000).toISOString();
+    const recent = await api.posts.browse({ filter: `tag:hash-weekly-email+status:[published,sent]+published_at:>'${since}'`, limit: 1, fields: 'id,title' });
+    if (recent.length) { console.log(`A weekly email already went out in the last 20 hours ("${recent[0].title}"): not sending again.`); return; }
   }
 
   const { eligible, unsent } = await fetchPool();

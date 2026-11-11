@@ -209,7 +209,7 @@ Trigger manually via Railway (podcast-import service → Run now), or trigger th
 - **Tiers cannot be deleted.** There is no DELETE endpoint — `DELETE /tiers/:id/` 404s even on the correct `Accept-Version`. Retire a tier by setting `active: false` **and** `visibility: "none"`. Inkspiller, Ink Blotter and Inkhorn are retired this way; they still exist in the API and always will.
 - **Subscriptions are yearly only.** `portal_plans` is `["yearly","free"]`; the tiers still carry monthly prices, which Portal no longer offers. Do not re-add "monthly" — a quarterly magazine sold monthly lets someone buy one issue and cancel.
 - **What a subscription buys (2026-11-11):** there is no paywall, so a subscription buys the ebook of each issue (Ebook, $20/year) or four mailed quarterly print issues plus the ebook of each (Print, $48/year), and supports the journal. Print is four quarterly issues only: there are no themed or awards editions. Do not promise early access or a delayed archive.
-- **Prices (2026-11-11): Ebook $20/year, Print $48/year (was $60), yearly only.** Ghost creates a new Stripe price when a tier's price changes and archives the old one; existing subscribers keep their old price until moved in Stripe (Stacey M Jones, the only print subscriber at the time, was moved to the $48 price at her 2027-10-06 renewal).
+- **Prices (2026-11-11): Ebook $20/year, Print $48/year (was $60), yearly only.** Ghost creates a new Stripe price when a tier's price changes and archives the old one; existing subscribers keep their old price until moved in Stripe (Stacey M Jones, the only print subscriber at the time, is being moved to the $48 price at her 2027-10-06 renewal, with no charge now).
 
 ## Working style
 
