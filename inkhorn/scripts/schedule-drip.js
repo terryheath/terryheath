@@ -9,7 +9,7 @@
 //
 // --start/--time are Pacific time. The script converts to UTC for Ghost.
 // Reads the slug order from inkhorn/drip/<issue-tag>.txt (one slug per line).
-// Sets each post: visibility=paid, tags +#this-week, schedules one week apart.
+// Sets each post: visibility=public (no paywall since 2026-11-11), tags +#this-week, schedules one week apart.
 // NO newsletter is attached (Ghost 6.61 email segmenter bug — drip is site-only).
 //
 // Credentials (macOS):
@@ -156,7 +156,7 @@ async function main() {
       id:           post.id,
       status:       'scheduled',
       published_at: publishedAt,
-      visibility:   'paid',
+      visibility:   'public',
       tags:         dedupedTags,
       updated_at:   post.updated_at,
     });
