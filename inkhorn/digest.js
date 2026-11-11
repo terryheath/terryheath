@@ -15,6 +15,8 @@
 //   test          — builds the email as a draft and sends a test to TEST_EMAIL only; nothing tagged, draft deleted.
 //   send          — sends to the newsletter, tags the piece #sent-weekly.
 // FORCE=1 skips the "is it Sunday 7am Pacific" check (test and manual runs).
+// TEST_SLUGS=slug1,slug2 (any mode): sends a test email of each named eligible piece to TEST_EMAIL only, then stops. Nothing is
+//   tagged or sent to readers, the Sunday check and the welcome step are skipped. Clear it afterwards.
 //
 // Railway cron is "0 14,15 * * 0" (UTC): 7am Pacific is 14:00Z in summer time and 15:00Z in winter time, so
 // the run that is not 7am Pacific exits at once.
@@ -34,6 +36,7 @@ const GHOST_API_URL   = process.env.GHOST_API_URL;
 const GHOST_ADMIN_KEY = process.env.GHOST_ADMIN_KEY;
 const MODE            = (process.env.WEEKLY_MODE || 'dry').trim().toLowerCase();
 const FORCE           = process.env.FORCE === '1';
+const TEST_SLUGS      = (process.env.TEST_SLUGS || '').split(',').map(x => x.trim()).filter(Boolean);
 const DRY_RUN         = process.env.DRY_RUN === '1';
 const TEST_EMAIL      = process.env.TEST_EMAIL || 'terry@terryheath.com';
 const NOTICE_EMAIL    = process.env.NOTICE_EMAIL || 'terry@terryheath.com';
@@ -124,16 +127,29 @@ function issueLabel(post) {
   return [pub?.name, season?.name].filter(Boolean).join(' · ');
 }
 
+// Poems: each stanza is one <p> with <br> between its lines, and an empty <p></p> marks a stanza break. Mail clients turn those
+// empty paragraphs into tall gaps, so they are removed and each stanza gets one line (1em) of space after it, lines single-spaced.
+// Prose keeps normal paragraphs with 1em between them.
+const EMPTY_P = /<p[^>]*>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/g;
+function formatBody(body, isPoem) {
+  let html = body.replace(EMPTY_P, '');
+  const gap = '0 0 1em 0';
+  const lh = isPoem ? '1.5' : '1.6';
+  html = html.replace(/<p(\s[^>]*)?>/g, `<p style="margin:${gap};line-height:${lh}">`);
+  html = html.replace(/<blockquote(\s[^>]*)?>/g, '<blockquote style="margin:0 0 1.25em 0;padding:0 0 0 12px;border-left:3px solid #ddd;font-size:15px;line-height:1.5;color:#555">');
+  return html;
+}
+
 function emailHtml(post, body) {
-  // Poems keep stanza breaks as empty paragraphs; mail clients collapse those, so give them height.
-  const full = body.replace(/<p><\/p>/g, '<p>&nbsp;</p>').replace(/<p>\s*<\/p>/g, '<p>&nbsp;</p>');
+  const isPoem = (post.tags || []).some(t => t.slug === 'poetry');
+  const full = formatBody(body, isPoem);
   const byline = post.custom_excerpt ? `<p style="margin:0 0 24px;font-size:16px;font-style:italic;color:#555">${esc(post.custom_excerpt)}</p>` : '';
   return (
     `<!--kg-card-begin: html-->\n` +
     `<p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888">From ${esc(issueLabel(post))}</p>\n` +
     `<h1 style="margin:0 0 8px;font-size:28px;line-height:1.25;color:#1a1a1a">${esc(post.title)}</h1>\n` +
     `${byline}\n` +
-    `<div style="font-size:17px;line-height:1.6;color:#1a1a1a">${full}</div>\n` +
+    `<div style="font-size:17px;color:#1a1a1a">${full}</div>\n` +
     `<hr style="border:none;border-top:1px solid #e0e0e0;margin:28px 0 20px">\n` +
     `<p style="margin:0 0 6px;font-size:15px"><a href="${esc(post.url)}" style="color:#1a1a1a;font-weight:700">Read it on Inkhorn Review &rarr;</a></p>\n` +
     `<p style="margin:0;font-size:13px;color:#888">${esc(issueLabel(post))}</p>\n` +
@@ -178,7 +194,24 @@ async function notifyNoneLeft() {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
+async function sendSamples() {
+  const { eligible } = await fetchPool();
+  for (const slug of TEST_SLUGS) {
+    const piece = eligible.find(p => p.slug === slug);
+    if (!piece) { console.warn(`Sample "${slug}" is not an eligible print piece: skipped.`); continue; }
+    const full = await api.posts.read({ id: piece.id }, { formats: 'html' });
+    const draft = await createEmailDraft(piece, emailHtml(piece, full.html || ''));
+    try {
+      await sendTest(draft.id, TEST_EMAIL);
+      console.log(`Sample sent to ${TEST_EMAIL}: "${piece.title}" (${piece.slug}).`);
+    } finally {
+      await api.posts.delete({ id: draft.id });
+    }
+  }
+}
+
 async function main() {
+  if (TEST_SLUGS.length) { await sendSamples(); return; }
   const now = pacificNow();
   console.log(`Mode: ${MODE}. Pacific now: ${now.weekday} ${now.hour}:00.`);
   if (!FORCE && !(now.weekday === 'Sun' && now.hour === 7)) {
@@ -245,7 +278,7 @@ try {
   failed.push('weekly piece');
 }
 try {
-  await runWelcome({ api, ghostApiUrl: GHOST_API_URL, siteUrl: SITE_URL, dryRun: DRY_RUN });
+  if (!TEST_SLUGS.length) await runWelcome({ api, ghostApiUrl: GHOST_API_URL, siteUrl: SITE_URL, dryRun: DRY_RUN });
 } catch (err) {
   console.error('\nWELCOME STEP FAILED:', err);
   failed.push('welcome');
