@@ -16,13 +16,16 @@
 //   send          — sends to the newsletter, tags the piece #sent-weekly.
 // FORCE=1 skips the "is it Sunday 7am Pacific" check (test and manual runs).
 // TEST_SLUGS=slug1,slug2 (any mode): sends a test email of each named eligible piece to TEST_EMAIL only, then stops. Nothing is
-//   tagged or sent to readers, the Sunday check and the welcome step are skipped. Clear it afterwards.
+//   tagged or sent to readers and the Sunday check is skipped. Clear it afterwards. Add :also to a slug (slug:also) for the layout with the
+//   "Also at Inkhorn" section; a plain slug sends the current layout.
 //
 // Railway cron is "0 14,15 * * 0" (UTC): 7am Pacific is 14:00Z in summer time and 15:00Z in winter time, so
 // the run that is not 7am Pacific exits at once.
 //
 // Required env vars: GHOST_API_URL, GHOST_ADMIN_KEY. Optional: TEST_EMAIL, NOTICE_EMAIL (default terry@terryheath.com).
-// The welcome-email step (welcome.js) still runs after, as before.
+// (The free-member welcome emails no longer pull pieces: the welcome step was removed 2026-11-11, so nothing here tags #welcome-used.)
+// ALSO=1 adds an "Also at Inkhorn" section after the piece (latest Life on Words, Founder's Letter, Gallery and Muse, only items
+//   newer than the previous weekly email, plus a links line). OFF by default until Terry approves it; ALSO_SINCE_DAYS overrides the window.
 
 import GhostAdminAPI from '@tryghost/admin-api';
 import { createHmac } from 'crypto';
@@ -30,13 +33,14 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { esc } from './digest-html.js';
-import { runWelcome } from './welcome.js';
 
 const GHOST_API_URL   = process.env.GHOST_API_URL;
 const GHOST_ADMIN_KEY = process.env.GHOST_ADMIN_KEY;
 const MODE            = (process.env.WEEKLY_MODE || 'dry').trim().toLowerCase();
 const FORCE           = process.env.FORCE === '1';
-const TEST_SLUGS      = (process.env.TEST_SLUGS || '').split(',').map(x => x.trim()).filter(Boolean);
+const TEST_SLUGS      = (process.env.TEST_SLUGS || '').split(',').map(x => x.trim()).filter(Boolean); // slug or slug:also
+const ALSO_ENABLED    = process.env.ALSO === '1';
+const ALSO_SINCE_DAYS = Number(process.env.ALSO_SINCE_DAYS || 0);
 const DRY_RUN         = process.env.DRY_RUN === '1';
 const TEST_EMAIL      = process.env.TEST_EMAIL || 'terry@terryheath.com';
 const NOTICE_EMAIL    = process.env.NOTICE_EMAIL || 'terry@terryheath.com';
@@ -140,7 +144,57 @@ function formatBody(body, isPoem) {
   return html;
 }
 
-function emailHtml(post, body) {
+// ── "Also at Inkhorn": the other departments ──────────────────────────────────
+
+const pagePath = (u) => SITE_URL + new URL(u).pathname;
+const DEPARTMENT_LINKS = [
+  ['Life on Words', `${SITE_URL}/life-on-words/`],
+  ["Founder's Letter", `${SITE_URL}/founder-letter/`],
+  ['Gallery', `${SITE_URL}/art/`],
+  ['Muse', 'https://gomuse.io/'],
+];
+
+/** When the previous weekly email went out, or null. */
+async function lastSendAt() {
+  const last = await api.posts.browse({ filter: 'tag:hash-weekly-email+status:[published,sent]', order: 'published_at desc', limit: 1, fields: 'id,published_at' });
+  return last[0]?.published_at ? new Date(last[0].published_at) : null;
+}
+
+/** The newest item in each department that is newer than `since`. Departments with nothing new are left out. */
+async function fetchAlso(since) {
+  const sinceIso = since.toISOString();
+  const items = [];
+  const latest = async (label, primaryTag) => {
+    const [p] = await api.posts.browse({ filter: `primary_tag:${primaryTag}+status:published+published_at:>'${sinceIso}'`, order: 'published_at desc', limit: 1, fields: 'id,title,url,custom_excerpt,published_at' });
+    if (p) items.push({ label, title: p.title, url: pagePath(p.url), note: p.custom_excerpt || '' });
+  };
+  await latest('Life on Words', 'podcast');
+  await latest("Founder's Letter", 'letter');
+  await latest('Gallery', 'art');
+  try { // Muse's newest released issue
+    const r = await fetch('https://api.gomuse.io/issues');
+    if (r.ok) {
+      const issue = (await r.json()).issues?.find(i => new Date(i.released_at) > since);
+      if (issue) items.push({ label: 'Muse', title: `${issue.name} issue`, url: `https://gomuse.io/issues/${issue.slug}`, note: '' });
+    }
+  } catch (err) { console.warn('Muse issues unavailable:', err.message); }
+  return items;
+}
+
+function alsoHtml(items) {
+  const rows = items.map(i =>
+    `<p style="margin:0 0 10px;font-size:15px;line-height:1.4"><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888">${esc(i.label)}</span><br>` +
+    `<a href="${esc(i.url)}" style="color:#1a1a1a;font-weight:600;text-decoration:none">${esc(i.title)}</a>` +
+    (i.note ? `<br><span style="font-size:14px;font-style:italic;color:#555">${esc(i.note)}</span>` : '') + `</p>`).join('\n');
+  const links = DEPARTMENT_LINKS.map(([name, url]) => `<a href="${esc(url)}" style="color:#555">${esc(name)}</a>`).join(' &middot; ');
+  return (
+    `<hr style="border:none;border-top:1px solid #e0e0e0;margin:28px 0 20px">\n` +
+    (items.length ? `<p style="margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#1a1a1a">Also at Inkhorn</p>\n${rows}\n` : '') +
+    `<p style="margin:${items.length ? '14px' : '0'} 0 0;font-size:13px;color:#888">Always at Inkhorn: ${links}</p>\n`
+  );
+}
+
+function emailHtml(post, body, alsoItems = null) {
   const isPoem = (post.tags || []).some(t => t.slug === 'poetry');
   const full = formatBody(body, isPoem);
   const byline = post.custom_excerpt ? `<p style="margin:0 0 24px;font-size:16px;font-style:italic;color:#555">${esc(post.custom_excerpt)}</p>` : '';
@@ -153,14 +207,15 @@ function emailHtml(post, body) {
     `<hr style="border:none;border-top:1px solid #e0e0e0;margin:28px 0 20px">\n` +
     `<p style="margin:0 0 6px;font-size:15px"><a href="${esc(post.url)}" style="color:#1a1a1a;font-weight:700">Read it on Inkhorn Review &rarr;</a></p>\n` +
     `<p style="margin:0;font-size:13px;color:#888">${esc(issueLabel(post))}</p>\n` +
+    (alsoItems ? alsoHtml(alsoItems) : '') +
     `<!--kg-card-end: html-->`
   );
 }
 
-async function createEmailDraft(post, html) {
+async function createEmailDraft(post, html, subject = post.title) {
   return api.posts.add({
     title: post.title,
-    email_subject: post.title,
+    email_subject: subject,
     html,
     status: 'draft',
     tags: [{ name: EMAIL_TAG }],
@@ -171,7 +226,7 @@ async function createEmailDraft(post, html) {
 }
 
 // Test emails go through Ghost's email-preview endpoint, which integration (API) keys may not call, so this uses the staff
-// access token (GHOST_STAFF_TOKEN, the same one welcome.js uses).
+// access token (GHOST_STAFF_TOKEN).
 async function sendTest(draftId, to) {
   const staff = process.env.GHOST_STAFF_TOKEN;
   if (!staff) throw new Error('GHOST_STAFF_TOKEN is required to send a test email');
@@ -196,14 +251,22 @@ async function notifyNoneLeft() {
 
 async function sendSamples() {
   const { eligible } = await fetchPool();
-  for (const slug of TEST_SLUGS) {
+  for (const entry of TEST_SLUGS) {
+    const [slug, variant] = entry.split(':');
     const piece = eligible.find(p => p.slug === slug);
     if (!piece) { console.warn(`Sample "${slug}" is not an eligible print piece: skipped.`); continue; }
     const full = await api.posts.read({ id: piece.id }, { formats: 'html' });
-    const draft = await createEmailDraft(piece, emailHtml(piece, full.html || ''));
+    let also = null;
+    if (variant === 'also') {
+      const days = ALSO_SINCE_DAYS || 60; // a wide window so the sample shows the section filled in
+      also = await fetchAlso(new Date(Date.now() - days * 86400_000));
+      console.log(`"Also at Inkhorn" sample (last ${days} days): ${also.map(i => `${i.label}: ${i.title}`).join(' | ') || '(nothing new)'}`);
+    }
+    const subject = `${variant === 'also' ? 'Proposed' : 'Current'} layout: ${piece.title}`;
+    const draft = await createEmailDraft(piece, emailHtml(piece, full.html || '', also), subject);
     try {
       await sendTest(draft.id, TEST_EMAIL);
-      console.log(`Sample sent to ${TEST_EMAIL}: "${piece.title}" (${piece.slug}).`);
+      console.log(`Sample sent to ${TEST_EMAIL}: "${piece.title}" (${slug}${variant ? ':' + variant : ''}).`);
     } finally {
       await api.posts.delete({ id: draft.id });
     }
@@ -236,7 +299,13 @@ async function main() {
   if (MODE === 'dry' || DRY_RUN) { console.log('dry mode: nothing sent, nothing tagged.'); return; }
 
   const full = await api.posts.read({ id: pick.id }, { formats: 'html' });
-  const html = emailHtml(pick, full.html || '');
+  let also = null;
+  if (ALSO_ENABLED) {
+    const since = ALSO_SINCE_DAYS ? new Date(Date.now() - ALSO_SINCE_DAYS * 86400_000) : (await lastSendAt()) || new Date(Date.now() - 7 * 86400_000);
+    also = await fetchAlso(since);
+    console.log(`Also at Inkhorn (since ${since.toISOString()}): ${also.map(i => `${i.label}: ${i.title}`).join(' | ') || '(nothing new)'}`);
+  }
+  const html = emailHtml(pick, full.html || '', also);
   const draft = await createEmailDraft(pick, html);
   console.log(`Email draft created: ${draft.id}`);
 
@@ -270,20 +339,9 @@ async function main() {
   console.log(`Tagged ${SENT_TAG}: "${pick.title}"`);
 }
 
-const failed = [];
 try {
   await main();
 } catch (err) {
   console.error('\nWEEKLY PIECE FAILED:', err);
-  failed.push('weekly piece');
-}
-try {
-  if (!TEST_SLUGS.length) await runWelcome({ api, ghostApiUrl: GHOST_API_URL, siteUrl: SITE_URL, dryRun: DRY_RUN });
-} catch (err) {
-  console.error('\nWELCOME STEP FAILED:', err);
-  failed.push('welcome');
-}
-if (failed.length) {
-  console.error(`\nFailed: ${failed.join(', ')}`);
   process.exit(1);
 }
