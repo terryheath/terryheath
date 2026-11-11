@@ -189,4 +189,15 @@ async function applyPulls(pulled, { commit = true, upload = true } = {}) {
   return { removed, sha, files };
 }
 
-module.exports = { applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
+// Pay for one work: $25 poem / micro / flash / prose up to 1,000 words; $40 prose over 1,000 words and printed art; online-only is unpaid.
+function payFor(spec) {
+  const [kind, extra] = spec.trim().toLowerCase().split(':');
+  const online = extra === 'online' || /:online$/.test(spec.toLowerCase()) || spec.toLowerCase().includes('online');
+  if (online) return 0;
+  if (kind === 'art' || kind === 'artwork') return 40;
+  if (kind === 'prose' || kind === 'fiction' || kind === 'nonfiction') return Number(extra) > 1000 ? 40 : 25;
+  if (['poem', 'poetry', 'micro', 'flash'].includes(kind)) return 25;
+  throw new Error(`unknown work "${spec}" (use poem, micro, flash, prose:WORDS, art, optionally with online)`);
+}
+
+module.exports = { payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };

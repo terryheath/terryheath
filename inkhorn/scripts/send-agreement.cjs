@@ -6,6 +6,8 @@
  *   node inkhorn/scripts/send-agreement.cjs --name "Full Name" --email a@b.com --titles "Title 1|Title 2" \
  *        --issue winter-2026 --amount 25 [--deadline-days 14] [--no-pull] [--greeting First] [--dry] [--preview]
  *
+ *   --work "poem|prose:1200|art" works out the amount (one entry per title: poem/micro/flash $25, prose up to 1,000 words $25, prose over
+ *   1,000 words $40, printed art $40; add :online or `art:online` for online-only work, which is unpaid). --amount overrides it.
  *   --amount 0 sends the unpaid template; > 0 sends the paid template with that amount (total for all titles).
  *   Deadline: release date minus 30 days, or --deadline-days N from today (Winter 2026 uses 14).
  *   --no-pull: the piece is already published, so a missed deadline never unpublishes it (cron records "cash by default"); uses the
@@ -20,7 +22,8 @@ const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i < 0 ?
 (async () => {
   const name = arg('name'), email = arg('email'), issue = arg('issue');
   const titles = String(arg('titles', '')).split('|').map((s) => s.trim()).filter(Boolean);
-  const amount = Number(arg('amount', 0));
+  const work = arg('work');
+  const amount = arg('amount') !== undefined && work === undefined ? Number(arg('amount', 0)) : arg('amount') !== undefined ? Number(arg('amount')) : work ? String(work).split('|').reduce((n, w) => n + L.payFor(w), 0) : 0;
   if (!name || !email || !issue || !titles.length) throw new Error('--name, --email, --issue and --titles are required');
   const paid = amount > 0;
   const rel = L.ymd(L.releaseDate(issue));

@@ -49,7 +49,7 @@ function build(paid, published) {
     doc.y = y + 25; doc.x = L; }
   if (paid) {
     h('Payment');
-    p("Inkhorn Review pays $25 per poem, micro or flash piece, and per prose piece of 1,000 words or fewer, and $40 per prose piece over 1,000 words. Artwork is not paid. Payment is sent on the issue's release day by Zelle or PayPal (U.S.) or Wise (elsewhere). Payment on initial publication covers all uses described in this agreement.");
+    p("Inkhorn Review pays $25 per poem, micro or flash piece, and per prose piece of 1,000 words or fewer, and $40 per prose piece over 1,000 words and per piece of printed artwork. Online-only work, art included, is not paid. Payment is sent on the issue's release day by Zelle or PayPal (U.S.) or Wise (elsewhere). Payment on initial publication covers all uses described in this agreement.");
     line('Amount due for this piece:', 'Amount', 'text', 100, { readonly: true });
     p('Choose one (required):');
     doc.font('Helvetica').fontSize(10.5);
