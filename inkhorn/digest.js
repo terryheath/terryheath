@@ -161,24 +161,47 @@ async function lastSendAt() {
   return last[0]?.published_at ? new Date(last[0].published_at) : null;
 }
 
-/** The latest item in every department (always one row each), flagged New when it came out after `since`. */
+/** Released Muse issues, newest first. MUSE_FAKE_ISSUE="Winter 2027|winter-2027" fakes a release (test samples only). */
+async function museIssues() {
+  if (process.env.MUSE_FAKE_ISSUE) {
+    const [name, slug] = process.env.MUSE_FAKE_ISSUE.split('|');
+    return [{ name, slug, released_at: new Date().toISOString() }];
+  }
+  try {
+    const r = await fetch('https://api.gomuse.io/issues');
+    return r.ok ? ((await r.json()).issues || []) : [];
+  } catch (err) {
+    console.warn('Muse issues unavailable:', err.message);
+    return [];
+  }
+}
+
+/**
+ * The latest item in every department (always one row each), flagged New when it came out after `since`. Muse: if an issue was
+ * released after `since` (the previous weekly email), the section leads with a "New from Muse" notice instead of the normal Muse row,
+ * once: the next send moves `since` forward. If Muse cannot be reached, the normal row shows and the notice carries to the next send.
+ */
 async function fetchAlso(since) {
   const rows = [];
   for (const d of DEPARTMENTS) {
     const [p] = await api.posts.browse({ filter: `primary_tag:${d.tag}+status:published`, order: 'published_at desc', limit: 1, fields: 'id,title,url,custom_excerpt,published_at' });
     if (p) rows.push({ label: d.label, page: d.page, title: p.title, url: pagePath(p.url), date: new Date(p.published_at), isNew: new Date(p.published_at) > since, note: p.custom_excerpt || '' });
   }
-  let muse = { label: 'Muse', page: MUSE_PAGE, title: 'Read and help choose the next issue', url: MUSE_PAGE, date: null, isNew: false, note: '' };
-  try { // Muse's newest released issue, if there is one yet
-    const r = await fetch('https://api.gomuse.io/issues');
-    const issue = r.ok ? (await r.json()).issues?.[0] : null;
-    if (issue) muse = { label: 'Muse', page: MUSE_PAGE, title: `${issue.name} issue`, url: `https://gomuse.io/issues/${issue.slug}`, date: new Date(issue.released_at), isNew: new Date(issue.released_at) > since, note: '' };
-  } catch (err) { console.warn('Muse issues unavailable:', err.message); }
-  rows.push(muse);
-  return rows;
+  const issues = await museIssues();
+  const fresh = issues.find(i => new Date(i.released_at) > since); // newest first, so the newest new issue
+  let notice = null;
+  if (fresh) {
+    notice = { text: `New from Muse: the ${fresh.name} issue`, url: `https://gomuse.io/issues/${fresh.slug}` };
+  } else {
+    const issue = issues[0];
+    rows.push(issue
+      ? { label: 'Muse', page: MUSE_PAGE, title: `${issue.name} issue`, url: `https://gomuse.io/issues/${issue.slug}`, date: new Date(issue.released_at), isNew: false, note: '' }
+      : { label: 'Muse', page: MUSE_PAGE, title: 'Read and help choose the next issue', url: MUSE_PAGE, date: null, isNew: false, note: '' });
+  }
+  return { rows, notice };
 }
 
-function alsoHtml(items) {
+function alsoHtml({ rows: items, notice }) {
   const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
   const rows = items.map(i =>
     `<p style="margin:0 0 14px;font-size:15px;line-height:1.4">` +
@@ -189,7 +212,9 @@ function alsoHtml(items) {
     (i.note ? `<br><span style="font-size:14px;font-style:italic;color:#555">${esc(i.note)}</span>` : '') + `</p>`).join('\n');
   return (
     `<hr style="border:none;border-top:1px solid #e0e0e0;margin:28px 0 20px">\n` +
-    `<p style="margin:0 0 14px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#1a1a1a">Also at Inkhorn</p>\n${rows}\n`
+    `<p style="margin:0 0 14px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#1a1a1a">Also at Inkhorn</p>\n` +
+    (notice ? `<p style="margin:0 0 16px;font-size:16px;line-height:1.4"><a href="${esc(notice.url)}" style="color:#ad1b45;font-weight:700;text-decoration:none">${esc(notice.text)} &rarr;</a></p>\n` : '') +
+    `${rows}\n`
   );
 }
 
@@ -259,7 +284,7 @@ async function sendSamples() {
     if (variant === 'also') {
       const since = (await lastSendAt()) || new Date(Date.now() - 7 * 86400_000);
       also = await fetchAlso(since);
-      console.log(`"Also at Inkhorn" sample (New = after ${since.toISOString()}): ${also.map(i => `${i.label}: ${i.title}${i.isNew ? ' [NEW]' : ''}`).join(' | ')}`);
+      console.log(`"Also at Inkhorn" sample (New = after ${since.toISOString()}): ${also.notice ? `[${also.notice.text}] ` : ''}${also.rows.map(i => `${i.label}: ${i.title}${i.isNew ? ' [NEW]' : ''}`).join(' | ')}`);
     }
     const subject = `${variant === 'also' ? 'Proposed' : 'Current'} layout: ${piece.title}`;
     const draft = await createEmailDraft(piece, emailHtml(piece, full.html || '', also), subject);
@@ -302,7 +327,7 @@ async function main() {
   if (ALSO_ENABLED) {
     const since = ALSO_SINCE_DAYS ? new Date(Date.now() - ALSO_SINCE_DAYS * 86400_000) : (await lastSendAt()) || new Date(Date.now() - 7 * 86400_000);
     also = await fetchAlso(since);
-    console.log(`Also at Inkhorn (since ${since.toISOString()}): ${also.map(i => `${i.label}: ${i.title}`).join(' | ') || '(nothing new)'}`);
+    console.log(`Also at Inkhorn (since ${since.toISOString()}): ${also.notice ? `[${also.notice.text}] ` : ''}${also.rows.map(i => `${i.label}: ${i.title}`).join(' | ')}`);
   }
   const html = emailHtml(pick, full.html || '', also);
   const draft = await createEmailDraft(pick, html);
