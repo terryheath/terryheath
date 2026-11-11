@@ -229,7 +229,7 @@ async function sendAgreement(o) {
   if (!tpl) throw new Error('template not found in DocuSeal: ' + templateName);
   const api = ghost();
   const tracker = await loadTracker(api);
-  const dup = tracker.records.find((r) => r.status !== 'expired' && r.issue === issue && pieces.some((p) => norm(p.title) === norm(r.title)));
+  const dup = tracker.records.find((r) => r.status !== 'expired' && ((o.duosumaTok && r.duosuma_tok === o.duosumaTok) || (r.issue === issue && pieces.some((p) => norm(p.title) === norm(r.title)))));
   if (dup) { const e = new Error(`already sent for "${dup.title}" (${dup.contributor}, submission ${dup.submission_id}); not sending again`); e.duplicate = dup; throw e; }
   const subs = await ds('POST', '/submissions', { template_id: tpl.id, send_email: true, message: { subject: mail.subject, body: mail.body }, submitters: [{ role: 'Contributor', email, name, values }] });
   const sub = subs[0];
@@ -238,6 +238,7 @@ async function sendAgreement(o) {
       issue, slug: p.slug, title: p.title, contributor: name, email, template: paid && noPull ? 'published-paid' : paid ? 'paid' : 'unpaid', amount: paid ? amount : 0,
       submission_id: sub.submission_id, submitter_slug: sub.slug, sent: today, deadline, status: 'sent', choice: null, pay_method: null,
       on_deadline: noPull ? 'record-cash-default' : 'pull', reminded: false, pulled: false, comp_granted: false,
+      ...(o.duosumaTok ? { duosuma_tok: o.duosumaTok } : {}),
     });
   }
   await saveTracker(api, tracker);
