@@ -149,6 +149,47 @@ async function confirm(f) {
   }
 }
 
+
+// ---- payouts page: live signed/unsigned status of every agreement (behind a secret key) -------------------------------------
+let payoutsCache = { at: 0, html: '' };
+async function payoutsHtml() {
+  if (Date.now() - payoutsCache.at < 30000) return payoutsCache.html;
+  const api = L.ghost();
+  const tracker = await L.loadTracker(api);
+  const today = L.todayPacific();
+  const subs = {};
+  await Promise.all([...new Set(tracker.records.map((r) => r.submission_id))].map(async (id) => { try { subs[id] = await L.ds('GET', `/submissions/${id}`); } catch { subs[id] = null; } }));
+  const rows = tracker.records.map((r) => {
+    const sub = subs[r.submission_id]; const sm = sub && sub.submitters && sub.submitters[0];
+    const vals = Object.fromEntries(((sm && sm.values) || []).map((v) => [v.field, v.value]));
+    const signed = !!(sm && sm.status === 'completed');
+    const choice = !signed || r.template === 'unpaid' ? '' : /subscription/i.test(String(vals['Payment choice'] || '')) ? 'Print subscription' : (vals['Payment choice'] ? 'Cash' : '');
+    return { ...r, signed, choice, method: vals['Payment method'] || '', details: vals['Payment details'] || '', signed_at: sm && sm.completed_at ? sm.completed_at.slice(0, 10) : '' };
+  });
+  const byIssue = {};
+  for (const r of rows) (byIssue[r.issue] ||= []).push(r);
+  const money = (n) => (n ? `$${n}` : '—');
+  const blocks = Object.entries(byIssue).map(([issue, rs]) => {
+    rs.sort((a, b) => Number(b.signed) - Number(a.signed) || a.deadline.localeCompare(b.deadline) || a.contributor.localeCompare(b.contributor));
+    const cashSigned = rs.filter((r) => r.signed && r.choice === 'Cash').reduce((n, r) => n + r.amount, 0);
+    const cashPending = rs.filter((r) => !r.signed && r.status !== 'expired').reduce((n, r) => n + r.amount, 0);
+    const tr = rs.map((r) => {
+      const left = L.daysBetween(today, r.deadline);
+      const status = r.signed ? `Signed ${esc(r.signed_at)}` : r.status === 'expired' ? 'Expired' : left < 0 ? `Unsigned, ${-left} day(s) late` : `Unsigned, ${left} day(s) left`;
+      const how = r.signed ? [r.choice, r.method, r.details].filter(Boolean).map(esc).join(' · ') : '';
+      return `<tr class="${r.signed ? 'ok' : 'open'}"><td>${esc(r.contributor)}</td><td>${esc(r.title)}</td><td>${money(r.amount)}</td><td>${status}</td><td>${esc(r.deadline)}</td><td>${how}</td></tr>`;
+    }).join('');
+    return `<h2>${esc(L.issueName(issue))} <small>${rs.filter((r) => r.signed).length} of ${rs.length} signed · cash signed ${money(cashSigned)} · still to come ${money(cashPending)}</small></h2>
+      <table><tr><th>Contributor</th><th>Piece</th><th>Pay</th><th>Status</th><th>Deadline</th><th>Choice · method · details</th></tr>${tr}</table>`;
+  }).join('');
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Payouts</title>
+<style>body{margin:0;background:#faf7f2;color:#222;font:15px/1.45 Georgia,serif}main{max-width:62rem;margin:0 auto;padding:2rem 1rem 4rem}h1{font-weight:normal}h2{font-weight:normal;margin:2rem 0 .5rem}h2 small{font-size:.75rem;color:#666}
+table{border-collapse:collapse;width:100%;background:#fff}th,td{border:1px solid #ddd;padding:.35rem .5rem;text-align:left;vertical-align:top}th{background:#f0ebe2}tr.ok td:nth-child(4){color:#1a6b2a}tr.open td:nth-child(4){color:#a33}</style></head>
+<body><main><h1>Payouts</h1><p>Live from DocuSeal; refreshed every 30 seconds. Updated ${esc(new Date().toISOString().replace('T', ' ').slice(0, 16))} UTC.</p>${blocks || '<p>No agreements yet.</p>'}</main></body></html>`;
+  payoutsCache = { at: Date.now(), html };
+  return html;
+}
+
 const readBody = (req) => new Promise((res, rej) => { let b = ''; req.on('data', (c) => { b += c; if (b.length > 20000) { req.destroy(); rej(new Error('too large')); } }); req.on('end', () => res(b)); });
 const send = (res, code, html) => { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(html); };
 
@@ -158,6 +199,12 @@ const server = http.createServer(async (req, res) => {
   const raw = qs.join('?');
   try {
     if (path === '/health') return send(res, 200, 'ok');
+    if (path === '/payouts') {
+      const key = process.env.PAYOUTS_KEY;
+      const given = (/(?:^|&)key=([^&]*)/.exec(raw) || [])[1] || '';
+      if (!key || dec(given) !== key) return send(res, 404, page('<h1>Not found</h1>'));
+      return send(res, 200, await payoutsHtml());
+    }
     if (path !== '/accept' && path !== '/accept/') return send(res, 404, page('<h1>Not found</h1>'));
     if (req.method === 'GET') {
       console.log('GET /accept raw=', JSON.stringify(raw).slice(0, 600));

@@ -11,6 +11,8 @@
  *          terryheath/terryheath), and uploads+activates the theme through the Admin API (the same two calls as theme/deploy.sh).
  *        - on_deadline "record-cash-default" (already published pieces): records "cash by default"; nothing is unpublished.
  *      It then emails the list. It never publishes anything.
+ *   3b. Contributor reminders: DocuSeal re-sends the signature request 7 and 3 days before each deadline (once each).
+ *   3c. Every Monday and Thursday: emails Terry the unsigned list per issue with days left (stops per issue once all are signed).
  *   4. A signed agreement with the subscription choice gets a complimentary Print membership (one year) in Ghost; the email asks
  *      Terry to add them to the print mailing list.
  * Env: GITHUB_TOKEN, DOCUSEAL_TOKEN (DOCUSEAL_URL optional), GHOST_API_URL, GHOST_ADMIN_KEY, GHOST_STAFF_TOKEN, optional NOTICE_EMAIL,
@@ -65,13 +67,35 @@ async function pullPost(api, r) {
   return 'set to draft';
 }
 
+// Every Monday and Thursday: who has not signed yet, per issue, with the days left. An issue drops out once all of it is signed.
+async function weeklyStatus(api, tracker, today) {
+  const dow = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short' }).format(new Date());
+  if (!FORCE && dow !== 'Mon' && dow !== 'Thu') return;
+  const byIssue = {};
+  for (const r of tracker.records) (byIssue[r.issue] ||= []).push(r);
+  const blocks = [];
+  for (const [issue, recs] of Object.entries(byIssue)) {
+    const open = recs.filter((r) => r.status === 'sent');
+    if (!open.length) continue;
+    const signed = recs.filter((r) => r.status === 'signed').length;
+    open.sort((a, b) => a.deadline.localeCompare(b.deadline));
+    blocks.push(`<h3>${esc(L.issueName(issue))}: ${open.length} unsigned, ${signed} signed</h3><ul>` + open.map((r) => {
+      const left = L.daysBetween(today, r.deadline);
+      return `<li><strong>${esc(r.contributor)}</strong> — ${esc(r.title)} — ${left < 0 ? `<strong>${-left} day(s) past the deadline</strong>` : `${left} day(s) left`} (due ${r.deadline})</li>`;
+    }).join('') + '</ul>');
+  }
+  if (!blocks.length) { console.log('Weekly status: everything is signed; nothing to send.'); return; }
+  console.log(`Weekly status (${dow}): ${blocks.length} issue(s) with unsigned agreements.`);
+  if (!DRY) await L.notify(api, `Unsigned contributor agreements (${dow} ${today})`, blocks.join('') + '<p>Live view: the payouts page.</p>');
+}
+
 (async () => {
   if (!FORCE && pacificHour() !== 8) { console.log(`Not 8am Pacific (hour ${pacificHour()}); nothing to do.`); return; }
   const api = L.ghost();
   const tracker = await L.loadTracker(api);
   if (!tracker.records.length) { console.log('No agreements recorded yet.'); return; }
   const today = L.todayPacific();
-  const events = { signed: [], reminders: [], pulled: [], cashDefault: [], comps: [] };
+  const events = { signed: [], reminders: [], pulled: [], cashDefault: [], comps: [], contribReminders: [] };
 
   await updateStatuses(tracker, events);
 
@@ -104,6 +128,21 @@ async function pullPost(api, r) {
     } catch (e) { console.error('running-order update failed:', e.message); events.applyError = e.message; }
   }
 
+  // Contributor reminders from DocuSeal at 7 and at 3 days before the deadline (once each; one email per submission).
+  const remindedSubs = new Set();
+  for (const r of tracker.records) {
+    if (r.status !== 'sent' || r.on_deadline === undefined) continue;
+    const left = L.daysBetween(today, r.deadline);
+    if (left < 0 || left > 7) continue;
+    const due3 = left <= 3 && !r.remind3, due7 = left > 3 && !r.remind7;
+    if (!due3 && !due7) continue;
+    if (remindedSubs.has(r.submission_id)) { if (due3) r.remind3 = r.remind7 = true; else r.remind7 = true; continue; }
+    try {
+      if (!DRY && await L.remindSubmission(r, left)) { remindedSubs.add(r.submission_id); events.contribReminders.push({ ...r, left }); }
+      if (due3) r.remind3 = r.remind7 = true; else r.remind7 = true;
+    } catch (e) { console.error('reminder failed for', r.email, e.message); }
+  }
+
   const list = (rs, extra = () => '') => '<ul>' + rs.map((r) => `<li><strong>${esc(r.title)}</strong> (${esc(r.contributor)}, ${esc(r.email)}, ${esc(r.issue)}; deadline ${r.deadline})${extra(r)}</li>`).join('') + '</ul>';
   const parts = [];
   if (events.reminders.length) parts.push(`<h3>Unsigned, deadline within 3 days</h3>${list(events.reminders)}`);
@@ -112,9 +151,11 @@ async function pullPost(api, r) {
   if (events.applyError) parts.push(`<h3>Running order NOT updated</h3><p>${esc(events.applyError)}. It will retry at the next run; or run <code>node inkhorn/scripts/apply-pulls.cjs</code> and deploy by hand.</p>`);
   if (events.cashDefault.length) parts.push(`<h3>Already published; no choice made by the deadline — recorded "cash by default"</h3>${list(events.cashDefault)}`);
   if (events.comps.length) parts.push(`<h3>Chose the Print subscription — complimentary Print membership granted</h3>${list(events.comps, (r) => ` — through ${r.comp_expires}`)}<p>Add them to the print mailing list.</p>`);
+  if (events.contribReminders.length) parts.push(`<h3>Reminders sent to contributors</h3>${list(events.contribReminders, (r) => ` — ${r.left} day(s) left`)}`);
   if (events.signed.length) parts.push(`<h3>Signed since the last check</h3>${list(events.signed, (r) => r.choice ? ` — choice: ${esc(r.choice)}${r.pay_method ? ' (' + esc(r.pay_method) + ')' : ''}` : '')}`);
   console.log(`signed ${events.signed.length}, reminders ${events.reminders.length}, pulled ${events.pulled.length}, cash-default ${events.cashDefault.length}, comps ${events.comps.length}${DRY ? ' (dry run: nothing saved or sent)' : ''}`);
   if (DRY) return;
   await L.saveTracker(api, tracker);
   if (parts.length) await L.notify(api, 'Inkhorn contributor agreements', parts.join(''));
+  await weeklyStatus(api, tracker, today);
 })().catch((e) => { console.error(e.message); process.exit(1); });

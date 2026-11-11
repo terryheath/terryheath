@@ -245,4 +245,20 @@ async function sendAgreement(o) {
   return { ...info, submission_id: sub.submission_id, records: pieces.length };
 }
 
-module.exports = { sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
+// Re-sends DocuSeal's signature-request email to the contributor as a reminder (7 and 3 days before the deadline).
+async function remindSubmission(r, days) {
+  const sub = await ds('GET', `/submissions/${r.submission_id}`);
+  const sm = sub.submitters && sub.submitters[0];
+  if (!sm || sm.status === 'completed') return false;
+  const published = r.on_deadline === 'record-cash-default';
+  const first = (r.contributor || '').replace(/\(.*?\)/g, '').trim().split(/\s+/)[0] || 'there';
+  const when = days === 1 ? 'tomorrow' : `in ${days} days`;
+  const body = `Hello ${first},\n\nA reminder: your Inkhorn Review contributor agreement for "${r.title}" is due ${pretty(r.deadline)}, ${when}. ` +
+    (published ? `Your piece stays published either way; if you have not chosen between cash and the Print subscription by then, we will pay the cash.` : `Inkhorn Review cannot publish a piece without the signed agreement, and the piece will be withdrawn from the issue if it is not signed by then.`) +
+    `\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\nInkhorn Review\nPublished by Follow the Rabbit LLC`;
+  await ds('PUT', `/submitters/${sm.id}`, { send_email: true, message: { subject: `Reminder: your Inkhorn Review contributor agreement is due ${pretty(r.deadline)}`, body } });
+  return true;
+}
+const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 86400000);
+
+module.exports = { remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
