@@ -35,7 +35,7 @@ async function updateStatuses(tracker, events) {
     const pc = String(vals['Payment choice'] || '');
     for (const r of recs) {
       r.status = 'signed'; r.signed_at = s.completed_at;
-      if (r.template === 'paid') {
+      if (r.template !== 'unpaid') {
         r.choice = /subscription/i.test(pc) ? 'subscription' : (pc ? 'cash' : null);
         r.pay_method = vals['Payment method'] || null; r.pay_details = vals['Payment details'] || null;
       }
