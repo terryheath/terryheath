@@ -24,8 +24,8 @@
 //
 // Required env vars: GHOST_API_URL, GHOST_ADMIN_KEY. Optional: TEST_EMAIL, NOTICE_EMAIL (default terry@terryheath.com).
 // (The free-member welcome emails no longer pull pieces: the welcome step was removed 2026-11-11, so nothing here tags #welcome-used.)
-// ALSO=1 adds an "Also at Inkhorn" section after the piece (latest Life on Words, Founder's Letter, Gallery and Muse, only items
-//   newer than the previous weekly email, plus a links line). OFF by default until Terry approves it; ALSO_SINCE_DAYS overrides the window.
+// ALSO=1 adds an "Also at Inkhorn" section after the piece (the latest Life on Words, Founder's Letter, Gallery and Muse, one row each,
+//   flagged NEW when newer than the previous weekly email). OFF by default until Terry approves it; ALSO_SINCE_DAYS overrides the window.
 
 import GhostAdminAPI from '@tryghost/admin-api';
 import { createHmac } from 'crypto';
@@ -144,15 +144,16 @@ function formatBody(body, isPoem) {
   return html;
 }
 
-// ── "Also at Inkhorn": the other departments ──────────────────────────────────
+// ── "Also at Inkhorn": every department, latest item ──────────────────────────
 
 const pagePath = (u) => SITE_URL + new URL(u).pathname;
-const DEPARTMENT_LINKS = [
-  ['Life on Words', `${SITE_URL}/life-on-words/`],
-  ["Founder's Letter", `${SITE_URL}/founder-letter/`],
-  ['Gallery', `${SITE_URL}/art/`],
-  ['Muse', 'https://gomuse.io/'],
+const DEPARTMENTS = [
+  { label: 'Life on Words', tag: 'podcast', page: `${SITE_URL}/life-on-words/` },
+  { label: "Founder's Letter", tag: 'letter', page: `${SITE_URL}/founder-letter/` },
+  { label: 'Gallery', tag: 'art', page: `${SITE_URL}/art/` },
+  // Dear Inkhorn: add { label: 'Dear Inkhorn', tag: ..., page: ... } when it exists in Ghost.
 ];
+const MUSE_PAGE = 'https://gomuse.io/';
 
 /** When the previous weekly email went out, or null. */
 async function lastSendAt() {
@@ -160,37 +161,35 @@ async function lastSendAt() {
   return last[0]?.published_at ? new Date(last[0].published_at) : null;
 }
 
-/** The newest item in each department that is newer than `since`. Departments with nothing new are left out. */
+/** The latest item in every department (always one row each), flagged New when it came out after `since`. */
 async function fetchAlso(since) {
-  const sinceIso = since.toISOString();
-  const items = [];
-  const latest = async (label, primaryTag) => {
-    const [p] = await api.posts.browse({ filter: `primary_tag:${primaryTag}+status:published+published_at:>'${sinceIso}'`, order: 'published_at desc', limit: 1, fields: 'id,title,url,custom_excerpt,published_at' });
-    if (p) items.push({ label, title: p.title, url: pagePath(p.url), note: p.custom_excerpt || '' });
-  };
-  await latest('Life on Words', 'podcast');
-  await latest("Founder's Letter", 'letter');
-  await latest('Gallery', 'art');
-  try { // Muse's newest released issue
+  const rows = [];
+  for (const d of DEPARTMENTS) {
+    const [p] = await api.posts.browse({ filter: `primary_tag:${d.tag}+status:published`, order: 'published_at desc', limit: 1, fields: 'id,title,url,custom_excerpt,published_at' });
+    if (p) rows.push({ label: d.label, page: d.page, title: p.title, url: pagePath(p.url), date: new Date(p.published_at), isNew: new Date(p.published_at) > since, note: p.custom_excerpt || '' });
+  }
+  let muse = { label: 'Muse', page: MUSE_PAGE, title: 'Read and help choose the next issue', url: MUSE_PAGE, date: null, isNew: false, note: '' };
+  try { // Muse's newest released issue, if there is one yet
     const r = await fetch('https://api.gomuse.io/issues');
-    if (r.ok) {
-      const issue = (await r.json()).issues?.find(i => new Date(i.released_at) > since);
-      if (issue) items.push({ label: 'Muse', title: `${issue.name} issue`, url: `https://gomuse.io/issues/${issue.slug}`, note: '' });
-    }
+    const issue = r.ok ? (await r.json()).issues?.[0] : null;
+    if (issue) muse = { label: 'Muse', page: MUSE_PAGE, title: `${issue.name} issue`, url: `https://gomuse.io/issues/${issue.slug}`, date: new Date(issue.released_at), isNew: new Date(issue.released_at) > since, note: '' };
   } catch (err) { console.warn('Muse issues unavailable:', err.message); }
-  return items;
+  rows.push(muse);
+  return rows;
 }
 
 function alsoHtml(items) {
+  const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
   const rows = items.map(i =>
-    `<p style="margin:0 0 10px;font-size:15px;line-height:1.4"><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888">${esc(i.label)}</span><br>` +
+    `<p style="margin:0 0 14px;font-size:15px;line-height:1.4">` +
+    `<a href="${esc(i.page)}" style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;text-decoration:none">${esc(i.label)}</a>` +
+    (i.isNew ? ` <span style="font-size:11px;font-weight:700;color:#ad1b45">NEW</span>` : '') + `<br>` +
     `<a href="${esc(i.url)}" style="color:#1a1a1a;font-weight:600;text-decoration:none">${esc(i.title)}</a>` +
+    (i.date ? ` <span style="font-size:13px;color:#888">&middot; ${fmt(i.date)}</span>` : '') +
     (i.note ? `<br><span style="font-size:14px;font-style:italic;color:#555">${esc(i.note)}</span>` : '') + `</p>`).join('\n');
-  const links = DEPARTMENT_LINKS.map(([name, url]) => `<a href="${esc(url)}" style="color:#555">${esc(name)}</a>`).join(' &middot; ');
   return (
     `<hr style="border:none;border-top:1px solid #e0e0e0;margin:28px 0 20px">\n` +
-    (items.length ? `<p style="margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#1a1a1a">Also at Inkhorn</p>\n${rows}\n` : '') +
-    `<p style="margin:${items.length ? '14px' : '0'} 0 0;font-size:13px;color:#888">Always at Inkhorn: ${links}</p>\n`
+    `<p style="margin:0 0 14px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#1a1a1a">Also at Inkhorn</p>\n${rows}\n`
   );
 }
 
@@ -258,9 +257,9 @@ async function sendSamples() {
     const full = await api.posts.read({ id: piece.id }, { formats: 'html' });
     let also = null;
     if (variant === 'also') {
-      const days = ALSO_SINCE_DAYS || 60; // a wide window so the sample shows the section filled in
-      also = await fetchAlso(new Date(Date.now() - days * 86400_000));
-      console.log(`"Also at Inkhorn" sample (last ${days} days): ${also.map(i => `${i.label}: ${i.title}`).join(' | ') || '(nothing new)'}`);
+      const since = (await lastSendAt()) || new Date(Date.now() - 7 * 86400_000);
+      also = await fetchAlso(since);
+      console.log(`"Also at Inkhorn" sample (New = after ${since.toISOString()}): ${also.map(i => `${i.label}: ${i.title}${i.isNew ? ' [NEW]' : ''}`).join(' | ')}`);
     }
     const subject = `${variant === 'also' ? 'Proposed' : 'Current'} layout: ${piece.title}`;
     const draft = await createEmailDraft(piece, emailHtml(piece, full.html || '', also), subject);
