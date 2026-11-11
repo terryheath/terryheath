@@ -15,7 +15,7 @@ Inkhorn Review's stack:
 ## The sites
 
 - **lifeonwords.com** — Domain only. Its old Ghost pod (`silky-mushroom`) is empty and is not a publishing target. Life on Words is a **column of Inkhorn Review**, living at `inkhornreview.com/life-on-words/`; the podcast import pipeline publishes there. Do not treat lifeonwords.com as a site that holds episodes.
-- **inkhornreview.com** — Inkhorn Review, a quarterly literary magazine (4 issues/year: autumn/October, winter/January, spring/April, summer/July). Ghost instance on PikaPods. Routes, contributor shelves, and code injection in this repo support it. Issues 2 and 3 are both "winter" (`winter-2026`, `winter-2027`) to shift onto this schedule.
+- **inkhornreview.com** — Inkhorn Review, a quarterly literary magazine (4 issues/year, released on the 1st at noon Pacific: autumn/September, winter/December, spring/March, summer/June). Ghost instance on PikaPods. Routes, contributor shelves, and code injection in this repo support it. Autumn 2026's pieces are dated Sep 1, 2026 (a minute apart, in print order); Winter 2026's are Dec 1, 2026.
 - **terryheath.com** — Personal site. Ghost on PikaPods (`smoky-hyena.pikapod.net`). The weekly digest in this repo feeds it.
 
 ## What's in here
@@ -100,12 +100,12 @@ Fetches all scheduled posts, sorts them by current published_at order, and space
 ### Extending routes.yaml with more issues
 
 Inkhorn publishes **4 issues per year** on a quarterly schedule. Seasons and their release months:
-- **autumn** — October
-- **winter** — January
-- **spring** — April
-- **summer** — July
+- **autumn** — September
+- **winter** — December
+- **spring** — March
+- **summer** — June
 
-Issues 2 and 3 are both named "winter" (`winter-2026`, `winter-2027`) to move onto this schedule; `winter-2026` currently sits at December 1, 2026 and will move if the January cadence starts with it.
+An issue's pieces share its release date (the 1st, noon Pacific = 19:00 UTC in summer time, 20:00 UTC in winter time), a minute apart in print order. Every print piece lives at `/{season}-{year}/<slug>/` (primary tag = the season tag); a piece that is also tagged `micro` still gets the season tag FIRST. Free reading periods open four months before each release (Autumn May 1, Winter Aug 1, Spring Nov 1, Summer Feb 1).
 
 Issue slugs are `{season}-{year}` in lowercase, where year is the calendar year the issue releases (e.g. `autumn-2026`, `winter-2026`, `spring-2027`, `summer-2027`). Always use "autumn", never "fall".
 
