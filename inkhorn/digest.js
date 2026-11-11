@@ -58,8 +58,8 @@ if (!['dry', 'test', 'send'].includes(MODE)) {
 
 const api = new GhostAdminAPI({ url: GHOST_API_URL, key: GHOST_ADMIN_KEY, version: 'v5.0' });
 
-function buildJWT() {
-  const [kid, secret] = GHOST_ADMIN_KEY.split(':');
+function buildJWT(key = GHOST_ADMIN_KEY) {
+  const [kid, secret] = key.split(':');
   const iat = Math.floor(Date.now() / 1000);
   const header  = Buffer.from(JSON.stringify({ alg: 'HS256', kid, typ: 'JWT' })).toString('base64url');
   const payload = Buffer.from(JSON.stringify({ exp: iat + 300, iat, aud: '/admin/' })).toString('base64url');
@@ -154,10 +154,14 @@ async function createEmailDraft(post, html) {
   }, { source: 'html' });
 }
 
+// Test emails go through Ghost's email-preview endpoint, which integration (API) keys may not call, so this uses the staff
+// access token (GHOST_STAFF_TOKEN, the same one welcome.js uses).
 async function sendTest(draftId, to) {
+  const staff = process.env.GHOST_STAFF_TOKEN;
+  if (!staff) throw new Error('GHOST_STAFF_TOKEN is required to send a test email');
   const res = await fetch(`${GHOST_API_URL}/ghost/api/admin/email_previews/posts/${draftId}/`, {
     method: 'POST',
-    headers: { Authorization: `Ghost ${buildJWT()}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Ghost ${buildJWT(staff)}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ emails: [to] }),
   });
   if (!res.ok) throw new Error(`test email failed ${res.status}: ${await res.text()}`);
