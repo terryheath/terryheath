@@ -1,0 +1,8 @@
+{
+  "name": "sign-lifeonwords-redirect",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "routes": [
+    { "pattern": "sign.lifeonwords.com/*", "zone_name": "lifeonwords.com" }
+  ]
+}
