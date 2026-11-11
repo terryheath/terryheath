@@ -1,7 +1,8 @@
 {{#get "posts" limit="4" filter="primary_tag:{{primary_tag.slug}}+id:-{{id}}" as |related|}}
 {{#if related}}
     <section class="related-wrapper">
-        <h3 class="related-title">More from {{primary_tag.name}}</h3>
+        {{!-- primary_tag is empty inside this {{#get}} block, so read the post from the page root --}}
+        <h3 class="related-title">{{#if @root.post.primary_tag.name}}More from {{@root.post.primary_tag.name}}{{else}}More to read{{/if}}</h3>
         <div class="related-feed">
             {{#foreach related}}
                 {{> "loop"}}
