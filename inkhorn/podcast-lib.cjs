@@ -69,13 +69,29 @@ function reminderTimes(startIso, tz, createdIso) {
   return { week: skipWeek ? null : week, two_days: created > two ? null : two, morning: created > morning ? null : morning };
 }
 
+// ---- the agreement deadline ---------------------------------------------------------------------------------------------------
+// A booked session goes ahead only if the agreement is signed before the one-week reminder would go out: 9:00 a.m. in the guest's time zone,
+// 7 days before the session date. (If the first email only just went out, they get 3 days from it, so nobody is cancelled before they could read it.)
+function deadlineFor(g) {
+  const b = g.booking;
+  if (!b || b.status !== 'booked' || !b.start) return null;
+  const tz = b.tz || PACIFIC;
+  const week = zonedInstant(shiftYmd(localYmd(new Date(b.start), tz), -7), 9, 0, tz);
+  const grace = g.invited_at ? new Date(new Date(g.invited_at).getTime() + 3 * 86400000) : new Date(0);
+  return week > grace ? week : grace;
+}
+
 // ---- email ------------------------------------------------------------------------------------------------------------------
 const fill = (t, v) => t.replace(/\{(\w+)\}/g, (m, k) => (v[k] !== undefined ? v[k] : m));
 function varsFor(g) {
   const b = g.booking;
   const tz = (b && b.tz) || PACIFIC;
   const v = { first: firstName(g.name), note: g.note ? `${g.note.trim()}\n\n` : '', studio_url: STUDIO, agreement_url: g.agreement ? g.agreement.url : '', book_url: `${HUB}/podcast/book?token=${g.token}`, old_when: g.old_when || '' };
-  if (b && b.status === 'booked') { v.when = when(new Date(b.start), tz); v.reschedule_url = `https://cal.com/reschedule/${b.uid}`; v.cancel_url = `https://cal.com/booking/${b.uid}?cancel=true`; }
+  if (b && b.start) v.when = when(new Date(b.start), tz);
+  if (b && b.status === 'booked') { v.reschedule_url = `https://cal.com/reschedule/${b.uid}`; v.cancel_url = `https://cal.com/booking/${b.uid}?cancel=true`; }
+  const dl = deadlineFor(g);
+  v.deadline = dl ? when(dl, tz) : '';
+  v.deadline_notice = dl ? `Please sign by ${v.deadline}. If the agreement isn't signed by then, the session will be cancelled, and you can sign and pick a new time whenever you're ready.\n\n` : '';
   return v;
 }
 function render(kind, g, extra = {}) {
@@ -158,6 +174,7 @@ async function handleCal(event) {
   if (!g) { await notifyTerry('Life on Words: a booking from someone not in the guest list', `${att.name} <${att.email}> booked (${trig}) ${p.startTime}. They are not in /podcast; add them there.`); return 'unknown guest'; }
   await refreshAgreement(g);
   if (trig === 'BOOKING_CANCELLED') {
+    if (g.booking && g.booking.uid === p.uid && g.booking.status === 'cancelled') return 'already cancelled'; // e.g. our own automatic cancellation
     if (g.booking && g.booking.uid === p.uid) { g.booking.status = 'cancelled'; g.cancelled = true; g.log.push(`${new Date().toISOString().slice(0, 16)} cancelled`); }
     await save(store);
     await notifyTerry(`Life on Words: ${g.name} cancelled`, `${g.name} cancelled the session on ${when(new Date(p.startTime), PACIFIC)} (Pacific). See ${HUB}/podcast`);
@@ -166,7 +183,7 @@ async function handleCal(event) {
   if (trig !== 'BOOKING_CREATED' && trig !== 'BOOKING_RESCHEDULED') return 'ignored';
   const re = trig === 'BOOKING_RESCHEDULED' || (g.booking && g.booking.status === 'booked' && g.booking.uid !== p.uid);
   g.booking = { uid: p.uid, start: new Date(p.startTime).toISOString(), end: new Date(p.endTime).toISOString(), tz: att.timeZone || PACIFIC, status: 'booked', created_at: new Date().toISOString() };
-  g.cancelled = false;
+  g.cancelled = false; g.cancel_reason = '';
   if (re) g.reschedules = (g.reschedules || 0) + 1;
   g.pipeline = g.pipeline === 'new' || !g.pipeline ? 'booked' : g.pipeline;
   g.log.push(`${new Date().toISOString().slice(0, 16)} ${re ? 'rescheduled' : 'booked'} ${g.booking.start}`);
@@ -177,6 +194,27 @@ async function handleCal(event) {
 }
 
 // ---- the hourly job --------------------------------------------------------------------------------------------------------------
+// Cancels a real Cal.com booking (so the slot reopens) through Cal's public cancel endpoint (it needs a CSRF cookie handshake).
+async function calCancel(uid) {
+  const c = await fetch('https://cal.com/api/auth/csrf');
+  const cookie = (c.headers.getSetCookie ? c.headers.getSetCookie() : []).map((x) => x.split(';')[0]).join('; ');
+  const { csrfToken } = await c.json();
+  const r = await fetch('https://cal.com/api/cancel', { method: 'POST', headers: { 'content-type': 'application/json', cookie }, body: JSON.stringify({ uid, allRemainingBookings: false, cancellationReason: 'The guest agreement was not signed by the deadline.', csrfToken }) });
+  if (!r.ok) throw new Error(`Cal.com cancel ${r.status}: ${(await r.text()).slice(0, 120)}`);
+}
+async function cancelUnsigned(g) {
+  const b = g.booking;
+  const notes = [];
+  if (b.uid && !String(b.uid).startsWith('imported-')) { try { await calCancel(b.uid); notes.push('Cal.com booking cancelled'); } catch (e) { notes.push(`Cal.com cancel FAILED (${e.message})`); } }
+  else notes.push('Google-only booking: its Google Calendar event must be deleted (guest notified)');
+  const whenText = when(new Date(b.start), b.tz || PACIFIC);
+  b.status = 'cancelled'; g.cancelled = true; g.cancel_reason = 'unsigned'; g.cancelled_at = new Date().toISOString();
+  g.log.push(`${g.cancelled_at.slice(0, 16)} cancelled: agreement unsigned at the deadline`);
+  await sendKind(g, 'cancelled_unsigned', `cancelled_unsigned:${b.uid}`, { when: whenText });
+  await notifyTerry(`Life on Words: ${g.name}'s session was cancelled (agreement unsigned)`, `${g.name} <${g.email}> had not signed by the deadline, so the session on ${whenText} was cancelled and they were emailed.\n${notes.join('\n')}\n${HUB}/podcast`);
+  return notes;
+}
+
 async function feedTitles() {
   try { const r = await fetch('https://inkhornreview.com/podcast/rss/', { signal: AbortSignal.timeout(15000) }); const x = await r.text(); return [...x.matchAll(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)].map((m) => m[1]); } catch { return []; }
 }
@@ -195,9 +233,15 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
     if (g.agreement && g.agreement.status !== 'signed' && g.agreement.sent_at && now - new Date(g.agreement.sent_at) > 3 * 86400000 && !g.reminders[`agreement_reminder:${g.agreement.submission_id}`]) {
       if (!dry) await sendKind(g, 'agreement_reminder', `agreement_reminder:${g.agreement.submission_id}`); did.push(`agreement reminder ${g.name}`);
     }
-    // session reminders: one week before, two days before, the morning of (each at most once per booking)
+    // an unsigned guest whose deadline has passed loses the session (rule: signed before the one-week reminder time)
+    const dl = deadlineFor(g);
+    if (dl && dl <= now && g.agreement && g.agreement.status !== 'signed' && new Date(g.booking.start) > now) {
+      if (!dry) await cancelUnsigned(g); did.push(`cancelled unsigned ${g.name}`);
+      continue;
+    }
+    // session reminders: one week before, two days before, the morning of (each at most once per booking); only guests who have signed
     const b = g.booking;
-    if (b && b.status === 'booked' && !g.cancelled && new Date(b.start) > now) {
+    if (b && b.status === 'booked' && !g.cancelled && new Date(b.start) > now && g.agreement && g.agreement.status === 'signed') {
       const t = reminderTimes(b.start, b.tz || PACIFIC, b.created_at);
       for (const [key, kind] of [['week', 'week_before'], ['two_days', 'two_days'], ['morning', 'morning_of']]) {
         const due = t[key];
@@ -212,4 +256,4 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
   return did;
 }
 
-module.exports = { invite, sendFirst, link, handleCal, runHourly, CAL_EVENT_URL, notifyTerry, PAGE, HUB, PACIFIC, load, save, newGuest, firstName, zonedInstant, localYmd, localHour, shiftYmd, when, reminderTimes, render, fill, varsFor, sendMail, sendKind, createAgreement, refreshAgreement, signedPdfUrl, TEMPLATE_NAME };
+module.exports = { deadlineFor, cancelUnsigned, calCancel, invite, sendFirst, link, handleCal, runHourly, CAL_EVENT_URL, notifyTerry, PAGE, HUB, PACIFIC, load, save, newGuest, firstName, zonedInstant, localYmd, localHour, shiftYmd, when, reminderTimes, render, fill, varsFor, sendMail, sendKind, createAgreement, refreshAgreement, signedPdfUrl, TEMPLATE_NAME };

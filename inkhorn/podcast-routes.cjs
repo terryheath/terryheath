@@ -54,10 +54,10 @@ function row(g) {
   const sent = Object.keys(g.reminders || {}).map((k) => k.split(':')[0]).join(', ');
   const pl = ['new', 'booked', 'recorded', 'edited', 'published'].map((s) => `<option${g.pipeline === s ? ' selected' : ''}>${s}</option>`).join('');
   const act = (a2, label) => `<form method="post" action="/podcast/act" style="display:inline"><input type="hidden" name="id" value="${esc(g.id)}"><button name="do" value="${a2}">${label}</button></form>`;
-  return `<tr><td><strong>${esc(g.name)}</strong><br><span class="small">${esc(g.email)}</span>${g.cancelled ? '<br><span class="bad">CANCELLED</span>' : ''}${g.kind !== 'invite' ? `<br><span class="small">${esc(g.kind === 'keep_date' ? 'date stands' : 'to reschedule (was ' + g.old_when + ')')}</span>` : ''}</td>
-    <td>${ag}</td><td>${bk}</td><td class="small">${esc(sent)}</td><td>${g.reschedules || 0}</td>
+  return `<tr><td><strong>${esc(g.name)}</strong><br><span class="small">${esc(g.email)}</span>${g.cancelled ? `<br><span class="bad">${g.cancel_reason === 'unsigned' ? 'Cancelled — unsigned' : 'CANCELLED'}</span>` : ''}${g.kind !== 'invite' ? `<br><span class="small">${esc(g.kind === 'keep_date' ? 'date stands' : 'to reschedule (was ' + g.old_when + ')')}</span>` : ''}</td>
+    <td>${ag}${(() => { const d = P.deadlineFor(g); return d && !(a && a.status === 'signed') ? `<br><span class="bad small">sign by ${esc(fmt(d.toISOString(), b.tz || P.PACIFIC))}</span>` : ''; })()}</td><td>${bk}</td><td class="small">${esc(sent)}</td><td>${g.reschedules || 0}</td>
     <td><form method="post" action="/podcast/act" style="display:inline"><input type="hidden" name="id" value="${esc(g.id)}"><select name="to">${pl}</select><button name="do" value="pipeline">Set</button></form><br>${act('recorded', 'Recorded')}${act('edited', 'Edited')}</td>
-    <td>${act('resend_invite', 'Resend invite')}${act('resend_book', 'Resend booking link')}${a && a.status === 'signed' ? `<a href="/podcast/pdf?id=${esc(g.id)}">Signed PDF</a>` : ''}</td></tr>`;
+    <td>${g.cancel_reason === 'unsigned' ? act('resend_cancel', 'Resend cancellation email') : ''}${act('resend_invite', 'Resend invite')}${act('resend_book', 'Resend booking link')}${a && a.status === 'signed' ? `<a href="/podcast/pdf?id=${esc(g.id)}">Signed PDF</a>` : ''}</td></tr>`;
 }
 async function adminPage(msg) {
   const store = await P.load();
@@ -108,6 +108,7 @@ async function adminRoute(req, res, path, query) {
     if (f.do === 'recorded' || f.do === 'edited') { g.pipeline = f.do; g.pipeline_manual = true; msg = `${g.name}: ${f.do}.`; }
     else if (f.do === 'pipeline') { g.pipeline = f.to; g.pipeline_manual = true; msg = `${g.name}: ${f.to}.`; }
     else if (f.do === 'resend_invite') { const kind = g.kind === 'keep_date' ? 'keep_date' : g.kind === 'reschedule' ? 'reschedule_notice' : 'invite'; const m = P.render(kind, g); await P.sendMail(g.email, m.subject, m.text); g.log.push(`${new Date().toISOString().slice(0, 16)} resent ${kind}`); msg = `Resent to ${g.name}.`; }
+    else if (f.do === 'resend_cancel') { const m = P.render('cancelled_unsigned', g); await P.sendMail(g.email, m.subject, m.text); g.log.push(`${new Date().toISOString().slice(0, 16)} resent cancellation`); msg = `Cancellation email resent to ${g.name}.`; }
     else if (f.do === 'resend_book') { const m = P.render('signed', g); await P.sendMail(g.email, m.subject, m.text); g.log.push(`${new Date().toISOString().slice(0, 16)} resent booking link`); msg = `Booking link resent to ${g.name}.`; }
     await P.save(store);
     return redirect(res, '/podcast?msg=' + encodeURIComponent(msg)), true;

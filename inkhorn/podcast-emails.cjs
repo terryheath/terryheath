@@ -1,6 +1,6 @@
 // Every email the Life on Words guest system sends, in one place (2026-11-12). Edit the text here; the code only fills in the {placeholders}.
 // Placeholders: {first} first name, {note} (invite only) the optional personal note from the Add guest form, placed above the opening line as its own paragraph (empty when there is no note), {when} the session date and time in the guest's own time zone (e.g. "Tuesday, December 8 at 9:00 a.m. PST"),
-// {old_when} the session's former date, {agreement_url}, {book_url} (personal booking link; works only once the agreement is signed),
+// {old_when} the session's former date, {agreement_url}, {deadline} (the agreement deadline, in their time zone), {deadline_notice} (agreement reminder only: the deadline sentence when they have a booking, else empty), {book_url} (personal booking link; works only once the agreement is signed),
 // {studio_url} the Riverside studio, {reschedule_url}, {cancel_url}.
 const STUDIO = 'https://riverside.com/studio/terry-heaths-studio?t=ed9e5caf23549199013b';
 const SIGN = '— Terry\nProduced by Terry Heath and Follow the Rabbit LLC';
@@ -22,13 +22,34 @@ Can't make it? Cancel: {cancel_url}`;
 const EMAILS = {
   invite: {
     subject: 'An invitation to Life on Words',
-    body: `Hello {first},
+    body: `{note}Hello {first},
 
-{note}I'd love to have you as a guest on Life on Words, a long-form conversation with writers about their work. I'm the host and guide; you're the expert. We talk for about an hour (I block 90 minutes so nothing feels rushed). It's a video conversation, recorded in your browser through Riverside, so there's nothing to install.
+I'd like to invite you to be a guest on Life on Words, my interview series with people who work in words: novelists, poets, songwriters, composers, playwrights.
+
+Past guests include:
+- a Grammy-nominated, multi-platinum songwriter
+- New York Times bestselling novelists and children's authors
+- a Newbery Honor author
+- a feature film composer
+- a three-time RITA Award winner
+- novelists whose books became Lifetime and Hallmark movies
+- an off-Broadway playwright
+- a television comedy writer
+
+What makes it different:
+- No stock questions. I prepare from your own work, and I don't ask every guest the same things. The conversation follows where your work leads.
+- You're the expert. I'm the host and guide; the hour is about how you think and how you make what you make.
+- Video on YouTube and Apple Podcasts, and audio wherever people listen to podcasts.
+- When your episode is live, I'll send you the links to share.
+
+The details:
+- About an hour of conversation; I block 90 minutes so nothing feels rushed.
+- Video, recorded in your browser through Riverside. There's nothing to install.
+- We record on Tuesdays, and you pick the time that suits you.
 
 Two steps:
-1. Sign the short guest agreement: {agreement_url}
-2. Then pick a time that suits you. Your booking link arrives by email as soon as the agreement is signed.
+1. Sign the short guest agreement. It's non-exclusive, and you keep all rights to your own work: {agreement_url}
+2. Your personal booking link arrives by email as soon as it's signed.
 
 If you have questions, just reply to this email.
 
@@ -40,7 +61,7 @@ ${SIGN}`,
 
 A quick reminder that your Life on Words guest agreement is still waiting for your signature. Once it's signed, you can pick a time to record.
 
-Sign here: {agreement_url}
+{deadline_notice}Sign here: {agreement_url}
 
 ${SIGN}`,
   },
@@ -100,12 +121,27 @@ I'll be in the studio when you arrive.
 
 ${SIGN}`,
   },
+  // Sent automatically when a booked session's agreement is still unsigned at the deadline (9:00 a.m. their time, 7 days before the session).
+  cancelled_unsigned: {
+    subject: 'Your Life on Words session has been cancelled',
+    body: `Hello {first},
+
+Your Life on Words session on {when} has been cancelled because the guest agreement wasn't signed in time.
+
+I'd still love to have you on. Whenever you're ready, sign the agreement and pick a new Tuesday:
+1. Sign: {agreement_url}
+2. Pick a time: {book_url}
+
+${SIGN}`,
+  },
   // The five guests whose dates stand (Terry's teaching schedule did not change theirs): the agreement only.
   keep_date: {
     subject: 'Your Life on Words session on {when}: one short agreement first',
     body: `Hello {first},
 
 Your Life on Words session on {when} stands. Before we record I need you to sign a short guest agreement; it covers the recording, publishing it, and possible future print collections, and it's non-exclusive and transfers nothing in your own work.
+
+Please sign by {deadline}. If the agreement isn't signed by then, the session will be cancelled, and you can sign and pick a new time whenever you're ready.
 
 Sign here: {agreement_url}
 
