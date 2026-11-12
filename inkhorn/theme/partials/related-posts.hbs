@@ -1,8 +1,11 @@
+{{!-- Related posts at the foot of a post. post.hbs passes the tag name in ({{> "related-posts" tag_name=primary_tag.name}}) because @root is not
+     an allowed global in themes (gscan GS120-NO-UNKNOWN-GLOBALS) and primary_tag is empty inside {{#get}} (its context is the query result),
+     so the heading reads the value from the parent context (../tag_name). A post with no tag shows the latest posts under "More to read". --}}
+{{#if tag_name}}
 {{#get "posts" limit="4" filter="primary_tag:{{primary_tag.slug}}+id:-{{id}}" as |related|}}
 {{#if related}}
     <section class="related-wrapper">
-        {{!-- primary_tag is empty inside this {{#get}} block, so read the post from the page root --}}
-        <h3 class="related-title">{{#if @root.post.primary_tag.name}}More from {{@root.post.primary_tag.name}}{{else}}More to read{{/if}}</h3>
+        <h3 class="related-title">More from {{../tag_name}}</h3>
         <div class="related-feed">
             {{#foreach related}}
                 {{> "loop"}}
@@ -11,3 +14,17 @@
     </section>
 {{/if}}
 {{/get}}
+{{else}}
+{{#get "posts" limit="4" filter="id:-{{id}}" as |related|}}
+{{#if related}}
+    <section class="related-wrapper">
+        <h3 class="related-title">More to read</h3>
+        <div class="related-feed">
+            {{#foreach related}}
+                {{> "loop"}}
+            {{/foreach}}
+        </div>
+    </section>
+{{/if}}
+{{/get}}
+{{/if}}
