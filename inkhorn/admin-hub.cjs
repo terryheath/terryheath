@@ -122,7 +122,7 @@ async function homeHtml() {
     if (upcoming) {
       const rs = rows.filter((r) => r.issue === upcoming);
       const cash = rs.filter((r) => r.signed && r.choice === 'Cash').reduce((n, r) => n + r.amount, 0);
-      const toCome = rs.filter((r) => !r.signed && r.status !== 'expired').reduce((n, r) => n + r.amount, 0);
+      const toCome = rs.filter((r) => !r.signed && r.status !== 'expired' && r.status !== 'withdrawn').reduce((n, r) => n + r.amount, 0);
       const subs = rs.filter((r) => r.signed && r.choice === 'Print subscription').length;
       pay = `<li><strong>${esc(L.issueName(upcoming))}, releases ${esc(L.pretty(L.ymd(L.releaseDate(upcoming))))}:</strong> cash to send $${cash} (signed), up to $${toCome} more if the rest sign; ${subs} Print subscription${subs === 1 ? '' : 's'} chosen.</li>`;
     }

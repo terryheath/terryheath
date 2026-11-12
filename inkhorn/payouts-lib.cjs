@@ -50,10 +50,10 @@ async function payoutsHtml() {
   const blocks = Object.entries(byIssue).map(([issue, rs]) => {
     rs.sort((a, b) => Number(b.signed) - Number(a.signed) || a.deadline.localeCompare(b.deadline) || a.contributor.localeCompare(b.contributor));
     const cashSigned = rs.filter((r) => r.signed && r.choice === 'Cash').reduce((n, r) => n + r.amount, 0);
-    const cashPending = rs.filter((r) => !r.signed && r.status !== 'expired').reduce((n, r) => n + r.amount, 0);
+    const cashPending = rs.filter((r) => !r.signed && r.status !== 'expired' && r.status !== 'withdrawn').reduce((n, r) => n + r.amount, 0);
     const tr = rs.map((r) => {
       const left = L.daysBetween(today, r.deadline);
-      const status = r.signed ? `Signed ${esc(r.signed_at)}` : r.status === 'expired' ? 'Expired' : left < 0 ? `Unsigned, ${-left} day(s) late` : `Unsigned, ${left} day(s) left`;
+      const status = r.signed ? `Signed ${esc(r.signed_at)}` : r.status === 'expired' ? 'Expired' : r.status === 'withdrawn' ? 'Withdrawn by the author' : left < 0 ? `Unsigned, ${-left} day(s) late` : `Unsigned, ${left} day(s) left`;
       const how = r.signed ? [r.choice, r.method, r.details].filter(Boolean).map(esc).join(' · ') : '';
       const bio = !r.signed ? '' : { filled: 'Bio filled in', pending: 'Bio waiting', applied: 'Bio applied', ignored: 'Bio ignored', none: 'No bio typed' }[r.bio_state] || '';
       return `<tr class="${r.signed ? 'ok' : 'open'}"><td>${esc(r.contributor)}${r.name_in_print && r.name_in_print !== r.contributor ? `<br><small>in print: ${esc(r.name_in_print)}</small>` : ''}</td><td>${esc(r.title)}</td><td>${money(r.amount)}</td><td>${status}</td><td>${esc(r.deadline)}</td><td>${how}</td><td>${esc(r.address)}</td><td>${esc(bio)}</td></tr>`;

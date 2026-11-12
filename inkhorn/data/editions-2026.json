@@ -689,24 +689,6 @@
     {
       "edition": "winter-2026",
       "position": 14,
-      "key": "birdsong",
-      "title": "There is safety in birdsong",
-      "title_italic_part": null,
-      "author": "Sam Agar",
-      "genre": "fiction",
-      "status_now": "new",
-      "slug": "there-is-safety-in-birdsong",
-      "current_url": null,
-      "match_scheduled_by_title": null,
-      "custom_excerpt": "by Sam Agar",
-      "bio": null,
-      "bio_html": null,
-      "nomination_line": null,
-      "html": "<p>It’s always been easier on the island. Less ground to cover, more room for escape. She arrived shortly before the end of everything. She’s lost track of how long it’s been and when she tries to guess, her mind becomes warped with thoughts of days and months and years, all jumbled into one endless before, bringing up burps of panic and dread. It’s better to focus on what’s in front of her: canned food, bottled water, packets of oats and grains. Two weeks after the collapse, when time was still manageable, she found a small row of shops and a few scattered cottages, all abandoned, all good foraging for what was left behind. They are not infinite, these boxes and bags and bottles lining her walls, and she must face the terrifying thought of after. She would like to start a garden. She wakes up at night thinking about all the things she does not know. There are still books, piled dusty and rotting in the small library at the centre of the island where the bells used to toll. She wanders the shelves searching desperately for all the answers she might need, the ones she hasn’t even thought of yet. There is a section on DIY and gardening and yet the words fall flat. She is used to being shown how to do everything.</p>\n<p>When the warnings came, early and often, she did not look up. It was only when the panic began to distract and multiply that she took action. She bought a freshwater pen, designed by a celebrity survivalist. When it did not arrive, she wept over the amount of money it cost, and the realisation that none of that mattered anymore. She has done well to get this far. She has always been good at being alone, it is essential to her survival. No one cries out for her or reaches for her hand and for this she is grateful. She finds a collection of seeds amongst the debris of a garden shed. Tomatoes, potatoes, and carrots. Celery and onions. She starts with a sunflower seed. At first there is nothing, an emptiness which she watches from the corner of her eye as she pretends not to sink hope into the dry soil. And then a shoot of green—small with promise and disappointment. It is her fixation; it is her infant. Each day it grows is a gift. When she has to move it to a bigger pot, she is sick with nerves, cooing and whispering and praying. Once it is almost as tall as her, she knows she should plant it outside but is not ready to lose it yet. She walks the island every day, watching for changes, making mental notes, faced always with her ignorance. There were experts once, people who would know what to look for. Sometimes she screams into the emptiness, swallowed whole by her echoes until her throat is raw and silenced. She paces against the worry that something should be done and that she should be the one to do it. Her sunflower begins to die, wilting and tired. Its loss is brutal, and she grieves.</p>\n<p>The robin is the first to come back to her. Tiny and undeniable, it haunts her every step. She is convinced it is an imagined companion. She has long since accepted that she will lose her mind. This is the beginning. It is there again on her next walk, bold and quick, teasing landings ahead of her feet, hopping away before her pace can catch up. It won’t let her get too close, but it eats the grains she scatters with each stride. She watches in awe, breath timid against this new wonder. It has been so long; it is poetry and music. And then it is joined by another, bigger and braver. It is a shock at first, when she first hears them sing, foreign and familiar all at once. Trilling in her ears as she wakes, confusing her momentarily as she reaches for an alarm that doesn’t exist. She gets used to it so quickly, and with it a sense of guilt and anxiety arrives. She must be grateful; she must not take it for granted. There are new birds to look at, small and blue, tiny speckled brown, vibrant orange. Blue tit, wren, bullfinch. She reads the names from a mouldy children’s book, forgetting them almost immediately after turning the page. She carries it around with her, so she can check, so she can remember. It’s like a drug, this reawakening, and she can feel the absence of others more than ever. While before it was useful, now it feels like a suffering, a painful wonder of who and how many.</p>\n<p>She finds eggshells on the bank of the river, dropped across her path like a gift. She collects them gently, thinking of the chickens that she will likely never see again. They break against her hands as she buries them in the soil. It is a sacred act. She plants the tomatoes and potatoes and carrots. She plants everything she can find, digging and toiling and begging promise. Please don’t die. Please come back. She does not know how often to turn the soil or what is the best time to sow. She does not know about fertiliser or nutrients. She gives herself blindly to this revolution, hoping she can play a part. She is hungry for it. As the world becomes green around her there are new discoveries to be made. Splashing in the river, rustling in the trees. She is careful with her tread; she is an interloper, and this place does not belong to her. When the harvest arrives, she is pagan in her embrace, dancing and singing with the rising sun. There is too much for just her. She laughs like a child, naked in her joy, running to the centre of the island, where the bells will ring again.</p>"
-    },
-    {
-      "edition": "winter-2026",
-      "position": 15,
       "key": "pine",
       "title": "Pine Needles",
       "title_italic_part": null,
@@ -724,7 +706,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 16,
+      "position": 15,
       "key": "cow",
       "title": "How Now Brown Cow",
       "title_italic_part": null,
@@ -742,7 +724,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 17,
+      "position": 16,
       "key": "kitchen",
       "title": "In a Stranger’s Kitchen",
       "title_italic_part": null,
@@ -760,7 +742,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 18,
+      "position": 17,
       "key": "fathers",
       "title": "Father’s Day",
       "title_italic_part": null,
@@ -778,7 +760,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 19,
+      "position": 18,
       "key": "coffee",
       "title": "The Incredible Shrinking Coffee Shop of Paris",
       "title_italic_part": null,
@@ -796,7 +778,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 20,
+      "position": 19,
       "key": "lot",
       "title": "Look: I am nothing says Lot’s daughter",
       "title_italic_part": "Look: I am nothing",
@@ -814,7 +796,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 21,
+      "position": 20,
       "key": "ribbon",
       "title": "A black ribbon? Really?",
       "title_italic_part": null,
@@ -832,7 +814,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 22,
+      "position": 21,
       "key": "gaotie",
       "title": "Gaotie",
       "title_italic_part": null,
@@ -850,7 +832,7 @@
     },
     {
       "edition": "winter-2026",
-      "position": 23,
+      "position": 22,
       "key": "komodo",
       "title": "Re: What Happened to Your Father at the Omaha Zoo.",
       "title_italic_part": null,
