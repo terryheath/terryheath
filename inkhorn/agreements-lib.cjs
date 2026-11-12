@@ -266,4 +266,4 @@ function releaseSlot(issue, position) {
   return new Date(Date.UTC(...(() => { const r = releaseDate(issue); return [r.y, r.m - 1, r.d, 12, 0, 0]; })()) + (position - 1) * 60000);
 }
 
-module.exports = { releaseSlot, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
+module.exports = { resolvedSlug, releaseSlot, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };

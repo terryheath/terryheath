@@ -14,12 +14,14 @@
  *   3a. A signed piece (not yet released, still a draft) is scheduled for its slot: 12:00 UTC on release day + (print position - 1) minutes.
  *   3b. Contributor reminders: DocuSeal re-sends the signature request 7 and 3 days before each deadline (once each).
  *   3c. Every Monday and Thursday: emails Terry the unsigned list per issue with days left (stops per issue once all are signed).
+ *   3d. Bios and addresses from signed agreements (bios-lib.cjs): a blank bio is filled in automatically; an existing one is left for Terry on the payouts page.
  *   4. A signed agreement with the subscription choice gets a complimentary Print membership (one year) in Ghost; the email asks
  *      Terry to add them to the print mailing list.
  * Env: GITHUB_TOKEN, DOCUSEAL_TOKEN (DOCUSEAL_URL optional), GHOST_API_URL, GHOST_ADMIN_KEY, GHOST_STAFF_TOKEN, optional NOTICE_EMAIL,
  *      AGREEMENTS_MODE=dry (print what would happen, change nothing), FORCE=1 (skip the 8am check).
  */
 const L = require('./agreements-lib.cjs');
+const B = require('./bios-lib.cjs');
 const DRY = (process.env.AGREEMENTS_MODE || '').toLowerCase() === 'dry';
 const FORCE = process.env.FORCE === '1';
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -96,9 +98,10 @@ async function weeklyStatus(api, tracker, today) {
   const tracker = await L.loadTracker(api);
   if (!tracker.records.length) { console.log('No agreements recorded yet.'); return; }
   const today = L.todayPacific();
-  const events = { signed: [], reminders: [], pulled: [], cashDefault: [], comps: [], contribReminders: [], scheduled: [] };
+  const events = { signed: [], reminders: [], pulled: [], cashDefault: [], comps: [], contribReminders: [], scheduled: [], bios: [], bioErrors: [] };
 
   await updateStatuses(tracker, events);
+  await B.processSigned(api, tracker, events, { dry: DRY }); // bios and addresses from newly signed agreements
 
   for (const r of tracker.records) {
     if (r.status === 'signed' && r.choice === 'subscription' && !r.comp_granted && !DRY) {
@@ -176,6 +179,10 @@ async function weeklyStatus(api, tracker, today) {
   if (events.comps.length) parts.push(`<h3>Chose the Print subscription — complimentary Print membership granted</h3>${list(events.comps, (r) => ` — through ${r.comp_expires}`)}<p>Add them to the print mailing list.</p>`);
   if (events.contribReminders.length) parts.push(`<h3>Reminders sent to contributors</h3>${list(events.contribReminders, (r) => ` — ${r.left} day(s) left`)}`);
   if (events.scheduled.length) parts.push(`<h3>Signed: scheduled for release day</h3>${list(events.scheduled, (r) => ` — scheduled ${r.slot.replace('T', ' ').slice(0, 16)} UTC`)}`);
+  const filled = events.bios.filter((b) => b.kind === 'filled'), waiting = events.bios.filter((b) => b.kind === 'pending');
+  if (filled.length) parts.push(`<h3>Bios filled in from signed agreements</h3><ul>${filled.map((b) => `<li>Filled in the bio and name in print (${esc(b.name)}) for <strong>${esc(b.r.title)}</strong> from the signed agreement.</li>`).join('')}</ul>`);
+  if (waiting.length) parts.push(`<h3>Bios waiting for you</h3><ul>${waiting.map((b) => `<li><strong>${esc(b.r.title)}</strong> (${esc(b.r.contributor)}): a bio already exists${b.note ? ' (' + esc(b.note) + ')' : ''}; compare and Apply or Ignore on the payouts page.</li>`).join('')}</ul>`);
+  if (events.bioErrors.length) parts.push(`<h3>Bio step failed</h3><ul>${events.bioErrors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>`);
   if (events.signed.length) parts.push(`<h3>Signed since the last check</h3>${list(events.signed, (r) => r.choice ? ` — choice: ${esc(r.choice)}${r.pay_method ? ' (' + esc(r.pay_method) + ')' : ''}` : '')}`);
   console.log(`signed ${events.signed.length}, reminders ${events.reminders.length}, pulled ${events.pulled.length}, cash-default ${events.cashDefault.length}, comps ${events.comps.length}${DRY ? ' (dry run: nothing saved or sent)' : ''}`);
   if (DRY) return;
