@@ -1,5 +1,5 @@
 // Every email the Life on Words guest system sends, in one place (2026-11-12). Edit the text here; the code only fills in the {placeholders}.
-// Placeholders: {first} first name, {when} the session date and time in the guest's own time zone (e.g. "Tuesday, December 8 at 9:00 a.m. PST"),
+// Placeholders: {first} first name, {note} (invite only) the optional personal note from the Add guest form, placed above the opening line as its own paragraph (empty when there is no note), {when} the session date and time in the guest's own time zone (e.g. "Tuesday, December 8 at 9:00 a.m. PST"),
 // {old_when} the session's former date, {agreement_url}, {book_url} (personal booking link; works only once the agreement is signed),
 // {studio_url} the Riverside studio, {reschedule_url}, {cancel_url}.
 const STUDIO = 'https://riverside.com/studio/terry-heaths-studio?t=ed9e5caf23549199013b';
@@ -21,10 +21,10 @@ Can't make it? Cancel: {cancel_url}`;
 
 const EMAILS = {
   invite: {
-    subject: 'Life on Words: your invitation (sign, then pick a time)',
+    subject: 'An invitation to Life on Words',
     body: `Hello {first},
 
-Thank you for agreeing to be a guest on Life on Words, a long-form conversation with writers about their work. I'm the host and guide; you're the expert. We talk for about an hour (I block 90 minutes so nothing feels rushed). It's a video conversation, recorded in your browser through Riverside, so there's nothing to install.
+{note}I'd love to have you as a guest on Life on Words, a long-form conversation with writers about their work. I'm the host and guide; you're the expert. We talk for about an hour (I block 90 minutes so nothing feels rushed). It's a video conversation, recorded in your browser through Riverside, so there's nothing to install.
 
 Two steps:
 1. Sign the short guest agreement: {agreement_url}
