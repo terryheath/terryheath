@@ -21,38 +21,52 @@ ${TIPS}
 const EMAILS = {
   invite: {
     subject: 'An invitation to Life on Words',
-    body: `{note}Hello {first},
+    // Terry's final text (2026-11-12). Plain text: his bold headings and link are written out. {agreement_url} is each guest's own agreement.
+    body: `{note}Hi {first},
 
-I'd like to invite you to be a guest on Life on Words, my podcast: interviews with people who work in words, including novelists, poets, songwriters, composers and playwrights.
+I'd love to have a conversation with you about your work.
 
-Past guests include:
-- a Grammy-nominated, multi-platinum songwriter
-- New York Times bestselling novelists and children's authors
-- a Newbery Honor author
-- a feature film composer
-- a three-time RITA Award winner
-- novelists whose books became Lifetime and Hallmark movies
-- an off-Broadway playwright
-- a television comedy writer
+I host a show called Life on Words, where I sit down with people who make their living with words: novelists, poets, songwriters, playwrights, composers, and writers of all kinds.
 
-What makes it different:
-- No stock questions. I prepare from your own work, and I don't ask every guest the same things. The conversation follows where your work leads.
-- You're the expert. I'm the host and guide; the hour is about how you think and how you make what you make.
-- It's a podcast: the episode is released as video on YouTube and Apple Podcasts, and as audio wherever people listen to podcasts.
-- When your episode is live, I'll send you the links to share.
+And I'm not interested in asking you the same ten questions everyone else asks.
 
-The details:
-- About an hour of conversation; I block 90 minutes so nothing feels rushed.
-- Video, recorded in your browser through Riverside. There's nothing to install.
-- We record on Tuesdays, and you pick the time that suits you.
+I want to get into the things that make your work yours.
 
-Two steps:
-1. Sign the short guest agreement. It's non-exclusive, and you keep all rights to your own work: {agreement_url}
-2. Your personal booking link arrives by email as soon as it's signed.
+Where your ideas come from. How you approach your craft. The choices you make. The things you've learned along the way. And perhaps a few things you've never been asked about before.
 
-If you have questions, just reply to this email.
+Think of it as an hour to talk about the work you love, with someone who's genuinely interested in hearing about it.
 
-${SIGN}`,
+We've had some wonderful guests on the show, including a Grammy-nominated, multi-platinum songwriter, New York Times bestselling authors, a Newbery Honor author, a feature film composer, an off-Broadway playwright, and a television comedy writer.
+
+I'd love to add you to that list.
+
+A few details:
+
+- The conversation takes about an hour.
+- We record on video using Riverside, right in your browser. Nothing to install.
+- We record on Tuesdays, and you choose a time that works for you.
+- Your episode appears on YouTube, Apple Podcasts, and the major podcast platforms.
+- Once it's published, I'll send you the links so you can share it.
+
+How to get started:
+
+There's just one thing to take care of first: a short guest agreement.
+
+Sign the guest agreement here: {agreement_url}
+
+It's non-exclusive, and you retain all rights to your work.
+
+Once you've signed, I'll email you your personal booking link so you can choose a Tuesday that suits you.
+
+That's it.
+
+I'd love to have you on.
+
+Terry
+
+Terry Heath
+Producer, Life on Words
+Follow the Rabbit LLC`,
   },
   agreement_reminder: {
     subject: 'A reminder: your Life on Words guest agreement',
