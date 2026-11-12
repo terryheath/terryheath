@@ -12,6 +12,9 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Only fees paid on or after this moment are ever refunded: the refund policy started 2026-11-12 (midnight Pacific). Terry's rule: no refunds on past fees.
+const POLICY_START = Date.parse(process.env.REFUND_POLICY_START || '2026-11-12T08:00:00Z') / 1000;
+const paidBefore = (c) => c.created < POLICY_START;
 const FEE_AMOUNTS = new Set([300, 400, 500]); // cents: every fee Duosuma has charged so far, and the new $5 fee
 const stripeKey = () => process.env.STRIPE_SECRET_KEY || execSync('security find-generic-password -s stripe-inkhorn-press -w', { stdio: ['pipe', 'pipe', 'pipe'] }).toString().trim();
 
@@ -68,6 +71,7 @@ function evaluate(rec, charges) {
   if (cand.length > 1 && want) { const n = cand.filter((c) => callType(c.desc) === want); if (n.length) cand = n; }
   if (cand.length > 1) return { state: 'flag', candidates: cand, reason: `${cand.length} fee charges for ${email}; pick the right one` };
   const c = cand[0];
+  if (paidBefore(c)) return { state: 'skip', reason: `fee ${c.id} ($${(c.amount / 100).toFixed(2)}) was paid ${new Date(c.created * 1000).toISOString().slice(0, 10)}, before the refund policy; not refunded`, charge: c };
   if (c.status !== 'succeeded') return { state: 'flag', candidates: [c], reason: `fee charge ${c.id} did not succeed (${c.status})` };
   if (c.refunded > 0) return { state: 'flag', candidates: [c], reason: `fee charge ${c.id} already has $${(c.refunded / 100).toFixed(2)} refunded in Stripe` };
   if (!FEE_AMOUNTS.has(c.amount)) return { state: 'flag', candidates: [c], reason: `fee charge ${c.id} is $${(c.amount / 100).toFixed(2)}, which is not a known fee amount` };
@@ -82,6 +86,7 @@ async function refundCharge(chargeId, meta = {}) {
   if (!/^Fee for /.test(c.description || '')) throw new Error(`${chargeId} is not a fee charge (description "${c.description}"); tips are never refunded`);
   if (!c.metadata || !c.metadata.SubToken) throw new Error(`${chargeId} is not a Duosuma charge`);
   if (c.status !== 'succeeded') throw new Error(`${chargeId} did not succeed`);
+  if (c.created < POLICY_START) throw new Error(`${chargeId} was paid ${new Date(c.created * 1000).toISOString().slice(0, 10)}, before the refund policy; past fees are not refunded`);
   if (c.amount_refunded > 0 || c.refunded) throw new Error(`${chargeId} is already refunded`);
   const r = await stripe('POST', '/refunds', { charge: chargeId, reason: 'requested_by_customer', 'metadata[source]': 'inkhorn-fee-refund', 'metadata[sub_token]': c.metadata.SubToken, 'metadata[how]': meta.how || 'auto' }, `inkhorn-fee-refund-${chargeId}`);
   return { charge: chargeId, refund_id: r.id, amount: r.amount, date: new Date().toISOString().slice(0, 10), by: meta.how || 'auto', status: r.status };
@@ -95,10 +100,11 @@ async function processRecords(records, todo, { dry = false, charges } = {}) {
   charges = charges || (await duosumaCharges());
   const out = [];
   for (const rec of todo) {
-    if (rec.refund || rec.refund_dismissed) { out.push({ rec, action: 'skipped', detail: rec.refund ? 'already refunded' : 'dismissed' }); continue; }
+    if (rec.refund || rec.refund_dismissed || rec.refund_skipped) { out.push({ rec, action: 'skipped', detail: rec.refund ? 'already refunded' : rec.refund_skipped ? rec.refund_skipped.reason : 'dismissed' }); continue; }
     const sib = records.find((x) => x !== rec && sameSubmission(x, rec) && x.refund && !x.refund.covered_by);
     if (sib) { if (!dry) rec.refund = { ...sib.refund, covered_by: sib.title }; out.push({ rec, action: 'covered', detail: `same submission as "${sib.title}", refunded once (${sib.refund.refund_id})` }); continue; }
     const ev = evaluate(rec, charges);
+    if (ev.state === 'skip') { if (!dry) { rec.refund_skipped = { reason: ev.reason, charge: ev.charge.id, at: new Date().toISOString().slice(0, 10) }; rec.refund_flag = undefined; } out.push({ rec, action: 'skipped', detail: ev.reason }); continue; }
     if (ev.state === 'refund') {
       // another record of the same contributor may already have claimed this very charge
       const claimed = records.find((x) => x !== rec && x.refund && x.refund.charge === ev.charge.id);
@@ -114,6 +120,6 @@ async function processRecords(records, todo, { dry = false, charges } = {}) {
   return out;
 }
 
-const needsCheck = (r) => r.status === 'signed' && !r.refund && !r.refund_dismissed && !r.refund_flag;
+const needsCheck = (r) => r.status === 'signed' && !r.refund && !r.refund_dismissed && !r.refund_skipped && !r.refund_flag;
 
-module.exports = { stripe, duosumaCharges, evaluate, refundCharge, processRecords, needsCheck, FEE_AMOUNTS };
+module.exports = { POLICY_START, stripe, duosumaCharges, evaluate, refundCharge, processRecords, needsCheck, FEE_AMOUNTS };

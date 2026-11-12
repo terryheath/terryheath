@@ -44,6 +44,7 @@ function refundCell(r) {
   const rid = esc(r.submission_id + '|' + r.title);
   if (r.refund) return `<span class="ok">Refunded $${(r.refund.amount / 100).toFixed(2)}</span><br><small>${esc(r.refund.refund_id)} · ${esc(r.refund.date)}${r.refund.covered_by ? ' (one refund for this submission; see ' + esc(r.refund.covered_by) + ')' : ''}${r.refund.by === 'manual' ? ' · by hand' : ''}</small>`;
   if (r.refund_dismissed) return '<small>No fee (dismissed)</small>';
+  if (r.refund_skipped) return `<small>Not refunded: fee paid before the refund policy (${esc(r.refund_skipped.charge)})</small>`;
   const fl = r.refund_flag;
   if (!fl) return '<small>Not checked</small>';
   const cands = fl.candidates || [];
