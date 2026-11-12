@@ -201,7 +201,7 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
       const t = reminderTimes(b.start, b.tz || PACIFIC, b.created_at);
       for (const [key, kind] of [['week', 'week_before'], ['two_days', 'two_days'], ['morning', 'morning_of']]) {
         const due = t[key];
-        if (!due || due > now || g.reminders[`${key}:${b.uid}`]) continue;
+        if (!due || due > now || now - due > 48 * 3600e3 || g.reminders[`${key}:${b.uid}`]) continue; // never send one that is more than 2 days stale
         if (!dry) await sendKind(g, kind, `${key}:${b.uid}`); did.push(`${key} ${g.name}`);
       }
     }
