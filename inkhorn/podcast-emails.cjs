@@ -24,7 +24,7 @@ const EMAILS = {
     subject: 'An invitation to Life on Words',
     body: `{note}Hello {first},
 
-I'd like to invite you to be a guest on Life on Words, my interview series with people who work in words: novelists, poets, songwriters, composers, playwrights.
+I'd like to invite you to be a guest on Life on Words, my podcast: interviews with people who work in words, including novelists, poets, songwriters, composers and playwrights.
 
 Past guests include:
 - a Grammy-nominated, multi-platinum songwriter
@@ -39,7 +39,7 @@ Past guests include:
 What makes it different:
 - No stock questions. I prepare from your own work, and I don't ask every guest the same things. The conversation follows where your work leads.
 - You're the expert. I'm the host and guide; the hour is about how you think and how you make what you make.
-- Video on YouTube and Apple Podcasts, and audio wherever people listen to podcasts.
+- It's a podcast: the episode is released as video on YouTube and Apple Podcasts, and as audio wherever people listen to podcasts.
 - When your episode is live, I'll send you the links to share.
 
 The details:
