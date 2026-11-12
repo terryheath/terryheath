@@ -3,7 +3,7 @@
 // {old_when} the session's former date, {agreement_url}, {book_url} (personal booking link; works only once the agreement is signed),
 // {studio_url} the Riverside studio, {reschedule_url}, {cancel_url}.
 const STUDIO = 'https://riverside.com/studio/terry-heaths-studio?t=ed9e5caf23549199013b';
-const SIGN = '— Terry\nLife on Words, produced by Follow the Rabbit LLC';
+const SIGN = '— Terry\nProduced by Terry Heath and Follow the Rabbit LLC';
 const TIPS = `Click the link a few minutes before your scheduled time. Riverside runs in your browser; there is nothing to download.
 
 Quick tips:
@@ -120,7 +120,7 @@ ${SIGN}`,
     subject: 'Life on Words: I need to move your session (my apologies)',
     body: `Hello {first},
 
-I'm sorry. My teaching schedule changed, and I need to move your Life on Words session, which was set for {old_when}. I apologize for the inconvenience, and I'd still love to have you on.
+I'm sorry. My teaching schedule changed, and I need to move your Life on Words session, which was set for {old_when}. I'd still love to have you on.
 
 Two steps, in this order:
 1. Sign the short guest agreement (it covers the recording, publishing it, and possible future print collections; it's non-exclusive and transfers nothing in your own work): {agreement_url}
