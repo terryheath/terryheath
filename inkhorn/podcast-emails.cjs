@@ -1,5 +1,5 @@
 // Every email the Life on Words guest system sends, in one place (2026-11-12). Edit the text here; the code only fills in the {placeholders}.
-// Placeholders: {first} first name, {note} (invite only) the optional personal note from the Add guest form, placed above the opening line as its own paragraph (empty when there is no note), {when} the session date and time in the guest's own time zone (e.g. "Tuesday, December 8 at 9:00 a.m. PST"),
+// Placeholders: {first} first name, {note} (invite only) the optional personal note from the Add guest form, placed after the greeting and before "I'd love to have a conversation" as its own paragraph (empty when there is no note), {when} the session date and time in the guest's own time zone (e.g. "Tuesday, December 8 at 9:00 a.m. PST"),
 // {old_when} the session's former date, {agreement_url}, {deadline} (the agreement deadline, in their time zone), {deadline_notice} (agreement reminder only: the deadline sentence when they have a booking, else empty), {book_url} (personal booking link; works only once the agreement is signed),
 // {studio_url} the Riverside studio, {reschedule_url}, {cancel_url}, {change_lines} (the reschedule and cancel links, or "reply to this email" for the sessions booked before Cal.com).
 const STUDIO = 'https://riverside.com/studio/terry-heaths-studio?t=ed9e5caf23549199013b';
@@ -22,9 +22,9 @@ const EMAILS = {
   invite: {
     subject: 'An invitation to Life on Words',
     // Terry's final text (2026-11-12). Plain text: his bold headings and link are written out. {agreement_url} is each guest's own agreement.
-    body: `{note}Hi {first},
+    body: `Hi {first},
 
-I'd love to have a conversation with you about your work.
+{note}I'd love to have a conversation with you about your work.
 
 I host a show called Life on Words, where I sit down with people who make their living with words: novelists, poets, songwriters, playwrights, composers, and writers of all kinds.
 
