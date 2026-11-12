@@ -89,7 +89,7 @@ async function weeklyStatus(api, tracker, today) {
   }
   if (!blocks.length) { console.log('Weekly status: everything is signed; nothing to send.'); return; }
   console.log(`Weekly status (${dow}): ${blocks.length} issue(s) with unsigned agreements.`);
-  if (!DRY) await L.notify(api, `Unsigned contributor agreements (${dow} ${today})`, blocks.join('') + '<p>Live view: the payouts page.</p>');
+  if (!DRY) await L.notify(api, `Unsigned contributor agreements (${dow} ${today})`, blocks.join('') + '<p>Live view: <a href="https://admin.inkhornreview.com/payouts">the payouts page</a>.</p>');
 }
 
 (async () => {
