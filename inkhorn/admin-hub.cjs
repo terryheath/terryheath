@@ -175,7 +175,7 @@ async function handle(req, res, ip) {
 
   if (path === '/podcast' || path.startsWith('/podcast/')) { if (await PR.adminRoute(req, res, path, query)) return; }
   if (path === '/') return send(res, 200, await homeHtml());
-  if (path === '/payouts') return send(res, 200, (await P.payoutsHtml()).replace('<main>', '<main><p><a href="/">Admin home</a> · <a href="/logout">Sign out</a></p>'), { 'Cache-Control': 'no-store', 'Content-Type': 'text/html; charset=utf-8' });
+  if (path === '/payouts') return send(res, 200, (await P.payoutsHtml()).replace('<main>', '<main><p><a href="/">Admin home</a> · <a href="/logout">Sign out</a></p>' + (new URL(req.url, 'http://x').searchParams.get('msg') ? `<p><strong>${esc(new URL(req.url, 'http://x').searchParams.get('msg'))}</strong></p>` : '')), { 'Cache-Control': 'no-store', 'Content-Type': 'text/html; charset=utf-8' });
   if (path === '/payouts.csv') {
     const issue = String(query.get('issue') || '');
     const { rows } = await P.payoutsData();
@@ -189,6 +189,14 @@ async function handle(req, res, ip) {
     const out = await P.payoutsBio(f);
     console.log('PAYOUTS BIO', f.do, out);
     return redirect(res, '/payouts');
+  }
+  if (path === '/payouts/refund' && req.method === 'POST') {
+    const origin = req.headers.origin;
+    if (origin && new URL(origin).host !== req.headers.host) return send(res, 403, shell('No', '<h1>No</h1>'));
+    const f = Object.fromEntries(new URLSearchParams(await readBody(req)));
+    let out; try { out = await P.payoutsRefund(f); } catch (e) { out = 'FAILED: ' + e.message; }
+    console.log('PAYOUTS REFUND', f.do, out);
+    return redirect(res, '/payouts?msg=' + encodeURIComponent(out));
   }
   return nf(res);
 }

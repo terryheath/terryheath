@@ -22,6 +22,7 @@
  */
 const L = require('./agreements-lib.cjs');
 const B = require('./bios-lib.cjs');
+const R = require('./refunds-lib.cjs');
 const DRY = (process.env.AGREEMENTS_MODE || '').toLowerCase() === 'dry';
 const FORCE = process.env.FORCE === '1';
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -98,10 +99,15 @@ async function weeklyStatus(api, tracker, today) {
   const tracker = await L.loadTracker(api);
   if (!tracker.records.length) { console.log('No agreements recorded yet.'); return; }
   const today = L.todayPacific();
-  const events = { signed: [], reminders: [], pulled: [], cashDefault: [], comps: [], contribReminders: [], scheduled: [], bios: [], bioErrors: [] };
+  const events = { refunds: [], refundError: null, signed: [], reminders: [], pulled: [], cashDefault: [], comps: [], contribReminders: [], scheduled: [], bios: [], bioErrors: [] };
 
   await updateStatuses(tracker, events);
   await B.processSigned(api, tracker, events, { dry: DRY }); // bios and addresses from newly signed agreements
+  // Duosuma submission fee: a newly signed agreement gets the fee refunded (never a tip, never twice, no email to the writer); unsure matches are flagged on /payouts.
+  if (events.signed.length) {
+    try { events.refunds = await R.processRecords(tracker.records, events.signed, { dry: DRY }); }
+    catch (e) { console.error('fee refund step failed:', e.message); events.refundError = e.message; }
+  }
 
   for (const r of tracker.records) {
     if (r.status === 'signed' && r.choice === 'subscription' && !r.comp_granted && !DRY) {
@@ -183,6 +189,7 @@ async function weeklyStatus(api, tracker, today) {
   if (filled.length) parts.push(`<h3>Bios filled in from signed agreements</h3><ul>${filled.map((b) => `<li>Filled in the bio and name in print (${esc(b.name)}) for <strong>${esc(b.r.title)}</strong> from the signed agreement.</li>`).join('')}</ul>`);
   if (waiting.length) parts.push(`<h3>Bios waiting for you</h3><ul>${waiting.map((b) => `<li><strong>${esc(b.r.title)}</strong> (${esc(b.r.contributor)}): a bio already exists${b.note ? ' (' + esc(b.note) + ')' : ''}; compare and Apply or Ignore on the payouts page.</li>`).join('')}</ul>`);
   if (events.bioErrors.length) parts.push(`<h3>Bio step failed</h3><ul>${events.bioErrors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>`);
+  if (events.refunds.length || events.refundError) parts.push(`<h3>Submission fee refunds</h3>${events.refundError ? `<p>The refund step FAILED: ${esc(events.refundError)}. Nothing was refunded; the payouts page has no flags for these.</p>` : ''}<ul>${events.refunds.map((o) => `<li><strong>${esc(o.rec.title)}</strong> (${esc(o.rec.contributor)}): ${esc(o.action)} — ${esc(o.detail)}</li>`).join('')}</ul><p>No email goes to writers about refunds. Flagged ones have a "Refund fee" button on <a href="https://admin.inkhornreview.com/payouts">the payouts page</a>.</p>`);
   if (events.signed.length) parts.push(`<h3>Signed since the last check</h3>${list(events.signed, (r) => r.choice ? ` — choice: ${esc(r.choice)}${r.pay_method ? ' (' + esc(r.pay_method) + ')' : ''}` : '')}`);
   console.log(`signed ${events.signed.length}, reminders ${events.reminders.length}, pulled ${events.pulled.length}, cash-default ${events.cashDefault.length}, comps ${events.comps.length}${DRY ? ' (dry run: nothing saved or sent)' : ''}`);
   if (DRY) return;

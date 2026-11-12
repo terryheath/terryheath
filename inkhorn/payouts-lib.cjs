@@ -2,6 +2,7 @@
 // behind the admin hub's password (admin-hub.cjs). Live from DocuSeal; refreshed every 30 seconds.
 const L = require('./agreements-lib.cjs');
 const B = require('./bios-lib.cjs');
+const R = require('./refunds-lib.cjs');
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // ---- payouts page: live signed/unsigned status, bios waiting for a decision, and the print mailing list (behind the admin password) ---------
 
@@ -36,6 +37,20 @@ const csvCell = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
 const mailingRows = (rows, issue) => rows.filter((r) => r.issue === issue && r.signed && (r.address || r.name_in_print)).map((r) => ({ name: r.name_in_print || r.contributor, address: r.address, piece: r.title }));
 function mailingCsv(rows, issue) { return ['Name in print,Address,Piece', ...mailingRows(rows, issue).map((m) => [m.name, m.address, m.piece].map(csvCell).join(','))].join('\n') + '\n'; }
 
+
+// The "Fee refund" cell: what was refunded, or why it is flagged with a button to refund after checking (see refunds-lib.cjs).
+function refundCell(r) {
+  if (!r.signed) return '';
+  const rid = esc(r.submission_id + '|' + r.title);
+  if (r.refund) return `<span class="ok">Refunded $${(r.refund.amount / 100).toFixed(2)}</span><br><small>${esc(r.refund.refund_id)} · ${esc(r.refund.date)}${r.refund.covered_by ? ' (one refund for this submission; see ' + esc(r.refund.covered_by) + ')' : ''}${r.refund.by === 'manual' ? ' · by hand' : ''}</small>`;
+  if (r.refund_dismissed) return '<small>No fee (dismissed)</small>';
+  const fl = r.refund_flag;
+  if (!fl) return '<small>Not checked</small>';
+  const cands = fl.candidates || [];
+  const pick = cands.length > 1 ? `<select name="charge">${cands.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select>` : cands.length ? `<input type="hidden" name="charge" value="${esc(cands[0])}"><small>${esc(cands[0])}</small>` : '<input name="charge" placeholder="ch_… fee charge" size="22">';
+  return `<span class="${fl.kind === 'nocharge' ? 'hint' : 'bad'}">${fl.kind === 'nocharge' ? 'No fee charge found' : 'Check before refunding'}</span><br><small>${esc(fl.reason)}</small>
+    <form method="post" action="/payouts/refund" class="act" onsubmit="return confirm('Refund this submission fee in full? This cannot be undone.')"><input type="hidden" name="rid" value="${rid}">${pick}<br><button name="do" value="refund">Refund fee</button> <button name="do" value="dismiss" class="ghost">No fee</button></form>`;
+}
 async function payoutsHtml() {
   const { rows, waiting } = await payoutsData();
   const today = L.todayPacific();
@@ -56,13 +71,13 @@ async function payoutsHtml() {
       const status = r.signed ? `Signed ${esc(r.signed_at)}` : r.status === 'expired' ? 'Expired' : r.status === 'withdrawn' ? 'Withdrawn by the author' : left < 0 ? `Unsigned, ${-left} day(s) late` : `Unsigned, ${left} day(s) left`;
       const how = r.signed ? [r.choice, r.method, r.details].filter(Boolean).map(esc).join(' · ') : '';
       const bio = !r.signed ? '' : { filled: 'Bio filled in', pending: 'Bio waiting', applied: 'Bio applied', ignored: 'Bio ignored', none: 'No bio typed' }[r.bio_state] || '';
-      return `<tr class="${r.signed ? 'ok' : 'open'}"><td>${esc(r.contributor)}${r.name_in_print && r.name_in_print !== r.contributor ? `<br><small>in print: ${esc(r.name_in_print)}</small>` : ''}</td><td>${esc(r.title)}</td><td>${money(r.amount)}</td><td>${status}</td><td>${esc(r.deadline)}</td><td>${how}</td><td>${esc(r.address)}</td><td>${esc(bio)}</td></tr>`;
+      return `<tr class="${r.signed ? 'ok' : 'open'}"><td>${esc(r.contributor)}${r.name_in_print && r.name_in_print !== r.contributor ? `<br><small>in print: ${esc(r.name_in_print)}</small>` : ''}</td><td>${esc(r.title)}</td><td>${money(r.amount)}</td><td>${status}</td><td>${esc(r.deadline)}</td><td>${how}</td><td>${esc(r.address)}</td><td>${esc(bio)}</td><td>${refundCell(r)}</td></tr>`;
     }).join('');
     const ml = mailingRows(rows, issue);
     const mailing = ml.length ? `<h3>Print mailing list, ${esc(L.issueName(issue))} <small>${ml.length} · <a href="/payouts.csv?issue=${esc(issue)}">Download CSV</a> · <a href="#" class="copy" data-t="mail-${esc(issue)}">Copy</a></small></h3>
       <pre id="mail-${esc(issue)}">${esc(ml.map((m) => `${m.name}\t${m.address}`).join('\n'))}</pre>` : '';
     return `<h2>${esc(L.issueName(issue))} <small>${rs.filter((r) => r.signed).length} of ${rs.length} signed · cash signed ${money(cashSigned)} · still to come ${money(cashPending)}</small></h2>
-      <table><tr><th>Contributor</th><th>Piece</th><th>Pay</th><th>Status</th><th>Deadline</th><th>Choice · method · details</th><th>Mailing address</th><th>Bio</th></tr>${tr}</table>${mailing}`;
+      <table><tr><th>Contributor</th><th>Piece</th><th>Pay</th><th>Status</th><th>Deadline</th><th>Choice · method · details</th><th>Mailing address</th><th>Bio</th><th>Fee refund</th></tr>${tr}</table>${mailing}`;
   }).join('');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Payouts</title>
 <style>body{margin:0;background:#faf7f2;color:#222;font:15px/1.45 Georgia,serif}main{max-width:72rem;margin:0 auto;padding:2rem 1rem 4rem}h1{font-weight:normal}h2{font-weight:normal;margin:2rem 0 .5rem}h3{font-weight:normal;margin:1.2rem 0 .3rem}h2 small,h3 small{font-size:.75rem;color:#666}
@@ -89,4 +104,25 @@ async function payoutsBio(form) {
 }
 
 
-module.exports = { payoutsData, payoutsHtml, payoutsBio, mailingCsv, mailingRows, resetCache: () => { payoutsCache = { at: 0, data: null }; } };
+// Refund fee / No fee buttons on the payouts page. Refunds exactly one fee charge (never a tip, never one already refunded), once per submission.
+async function payoutsRefund(form) {
+  const api = L.ghost();
+  const tracker = await L.loadTracker(api);
+  const rec = tracker.records.find((r) => `${r.submission_id}|${r.title}` === form.rid);
+  if (!rec) return 'record not found';
+  const done = async (msg) => { await L.saveTracker(api, tracker); payoutsCache = { at: 0, data: null }; return msg; };
+  if (form.do === 'dismiss') { if (rec.refund) return 'already refunded'; rec.refund_dismissed = true; rec.refund_flag = undefined; return done('dismissed'); }
+  if (form.do !== 'refund') return 'unknown action';
+  if (rec.refund) return 'already refunded';
+  const sib = tracker.records.find((x) => x !== rec && x.submission_id === rec.submission_id && x.refund && !x.refund.covered_by);
+  if (sib) { rec.refund = { ...sib.refund, covered_by: sib.title }; rec.refund_flag = undefined; return done('same submission already refunded'); }
+  const chargeId = String(form.charge || '').trim();
+  if (!/^ch_[A-Za-z0-9]+$/.test(chargeId)) return 'enter a Stripe charge id (ch_...)';
+  const claimed = tracker.records.find((x) => x.refund && x.refund.charge === chargeId);
+  if (claimed) return `charge ${chargeId} was already refunded for ${claimed.title}`;
+  rec.refund = await R.refundCharge(chargeId, { how: 'manual' });
+  rec.refund_flag = undefined;
+  return done(`refunded ${rec.refund.refund_id}`);
+}
+
+module.exports = { payoutsRefund, payoutsData, payoutsHtml, payoutsBio, mailingCsv, mailingRows, resetCache: () => { payoutsCache = { at: 0, data: null }; } };
