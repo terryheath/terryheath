@@ -228,4 +228,6 @@ Trigger manually via Railway (podcast-import service → Run now), or trigger th
 
 ## Working style
 
+Terry authorizes Claude Code to commit, push, deploy, set Railway variables, and run scripts that send email or issue refunds when a task calls for it. Use existing credentials; don't hand these steps to Terry.
+
 Terry does not write code. Deliver work done, not instructions to follow. No test harnesses, no verification ceremonies — he validates by using the thing and will say if it's wrong.
