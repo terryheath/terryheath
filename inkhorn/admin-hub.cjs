@@ -7,6 +7,7 @@
 const crypto = require('crypto');
 const L = require('./agreements-lib.cjs');
 const P = require('./payouts-lib.cjs');
+const PR = require('./podcast-routes.cjs');
 
 const SECRET = () => process.env.ADMIN_SESSION_SECRET || '';
 const SETUP = () => process.env.ADMIN_SETUP_TOKEN || '';
@@ -79,6 +80,7 @@ const LINKS = [
   ]],
   ['Agreements', [
     ['DocuSeal', 'https://sign.inkhornreview.com/', 'Templates, every sent and signed agreement, the API token.'],
+    ['Life on Words guests', '/podcast', 'Guest agreements, bookings and reminders for the podcast; add a guest and send the invitation.'],
     ['Payouts', '/payouts', 'Signed or not, pay and subscription choices, bios to Apply or Ignore, print mailing lists (CSV).'],
     ['Contributor confirm page', 'https://agreements.inkhornreview.com/accept', 'What the Duosuma acceptance letter links to; sends the agreement when a contributor confirms. Public.'],
   ]],
@@ -130,7 +132,7 @@ async function homeHtml() {
   } catch (e) { console.error('hub status failed', e.message); }
   const links = LINKS.map(([group, items]) => `<h2>${esc(group)}</h2><ul>${items.map(([name, url, why]) => `<li><a href="${esc(url)}">${esc(name)}</a><br><span class="why">${esc(why)}</span></li>`).join('')}</ul>`).join('');
   const subs = `<h2>Subdomains</h2><p class="why">Every *.inkhornreview.com name in use. New admin tools go under admin.inkhornreview.com/&lt;path&gt;, not a new subdomain.</p><table><tr><th>Name</th><th>What it does</th><th>Runs on</th></tr>${SUBDOMAINS.map(([n, w, r]) => `<tr><td>${esc(n)}</td><td>${esc(w)}</td><td>${esc(r)}</td></tr>`).join('')}</table>`;
-  return shell('Admin', `<h1>Admin</h1><nav><a href="/">Home</a><a href="/payouts">Payouts</a><a href="/logout">Sign out</a></nav>${status}${links}${subs}`);
+  return shell('Admin', `<h1>Admin</h1><nav><a href="/">Home</a><a href="/payouts">Payouts</a><a href="/podcast">Life on Words</a><a href="/logout">Sign out</a></nav>${status}${links}${subs}`);
 }
 
 // ---- routing ----------------------------------------------------------------------------------------------------------------
@@ -143,6 +145,7 @@ async function handle(req, res, ip) {
   const [path, ...qs] = req.url.split('?');
   const query = new URLSearchParams(qs.join('?'));
   if (path === '/health') return send(res, 200, 'ok');
+  if (path.startsWith('/podcast/book') || path.startsWith('/podcast/webhook/')) { if (await PR.publicRoute(req, res, path, query)) return; } // public: the booking gate and the Cal.com webhook
   const auth = await loadAuth();
 
   if (path === '/setup') {
@@ -170,6 +173,7 @@ async function handle(req, res, ip) {
   if (!auth) return nf(res); // not set up yet: nothing to see (visit /setup?token=... once)
   if (!signedIn(req)) return send(res, 200, loginPage());
 
+  if (path === '/podcast' || path.startsWith('/podcast/')) { if (await PR.adminRoute(req, res, path, query)) return; }
   if (path === '/') return send(res, 200, await homeHtml());
   if (path === '/payouts') return send(res, 200, (await P.payoutsHtml()).replace('<main>', '<main><p><a href="/">Admin home</a> · <a href="/logout">Sign out</a></p>'), { 'Cache-Control': 'no-store', 'Content-Type': 'text/html; charset=utf-8' });
   if (path === '/payouts.csv') {
