@@ -179,6 +179,30 @@ If none of the times work, reply and we'll find one together.
 
 ${SIGN}`,
   },
+  // Sent by "Send updated agreement" (and scripts/send-updated-agreement.cjs) to every guest who has not signed, after the agreement text changes. The old link is archived first.
+  agreement_updated: {
+    subject: 'An updated Life on Words guest agreement',
+    body: `Hi {first},
+
+I've revised the Life on Words guest agreement to make it narrower. It now covers the episode, its promotion, and an edited transcript in Inkhorn Review. Anything else needs your permission, and anything you read stays yours.
+
+Here's the updated agreement: {agreement_url}
+
+The earlier link no longer works.
+
+${SIGN}`,
+  },
+  // A guest who has already said yes by email: the agreement only (no full invitation). The booking link follows once it is signed.
+  agreement_only_accepted: {
+    subject: 'Your Life on Words guest agreement',
+    body: `Hi {first},
+
+Here's the short guest agreement: {agreement_url}
+
+It's non-exclusive, and you keep all rights to your work. Once it's signed, I'll send your booking link so you can choose a Tuesday that suits you.
+
+${SIGN}`,
+  },
 };
 
 module.exports = { EMAILS, STUDIO };

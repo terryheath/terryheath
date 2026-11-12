@@ -54,10 +54,10 @@ function row(g) {
   const sent = Object.keys(g.reminders || {}).map((k) => k.split(':')[0]).join(', ');
   const pl = ['new', 'booked', 'recorded', 'edited', 'published'].map((s) => `<option${g.pipeline === s ? ' selected' : ''}>${s}</option>`).join('');
   const act = (a2, label) => `<form method="post" action="/podcast/act" style="display:inline"><input type="hidden" name="id" value="${esc(g.id)}"><button name="do" value="${a2}">${label}</button></form>`;
-  return `<tr><td><strong>${esc(g.name)}</strong><br><span class="small">${esc(g.email)}</span>${g.cancelled ? `<br><span class="bad">${g.cancel_reason === 'unsigned' ? 'Cancelled — unsigned' : 'CANCELLED'}</span>` : ''}${g.kind !== 'invite' ? `<br><span class="small">${esc(g.kind === 'keep_date' ? 'date stands' : 'to reschedule (was ' + g.old_when + ')')}</span>` : ''}</td>
+  return `<tr><td><strong>${esc(g.name)}</strong><br><span class="small">${esc(g.email)}</span>${g.cancelled ? `<br><span class="bad">${g.cancel_reason === 'unsigned' ? 'Cancelled — unsigned' : 'CANCELLED'}</span>` : ''}${g.kind !== 'invite' ? `<br><span class="small">${esc(g.kind === 'keep_date' ? 'date stands' : g.kind === 'accepted' ? 'already said yes' : 'to reschedule (was ' + g.old_when + ')')}</span>` : ''}</td>
     <td>${ag}${(() => { const d = P.deadlineFor(g); return d && !(a && a.status === 'signed') ? `<br><span class="bad small">sign by ${esc(fmt(d.toISOString(), b.tz || P.PACIFIC))}</span>` : ''; })()}</td><td>${bk}</td><td class="small">${esc(sent)}</td><td>${g.reschedules || 0}</td>
     <td><form method="post" action="/podcast/act" style="display:inline"><input type="hidden" name="id" value="${esc(g.id)}"><select name="to">${pl}</select><button name="do" value="pipeline">Set</button></form><br>${act('recorded', 'Recorded')}${act('edited', 'Edited')}</td>
-    <td>${g.cancel_reason === 'unsigned' ? act('resend_cancel', 'Resend cancellation email') : ''}${act('resend_invite', 'Resend invite')}${act('resend_book', 'Resend booking link')}${a && a.status === 'signed' ? `<a href="/podcast/pdf?id=${esc(g.id)}">Signed PDF</a>` : ''}</td></tr>`;
+    <td>${g.cancel_reason === 'unsigned' ? act('resend_cancel', 'Resend cancellation email') : ''}${a && a.status !== 'signed' && !g.cancelled ? `<form method="post" action="/podcast/act" style="display:inline" onsubmit="return confirm('Archive the current agreement link for this guest and email a new one?')"><input type="hidden" name="id" value="${esc(g.id)}"><button name="do" value="updated_agreement">Send updated agreement</button></form>` : ''}${act('resend_invite', 'Resend invite')}${act('resend_book', 'Resend booking link')}${a && a.status === 'signed' ? `<a href="/podcast/pdf?id=${esc(g.id)}">Signed PDF</a>` : ''}</td></tr>`;
 }
 async function adminPage(msg) {
   const store = await P.load();
@@ -67,10 +67,10 @@ async function adminPage(msg) {
   const soon = store.guests.filter((g) => g.booking && g.booking.status === 'booked' && !g.cancelled && new Date(g.booking.start) - now < 2 * 86400000 && new Date(g.booking.start) > now - 3600e3 && !(g.agreement && g.agreement.status === 'signed'));
   const warn = soon.length ? `<div class="warn"><strong>Within 2 days and the agreement is NOT signed:</strong> ${soon.map((g) => `${esc(g.name)} (${esc(fmt(g.booking.start, P.PACIFIC))})`).join('; ')}</div>` : '';
   const pending = store.guests.filter((g) => g.pending_send);
-  const batch = pending.length ? `<h2>Ready to send (${pending.length})</h2><p class="small">Nothing here has been sent. Read the emails, then send them all with one click.</p>${pending.map((g) => { const kind = g.kind === 'keep_date' ? 'keep_date' : g.kind === 'reschedule' ? 'reschedule_notice' : 'invite'; const m = P.render(kind, { ...g, agreement: { url: '(your agreement link)' } }); return `<details><summary><strong>${esc(g.name)}</strong> &lt;${esc(g.email)}&gt;: ${esc(m.subject)}</summary><div class="pre">${esc(m.text)}</div></details>`; }).join('')}<form method="post" action="/podcast/send-batch" onsubmit="return confirm('Send these ${pending.length} emails now?')"><button>Send these ${pending.length} emails</button></form>` : '';
+  const batch = pending.length ? `<h2>Ready to send (${pending.length})</h2><p class="small">Nothing here has been sent. Read the emails, then send them all with one click.</p>${pending.map((g) => { const kind = P.firstKind(g); const m = P.render(kind, { ...g, agreement: { url: '(your agreement link)' } }); return `<details><summary><strong>${esc(g.name)}</strong> &lt;${esc(g.email)}&gt;: ${esc(m.subject)}</summary><div class="pre">${esc(m.text)}</div></details>`; }).join('')}<form method="post" action="/podcast/send-batch" onsubmit="return confirm('Send these ${pending.length} emails now?')"><button>Send these ${pending.length} emails</button></form>` : '';
   const rows = store.guests.filter((g) => !g.pending_send).map(row).join('');
   return page('Life on Words guests', `<p><a href="/">Admin home</a> · <a href="/payouts">Payouts</a> · <a href="/logout">Sign out</a></p><h1>Life on Words guests</h1>${msg ? `<p class="ok">${esc(msg)}</p>` : ''}${warn}
-    <h2>Add guest</h2><form method="post" action="/podcast/add"><input name="name" placeholder="Name" required size="22"> <input name="email" type="email" placeholder="Email" required size="28"><br><textarea name="note" rows="2" cols="70" placeholder="Optional personal note, placed after the greeting and before the first line of the invitation (for example: Thanks for reaching out)"></textarea><br><button>Add guest and send the invitation</button></form>
+    <h2>Add guest</h2><form method="post" action="/podcast/add"><input name="name" placeholder="Name" required size="22"> <input name="email" type="email" placeholder="Email" required size="28"><br><textarea name="note" rows="2" cols="70" placeholder="Optional personal note, placed after the greeting and before the first line of the invitation (for example: Thanks for reaching out)"></textarea><br><label><input type="checkbox" name="accepted" value="1"> Add guest who already said yes (sends only the agreement, not the full invitation)</label><br><button>Add guest and send the email</button></form>
     ${batch}<h2>Guests (${store.guests.filter((g) => !g.pending_send).length})</h2>
     <table><tr><th>Guest</th><th>Agreement</th><th>Booked time</th><th>Emails sent</th><th>Resched.</th><th>Status</th><th></th></tr>${rows || '<tr><td colspan="7">No guests yet.</td></tr>'}</table>
     <p class="small">"Published" is set automatically when an episode in the feed carries the guest's name; setting a status by hand here overrides it. Reminders: one week before and two days before at 9:00 a.m. their time; the morning of at 7:00 a.m. their time (6:00 p.m. the evening before if the session starts before 9:00 a.m.).</p>`);
@@ -90,10 +90,10 @@ async function adminRoute(req, res, path, query) {
     const email = String(f.email || '').trim().toLowerCase(), name = String(f.name || '').trim();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !name) return redirect(res, '/podcast?msg=' + encodeURIComponent('Name and a valid email are required.')), true;
     if (store.guests.find((g) => g.email === email)) return redirect(res, '/podcast?msg=' + encodeURIComponent(`${email} is already on the list.`)), true;
-    const g = P.newGuest({ name, email, note: String(f.note || '').trim() });
+    const g = P.newGuest({ name, email, note: String(f.note || '').trim(), kind: f.accepted ? 'accepted' : 'invite' });
     store.guests.push(g);
     await P.invite(g); await P.save(store);
-    return redirect(res, '/podcast?msg=' + encodeURIComponent(`Invitation sent to ${name}.`)), true;
+    return redirect(res, '/podcast?msg=' + encodeURIComponent((g.kind === 'accepted' ? `Agreement sent to ${name}.` : `Invitation sent to ${name}.`))), true;
   }
   if (path === '/podcast/send-batch') {
     const pend = store.guests.filter((g) => g.pending_send);
@@ -107,7 +107,8 @@ async function adminRoute(req, res, path, query) {
     let msg = '';
     if (f.do === 'recorded' || f.do === 'edited') { g.pipeline = f.do; g.pipeline_manual = true; msg = `${g.name}: ${f.do}.`; }
     else if (f.do === 'pipeline') { g.pipeline = f.to; g.pipeline_manual = true; msg = `${g.name}: ${f.to}.`; }
-    else if (f.do === 'resend_invite') { const kind = g.kind === 'keep_date' ? 'keep_date' : g.kind === 'reschedule' ? 'reschedule_notice' : 'invite'; const m = P.render(kind, g); await P.sendMail(g.email, m.subject, m.text); g.log.push(`${new Date().toISOString().slice(0, 16)} resent ${kind}`); msg = `Resent to ${g.name}.`; }
+    else if (f.do === 'resend_invite') { const kind = P.firstKind(g); const m = P.render(kind, g); await P.sendMail(g.email, m.subject, m.text); g.log.push(`${new Date().toISOString().slice(0, 16)} resent ${kind}`); msg = `Resent to ${g.name}.`; }
+    else if (f.do === 'updated_agreement') { try { await P.sendUpdatedAgreement(g); msg = `Updated agreement sent to ${g.name}; the old link no longer works.`; } catch (e) { msg = `${g.name}: ${e.message}`; } }
     else if (f.do === 'resend_cancel') { const m = P.render('cancelled_unsigned', g); await P.sendMail(g.email, m.subject, m.text); g.log.push(`${new Date().toISOString().slice(0, 16)} resent cancellation`); msg = `Cancellation email resent to ${g.name}.`; }
     else if (f.do === 'resend_book') { const m = P.render('signed', g); await P.sendMail(g.email, m.subject, m.text); g.log.push(`${new Date().toISOString().slice(0, 16)} resent booking link`); msg = `Booking link resent to ${g.name}.`; }
     await P.save(store);

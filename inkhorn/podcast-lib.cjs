@@ -150,18 +150,34 @@ async function signedPdfUrl(g) {
 // ---- inviting ---------------------------------------------------------------------------------------------------------------
 const CAL_EVENT_URL = process.env.CAL_EVENT_URL || 'https://cal.com/terry-heath-gpfyhn/life-on-words-recording';
 const notifyTerry = (subject, text) => sendMail('hello@terryheath.com', subject, text).catch((e) => console.error('notify failed', e.message));
-// New guest: create the DocuSeal agreement and send the invite (with the optional personal note on top).
+// Which first email a guest gets: the invitation, the two notices to the imported guests, or (already said yes) the agreement only.
+const firstKind = (g) => (g.kind === 'keep_date' ? 'keep_date' : g.kind === 'reschedule' ? 'reschedule_notice' : g.kind === 'accepted' ? 'agreement_only_accepted' : 'invite');
+// New guest: create the DocuSeal agreement and send the first email (the invitation with the optional personal note on top, or for a guest who already said yes the agreement only).
 async function invite(g) {
   if (!g.agreement) await createAgreement(g);
-  await sendKind(g, 'invite', `invite:${g.agreement.submission_id}`);
+  const kind = firstKind(g);
+  await sendKind(g, kind, `${kind}:${g.agreement.submission_id}`);
   g.invited_at = new Date().toISOString();
 }
 // The five whose dates stand and the five who must reschedule get their own first email (not the invite).
-async function sendFirst(g) {
-  if (!g.agreement) await createAgreement(g);
-  const kind = g.kind === 'keep_date' ? 'keep_date' : g.kind === 'reschedule' ? 'reschedule_notice' : 'invite';
-  await sendKind(g, kind, `${kind}:${g.agreement.submission_id}`);
-  g.invited_at = new Date().toISOString();
+async function sendFirst(g) { return invite(g); }
+// The agreement text changed: archive the guest's unsigned agreement (the old link stops working), create a new one from the current template
+// and send agreement_updated. The original sent_at, invited_at, booking and the agreement-reminder record are kept, so the sign-by deadline and the
+// reminder schedule do not move. Never touches a signed agreement. Returns 'sent', or throws.
+async function sendUpdatedAgreement(g) {
+  await refreshAgreement(g);
+  if (g.agreement && g.agreement.status === 'signed') throw new Error('already signed; left alone');
+  const old = g.agreement;
+  await createAgreement(g); // sets g.agreement to the new submission
+  if (old) {
+    g.agreement.sent_at = old.sent_at || g.agreement.sent_at; // keep the reminder clock
+    g.agreement.replaces = [...(old.replaces || []), old.submission_id];
+    const oldRem = g.reminders[`agreement_reminder:${old.submission_id}`];
+    if (oldRem) g.reminders[`agreement_reminder:${g.agreement.submission_id}`] = oldRem;
+    try { await L.ds('DELETE', `/submissions/${old.submission_id}`); } catch (e) { g.log.push(`${new Date().toISOString().slice(0, 16)} archiving old agreement #${old.submission_id} FAILED: ${e.message}`); throw e; }
+  }
+  await sendKind(g, 'agreement_updated', `agreement_updated:${g.agreement.submission_id}`);
+  return 'sent';
 }
 const link = (g) => `${HUB}/podcast/book?token=${g.token}`;
 
@@ -257,4 +273,4 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
   return did;
 }
 
-module.exports = { deadlineFor, cancelUnsigned, calCancel, invite, sendFirst, link, handleCal, runHourly, CAL_EVENT_URL, notifyTerry, PAGE, HUB, PACIFIC, load, save, newGuest, firstName, zonedInstant, localYmd, localHour, shiftYmd, when, reminderTimes, render, fill, varsFor, sendMail, sendKind, createAgreement, refreshAgreement, signedPdfUrl, TEMPLATE_NAME };
+module.exports = { firstKind, sendUpdatedAgreement, deadlineFor, cancelUnsigned, calCancel, invite, sendFirst, link, handleCal, runHourly, CAL_EVENT_URL, notifyTerry, PAGE, HUB, PACIFIC, load, save, newGuest, firstName, zonedInstant, localYmd, localHour, shiftYmd, when, reminderTimes, render, fill, varsFor, sendMail, sendKind, createAgreement, refreshAgreement, signedPdfUrl, TEMPLATE_NAME };
