@@ -1,7 +1,7 @@
 // Every email the Life on Words guest system sends, in one place (2026-11-12). Edit the text here; the code only fills in the {placeholders}.
 // Placeholders: {first} first name, {note} (invite only) the optional personal note from the Add guest form, placed above the opening line as its own paragraph (empty when there is no note), {when} the session date and time in the guest's own time zone (e.g. "Tuesday, December 8 at 9:00 a.m. PST"),
 // {old_when} the session's former date, {agreement_url}, {deadline} (the agreement deadline, in their time zone), {deadline_notice} (agreement reminder only: the deadline sentence when they have a booking, else empty), {book_url} (personal booking link; works only once the agreement is signed),
-// {studio_url} the Riverside studio, {reschedule_url}, {cancel_url}.
+// {studio_url} the Riverside studio, {reschedule_url}, {cancel_url}, {change_lines} (the reschedule and cancel links, or "reply to this email" for the sessions booked before Cal.com).
 const STUDIO = 'https://riverside.com/studio/terry-heaths-studio?t=ed9e5caf23549199013b';
 const SIGN = '— Terry\nProduced by Terry Heath and Follow the Rabbit LLC';
 const TIPS = `Click the link a few minutes before your scheduled time. Riverside runs in your browser; there is nothing to download.
@@ -16,8 +16,7 @@ Recording link: {studio_url}
 
 ${TIPS}
 
-Need to change it? Reschedule: {reschedule_url}
-Can't make it? Cancel: {cancel_url}`;
+{change_lines}`;
 
 const EMAILS = {
   invite: {
