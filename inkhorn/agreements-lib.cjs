@@ -47,7 +47,7 @@ async function saveTracker(api, tracker) {
 
 // --- dates ---------------------------------------------------------------------------------------
 const SEASON_MONTH = { spring: 3, summer: 6, autumn: 9, winter: 12 };
-// Release date of an issue slug like winter-2026: the 1st of Mar/Jun/Sep/Dec of that year, noon Pacific.
+// Release date of an issue slug like winter-2026: the 1st of Mar/Jun/Sep/Dec of that year (issues go live at 12:00 UTC, very early morning Pacific).
 function releaseDate(issue) {
   const [season, year] = issue.split('-');
   return { y: +year, m: SEASON_MONTH[season], d: 1 };
@@ -261,13 +261,9 @@ async function remindSubmission(r, days) {
 }
 const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 86400000);
 
-// Noon Pacific on a YYYY-MM-DD release date, as a UTC Date (20:00Z in winter, 19:00Z in summer time).
-function noonPacific(dateStr) {
-  for (const h of [19, 20]) {
-    const d = new Date(`${dateStr}T${h}:00:00Z`);
-    if (Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', hour12: false }).format(d)) % 24 === 12) return d;
-  }
-  return new Date(`${dateStr}T20:00:00Z`);
+// An issue's pieces go live on release day starting 12:00 UTC (4am Pacific in winter, 5am in summer time), one minute apart in print order.
+function releaseSlot(issue, position) {
+  return new Date(Date.UTC(...(() => { const r = releaseDate(issue); return [r.y, r.m - 1, r.d, 12, 0, 0]; })()) + (position - 1) * 60000);
 }
 
-module.exports = { noonPacific, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
+module.exports = { releaseSlot, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };

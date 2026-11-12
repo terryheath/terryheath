@@ -11,7 +11,7 @@
  *          terryheath/terryheath), and uploads+activates the theme through the Admin API (the same two calls as theme/deploy.sh).
  *        - on_deadline "record-cash-default" (already published pieces): records "cash by default"; nothing is unpublished.
  *      It then emails the list. It never publishes anything.
- *   3a. A signed piece (not yet released, still a draft) is scheduled for its slot: noon Pacific on release day + (print position - 1) minutes.
+ *   3a. A signed piece (not yet released, still a draft) is scheduled for its slot: 12:00 UTC on release day + (print position - 1) minutes.
  *   3b. Contributor reminders: DocuSeal re-sends the signature request 7 and 3 days before each deadline (once each).
  *   3c. Every Monday and Thursday: emails Terry the unsigned list per issue with days left (stops per issue once all are signed).
  *   4. A signed agreement with the subscription choice gets a complimentary Print membership (one year) in Ghost; the email asks
@@ -129,7 +129,7 @@ async function weeklyStatus(api, tracker, today) {
     } catch (e) { console.error('running-order update failed:', e.message); events.applyError = e.message; }
   }
 
-  // A piece whose agreement is signed gets scheduled at its slot on release day: noon Pacific plus (print position - 1) minutes. Unsigned pieces
+  // A piece whose agreement is signed gets scheduled at its slot on release day: 12:00 UTC plus (print position - 1) minutes. Unsigned pieces
   // stay drafts. Only draft pieces of issues that have not released yet are touched, and only if the slot is still in the future.
   if (!DRY && process.env.SCHEDULE_SIGNED === 'on') { // OFF unless SCHEDULE_SIGNED=on on the Railway `agreements` service (held 2026-11-11 pending Terry's say-so on release times)
     const editions = JSON.parse(require('fs').readFileSync(L.editionsPath, 'utf8')).pieces;
@@ -137,7 +137,7 @@ async function weeklyStatus(api, tracker, today) {
       if (r.status !== 'signed' || r.on_deadline !== 'pull' || !r.slug || r.scheduled) continue;
       const piece = editions.find((p) => p.edition === r.issue && L.findPiece(r.issue, p.title) && L.findPiece(r.issue, p.title).slug === r.slug);
       if (!piece) continue;
-      const slot = new Date(L.noonPacific(L.ymd(L.releaseDate(r.issue))).getTime() + (piece.position - 1) * 60000);
+      const slot = L.releaseSlot(r.issue, piece.position);
       if (slot.getTime() < Date.now() + 5 * 60000) continue;
       try {
         const got = await api.posts.browse({ filter: `slug:${r.slug}`, fields: 'id,status,updated_at', limit: 1 });
