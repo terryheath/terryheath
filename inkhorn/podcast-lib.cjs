@@ -185,6 +185,7 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
   const titles = (await feedTitles()).map((t) => t.toLowerCase());
   const did = [];
   for (const g of store.guests) {
+    if (g.pending_send) continue; // imported guests are untouched until Terry sends their first email from /podcast
     await refreshAgreement(g);
     // signed: thank them and send the booking link (not to the five whose dates already stand)
     if (g.agreement && g.agreement.status === 'signed' && g.kind !== 'keep_date' && !g.booking && !g.reminders[`signed:${g.agreement.submission_id}`]) {
