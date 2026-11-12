@@ -195,17 +195,17 @@ async function handleCal(event) {
 
 // ---- the hourly job --------------------------------------------------------------------------------------------------------------
 // Cancels a real Cal.com booking (so the slot reopens) through Cal's public cancel endpoint (it needs a CSRF cookie handshake).
-async function calCancel(uid) {
-  const c = await fetch('https://cal.com/api/auth/csrf');
+async function calCancel(uid, email) {
+  const c = await fetch('https://cal.com/api/csrf'); // the endpoint Cal's own cancel page uses
   const cookie = (c.headers.getSetCookie ? c.headers.getSetCookie() : []).map((x) => x.split(';')[0]).join('; ');
   const { csrfToken } = await c.json();
-  const r = await fetch('https://cal.com/api/cancel', { method: 'POST', headers: { 'content-type': 'application/json', cookie }, body: JSON.stringify({ uid, allRemainingBookings: false, cancellationReason: 'The guest agreement was not signed by the deadline.', csrfToken }) });
+  const r = await fetch('https://cal.com/api/cancel', { method: 'POST', headers: { 'content-type': 'application/json', cookie }, body: JSON.stringify({ uid, allRemainingBookings: false, cancellationReason: 'The guest agreement was not signed by the deadline.', cancelledBy: email, internalNote: null, csrfToken }) });
   if (!r.ok) throw new Error(`Cal.com cancel ${r.status}: ${(await r.text()).slice(0, 120)}`);
 }
 async function cancelUnsigned(g) {
   const b = g.booking;
   const notes = [];
-  if (b.uid && !String(b.uid).startsWith('imported-')) { try { await calCancel(b.uid); notes.push('Cal.com booking cancelled'); } catch (e) { notes.push(`Cal.com cancel FAILED (${e.message})`); } }
+  if (b.uid && !String(b.uid).startsWith('imported-')) { try { await calCancel(b.uid, g.email); notes.push('Cal.com booking cancelled'); } catch (e) { notes.push(`Cal.com cancel FAILED (${e.message})`); } }
   else notes.push('Google-only booking: its Google Calendar event must be deleted (guest notified)');
   const whenText = when(new Date(b.start), b.tz || PACIFIC);
   b.status = 'cancelled'; g.cancelled = true; g.cancel_reason = 'unsigned'; g.cancelled_at = new Date().toISOString();
