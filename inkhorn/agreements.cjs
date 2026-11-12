@@ -131,7 +131,7 @@ async function weeklyStatus(api, tracker, today) {
 
   // A piece whose agreement is signed gets scheduled at its slot on release day: noon Pacific plus (print position - 1) minutes. Unsigned pieces
   // stay drafts. Only draft pieces of issues that have not released yet are touched, and only if the slot is still in the future.
-  if (!DRY) {
+  if (!DRY && process.env.SCHEDULE_SIGNED === 'on') { // OFF unless SCHEDULE_SIGNED=on on the Railway `agreements` service (held 2026-11-11 pending Terry's say-so on release times)
     const editions = JSON.parse(require('fs').readFileSync(L.editionsPath, 'utf8')).pieces;
     for (const r of tracker.records) {
       if (r.status !== 'signed' || r.on_deadline !== 'pull' || !r.slug || r.scheduled) continue;
