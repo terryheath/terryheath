@@ -261,4 +261,13 @@ async function remindSubmission(r, days) {
 }
 const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 86400000);
 
-module.exports = { remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
+// Noon Pacific on a YYYY-MM-DD release date, as a UTC Date (20:00Z in winter, 19:00Z in summer time).
+function noonPacific(dateStr) {
+  for (const h of [19, 20]) {
+    const d = new Date(`${dateStr}T${h}:00:00Z`);
+    if (Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', hour12: false }).format(d)) % 24 === 12) return d;
+  }
+  return new Date(`${dateStr}T20:00:00Z`);
+}
+
+module.exports = { noonPacific, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };

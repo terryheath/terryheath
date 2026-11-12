@@ -11,6 +11,7 @@
  *          terryheath/terryheath), and uploads+activates the theme through the Admin API (the same two calls as theme/deploy.sh).
  *        - on_deadline "record-cash-default" (already published pieces): records "cash by default"; nothing is unpublished.
  *      It then emails the list. It never publishes anything.
+ *   3a. A signed piece (not yet released, still a draft) is scheduled for its slot: noon Pacific on release day + (print position - 1) minutes.
  *   3b. Contributor reminders: DocuSeal re-sends the signature request 7 and 3 days before each deadline (once each).
  *   3c. Every Monday and Thursday: emails Terry the unsigned list per issue with days left (stops per issue once all are signed).
  *   4. A signed agreement with the subscription choice gets a complimentary Print membership (one year) in Ghost; the email asks
@@ -95,7 +96,7 @@ async function weeklyStatus(api, tracker, today) {
   const tracker = await L.loadTracker(api);
   if (!tracker.records.length) { console.log('No agreements recorded yet.'); return; }
   const today = L.todayPacific();
-  const events = { signed: [], reminders: [], pulled: [], cashDefault: [], comps: [], contribReminders: [] };
+  const events = { signed: [], reminders: [], pulled: [], cashDefault: [], comps: [], contribReminders: [], scheduled: [] };
 
   await updateStatuses(tracker, events);
 
@@ -128,6 +129,28 @@ async function weeklyStatus(api, tracker, today) {
     } catch (e) { console.error('running-order update failed:', e.message); events.applyError = e.message; }
   }
 
+  // A piece whose agreement is signed gets scheduled at its slot on release day: noon Pacific plus (print position - 1) minutes. Unsigned pieces
+  // stay drafts. Only draft pieces of issues that have not released yet are touched, and only if the slot is still in the future.
+  if (!DRY) {
+    const editions = JSON.parse(require('fs').readFileSync(L.editionsPath, 'utf8')).pieces;
+    for (const r of tracker.records) {
+      if (r.status !== 'signed' || r.on_deadline !== 'pull' || !r.slug || r.scheduled) continue;
+      const piece = editions.find((p) => p.edition === r.issue && L.findPiece(r.issue, p.title) && L.findPiece(r.issue, p.title).slug === r.slug);
+      if (!piece) continue;
+      const slot = new Date(L.noonPacific(L.ymd(L.releaseDate(r.issue))).getTime() + (piece.position - 1) * 60000);
+      if (slot.getTime() < Date.now() + 5 * 60000) continue;
+      try {
+        const got = await api.posts.browse({ filter: `slug:${r.slug}`, fields: 'id,status,updated_at', limit: 1 });
+        if (!got.length) continue;
+        if (got[0].status === 'draft') {
+          await api.posts.edit({ id: got[0].id, updated_at: got[0].updated_at, status: 'scheduled', published_at: slot.toISOString() });
+          events.scheduled.push({ ...r, slot: slot.toISOString() });
+        }
+        r.scheduled = true;
+      } catch (e) { console.error('scheduling failed for', r.slug, e.message); }
+    }
+  }
+
   // Contributor reminders from DocuSeal at 7 and at 3 days before the deadline (once each; one email per submission).
   const remindedSubs = new Set();
   for (const r of tracker.records) {
@@ -152,6 +175,7 @@ async function weeklyStatus(api, tracker, today) {
   if (events.cashDefault.length) parts.push(`<h3>Already published; no choice made by the deadline — recorded "cash by default"</h3>${list(events.cashDefault)}`);
   if (events.comps.length) parts.push(`<h3>Chose the Print subscription — complimentary Print membership granted</h3>${list(events.comps, (r) => ` — through ${r.comp_expires}`)}<p>Add them to the print mailing list.</p>`);
   if (events.contribReminders.length) parts.push(`<h3>Reminders sent to contributors</h3>${list(events.contribReminders, (r) => ` — ${r.left} day(s) left`)}`);
+  if (events.scheduled.length) parts.push(`<h3>Signed: scheduled for release day</h3>${list(events.scheduled, (r) => ` — scheduled ${r.slot.replace('T', ' ').slice(0, 16)} UTC`)}`);
   if (events.signed.length) parts.push(`<h3>Signed since the last check</h3>${list(events.signed, (r) => r.choice ? ` — choice: ${esc(r.choice)}${r.pay_method ? ' (' + esc(r.pay_method) + ')' : ''}` : '')}`);
   console.log(`signed ${events.signed.length}, reminders ${events.reminders.length}, pulled ${events.pulled.length}, cash-default ${events.cashDefault.length}, comps ${events.comps.length}${DRY ? ' (dry run: nothing saved or sent)' : ''}`);
   if (DRY) return;
