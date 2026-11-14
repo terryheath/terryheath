@@ -205,6 +205,7 @@ const link = (g) => `${HUB}/podcast/book?token=${g.token}`;
 // ---- Cal.com webhook (BOOKING_CREATED / BOOKING_RESCHEDULED / BOOKING_CANCELLED) ----------------------------------------------------
 async function handleCal(event) {
   const trig = event.triggerEvent, p = event.payload || {};
+  if (trig === 'PING') return 'ping'; // Cal's "Ping test" button: acknowledge, change nothing, email nobody
   const att = (p.attendees || [])[0];
   if (!att || !att.email) return 'no attendee';
   const store = await load();
