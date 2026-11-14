@@ -255,7 +255,9 @@ const TRACKS = {
   signed: { flag: 'needs_terry', steps: [{ kind: 'booking_nudge', days: 5 }, { kind: 'booking_final', days: 14 }] },
 };
 const hasBooking = (g) => !!(g.booking && g.booking.status === 'booked');
-const acceptedAt = (g) => g.accepted_at || (g.kind === 'accepted' ? g.invited_at || g.created_at : null);
+// "Already said yes" guests and the reschedule guests (they had a date with Terry already) count as accepted from their original invite date.
+const YES_KINDS = ['accepted', 'reschedule'];
+const acceptedAt = (g) => g.accepted_at || (YES_KINDS.includes(g.kind) ? g.invited_at || g.created_at : null);
 function trackOf(g) {
   if (g.pending_send || g.declined || g.cancelled) return null;
   const a = g.agreement;
@@ -357,7 +359,7 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
     try {
     await refreshAgreement(g);
     if (g.declined) continue; // marked declined: nothing more goes to this guest
-    if (g.kind === 'accepted' && !g.accepted_at) { g.accepted_at = g.invited_at || g.created_at; did.push(`accepted (said yes from the start) ${g.name}`); } // "already said yes" guests are accepted from the start
+    if (YES_KINDS.includes(g.kind) && !g.accepted_at && (g.invited_at || g.created_at)) { g.accepted_at = g.invited_at || g.created_at; did.push(`accepted (${g.kind === 'reschedule' ? 'reschedule guest' : 'said yes from the start'}) ${g.name}`); } // "already said yes" and reschedule guests are accepted from their invite date
     // signed: thank them and send the booking link (not to the five whose dates already stand)
     if (g.agreement && g.agreement.status === 'signed' && g.kind !== 'keep_date' && !g.booking && !g.reminders[`signed:${g.agreement.submission_id}`]) {
       if (!dry) await sendKind(g, 'signed', `signed:${g.agreement.submission_id}`); did.push(`signed ${g.name}`);
