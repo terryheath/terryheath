@@ -96,7 +96,7 @@ const LINKS = [
   ]],
   ['Muse', [['gomuse.io Admin', 'https://gomuse.io/admin', 'Issues, people, email (including the announcement emails), flagged pieces.']]],
   ['Hosting', [
-    ['Railway: Inkhorn Cron', 'https://railway.com/project/7865f281-fb8b-46e7-90bd-ffb6babf849d', 'The cron jobs (weekly digest, agreements, patreon sync, ...) and the agreements-accept web service.'],
+    ['Railway: Shared Cron', 'https://railway.com/project/7865f281-fb8b-46e7-90bd-ffb6babf849d', 'The cron jobs (weekly digest, agreements, patreon sync, ...) and the agreements-accept web service.'],
     ['Railway: agreements', 'https://railway.com/project/7865f281-fb8b-46e7-90bd-ffb6babf849d/service/b69a9017-8d4f-4b4f-8c35-5e0736b306c5', 'The daily agreements cron: logs, variables (SCHEDULE_SIGNED), run history.'],
     ['Railway: muse', 'https://railway.com/project/9a9c6ef8-f93a-439a-b0f1-e6595a1d2a0d', 'Muse API, web and Postgres; announcement-email switches live here.'],
     ['PikaPods', 'https://www.pikapods.com/pods', 'Ghost (inkhornreview.com), DocuSeal; backups, env vars, custom domains.'],
