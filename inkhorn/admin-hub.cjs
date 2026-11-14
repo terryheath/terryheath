@@ -67,7 +67,8 @@ const SUBDOMAINS = [
   ['address.inkhornreview.com', 'The address service: members give a print-subscription mailing address (writes SHIP blocks to member notes).', 'Railway: address-service'],
   ['muse.inkhornreview.com', 'Old Muse address; redirects to gomuse.io.', 'Railway: muse project'],
   ['www.inkhornreview.com', 'Redirects to inkhornreview.com (a Cloudflare Worker).', 'Cloudflare'],
-  ['mail.inkhornreview.com', 'Sending domain for Ghost newsletters (Mailgun); email.mail is its tracking CNAME.', 'Mailgun'],
+  ['mail.inkhorn.press', 'Sending domain for the Inkhorn Ghost (Mailgun account terry@terryheath.com); email.mail is its tracking CNAME.', 'Mailgun'],
+  ['mail.terryheath.com', 'Sending domain for the terryheath.com Ghost (same Mailgun account); email.mail is its tracking CNAME.', 'Mailgun'],
   ['ses.inkhornreview.com', 'Amazon SES MAIL FROM domain (SPF and bounce handling for DocuSeal and shop mail). Not a website.', 'AWS SES'],
   ['inkhornreview.com', 'The magazine itself: Ghost, plus /ghost/ for Ghost Admin.', 'PikaPods: Ghost'],
 ];
