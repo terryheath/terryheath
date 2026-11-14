@@ -1,6 +1,6 @@
 // Every email the Life on Words guest system sends, in one place (2026-11-12). Edit the text here; the code only fills in the {placeholders}.
 // Placeholders: {first} first name, {note} (invite only) the optional personal note from the Add guest form, placed after the greeting and before "I'd love to have a conversation" as its own paragraph (empty when there is no note), {when} the session date and time in the guest's own time zone (e.g. "Tuesday, December 8 at 9:00 a.m. PST"),
-// {old_when} the session's former date, {agreement_url}, {deadline} (the agreement deadline, in their time zone), {deadline_notice} (agreement reminder only: the deadline sentence when they have a booking, else empty), {book_url} (personal booking link; works only once the agreement is signed),
+// {old_when} the session's former date, {agreement_url}, {deadline} (the agreement deadline, in their time zone), {deadline_notice} (agreement reminder only: the deadline sentence when they have a booking, else empty), {book_url} and {booking_url} (the same: the guest's own booking link; works only once the agreement is signed),
 // {studio_url} the Riverside studio, {reschedule_url}, {cancel_url}, {change_lines} (the reschedule and cancel links, or "reply to this email" for the sessions booked before Cal.com).
 const STUDIO = 'https://riverside.com/studio/terry-heaths-studio?t=ed9e5caf23549199013b';
 const SIGN = '— Terry';
@@ -200,6 +200,72 @@ ${SIGN}`,
 Here's the short guest agreement: {agreement_url}
 
 It's non-exclusive, and you keep all rights to your work. Once it's signed, I'll send your booking link so you can choose a Tuesday that suits you.
+
+${SIGN}`,
+  },
+  // ---- follow-up tracks (2026-11-14) -------------------------------------------------------------------------------------------
+  // No response to the invitation: the last note, 10 days after the agreement went out (the day-3 agreement_reminder comes first).
+  final_note: {
+    subject: 'Life on Words: one last note',
+    body: `Hi {first},
+
+I don't want to crowd your inbox, so this is my last note about it. If you'd like to come on Life on Words, the invitation stands. The first step is the short guest agreement:
+
+{agreement_url}
+
+Once it's signed, you'll get a link to pick a Tuesday that suits you. And if the timing isn't right, no reply is needed.
+
+${SIGN}`,
+  },
+  // Said yes but has not signed.
+  accepted_reminder: {
+    subject: 'Life on Words: your next step',
+    body: `Hi {first},
+
+Thank you again for saying yes. I'm looking forward to the conversation.
+
+The next step is the short guest agreement. It's non-exclusive, and you keep all rights to your work:
+
+{agreement_url}
+
+As soon as it's signed, I'll send your booking link so you can choose a Tuesday.
+
+${SIGN}`,
+  },
+  accepted_final: {
+    subject: 'Life on Words: still holding your spot',
+    body: `Hi {first},
+
+Just checking in. The guest agreement is the only thing between us and picking a date:
+
+{agreement_url}
+
+If anything in it gives you pause, or you'd like to talk it over first, just reply and let me know.
+
+${SIGN}`,
+  },
+  // Signed but has not booked.
+  booking_nudge: {
+    subject: 'Life on Words: pick your Tuesday',
+    body: `Hi {first},
+
+Thank you for signing the guest agreement. You're all set except for the date. Here's your booking link:
+
+{booking_url}
+
+Sessions are on Tuesdays and take about an hour.
+
+${SIGN}`,
+  },
+  booking_final: {
+    subject: 'Life on Words: finding a date',
+    body: `Hi {first},
+
+I'd still love to have you on. Here's your booking link again:
+
+{booking_url}
+
+If none of the open Tuesdays work, reply with a few dates that might, and I'll see what I can do.
 
 ${SIGN}`,
   },

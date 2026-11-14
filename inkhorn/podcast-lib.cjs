@@ -88,7 +88,7 @@ const fill = (t, v) => t.replace(/\{(\w+)\}/g, (m, k) => (v[k] !== undefined ? v
 function varsFor(g) {
   const b = g.booking;
   const tz = (b && b.tz) || PACIFIC;
-  const v = { first: firstName(g.name), note: g.note ? `${g.note.trim()}\n\n` : '', studio_url: STUDIO, agreement_url: g.agreement ? g.agreement.url : '', book_url: `${HUB}/podcast/book?token=${g.token}`, old_when: g.old_when || '' };
+  const v = { first: firstName(g.name), note: g.note ? `${g.note.trim()}\n\n` : '', studio_url: STUDIO, agreement_url: g.agreement ? g.agreement.url : '', book_url: `${HUB}/podcast/book?token=${g.token}`, booking_url: `${HUB}/podcast/book?token=${g.token}`, old_when: g.old_when || '' };
   if (b && b.start) v.when = when(new Date(b.start), tz);
   if (b && b.status === 'booked' && !String(b.uid).startsWith('imported-')) { v.reschedule_url = `https://cal.com/reschedule/${b.uid}`; v.cancel_url = `https://cal.com/booking/${b.uid}?cancel=true`; }
   v.change_lines = v.reschedule_url ? `Need to change it? Reschedule: ${v.reschedule_url}\nCan't make it? Cancel: ${v.cancel_url}` : "Need to change it, or can't make it? Just reply to this email.";
@@ -113,6 +113,7 @@ async function sendMail(to, subject, text) {
 // Sends an email kind to a guest and records it (never twice for the same key).
 async function sendKind(g, kind, key = kind, extra = {}) {
   if (g.reminders[key]) return false;
+  if (g.declined) { g.log.push(`${new Date().toISOString().slice(0, 16)} NOT sent (declined): ${key}`); return false; } // marked declined: no email of any kind
   // Any email that carries the agreement link carries the CURRENT agreement: an unsigned guest still on an older version gets a fresh submission first.
   if (EMAILS[kind] && /\{agreement_url\}/.test(EMAILS[kind].body) && kind !== 'agreement_updated') {
     const oldId = g.agreement && g.agreement.submission_id;
@@ -144,7 +145,7 @@ async function refreshAgreement(g) {
     const sub = await L.ds('GET', `/submissions/${g.agreement.submission_id}`);
     const s = sub.submitters && sub.submitters[0];
     if (!s) return;
-    if (s.status === 'completed') { g.agreement.status = 'signed'; g.agreement.signed_at = s.completed_at; }
+    if (s.status === 'completed') { g.agreement.status = 'signed'; g.agreement.signed_at = s.completed_at; if (!g.accepted_at) g.accepted_at = s.completed_at; } // signing counts as accepting
     else if (s.opened_at) { g.agreement.status = 'viewed'; g.agreement.viewed_at = s.opened_at; }
   } catch (e) { console.error('agreement refresh failed', g.email, e.message); }
 }
@@ -232,6 +233,95 @@ async function handleCal(event) {
   return re ? 'rescheduled' : 'booked';
 }
 
+// ---- follow-up tracks (2026-11-14) ------------------------------------------------------------------------------------------
+// Three tracks for guests with no session booked. The track is worked out from the guest's own dates every time, so nothing is "migrated":
+//   no_response  invited, not accepted, agreement unsigned:  day 3 agreement_reminder, day 10 final_note, then "No response"
+//                (days counted from when the agreement went out)
+//   accepted     said yes (button, or "already said yes", or signed earlier), agreement unsigned:  day 3 accepted_reminder, day 10 accepted_final,
+//                then "Needs Terry" (days counted from the later of accepted_at and the agreement going out). A guest who moves here from the
+//                no-response track and already got the day-3 reminder or the last note does not get accepted_reminder again.
+//   signed       agreement signed, no booking, not a keep_date guest:  day 5 booking_nudge, day 14 booking_final, then "Needs Terry"
+//                (days counted from signing)
+// Every track stops the moment the guest signs (accepted -> signed), books, is cancelled or is marked declined. At most one email per guest
+// per run; never two emails within 48 hours (a guest with a recent email is held, not skipped); if two steps are overdue together only the
+// later one goes out and the earlier is recorded as skipped. After the final email, 7 days of quiet (FINAL_GRACE_DAYS), then the hub status flips
+// and Terry gets one line by email.
+const DAY = 86400000;
+const FINAL_GRACE_DAYS = 7;
+const MIN_GAP_MS = 48 * 3600e3;
+const TRACKS = {
+  no_response: { flag: 'no_response', steps: [{ kind: 'agreement_reminder', days: 3 }, { kind: 'final_note', days: 10 }] },
+  accepted: { flag: 'needs_terry', steps: [{ kind: 'accepted_reminder', days: 3, skipIfGot: ['agreement_reminder', 'final_note'] }, { kind: 'accepted_final', days: 10 }] },
+  signed: { flag: 'needs_terry', steps: [{ kind: 'booking_nudge', days: 5 }, { kind: 'booking_final', days: 14 }] },
+};
+const hasBooking = (g) => !!(g.booking && g.booking.status === 'booked');
+const acceptedAt = (g) => g.accepted_at || (g.kind === 'accepted' ? g.invited_at || g.created_at : null);
+function trackOf(g) {
+  if (g.pending_send || g.declined || g.cancelled) return null;
+  const a = g.agreement;
+  if (!a || !a.sent_at || hasBooking(g)) return null;
+  if (a.status === 'signed') return g.kind === 'keep_date' ? null : 'signed';
+  return acceptedAt(g) ? 'accepted' : 'no_response';
+}
+const isoOf = (d) => new Date(d).toISOString();
+const gotKind = (g, kind) => Object.keys(g.reminders || {}).some((k) => k.split(':')[0] === kind);
+const settled = (g, key) => !!(g.reminders[key] || g.reminders[`skip_${key}`]);
+const lastEmailMs = (g) => Math.max(0, ...Object.entries(g.reminders || {}).filter(([k]) => !k.startsWith('skip_')).map(([, v]) => Date.parse(v) || 0));
+// What the follow-up engine would do for this guest right now. Pure: it changes nothing.
+//   { track, send, skip, hold, flag, clearFlag, next }  send/skip/next are { kind, key, at } steps; flag is { state, track } when the final email's quiet period has passed.
+function planFollowUp(g, now = new Date()) {
+  const track = trackOf(g);
+  const out = { track, send: null, skip: [], hold: false, flag: null, clearFlag: false, next: null };
+  if (g.flag && g.flag.track !== track && !g.declined && !g.cancelled) out.clearFlag = true; // the guest moved on (accepted, signed, booked...)
+  if (!track) {
+    // Display only: a guest with a booked session and an unsigned agreement still gets the day-3 agreement_reminder (sent by the hourly job's own block, not this plan).
+    const ag = g.agreement;
+    if (!g.pending_send && !g.declined && !g.cancelled && hasBooking(g) && ag && ag.status !== 'signed' && ag.sent_at && !g.reminders[`agreement_reminder:${ag.submission_id}`]) out.next = { kind: 'agreement_reminder', key: `agreement_reminder:${ag.submission_id}`, at: new Date(Date.parse(ag.sent_at) + 3 * DAY) };
+    return out;
+  }
+  const a = g.agreement;
+  const base = track === 'no_response' ? new Date(a.sent_at) : track === 'accepted' ? new Date(Math.max(Date.parse(acceptedAt(g)), Date.parse(a.sent_at))) : new Date(a.signed_at || a.sent_at);
+  const steps = TRACKS[track].steps.map((st) => ({ kind: st.kind, key: `${st.kind}:${a.submission_id}`, at: new Date(base.getTime() + st.days * DAY), satisfied: !!(st.skipIfGot && st.skipIfGot.some((k) => gotKind(g, k))) }));
+  const pending = steps.filter((st) => !st.satisfied && !settled(g, st.key));
+  const due = pending.filter((st) => st.at <= now);
+  if (due.length) {
+    const quietAt = new Date(lastEmailMs(g) + MIN_GAP_MS);
+    if (quietAt > now) { out.hold = true; out.next = { ...due[due.length - 1], at: quietAt }; }
+    else { out.send = due[due.length - 1]; out.skip = due.slice(0, -1); out.next = out.send; }
+    return out;
+  }
+  if (pending.length) { out.next = pending[0]; return out; }
+  // every email is out: after the quiet period the guest is flagged for Terry
+  const last = steps[steps.length - 1], sentAt = g.reminders[last.key];
+  if (sentAt) {
+    const flagAt = new Date(Date.parse(sentAt) + FINAL_GRACE_DAYS * DAY);
+    if (g.flag && g.flag.track === track) return out;
+    if (flagAt <= now) out.flag = { state: TRACKS[track].flag, track };
+    else out.next = { kind: `mark ${TRACKS[track].flag === 'no_response' ? 'No response' : 'Needs Terry'}`, key: null, at: flagAt };
+  }
+  return out;
+}
+// The hub status: Invited, Accepted, Signed, Booked, No response, Needs Terry (plus Declined and Cancelled).
+function statusOf(g) {
+  if (g.declined) return 'Declined';
+  if (g.cancelled) return 'Cancelled';
+  if (hasBooking(g)) return 'Booked';
+  if (g.flag) return g.flag.state === 'no_response' ? 'No response' : 'Needs Terry';
+  if (g.agreement && g.agreement.status === 'signed') return 'Signed';
+  if (acceptedAt(g)) return 'Accepted';
+  return 'Invited';
+}
+const FLAG_NOTICE = {
+  no_response: (g) => `${g.name} <${g.email}> has not answered the invitation, the reminder or the last note. No more emails will go to them.`,
+  needs_terry_accepted: (g) => `${g.name} <${g.email}> said yes but still has not signed the agreement after two reminders. No more emails will go to them.`,
+  needs_terry_signed: (g) => `${g.name} <${g.email}> signed the agreement but has not booked a session after two emails. No more emails will go to them.`,
+};
+const flagNotice = (g, f) => (f.state === 'no_response' ? FLAG_NOTICE.no_response(g) : f.track === 'accepted' ? FLAG_NOTICE.needs_terry_accepted(g) : FLAG_NOTICE.needs_terry_signed(g));
+// Everyone, for the hub and the dry-run script: [{ guest, track, status, next }]
+function followUpPlan(guests, now = new Date()) {
+  return guests.filter((g) => !g.pending_send).map((g) => { const p = planFollowUp(g, now); return { guest: g, track: p.track, status: statusOf(g), next: p.next, hold: p.hold, send: p.send, skip: p.skip, flag: p.flag }; });
+}
+
 // ---- the hourly job --------------------------------------------------------------------------------------------------------------
 // Cancels a real Cal.com booking (so the slot reopens) through Cal's public cancel endpoint (it needs a CSRF cookie handshake).
 async function calCancel(uid, email) {
@@ -263,13 +353,18 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
   const did = [];
   for (const g of store.guests) {
     if (g.pending_send) continue; // imported guests are untouched until Terry sends their first email from /podcast
+    const before = did.length;
+    try {
     await refreshAgreement(g);
+    if (g.declined) continue; // marked declined: nothing more goes to this guest
+    if (g.kind === 'accepted' && !g.accepted_at) { g.accepted_at = g.invited_at || g.created_at; did.push(`accepted (said yes from the start) ${g.name}`); } // "already said yes" guests are accepted from the start
     // signed: thank them and send the booking link (not to the five whose dates already stand)
     if (g.agreement && g.agreement.status === 'signed' && g.kind !== 'keep_date' && !g.booking && !g.reminders[`signed:${g.agreement.submission_id}`]) {
       if (!dry) await sendKind(g, 'signed', `signed:${g.agreement.submission_id}`); did.push(`signed ${g.name}`);
     }
-    // one reminder if the agreement is still unsigned 3 days after it went out
-    if (g.agreement && g.agreement.status !== 'signed' && g.agreement.sent_at && now - new Date(g.agreement.sent_at) > 3 * 86400000 && !g.reminders[`agreement_reminder:${g.agreement.submission_id}`]) {
+    // one reminder if the agreement is still unsigned 3 days after it went out: for a guest with a booked session (the sign-by deadline matters most).
+    // Everyone else is on a follow-up track below, which sends this same reminder on day 3 for the no-response track.
+    if (g.agreement && g.agreement.status !== 'signed' && hasBooking(g) && g.agreement.sent_at && now - new Date(g.agreement.sent_at) > 3 * 86400000 && !g.reminders[`agreement_reminder:${g.agreement.submission_id}`]) {
       if (!dry) await sendKind(g, 'agreement_reminder', `agreement_reminder:${g.agreement.submission_id}`); did.push(`agreement reminder ${g.name}`);
     }
     // an unsigned guest whose deadline has passed loses the session (rule: signed before the one-week reminder time)
@@ -277,6 +372,24 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
     if (dl && dl <= now && g.agreement && g.agreement.status !== 'signed' && new Date(g.booking.start) > now) {
       if (!dry) await cancelUnsigned(g); did.push(`cancelled unsigned ${g.name}`);
       continue;
+    }
+    // follow-up tracks (no response / accepted / signed but not booked)
+    const plan = planFollowUp(g, now);
+    if (plan.clearFlag) { if (!dry) { delete g.flag; g.log.push(`${now.toISOString().slice(0, 16)} follow-up flag cleared (guest moved on)`); } did.push(`flag cleared ${g.name}`); }
+    if (plan.send) {
+      if (!dry) {
+        for (const sk of plan.skip) g.reminders[`skip_${sk.key}`] = now.toISOString(); // overdue together: the earlier one is skipped, not sent late
+        await sendKind(g, plan.send.kind, plan.send.key);
+      }
+      did.push(`${plan.send.kind} ${g.name}${plan.skip.length ? ` (skipped ${plan.skip.map((x) => x.kind).join(', ')})` : ''}`);
+    }
+    if (plan.flag) {
+      if (!dry) {
+        g.flag = { state: plan.flag.state, track: plan.flag.track, since: now.toISOString() };
+        g.log.push(`${now.toISOString().slice(0, 16)} marked ${plan.flag.state === 'no_response' ? 'No response' : 'Needs Terry'}`);
+        await notifyTerry(`Life on Words: ${g.name}, ${plan.flag.state === 'no_response' ? 'no response' : 'needs you'}`, `${flagNotice(g, plan.flag)} ${HUB}/podcast`);
+      }
+      did.push(`${plan.flag.state} ${g.name}`);
     }
     // session reminders: one week before, two days before, the morning of (each at most once per booking); only guests who have signed
     const b = g.booking;
@@ -290,9 +403,11 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
     }
     // published: an episode in the feed carries the guest's name (Terry can override on /podcast)
     if (!g.pipeline_manual && g.pipeline !== 'published' && g.name.length > 3 && titles.some((t) => t.includes(g.name.toLowerCase()))) { g.pipeline = 'published'; did.push(`published ${g.name}`); }
+    } catch (e) { console.error('hourly failed for', g.email, e.message); did.push(`FAILED ${g.name}: ${e.message}`); }
+    finally { if (!dry && did.length > before) await save(store); } // saved right after each guest (even after a `continue`), so an error later in the run can never make an email go out twice
   }
   if (!dry) await save(store);
   return did;
 }
 
-module.exports = { firstKind, sendUpdatedAgreement, deadlineFor, cancelUnsigned, calCancel, invite, sendFirst, link, handleCal, runHourly, CAL_EVENT_URL, notifyTerry, PAGE, HUB, PACIFIC, load, save, newGuest, firstName, zonedInstant, localYmd, localHour, shiftYmd, when, reminderTimes, render, fill, varsFor, sendMail, sendKind, createAgreement, refreshAgreement, signedPdfUrl, TEMPLATE_NAME };
+module.exports = { planFollowUp, followUpPlan, statusOf, trackOf, acceptedAt, hasBooking, FINAL_GRACE_DAYS, firstKind, sendUpdatedAgreement, deadlineFor, cancelUnsigned, calCancel, invite, sendFirst, link, handleCal, runHourly, CAL_EVENT_URL, notifyTerry, PAGE, HUB, PACIFIC, load, save, newGuest, firstName, zonedInstant, localYmd, localHour, shiftYmd, when, reminderTimes, render, fill, varsFor, sendMail, sendKind, createAgreement, refreshAgreement, signedPdfUrl, TEMPLATE_NAME };
