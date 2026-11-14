@@ -1,5 +1,5 @@
-// admin.inkhornreview.com: Terry's single admin hub (2026-11-11). Plain HTML, one password. Runs inside the agreements-accept web service
-// (Host header admin.inkhornreview.com). Admin tools go under admin.inkhornreview.com/<path>; do not create new subdomains for them.
+// admin.terryheath.com: Terry's single admin hub (2026-11-11). Plain HTML, one password. Runs inside the agreements-accept web service
+// (Host header admin.terryheath.com). Admin tools go under admin.terryheath.com/<path>; do not create new subdomains for them.
 //
 // Password: set once at /setup?token=<ADMIN_SETUP_TOKEN> (token in Keychain `inkhorn-admin-setup-token` and Railway). Only a scrypt hash is
 // stored, in the private draft Ghost page `admin-hub-auth` (delete that page to allow a new setup). Signed in = a 30-day cookie (HMAC with
@@ -60,7 +60,7 @@ const loginPage = (msg) => shell('Admin sign in', `<h1>Admin</h1>${msg ? `<p cla
 const setupPage = (token, msg) => shell('Set the admin password', `<h1>Set the admin password</h1>${msg ? `<p class="warn">${esc(msg)}</p>` : ''}<form method="post" action="/setup"><input type="hidden" name="token" value="${esc(token)}"><p><input type="password" name="password" placeholder="Password (12+ characters)" minlength="12" required autocomplete="new-password"></p><p><input type="password" name="again" placeholder="Again" minlength="12" required autocomplete="new-password"></p><p><button>Save and sign in</button></p></form><p class="why">Only a hash is stored. To set a new password later, delete the private Ghost page "Admin hub login" and visit /setup again with the setup token.</p>`);
 
 const SUBDOMAINS = [
-  ['admin.inkhornreview.com', 'This hub. Every admin tool goes under a path here (admin.inkhornreview.com/<path>), not a new subdomain.', 'Railway: agreements-accept service'],
+  ['admin.terryheath.com', 'This hub (moved from admin.inkhornreview.com on 2026-11-13, which redirects here). Every admin tool goes under a path here (admin.terryheath.com/<path>), not a new subdomain.', 'Railway: agreements-accept service'],
   ['agreements.inkhornreview.com', 'The contributor confirm page (/accept) linked from the Duosuma acceptance letter. Public; the old payouts address redirects to admin.', 'Railway: agreements-accept service'],
   ['sign.inkhornreview.com', 'DocuSeal, where contributor agreements are sent and signed. (sign.lifeonwords.com redirects here.)', 'PikaPods: FTR DocuSeal'],
   ['download.inkhornreview.com', 'Ebook delivery: per-order download links, and the shop admin at /admin.', 'Railway: inkhorn-shop-service'],
@@ -131,7 +131,7 @@ async function homeHtml() {
       <p><strong>Payments due at the next release</strong></p><ul>${pay}</ul></div>`;
   } catch (e) { console.error('hub status failed', e.message); }
   const links = LINKS.map(([group, items]) => `<h2>${esc(group)}</h2><ul>${items.map(([name, url, why]) => `<li><a href="${esc(url)}">${esc(name)}</a><br><span class="why">${esc(why)}</span></li>`).join('')}</ul>`).join('');
-  const subs = `<h2>Subdomains</h2><p class="why">Every *.inkhornreview.com name in use. New admin tools go under admin.inkhornreview.com/&lt;path&gt;, not a new subdomain.</p><table><tr><th>Name</th><th>What it does</th><th>Runs on</th></tr>${SUBDOMAINS.map(([n, w, r]) => `<tr><td>${esc(n)}</td><td>${esc(w)}</td><td>${esc(r)}</td></tr>`).join('')}</table>`;
+  const subs = `<h2>Subdomains</h2><p class="why">Every *.terryheath.com and *.inkhornreview.com name in use. New admin tools go under admin.terryheath.com/&lt;path&gt;, not a new subdomain.</p><table><tr><th>Name</th><th>What it does</th><th>Runs on</th></tr>${SUBDOMAINS.map(([n, w, r]) => `<tr><td>${esc(n)}</td><td>${esc(w)}</td><td>${esc(r)}</td></tr>`).join('')}</table>`;
   return shell('Admin', `<h1>Admin</h1><nav><a href="/">Home</a><a href="/payouts">Payouts</a><a href="/podcast">Life on Words</a><a href="/logout">Sign out</a></nav>${status}${links}${subs}`);
 }
 

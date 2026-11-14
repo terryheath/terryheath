@@ -5,12 +5,10 @@
  * Designed to run unattended on a schedule.
  *
  * Required env:
- *   GHOST_API_URL      https://accelerated-basilisk.pikapod.net  (Inkhorn Review)
- *                      Episodes are a column of Inkhorn Review, not a separate
- *                      site: they land in the /life-on-words/ collection by way
- *                      of the "Podcast" tag. Nothing here publishes to the old
- *                      lifeonwords.com pod, which is empty. An earlier version
- *                      of this comment named that pod and was wrong.
+ *   GHOST_API_URL      https://smoky-hyena.pikapod.net  (terryheath.com)
+ *                      Episodes of Life on Words with Terry Heath land in the
+ *                      /podcast/ collection by way of the "podcast" tag (since
+ *                      2026-11-13; they used to go to inkhornreview.com).
  *   GHOST_ADMIN_KEY    the "id:secret" Admin API key
  *
  * Optional env:
@@ -24,7 +22,8 @@
  *   MAX_AGE_DAYS       skip episodes older than this (default: 14)
  *   DRY_RUN            "1" = log what would happen, change nothing
  *   SITE_URL           public site URL used for the "Listen to this episode"
- *                      link (default: https://inkhornreview.com). Never derived
+ *                      link (default: https://terryheath.com; PODCAST_PATH, default /podcast, is
+ *                      added before the slug). Never derived
  *                      from GHOST_API_URL, which is the admin host.
  *   REFRESH_GUID       RSS guid of an already-published episode. Instead of the
  *                      normal import, rebuild that one post's body from the
@@ -55,7 +54,8 @@ const __dirname = path.dirname(__filename);
 const FEED_URL = process.env.FEED_URL
   || 'https://api.riverside.com/hosting/V48At7Hk.rss';
 const SHOP_ID = process.env.BOOKSHOP_ID;
-const SITE_URL = (process.env.SITE_URL || 'https://inkhornreview.com').replace(/\/+$/, '');
+const SITE_URL = (process.env.SITE_URL || 'https://terryheath.com').replace(/\/+$/, '');
+const PODCAST_PATH = process.env.PODCAST_PATH ?? '/podcast';
 const ISBNDB_KEY = process.env.ISBNDB_KEY;
 const HEADSHOT_DIR = process.env.HEADSHOT_DIR || './headshots';
 const POST_STATUS = process.env.POST_STATUS || 'draft';
@@ -722,7 +722,7 @@ async function refreshOne(guid) {
   }
   const post = found[0];
   const guest = guestFromTitle((item.title || '').trim());
-  const html = await buildHtml(item, `${SITE_URL}/${post.slug}/`, transcriptUrls.get(guid),
+  const html = await buildHtml(item, `${SITE_URL}${PODCAST_PATH}/${post.slug}/`, transcriptUrls.get(guid),
     { headshotAlt: guest || undefined, headshotCaption: (guest && credits[guest]) || undefined });
 
   if (DRY_RUN) {
@@ -856,7 +856,7 @@ async function main() {
         // published_at. Patch in the headshot + final HTML and publish.
         // headshotUrl is omitted here because feature_image already carries the
         // headshot — including it in the body would duplicate it.
-        const postUrl  = `${SITE_URL}/${existingDraft.slug}/`;
+        const postUrl  = `${SITE_URL}${PODCAST_PATH}/${existingDraft.slug}/`;
         const headshotOpts = { headshotAlt: guest || undefined, headshotCaption: caption };
         const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid), headshotOpts);
         const editPayload = {
@@ -897,7 +897,7 @@ async function main() {
         // Step 2: rebuild HTML with the listen link now that we have the slug.
         // headshotUrl is omitted here because feature_image already carries the
         // headshot — including it in the body would duplicate it.
-        const postUrl = `${SITE_URL}/${draft.slug}/`;
+        const postUrl = `${SITE_URL}${PODCAST_PATH}/${draft.slug}/`;
         const headshotOpts = { headshotAlt: guest || undefined, headshotCaption: caption };
         const finalHtml = await buildHtml(item, postUrl, transcriptUrls.get(guid), headshotOpts);
         const editPayload = {

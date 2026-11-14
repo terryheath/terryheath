@@ -159,10 +159,13 @@ const server = http.createServer(async (req, res) => {
   const [path, ...qs] = req.url.split('?');
   const raw = qs.join('?');
   try {
-    if (/^admin\./i.test(req.headers.host || '')) return await hub.handle(req, res, ip); // admin.inkhornreview.com: the admin hub
+    const host = (req.headers.host || '').toLowerCase();
+    // admin.inkhornreview.com moved to admin.terryheath.com (2026-11-13): reads redirect with the path kept; writes (the Cal.com webhook, until its URL is updated) are still served.
+    if (host.startsWith('admin.inkhornreview.com') && (req.method === 'GET' || req.method === 'HEAD')) { res.writeHead(301, { Location: 'https://admin.terryheath.com' + req.url }); return res.end(); }
+    if (/^admin\./i.test(host)) return await hub.handle(req, res, ip); // admin.terryheath.com: the admin hub
     if (path === '/health') return send(res, 200, 'ok');
-    if (path === '/payouts' || path === '/payouts.csv' || path === '/payouts/') { // retired: the payouts page lives at admin.inkhornreview.com/payouts
-      res.writeHead(301, { Location: 'https://admin.inkhornreview.com/payouts' }); return res.end();
+    if (path === '/payouts' || path === '/payouts.csv' || path === '/payouts/') { // retired: the payouts page lives at admin.terryheath.com/payouts
+      res.writeHead(301, { Location: 'https://admin.terryheath.com/payouts' }); return res.end();
     }
     if (path !== '/accept' && path !== '/accept/') return send(res, 404, page('<h1>Not found</h1>'));
     if (req.method === 'GET') {

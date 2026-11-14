@@ -1,4 +1,4 @@
-// Life on Words guest system: web routes served on admin.inkhornreview.com (admin-hub.cjs calls these).
+// Life on Words guest system: web routes served on admin.terryheath.com (admin-hub.cjs calls these).
 //   public (no password):  /podcast/book?token=...        the gate to the hidden Cal.com event (signed agreement required)
 //                          /podcast/webhook/<secret>      Cal.com webhook (PODCAST_WEBHOOK_SECRET env var is the <secret>)
 //   behind the hub login:  /podcast                       guests, agreements, bookings, reminders, buttons

@@ -1,4 +1,4 @@
-// The payouts page (signed agreements, pay and subscriptions, bios to Apply/Ignore, mailing lists), served at admin.inkhornreview.com/payouts
+// The payouts page (signed agreements, pay and subscriptions, bios to Apply/Ignore, mailing lists), served at admin.terryheath.com/payouts
 // behind the admin hub's password (admin-hub.cjs). Live from DocuSeal; refreshed every 30 seconds.
 const L = require('./agreements-lib.cjs');
 const B = require('./bios-lib.cjs');

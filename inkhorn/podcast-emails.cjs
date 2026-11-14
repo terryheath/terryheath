@@ -152,7 +152,7 @@ ${SIGN}`,
     subject: 'Your Life on Words session on {when}: one short agreement first',
     body: `Hello {first},
 
-Your Life on Words session on {when} stands. Before we record, I need you to sign a short guest agreement. It covers publishing the conversation as a podcast and in print, it's non-exclusive, and you keep all rights to your own work.
+Your Life on Words session on {when} stands. Before we record, I need you to sign a short guest agreement. It covers publishing the conversation as a podcast, it's non-exclusive, and you keep all rights to your own work.
 
 Please sign by {deadline}. If the agreement isn't signed by then, the session will be cancelled, and you can sign and pick a new time whenever you're ready.
 
@@ -172,7 +172,7 @@ ${SIGN}`,
 I'm sorry. My teaching schedule changed, and I need to move your Life on Words session, which was set for {old_when}. I'd still love to have you on.
 
 Two steps, in this order:
-1. Sign the short guest agreement. It covers publishing the conversation as a podcast and in print, it's non-exclusive, and you keep all rights to your own work: {agreement_url}
+1. Sign the short guest agreement. It covers publishing the conversation as a podcast, it's non-exclusive, and you keep all rights to your own work: {agreement_url}
 2. Then pick a new time. Your personal booking link works as soon as you've signed: {book_url}
 
 If none of the times work, reply and we'll find one together.
@@ -184,7 +184,7 @@ ${SIGN}`,
     subject: 'An updated Life on Words guest agreement',
     body: `Hi {first},
 
-I've revised the Life on Words guest agreement to make it narrower. It now covers the episode, its promotion, and an edited transcript in Inkhorn Review. Anything else needs your permission, and anything you read stays yours.
+I've revised the Life on Words guest agreement to make it narrower. It now covers the episode and its promotion. Anything else needs your permission, and anything you read stays yours.
 
 Here's the updated agreement: {agreement_url}
 

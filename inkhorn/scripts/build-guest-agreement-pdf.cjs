@@ -18,11 +18,11 @@ const box = (name, type, x, y, w, hh, o = {}) => { doc.save().lineWidth(0.5).str
 const line = (label, name, type, w, o = {}) => { const y = doc.y; doc.font('Helvetica').fontSize(10).text(label, L, y, { lineBreak: false }); const x = L + doc.widthOfString(label) + 6; box(name, type, x, y - 3, w, o.h || 17, o); doc.y = y + (o.h || 17) + 8; doc.x = L; };
 
 doc.font('Helvetica-Bold').fontSize(18).text('Life on Words: Guest Agreement').moveDown(0.3);
-p('Life on Words is a podcast produced by Follow the Rabbit LLC (the "Producer"), a column of Inkhorn Review. This agreement is between the Producer and the guest named below ("Guest").');
+p('Life on Words is a podcast produced by Follow the Rabbit LLC (the "Producer"). This agreement is between the Producer and the guest named below ("Guest").');
 h('1. The recording');
 p('Guest agrees to be recorded, in audio and video, in a conversation with the host, Terry Heath, for Life on Words.');
 h('2. What the Producer may do');
-p('Guest grants the Producer a non-exclusive, worldwide, perpetual, royalty-free license to record, edit, publish, distribute and promote the recording as a Life on Words episode, in whole or in part: (a) as audio and video on podcast and video platforms, including the Riverside feed, YouTube, Apple Podcasts, Spotify and the Producer\'s own websites; (b) as clips, excerpts, transcripts and posts that promote the episode; and (c) as an edited transcript of the conversation in Inkhorn Review, in print and online. Any other use, including any other publication, book or anthology, or licensing to another publisher, requires Guest\'s written permission.');
+p('Guest grants the Producer a non-exclusive, worldwide, perpetual, royalty-free license to record, edit, publish, distribute and promote the recording as a Life on Words episode, in whole or in part: (a) as audio and video on podcast and video platforms, including the Riverside feed, YouTube, Apple Podcasts, Spotify and the Producer\'s own websites; and (b) as clips, excerpts, transcripts and posts that promote the episode. Any other use, including any other publication, book or anthology, or licensing to another publisher, requires Guest\'s written permission.');
 h('3. Name, likeness and bio');
 p('The Producer may use Guest\'s name, voice, likeness and short bio to present and promote the episode.');
 h('4. Guest keeps their own work');

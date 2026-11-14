@@ -24,7 +24,7 @@
 //
 // Required env vars: GHOST_API_URL, GHOST_ADMIN_KEY. Optional: TEST_EMAIL, NOTICE_EMAIL (default terry@terryheath.com).
 // (The free-member welcome emails no longer pull pieces: the welcome step was removed 2026-11-11, so nothing here tags #welcome-used.)
-// ALSO=1 adds an "Also at Inkhorn" section after the piece (the latest Life on Words, Founder's Letter, Gallery and Muse, one row each,
+// ALSO=1 adds an "Also at Inkhorn" section after the piece (the latest Founder's Letter, Gallery and Muse, one row each,
 //   flagged NEW when newer than the previous weekly email). OFF by default until Terry approves it; ALSO_SINCE_DAYS overrides the window.
 
 import GhostAdminAPI from '@tryghost/admin-api';
@@ -148,7 +148,6 @@ function formatBody(body, isPoem) {
 
 const pagePath = (u) => SITE_URL + new URL(u).pathname;
 const DEPARTMENTS = [
-  { label: 'Life on Words', tag: 'podcast', page: `${SITE_URL}/life-on-words/` },
   { label: "Founder's Letter", tag: 'letter', page: `${SITE_URL}/founder-letter/` },
   { label: 'Gallery', tag: 'art', page: `${SITE_URL}/art/` },
   // Dear Inkhorn: add { label: 'Dear Inkhorn', tag: ..., page: ... } when it exists in Ghost.
@@ -218,12 +217,26 @@ function alsoHtml({ rows: items, notice }) {
   );
 }
 
+
+// ── Life on Words moved note (2026-11-13) ─────────────────────────────────────
+// Shown near the top of the four Sunday emails below, then never again (the dates are the whole mechanism: nothing to remove).
+const LOW_NOTE_SUNDAYS = ['2026-11-15', '2026-11-22', '2026-11-29', '2026-12-06']; // Pacific dates
+const LOW_NOTE_HTML =
+  `<p style="margin:0 0 22px;padding:12px 14px;background:#f6f3ee;font-size:15px;line-height:1.45;color:#1a1a1a">` +
+  `Life on Words, our interview podcast, now lives at <a href="https://terryheath.com/podcast/" style="color:#1a1a1a;font-weight:700">terryheath.com/podcast</a> ` +
+  `as Inkhorn Review becomes part of the nonprofit Inkhorn Press. The full archive and every new episode are there.</p>\n`;
+function lowNote(now = new Date()) {
+  const pacificDate = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  return LOW_NOTE_SUNDAYS.includes(pacificDate) ? LOW_NOTE_HTML : '';
+}
+
 function emailHtml(post, body, alsoItems = null) {
   const isPoem = (post.tags || []).some(t => t.slug === 'poetry');
   const full = formatBody(body, isPoem);
   const byline = post.custom_excerpt ? `<p style="margin:0 0 24px;font-size:16px;font-style:italic;color:#555">${esc(post.custom_excerpt)}</p>` : '';
   return (
     `<!--kg-card-begin: html-->\n` +
+    lowNote() +
     `<p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888">From ${esc(issueLabel(post))}</p>\n` +
     `<h1 style="margin:0 0 8px;font-size:28px;line-height:1.25;color:#1a1a1a">${esc(post.title)}</h1>\n` +
     `${byline}\n` +

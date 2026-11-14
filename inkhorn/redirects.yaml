@@ -7,8 +7,10 @@
   /tag/nonfiction/: /nonfiction/
   /tag/micro/: /micro/
   /tag/art/: /art/
-  /tag/podcast/: /life-on-words/
-  ^/podcast/(.*)$: /life-on-words/$1
+  /tag/podcast/: https://terryheath.com/podcast/
+  ^/podcast/(.*)$: https://terryheath.com/podcast/$1
+  /life-on-words/: https://terryheath.com/podcast/
+  ^/life-on-words/(.*)$: https://terryheath.com/podcast/$1
   /tag/letter/: /founder-letter/
   /colophon/: /founder-letter/
   /micro/tolls/: /autumn-2026/tolls/

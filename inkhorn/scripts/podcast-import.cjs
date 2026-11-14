@@ -5,7 +5,7 @@
 // The file is { "keep": [{name,email,start,created}], "move": [{name,email,old_when}] }:
 //   keep = the date stands: start is the session's ISO time (with offset), created is when the calendar event was made (reminders run as normal);
 //   move = the session must be rescheduled: old_when is the former date, written as text.
-// Guests are created marked pending_send: NOTHING IS SENT. They appear on admin.inkhornreview.com/podcast under "Ready to send".
+// Guests are created marked pending_send: NOTHING IS SENT. They appear on admin.terryheath.com/podcast under "Ready to send".
 const fs = require('fs');
 const P = require('../podcast-lib.cjs');
 

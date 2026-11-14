@@ -90,7 +90,7 @@ async function weeklyStatus(api, tracker, today) {
   }
   if (!blocks.length) { console.log('Weekly status: everything is signed; nothing to send.'); return; }
   console.log(`Weekly status (${dow}): ${blocks.length} issue(s) with unsigned agreements.`);
-  if (!DRY) await L.notify(api, `Unsigned contributor agreements (${dow} ${today})`, blocks.join('') + '<p>Live view: <a href="https://admin.inkhornreview.com/payouts">the payouts page</a>.</p>');
+  if (!DRY) await L.notify(api, `Unsigned contributor agreements (${dow} ${today})`, blocks.join('') + '<p>Live view: <a href="https://admin.terryheath.com/payouts">the payouts page</a>.</p>');
 }
 
 (async () => {
@@ -189,7 +189,7 @@ async function weeklyStatus(api, tracker, today) {
   if (filled.length) parts.push(`<h3>Bios filled in from signed agreements</h3><ul>${filled.map((b) => `<li>Filled in the bio and name in print (${esc(b.name)}) for <strong>${esc(b.r.title)}</strong> from the signed agreement.</li>`).join('')}</ul>`);
   if (waiting.length) parts.push(`<h3>Bios waiting for you</h3><ul>${waiting.map((b) => `<li><strong>${esc(b.r.title)}</strong> (${esc(b.r.contributor)}): a bio already exists${b.note ? ' (' + esc(b.note) + ')' : ''}; compare and Apply or Ignore on the payouts page.</li>`).join('')}</ul>`);
   if (events.bioErrors.length) parts.push(`<h3>Bio step failed</h3><ul>${events.bioErrors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>`);
-  if (events.refunds.length || events.refundError) parts.push(`<h3>Submission fee refunds</h3>${events.refundError ? `<p>The refund step FAILED: ${esc(events.refundError)}. Nothing was refunded; the payouts page has no flags for these.</p>` : ''}<ul>${events.refunds.map((o) => `<li><strong>${esc(o.rec.title)}</strong> (${esc(o.rec.contributor)}): ${esc(o.action)} — ${esc(o.detail)}</li>`).join('')}</ul><p>No email goes to writers about refunds. Flagged ones have a "Refund fee" button on <a href="https://admin.inkhornreview.com/payouts">the payouts page</a>.</p>`);
+  if (events.refunds.length || events.refundError) parts.push(`<h3>Submission fee refunds</h3>${events.refundError ? `<p>The refund step FAILED: ${esc(events.refundError)}. Nothing was refunded; the payouts page has no flags for these.</p>` : ''}<ul>${events.refunds.map((o) => `<li><strong>${esc(o.rec.title)}</strong> (${esc(o.rec.contributor)}): ${esc(o.action)} — ${esc(o.detail)}</li>`).join('')}</ul><p>No email goes to writers about refunds. Flagged ones have a "Refund fee" button on <a href="https://admin.terryheath.com/payouts">the payouts page</a>.</p>`);
   if (events.signed.length) parts.push(`<h3>Signed since the last check</h3>${list(events.signed, (r) => r.choice ? ` — choice: ${esc(r.choice)}${r.pay_method ? ' (' + esc(r.pay_method) + ')' : ''}` : '')}`);
   console.log(`signed ${events.signed.length}, reminders ${events.reminders.length}, pulled ${events.pulled.length}, cash-default ${events.cashDefault.length}, comps ${events.comps.length}${DRY ? ' (dry run: nothing saved or sent)' : ''}`);
   if (DRY) return;

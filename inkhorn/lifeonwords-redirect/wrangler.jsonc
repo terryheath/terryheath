@@ -1,0 +1,9 @@
+{
+  "name": "low-redirect",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "routes": [
+    { "pattern": "lifeonwords.com/*", "zone_name": "lifeonwords.com" },
+    { "pattern": "www.lifeonwords.com/*", "zone_name": "lifeonwords.com" }
+  ]
+}

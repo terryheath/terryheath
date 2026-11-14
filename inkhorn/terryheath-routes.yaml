@@ -1,0 +1,18 @@
+routes:
+
+collections:
+  /podcast/:
+    permalink: /podcast/{slug}/
+    template: index
+    filter: primary_tag:podcast
+    data: tag.podcast
+    order: published_at desc
+
+  /:
+    permalink: /{slug}/
+    template: index
+    filter: primary_tag:-podcast
+
+taxonomies:
+  tag: /tag/{slug}/
+  author: /author/{slug}/

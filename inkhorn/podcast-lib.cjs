@@ -7,9 +7,11 @@ const L = require('./agreements-lib.cjs');
 const { EMAILS, STUDIO } = require('./podcast-emails.cjs');
 
 const PAGE = 'podcast-guests';
-const HUB = 'https://admin.inkhornreview.com';
+const HUB = 'https://admin.terryheath.com';
 const TEMPLATE_NAME = 'Life on Words — Guest Agreement';
 const PACIFIC = 'America/Los_Angeles';
+// Bump when the guest agreement text changes. 2026-11-13: producer is Follow the Rabbit LLC; the Inkhorn Review transcript right (2(c)) is gone.
+const AGREEMENT_VERSION = '2026-11-13';
 
 // ---- store ------------------------------------------------------------------------------------------------------------------
 async function load(api = L.ghost()) {
@@ -106,11 +108,16 @@ async function sendMail(to, subject, text) {
     const nodemailer = require('nodemailer');
     transport = nodemailer.createTransport({ host: process.env.SMTP_HOST || 'email-smtp.us-east-2.amazonaws.com', port: 587, secure: false, auth: { user: process.env.SMTP_USERNAME, pass: process.env.SMTP_PASSWORD } });
   }
-  await transport.sendMail({ from: 'Life on Words <hello@inkhornreview.com>', replyTo: 'hello@terryheath.com', to, subject, text });
+  await transport.sendMail({ from: process.env.PODCAST_FROM || 'Life on Words <hello@inkhornreview.com>', replyTo: 'hello@terryheath.com', to, subject, text });
 }
 // Sends an email kind to a guest and records it (never twice for the same key).
 async function sendKind(g, kind, key = kind, extra = {}) {
   if (g.reminders[key]) return false;
+  // Any email that carries the agreement link carries the CURRENT agreement: an unsigned guest still on an older version gets a fresh submission first.
+  if (EMAILS[kind] && /\{agreement_url\}/.test(EMAILS[kind].body) && kind !== 'agreement_updated') {
+    const oldId = g.agreement && g.agreement.submission_id;
+    if (await upgradeAgreement(g) && key.endsWith(`:${oldId}`)) key = key.replace(`:${oldId}`, `:${g.agreement.submission_id}`); // record the send under the new submission id
+  }
   const m = render(kind, g, extra);
   await sendMail(g.email, m.subject, m.text);
   g.reminders[key] = new Date().toISOString();
@@ -128,7 +135,7 @@ async function templateId() {
 async function createAgreement(g) {
   const subs = await L.ds('POST', '/submissions', { template_id: await templateId(), send_email: false, submitters: [{ role: 'Guest', email: g.email, name: g.name, values: { 'Full name': g.name, Email: g.email } }] });
   const s = subs[0];
-  g.agreement = { submission_id: s.submission_id, url: `${L.DOCUSEAL_URL}/s/${s.slug}`, status: 'sent', sent_at: new Date().toISOString() };
+  g.agreement = { submission_id: s.submission_id, url: `${L.DOCUSEAL_URL}/s/${s.slug}`, status: 'sent', sent_at: new Date().toISOString(), version: AGREEMENT_VERSION };
 }
 // Refreshes agreement status from DocuSeal (sent / viewed / signed).
 async function refreshAgreement(g) {
@@ -178,6 +185,20 @@ async function sendUpdatedAgreement(g) {
   }
   await sendKind(g, 'agreement_updated', `agreement_updated:${g.agreement.submission_id}`);
   return 'sent';
+}
+// Silent upgrade (no email of its own): archives an unsigned guest's old-version submission, creates a new one from the current template, keeps the
+// original sent_at (so the deadline and reminder clock do not move) and moves the reminder records to the new submission id.
+// Called from sendKind just before an email that carries the agreement link. Signed agreements are never touched.
+async function upgradeAgreement(g) {
+  if (!g.agreement || g.agreement.status === 'signed' || g.agreement.version === AGREEMENT_VERSION) return false;
+  const old = g.agreement;
+  await createAgreement(g);
+  g.agreement.sent_at = old.sent_at || g.agreement.sent_at;
+  g.agreement.replaces = [...(old.replaces || []), old.submission_id];
+  for (const k of Object.keys(g.reminders)) if (k.endsWith(`:${old.submission_id}`)) g.reminders[k.replace(`:${old.submission_id}`, `:${g.agreement.submission_id}`)] = g.reminders[k];
+  try { await L.ds('DELETE', `/submissions/${old.submission_id}`); } catch (e) { g.log.push(`${new Date().toISOString().slice(0, 16)} archiving old agreement #${old.submission_id} FAILED: ${e.message}`); }
+  g.log.push(`${new Date().toISOString().slice(0, 16)} agreement upgraded to ${AGREEMENT_VERSION}: #${old.submission_id} -> #${g.agreement.submission_id}`);
+  return true;
 }
 const link = (g) => `${HUB}/podcast/book?token=${g.token}`;
 
@@ -233,7 +254,7 @@ async function cancelUnsigned(g) {
 }
 
 async function feedTitles() {
-  try { const r = await fetch('https://inkhornreview.com/podcast/rss/', { signal: AbortSignal.timeout(15000) }); const x = await r.text(); return [...x.matchAll(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)].map((m) => m[1]); } catch { return []; }
+  try { const r = await fetch('https://terryheath.com/podcast/rss/', { signal: AbortSignal.timeout(15000) }); const x = await r.text(); return [...x.matchAll(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)].map((m) => m[1]); } catch { return []; }
 }
 async function runHourly({ dry = false, now = new Date() } = {}) {
   const store = await load();

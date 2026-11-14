@@ -16,31 +16,11 @@
   {{/foreach}}
 {{/get}}
 
-{{!-- ── PODCAST + FOUNDER'S LETTER ────────────────────────────────────── --}}
-{{#get "posts" filter="primary_tag:podcast" limit="1" order="published_at desc" as |podcastPosts|}}
+{{!-- ── FOUNDER'S LETTER ──────────────────────────────────────────────── --}}
+{{!-- Life on Words moved to terryheath.com/podcast/ on 2026-11-13. --}}
 {{#get "posts" filter="primary_tag:letter" limit="1" order="published_at desc" as |letterPosts|}}
-{{#if podcastPosts}}{{#if letterPosts}}
+{{#if letterPosts}}
 <section class="ih-cards-2col">
-
-    {{!-- Podcast card --}}
-    {{#foreach podcastPosts}}
-    <a href="{{url}}" class="ih-card-podcast">
-        {{#if feature_image}}
-            <img class="ih-podcast-img" src="{{img_url feature_image size="s"}}" alt="{{title}}">
-        {{else}}
-            <div class="ih-podcast-img-placeholder"></div>
-        {{/if}}
-        <div class="ih-card-podcast-body">
-            <div class="ih-card-label">The Podcast &middot; Free</div>
-            <div class="ih-card-title">Life on Words</div>
-            {{#if title}}<div class="ih-card-excerpt" style="font-style:italic;color:#3a352e">{{title}}</div>{{/if}}
-            {{#if custom_excerpt}}<div class="ih-card-excerpt">{{custom_excerpt}}</div>{{/if}}
-            <div class="ih-card-listen">Listen &rarr;</div>
-        </div>
-    </a>
-    {{/foreach}}
-
-    {{!-- Founder's Letter card --}}
     {{#foreach letterPosts}}
     <a href="{{url}}" class="ih-card-letter">
         <div class="ih-card-label">The Founder&rsquo;s Letter</div>
@@ -49,10 +29,8 @@
         <div class="ih-card-listen">Read the letter &rarr;</div>
     </a>
     {{/foreach}}
-
 </section>
-{{/if}}{{/if}}
-{{/get}}
+{{/if}}
 {{/get}}
 
 {{!-- ── THE ARCHIVE ──────────────────────────────────────────────────── --}}
