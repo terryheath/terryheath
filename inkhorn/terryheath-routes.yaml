@@ -3,7 +3,7 @@ routes:
 collections:
   /podcast/:
     permalink: /podcast/{slug}/
-    template: index
+    template: podcast
     filter: primary_tag:podcast
     data: tag.podcast
     order: published_at desc

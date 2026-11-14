@@ -1,0 +1,40 @@
+{{!< default}}
+
+{{!-- Life on Words with Terry Heath: the /podcast/ index (routes.yaml: template podcast). Show header from the "podcast" tag, then the episodes. --}}
+<main class="site-main">
+
+    {{#get "tags" filter="slug:podcast" limit="1"}}
+    {{#foreach tags}}
+    <section class="tag">
+
+        <div class="gh-canvas">
+
+            <h1 class="tag-name">Life on Words with Terry Heath</h1>
+
+            {{#if description}}
+                <div class="tag-description">{{description}}</div>
+            {{/if}}
+
+            {{#if feature_image}}
+                <div class="tag-media u-placeholder horizontal kg-width-wide">
+                    <img class="u-object-fit" srcset="{{> srcset}}" src="{{img_url feature_image size="l"}}" alt="Life on Words with Terry Heath">
+                </div>
+            {{/if}}
+
+            <p class="tag-description"><a href="{{@site.url}}/podcast/rss/">Subscribe with the podcast feed (RSS)</a></p>
+
+        </div>
+
+    </section>
+    {{/foreach}}
+    {{/get}}
+
+    <div class="post-feed gh-feed gh-canvas">
+        {{#foreach posts}}
+            {{> "loop"}}
+        {{/foreach}}
+    </div>
+
+    {{pagination}}
+
+</main>

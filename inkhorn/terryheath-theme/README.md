@@ -1,0 +1,2 @@
+The terryheath.com Ghost theme is stock Dawn 1.0.0 plus one added file, `podcast.hbs` (the /podcast/ index; `terryheath-routes.yaml` points the /podcast/ collection at it with `template: podcast`).
+To change it: download the active theme in the Ghost admin session (`GET /ghost/api/admin/themes/dawn/download/`), add or replace the file in the zip, and upload it as `dawn.zip` (`POST /ghost/api/admin/themes/upload/`). The Admin API integration key cannot do theme calls, only the signed-in session can.
