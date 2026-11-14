@@ -108,7 +108,7 @@ async function sendMail(to, subject, text) {
     const nodemailer = require('nodemailer');
     transport = nodemailer.createTransport({ host: process.env.SMTP_HOST || 'email-smtp.us-east-2.amazonaws.com', port: 587, secure: false, auth: { user: process.env.SMTP_USERNAME, pass: process.env.SMTP_PASSWORD } });
   }
-  await transport.sendMail({ from: process.env.PODCAST_FROM || 'Life on Words <hello@inkhornreview.com>', replyTo: 'hello@terryheath.com', to, subject, text });
+  await transport.sendMail({ from: process.env.PODCAST_FROM || 'Life on Words <hello@terryheath.com>', replyTo: 'hello@terryheath.com', to, subject, text });
 }
 // Sends an email kind to a guest and records it (never twice for the same key).
 async function sendKind(g, kind, key = kind, extra = {}) {
