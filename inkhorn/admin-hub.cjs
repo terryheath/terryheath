@@ -62,7 +62,7 @@ const setupPage = (token, msg) => shell('Set the admin password', `<h1>Set the a
 const SUBDOMAINS = [
   ['admin.terryheath.com', 'This hub (moved from admin.inkhornreview.com on 2026-11-13, which redirects here). Every admin tool goes under a path here (admin.terryheath.com/<path>), not a new subdomain.', 'Railway: agreements-accept service'],
   ['agreements.inkhornreview.com', 'The contributor confirm page (/accept) linked from the Duosuma acceptance letter. Public; the old payouts address redirects to admin.', 'Railway: agreements-accept service'],
-  ['sign.inkhornreview.com', 'DocuSeal, where contributor agreements are sent and signed. (sign.lifeonwords.com redirects here.)', 'PikaPods: FTR DocuSeal'],
+  ['sign.terryheath.com', 'DocuSeal, where contributor and guest agreements are sent and signed. (sign.inkhornreview.com and sign.lifeonwords.com 301-redirect here, paths kept, via the sign-lifeonwords-redirect Worker.)', 'PikaPods: FTR DocuSeal'],
   ['download.inkhornreview.com', 'Ebook delivery: per-order download links, and the shop admin at /admin.', 'Railway: inkhorn-shop-service'],
   ['address.inkhornreview.com', 'The address service: members give a print-subscription mailing address (writes SHIP blocks to member notes).', 'Railway: address-service'],
   ['muse.inkhornreview.com', 'Old Muse address; redirects to gomuse.io.', 'Railway: muse project'],
@@ -80,7 +80,7 @@ const LINKS = [
     ['The agreements tracker (Ghost page)', 'https://inkhornreview.com/ghost/#/pages/6af4f4a0a7098200015eb89e', 'The raw record of every contributor agreement; the payouts page reads it. Edit only if you must.'],
   ]],
   ['Agreements', [
-    ['DocuSeal', 'https://sign.inkhornreview.com/', 'Templates, every sent and signed agreement, the API token.'],
+    ['DocuSeal', 'https://sign.terryheath.com/', 'Templates, every sent and signed agreement, the API token.'],
     ['Life on Words guests', '/podcast', 'Guest agreements, bookings and reminders for the podcast; add a guest and send the invitation.'],
     ['Payouts', '/payouts', 'Signed or not, pay and subscription choices, bios to Apply or Ignore, print mailing lists (CSV).'],
     ['Contributor confirm page', 'https://agreements.inkhornreview.com/accept', 'What the Duosuma acceptance letter links to; sends the agreement when a contributor confirms. Public.'],

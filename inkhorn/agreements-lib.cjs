@@ -6,7 +6,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const DOCUSEAL_URL = (process.env.DOCUSEAL_URL || 'https://sign.inkhornreview.com').replace(/\/$/, '');
+const DOCUSEAL_URL = (process.env.DOCUSEAL_URL || 'https://sign.terryheath.com').replace(/\/$/, '');
 const TRACKER_SLUG = 'agreements-tracker';
 const kc = (s) => execSync(`security find-generic-password -s "${s}" -w`, { stdio: ['pipe', 'pipe', 'pipe'] }).toString().trim();
 
