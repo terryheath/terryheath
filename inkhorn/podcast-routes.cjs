@@ -1,9 +1,14 @@
 // Life on Words guest system: web routes served on admin.terryheath.com (admin-hub.cjs calls these).
 //   public (no password):  /podcast/book?token=...        the gate to the hidden Cal.com event (signed agreement required)
 //                          /podcast/webhook/<secret>      Cal.com webhook (PODCAST_WEBHOOK_SECRET env var is the <secret>)
+//                          /podcast/headshot?g=<token>    guest headshot: GET {has}, POST the raw image (jpg/png/webp, 10 MB); called from the guest guide at
+//                                                         terryheath.com/podcast/guests/ (CORS for that origin only); files live on the hub's /data volume
+//   behind the hub login:  /podcast/headshot-file?id=<guest id>[&download=1]   the saved headshot (thumbnail and download on the guest's row)
 //   behind the hub login:  /podcast                       guests, agreements, bookings, reminders, buttons
 //                          POST /podcast/add, /podcast/act, /podcast/send-batch;  GET /podcast/pdf?id=...
 const P = require('./podcast-lib.cjs');
+const fs = require('fs');
+const path_ = require('path');
 const L = require('./agreements-lib.cjs');
 const crypto = require('crypto');
 
@@ -17,8 +22,46 @@ const send = (res, code, html) => { res.writeHead(code, { 'Content-Type': 'text/
 const redirect = (res, to, code = 303) => { res.writeHead(code, { Location: to, 'Cache-Control': 'no-store' }); res.end(); };
 const readBody = (req) => new Promise((res, rej) => { let b = ''; req.on('data', (c) => { b += c; if (b.length > 200000) { req.destroy(); rej(new Error('too large')); } }); req.on('end', () => res(b)); });
 
+
+// ---- headshots (guest guide, 2026-11-15) --------------------------------------------------------------------------------------
+const HEADSHOT_DIR = process.env.HEADSHOT_DIR || '/data/headshots';
+const HEADSHOT_MAX = 10 * 1024 * 1024;
+const GUIDE_ORIGIN = 'https://terryheath.com';
+const sniff = (b) => (b.length > 12 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff ? 'jpg' : b.length > 8 && b.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) ? 'png' : b.length > 12 && b.slice(0, 4).toString() === 'RIFF' && b.slice(8, 12).toString() === 'WEBP' ? 'webp' : null);
+const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+const cors = (req) => (req.headers.origin === GUIDE_ORIGIN ? { 'Access-Control-Allow-Origin': GUIDE_ORIGIN, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600', Vary: 'Origin' } : { Vary: 'Origin' });
+const json = (req, res, code, o) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...cors(req) }); res.end(JSON.stringify(o)); };
+const readRaw = (req, max) => new Promise((ok, no) => { const chunks = []; let n = 0, over = false; req.on('data', (c) => { n += c.length; if (n > max) over = true; else if (!over) chunks.push(c); }); req.on('end', () => (over ? no(new Error('too large')) : ok(Buffer.concat(chunks)))); req.on('error', no); }); // reads (and discards) an oversize body so the browser gets the friendly 413, not a dropped connection
+const headshotFile = (g) => (g.headshot && g.headshot.file ? path_.join(HEADSHOT_DIR, path_.basename(g.headshot.file)) : null);
+async function headshotRoute(req, res, query) {
+  if (req.method === 'OPTIONS') { res.writeHead(204, cors(req)); return res.end(); }
+  const token = query.get('g') || '';
+  const store = await P.load();
+  const g = token.length > 10 ? store.guests.find((x) => eq(x.token, token)) : null;
+  if (!g) return json(req, res, 404, { ok: false, error: 'This link is not recognized. Please use the link in your booking email.' });
+  if (req.method === 'GET') return json(req, res, 200, { ok: true, has: !!g.headshot, name: P.firstName(g.name) });
+  if (req.method !== 'POST') return json(req, res, 405, { ok: false, error: 'Method not allowed' });
+  let replaced = false;
+  let buf; try { buf = await readRaw(req, HEADSHOT_MAX); } catch { return json(req, res, 413, { ok: false, error: 'That file is larger than 10 MB. Please choose a smaller one.' }); }
+  const ext = sniff(buf);
+  if (!ext) return json(req, res, 415, { ok: false, error: 'Please upload a JPG, PNG or WebP image.' });
+  try {
+    fs.mkdirSync(HEADSHOT_DIR, { recursive: true });
+    const old = headshotFile(g); replaced = !!old;
+    const file = `${g.id}-${Date.now()}.${ext}`;
+    fs.writeFileSync(path_.join(HEADSHOT_DIR, file), buf);
+    if (old && old !== path_.join(HEADSHOT_DIR, file)) { try { fs.unlinkSync(old); } catch {} }
+    g.headshot = { file, bytes: buf.length, type: MIME[ext], uploaded_at: new Date().toISOString() };
+    g.log.push(`${g.headshot.uploaded_at.slice(0, 16)} headshot uploaded (${ext}, ${Math.round(buf.length / 1024)} KB)`);
+    await P.save(store);
+  } catch (e) { console.error('headshot save failed', e); return json(req, res, 500, { ok: false, error: 'Sorry, the upload did not save. Please try again, or reply to my email and attach it.' }); }
+  return json(req, res, 200, { ok: true, replaced });
+}
+const headshotHtml = (g) => (g.headshot ? `<br><a href="/podcast/headshot-file?id=${esc(g.id)}&download=1" title="Download headshot"><img src="/podcast/headshot-file?id=${esc(g.id)}" alt="Headshot of ${esc(g.name)}" style="width:64px;height:64px;object-fit:cover;border:1px solid #ccc;margin-top:.3rem"></a><br><span class="small">headshot ${esc(String(g.headshot.uploaded_at).slice(0, 10))} · <a href="/podcast/headshot-file?id=${esc(g.id)}&download=1">download</a></span>` : '');
+
 // ---- public ----------------------------------------------------------------------------------------------------------------
 async function publicRoute(req, res, path, query) {
+  if (path === '/podcast/headshot') return await headshotRoute(req, res, query), true;
   if (path === '/podcast/book') {
     const token = query.get('token') || '';
     const store = await P.load();
@@ -59,7 +102,7 @@ function row(g) {
   const accTxt = P.acceptedAt(g) ? `<br><span class="small">said yes ${esc(String(P.acceptedAt(g)).slice(0, 10))}</span>` : '';
   const pl = ['new', 'booked', 'recorded', 'edited', 'published'].map((s) => `<option${g.pipeline === s ? ' selected' : ''}>${s}</option>`).join('');
   const act = (a2, label) => `<form method="post" action="/podcast/act" style="display:inline"><input type="hidden" name="id" value="${esc(g.id)}"><button name="do" value="${a2}">${label}</button></form>`;
-  return `<tr><td><strong>${esc(g.name)}</strong><br><span class="small">${esc(g.email)}</span><br><strong class="${stCls}">${esc(st)}</strong>${accTxt}${nextTxt}${g.cancelled ? `<br><span class="bad">${g.cancel_reason === 'unsigned' ? 'Cancelled — unsigned' : 'CANCELLED'}</span>` : ''}${g.kind !== 'invite' ? `<br><span class="small">${esc(g.kind === 'keep_date' ? 'date stands' : g.kind === 'accepted' ? 'already said yes' : 'to reschedule (was ' + g.old_when + ')')}</span>` : ''}</td>
+  return `<tr><td><strong>${esc(g.name)}</strong><br><span class="small">${esc(g.email)}</span>${headshotHtml(g)}<br><strong class="${stCls}">${esc(st)}</strong>${accTxt}${nextTxt}${g.cancelled ? `<br><span class="bad">${g.cancel_reason === 'unsigned' ? 'Cancelled — unsigned' : 'CANCELLED'}</span>` : ''}${g.kind !== 'invite' ? `<br><span class="small">${esc(g.kind === 'keep_date' ? 'date stands' : g.kind === 'accepted' ? 'already said yes' : 'to reschedule (was ' + g.old_when + ')')}</span>` : ''}</td>
     <td>${ag}${(() => { const d = P.deadlineFor(g); return d && !(a && a.status === 'signed') ? `<br><span class="bad small">sign by ${esc(fmt(d.toISOString(), b.tz || P.PACIFIC))}</span>` : ''; })()}</td><td>${bk}</td><td class="small">${esc(sent)}</td><td>${g.reschedules || 0}</td>
     <td><form method="post" action="/podcast/act" style="display:inline"><input type="hidden" name="id" value="${esc(g.id)}"><select name="to">${pl}</select><button name="do" value="pipeline">Set</button></form><br>${act('recorded', 'Recorded')}${act('edited', 'Edited')}</td>
     <td>${!P.acceptedAt(g) && !g.declined && !(a && a.status === 'signed') ? act('accepted', 'Accepted') : ''}${g.declined ? act('reopen', 'Reopen (no longer declined)') : `<form method="post" action="/podcast/act" style="display:inline" onsubmit="return confirm('Mark this guest as declined? No more emails of any kind will go to them.')"><input type="hidden" name="id" value="${esc(g.id)}"><button name="do" value="declined">Declined</button></form>`}${g.cancel_reason === 'unsigned' ? act('resend_cancel', 'Resend cancellation email') : ''}${a && a.status !== 'signed' && !g.cancelled ? `<form method="post" action="/podcast/act" style="display:inline" onsubmit="return confirm('Archive the current agreement link for this guest and email a new one?')"><input type="hidden" name="id" value="${esc(g.id)}"><button name="do" value="updated_agreement">Send updated agreement</button></form>` : ''}${act('resend_invite', 'Resend invite')}${act('resend_book', 'Resend booking link')}${a && a.status === 'signed' ? `<a href="/podcast/pdf?id=${esc(g.id)}">Signed PDF</a>` : ''}</td></tr>`;
@@ -83,6 +126,15 @@ async function adminPage(msg) {
 
 async function adminRoute(req, res, path, query) {
   if (path === '/podcast' && req.method === 'GET') return send(res, 200, await adminPage(query.get('msg') || '')), true;
+  if (path === '/podcast/headshot-file') {
+    const store = await P.load(); const g = store.guests.find((x) => x.id === query.get('id'));
+    const fp = g && headshotFile(g);
+    if (!fp || !fs.existsSync(fp)) return send(res, 404, page('Not found', '<h1>No headshot yet</h1>')), true;
+    const ext = path_.extname(fp).slice(1);
+    const dl = query.get('download') ? { 'Content-Disposition': `attachment; filename="${String(g.name).replace(/[^A-Za-z0-9 _-]/g, '').trim().replace(/ +/g, '-') || 'guest'}-headshot.${ext}"` } : {};
+    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff', ...dl });
+    return res.end(fs.readFileSync(fp)), true;
+  }
   if (path === '/podcast/pdf') {
     const store = await P.load(); const g = store.guests.find((x) => x.id === query.get('id'));
     const url = g && (await P.signedPdfUrl(g));

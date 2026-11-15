@@ -1,6 +1,6 @@
 // Every email the Life on Words guest system sends, in one place (2026-11-12). Edit the text here; the code only fills in the {placeholders}.
 // Placeholders: {first} first name, {note} (invite only) the optional personal note from the Add guest form, placed after the greeting and before "I'd love to have a conversation" as its own paragraph (empty when there is no note), {when} the session date and time in the guest's own time zone (e.g. "Tuesday, December 8 at 9:00 a.m. PST"),
-// {old_when} the session's former date, {agreement_url}, {deadline} (the agreement deadline, in their time zone), {deadline_notice} (agreement reminder only: the deadline sentence when they have a booking, else empty), {book_url} and {booking_url} (the same: the guest's own booking link; works only once the agreement is signed),
+// {old_when} the session's former date, {agreement_url}, {deadline} (the agreement deadline, in their time zone), {deadline_notice} (agreement reminder only: the deadline sentence when they have a booking, else empty), {book_url} and {booking_url} (the same: the guest's own booking link; works only once the agreement is signed), {guide_url} (the guest's own link to the guest guide at terryheath.com/podcast/guests/, token included),
 // {studio_url} the Riverside studio, {reschedule_url}, {cancel_url}, {change_lines} (the reschedule and cancel links, or "reply to this email" for the sessions booked before Cal.com).
 const STUDIO = 'https://riverside.com/studio/terry-heaths-studio?t=ed9e5caf23549199013b';
 const SIGN = '— Terry';
@@ -17,6 +17,8 @@ Recording link: {studio_url}
 ${TIPS}
 
 {change_lines}`;
+// The booking confirmation and the three session reminders also carry the guest's own guest-guide link (the keep_date email does not).
+const SESSION_GUIDE = SESSION.replace('{change_lines}', 'Your guest guide: {guide_url}\n\n{change_lines}');
 
 const EMAILS = {
   invite: {
@@ -96,7 +98,7 @@ ${SIGN}`,
 
 You're booked. I'm looking forward to the conversation.
 
-${SESSION}
+${SESSION_GUIDE}
 
 If anything comes up, reply to this email.
 
@@ -108,7 +110,7 @@ ${SIGN}`,
 
 A week from now we'll record your Life on Words conversation.
 
-${SESSION}
+${SESSION_GUIDE}
 
 ${SIGN}`,
   },
@@ -118,7 +120,7 @@ ${SIGN}`,
 
 Your Life on Words session is in two days.
 
-${SESSION}
+${SESSION_GUIDE}
 
 ${SIGN}`,
   },
@@ -128,7 +130,7 @@ ${SIGN}`,
 
 Your Life on Words session is today.
 
-${SESSION}
+${SESSION_GUIDE}
 
 I'll be in the studio when you arrive.
 
@@ -209,7 +211,7 @@ ${SIGN}`,
     subject: 'Life on Words: one last note',
     body: `Hi {first},
 
-I don't want to crowd your inbox, so this is my last note about it. If you'd like to come on Life on Words, the invitation stands. The first step is the short guest agreement:
+I don't want to crowd your inbox, so this is my last note about it. If you'd like to be a guest on Life on Words, the invitation stands. The first step is the short guest agreement:
 
 {agreement_url}
 
