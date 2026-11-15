@@ -1,0 +1,6 @@
+# Ghost redirects for terryheath.com (uploaded in Settings > Labs, or POST /ghost/api/admin/redirects/upload/ from the signed-in admin session).
+# Uploading REPLACES the whole file, so download the current one first (GET /ghost/api/admin/redirects/download/) and keep every line.
+301:
+  # The guest guide is served at /podcast/guests/ by routes.yaml; the plain page address sends people there. Ghost keeps the query string, so ?g=<token> survives.
+  ^/guest-guide/$: /podcast/guests/
+302: {}
