@@ -1,4 +1,7 @@
 routes:
+  /podcast/guests/:
+    template: guest-guide
+    data: page.guest-guide
 
 collections:
   /podcast/:
