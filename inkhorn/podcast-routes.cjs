@@ -41,7 +41,8 @@ async function sweepHeadshots(log = (m) => console.log(m)) {
   if (!fs.existsSync(HEADSHOT_DIR)) { log('headshot sweep: no folder yet, nothing to do'); return 0; }
   let store; try { store = await P.load(); } catch (e) { log(`headshot sweep: skipped, could not read the guest list (${e.message})`); return 0; }
   if (!store.page || !store.guests.length) { log('headshot sweep: skipped, guest list is empty or missing'); return 0; }
-  const keep = new Set(store.guests.filter((g) => g.headshot && g.headshot.file).map((g) => path_.basename(g.headshot.file)));
+  let ex; try { ex = await loadExtras(); } catch (e) { log(`headshot sweep: skipped, could not read the by-name headshot list (${e.message})`); return 0; }
+  const keep = new Set([...store.guests, ...ex.list].filter((g) => g.headshot && g.headshot.file).map((g) => path_.basename(g.headshot.file)));
   let n = 0;
   for (const f of fs.readdirSync(HEADSHOT_DIR)) {
     const fp = path_.join(HEADSHOT_DIR, f);
@@ -49,7 +50,7 @@ async function sweepHeadshots(log = (m) => console.log(m)) {
     if (!st.isFile() || keep.has(f) || Date.now() - st.mtimeMs < 10 * 60 * 1000) continue;
     try { fs.unlinkSync(fp); n++; log(`headshot sweep: deleted ${f} (${st.size} bytes, not referenced by any guest)`); } catch (e) { log(`headshot sweep: could not delete ${f}: ${e.message}`); }
   }
-  log(`headshot sweep: done, ${n} deleted, ${keep.size} kept, ${store.guests.length} guests`);
+  log(`headshot sweep: done, ${n} deleted, ${keep.size} kept, ${store.guests.length} guests, ${ex.list.length} by-name`);
   return n;
 }
 // Match a guest name from an episode title to one guest record: same name once case, accents, punctuation and "(...)" are ignored; failing that, every word of one
@@ -68,8 +69,8 @@ async function headshotApi(req, res, query) {
   const out = (code, o) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(o)); };
   if (!secret || !got || !eq(got, secret)) return out(401, { ok: false, error: 'unauthorized' });
   if (req.method !== 'GET') return out(405, { ok: false, error: 'GET only' });
-  const store = await P.load();
-  const { list } = matchGuest(store.guests, query.get('name'));
+  const store = await P.load(); const ex = await loadExtras();
+  const { list } = matchGuest([...store.guests, ...ex.list], query.get('name'));
   if (!list.length) return out(404, { ok: false, error: 'no guest with that name' });
   if (list.length > 1) return out(409, { ok: false, error: `ambiguous: ${list.map((g) => g.name).join(', ')}` });
   const g = list[0], fp = headshotFile(g);
@@ -77,6 +78,31 @@ async function headshotApi(req, res, query) {
   const ext = path_.extname(fp).slice(1);
   res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Photo-Credit': encodeURIComponent(g.photo_credit || ''), 'X-Guest-Name': encodeURIComponent(g.name) });
   res.end(fs.readFileSync(fp));
+}
+// Headshots for people who have no guest record (recorded without one): a separate private Ghost page, so they can never be emailed, counted as guests or
+// touched by the hourly job. Shape: [{id, name, photo_credit, headshot:{file,bytes,type,uploaded_at}, created_at}]. Matched by name like guests.
+const EXTRA_PAGE = 'podcast-headshots';
+async function loadExtras(api = L.ghost()) {
+  const r = await api.pages.browse({ filter: `slug:${EXTRA_PAGE}`, limit: 1, fields: 'id,codeinjection_head,updated_at' });
+  if (!r.length) return { page: null, list: [] };
+  let list = []; try { list = JSON.parse(r[0].codeinjection_head || '[]'); } catch { list = []; }
+  return { page: r[0], list };
+}
+async function saveExtras(ex, api = L.ghost()) {
+  const json = JSON.stringify(ex.list, null, 1);
+  if (!ex.page) ex.page = await api.pages.add({ title: 'Life on Words headshots without a guest record (private)', slug: EXTRA_PAGE, status: 'draft', codeinjection_head: json });
+  else ex.page = await api.pages.edit({ id: ex.page.id, updated_at: ex.page.updated_at, codeinjection_head: json });
+}
+// Write an uploaded image for a record (guest or extra): new file first, then the record, then the old file is deleted. Returns {replaced}.
+function putHeadshot(rec, buf, ext, who) {
+  fs.mkdirSync(HEADSHOT_DIR, { recursive: true });
+  const old = headshotFile(rec);
+  const file = `${rec.id}-${Date.now()}.${ext}`;
+  fs.writeFileSync(path_.join(HEADSHOT_DIR, file), buf);
+  if (old && old !== path_.join(HEADSHOT_DIR, file)) { try { fs.unlinkSync(old); } catch {} }
+  rec.headshot = { file, bytes: buf.length, type: MIME[ext], uploaded_at: new Date().toISOString() };
+  if (rec.log) rec.log.push(`${rec.headshot.uploaded_at.slice(0, 16)} headshot uploaded${who ? ' ' + who : ''} (${ext}, ${Math.round(buf.length / 1024)} KB)`);
+  return { replaced: !!old };
 }
 const headshotFile = (g) => (g.headshot && g.headshot.file ? path_.join(HEADSHOT_DIR, path_.basename(g.headshot.file)) : null);
 async function headshotRoute(req, res, query) {
@@ -91,19 +117,22 @@ async function headshotRoute(req, res, query) {
   let buf; try { buf = await readRaw(req, HEADSHOT_MAX); } catch { return json(req, res, 413, { ok: false, error: 'That file is larger than 10 MB. Please choose a smaller one.' }); }
   const ext = sniff(buf);
   if (!ext) return json(req, res, 415, { ok: false, error: 'Please upload a JPG, PNG or WebP image.' });
-  try {
-    fs.mkdirSync(HEADSHOT_DIR, { recursive: true });
-    const old = headshotFile(g); replaced = !!old;
-    const file = `${g.id}-${Date.now()}.${ext}`;
-    fs.writeFileSync(path_.join(HEADSHOT_DIR, file), buf);
-    if (old && old !== path_.join(HEADSHOT_DIR, file)) { try { fs.unlinkSync(old); } catch {} }
-    g.headshot = { file, bytes: buf.length, type: MIME[ext], uploaded_at: new Date().toISOString() };
-    g.log.push(`${g.headshot.uploaded_at.slice(0, 16)} headshot uploaded (${ext}, ${Math.round(buf.length / 1024)} KB)`);
-    await P.save(store);
-  } catch (e) { console.error('headshot save failed', e); return json(req, res, 500, { ok: false, error: 'Sorry, the upload did not save. Please try again, or reply to my email and attach it.' }); }
+  try { replaced = putHeadshot(g, buf, ext, '').replaced; await P.save(store); }
+  catch (e) { console.error('headshot save failed', e); return json(req, res, 500, { ok: false, error: 'Sorry, the upload did not save. Please try again, or reply to my email and attach it.' }); }
   return json(req, res, 200, { ok: true, replaced });
 }
-const headshotHtml = (g) => `${g.headshot ? `<br><a href="/podcast/headshot-file?id=${esc(g.id)}&download=1" title="Download headshot"><img src="/podcast/headshot-file?id=${esc(g.id)}" alt="Headshot of ${esc(g.name)}" style="width:64px;height:64px;object-fit:cover;border:1px solid #ccc;margin-top:.3rem"></a><br><span class="small">headshot ${esc(String(g.headshot.uploaded_at).slice(0, 10))} · <a href="/podcast/headshot-file?id=${esc(g.id)}&download=1">download</a></span><form method="post" action="/podcast/act" style="display:inline" onsubmit="return confirm('Remove this headshot? The file is deleted and cannot be restored.')"><input type="hidden" name="id" value="${esc(g.id)}"><button name="do" value="remove_headshot">Remove headshot</button></form>` : ''}<form method="post" action="/podcast/act" style="margin-top:.3rem"><input type="hidden" name="id" value="${esc(g.id)}"><input name="credit" value="${esc(g.photo_credit || '')}" placeholder="Photo credit (optional)" size="26" title="Used as the photo caption on the episode page. HTML links are allowed."><button name="do" value="credit">Save</button></form>`;
+const uploadCtl = (g, label) => `<span class="lwup" data-id="${esc(g.id)}"><input type="file" accept="image/jpeg,image/png,image/webp" style="max-width:15rem"><button type="button" onclick="lwUpload(this)">${label}</button></span>`;
+const headshotHtml = (g) => `${g.headshot ? `<br><a href="/podcast/headshot-file?id=${esc(g.id)}&download=1" title="Download headshot"><img src="/podcast/headshot-file?id=${esc(g.id)}" alt="Headshot of ${esc(g.name)}" style="width:64px;height:64px;object-fit:cover;border:1px solid #ccc;margin-top:.3rem"></a><br><span class="small">headshot ${esc(String(g.headshot.uploaded_at).slice(0, 10))} · <a href="/podcast/headshot-file?id=${esc(g.id)}&download=1">download</a></span><form method="post" action="/podcast/act" style="display:inline" onsubmit="return confirm('Remove this headshot? The file is deleted and cannot be restored.')"><input type="hidden" name="id" value="${esc(g.id)}"><button name="do" value="remove_headshot">Remove headshot</button></form>` : '<br><strong class="bad nohs">No headshot</strong>'}<br>${uploadCtl(g, g.headshot ? 'Replace headshot' : 'Upload headshot')}<form method="post" action="/podcast/act" style="margin-top:.3rem"><input type="hidden" name="id" value="${esc(g.id)}"><input name="credit" value="${esc(g.photo_credit || '')}" placeholder="Photo credit (optional)" size="26" title="Used as the photo caption on the episode page. HTML links are allowed."><button name="do" value="credit">Save</button></form>`;
+const UPLOAD_JS = `<script>async function lwUpload(b){var w=b.closest('.lwup'),f=w.querySelector('input[type=file]').files[0],n=w.dataset.name;if(!f){alert('Choose a picture first.');return;}if(f.size>10485760){alert('That file is larger than 10 MB.');return;}b.disabled=true;b.textContent='Uploading...';try{var q=w.dataset.id?'id='+encodeURIComponent(w.dataset.id):'name='+encodeURIComponent(n||'');var r=await fetch('/podcast/headshot-upload?'+q,{method:'POST',body:f,credentials:'same-origin'});var j=await r.json();location.href='/podcast?msg='+encodeURIComponent(j.message||j.error||'Done');}catch(e){b.disabled=false;b.textContent='Try again';alert('The upload did not go through: '+e.message);}}
+function lwByName(b){var w=b.closest('form'),n=w.querySelector('input[name=who]').value.trim();if(!n){alert('Type the guest name first.');return;}var s=w.querySelector('.lwup');s.dataset.name=n;s.dataset.id='';lwUpload(b);}</script>`;
+// ---- who is missing a headshot --------------------------------------------------------------------------------------
+// A guest "has recorded" when the session time has passed or the pipeline says recorded/edited. Published guests are left out (their episode is live).
+const hasRecorded = (g, now = Date.now()) => ['recorded', 'edited'].includes(g.pipeline) || !!(g.booking && g.booking.status !== 'cancelled' && new Date(g.booking.start) < now);
+function missingHeadshots(guests, now = Date.now()) {
+  return guests.filter((g) => !g.pending_send && !g.headshot && !g.declined && !g.cancelled && g.pipeline !== 'published')
+    .map((g) => ({ g, rec: hasRecorded(g, now), at: g.booking && g.booking.start ? new Date(g.booking.start).getTime() : null }))
+    .sort((a, b) => (a.at == null) - (b.at == null) || (a.at || 0) - (b.at || 0) || a.g.name.localeCompare(b.g.name));
+}
 
 // ---- public ----------------------------------------------------------------------------------------------------------------
 async function publicRoute(req, res, path, query) {
@@ -164,9 +193,15 @@ async function adminPage(msg) {
   const pending = store.guests.filter((g) => g.pending_send);
   const batch = pending.length ? `<h2>Ready to send (${pending.length})</h2><p class="small">Nothing here has been sent. Read the emails, then send them all with one click.</p>${pending.map((g) => { const kind = P.firstKind(g); const m = P.render(kind, { ...g, agreement: { url: '(your agreement link)' } }); return `<details><summary><strong>${esc(g.name)}</strong> &lt;${esc(g.email)}&gt;: ${esc(m.subject)}</summary><div class="pre">${esc(m.text)}</div></details>`; }).join('')}<form method="post" action="/podcast/send-batch" onsubmit="return confirm('Send these ${pending.length} emails now?')"><button>Send these ${pending.length} emails</button></form>` : '';
   const rows = store.guests.filter((g) => !g.pending_send).map(row).join('');
-  return page('Life on Words guests', `<p><a href="/">Admin home</a> · <a href="/payouts">Payouts</a> · <a href="/logout">Sign out</a></p><h1>Life on Words guests</h1>${msg ? `<p class="ok">${esc(msg)}</p>` : ''}${warn}
+  const ex = await loadExtras();
+  const miss = missingHeadshots(store.guests, now);
+  const missLine = ({ g, rec, at }) => `<li>${rec ? '<strong class="bad">RECORDED</strong> ' : ''}${esc(g.name)} <span class="small">${at ? esc(fmt(new Date(at).toISOString(), P.PACIFIC)) : 'no session date yet'}${rec ? ' · its episode will be held as a draft until a headshot is here' : ''}</span></li>`;
+  const missBox = `<h2>Missing headshots (${miss.length})</h2>${miss.length ? `<ul style="margin:.3rem 0;padding-left:1.2rem">${miss.filter((m) => m.at != null).map(missLine).join('')}</ul>${miss.some((m) => m.at == null) ? `<details><summary class="small">${miss.filter((m) => m.at == null).length} more with no session date yet</summary><ul style="padding-left:1.2rem">${miss.filter((m) => m.at == null).map(missLine).join('')}</ul></details>` : ''}<p class="small">Soonest session first. Guests already recorded are marked RECORDED. Nobody is emailed from this list.</p>` : '<p class="ok">Everyone has a headshot.</p>'}`;
+  const exRows = ex.list.map((e) => `<tr><td><strong>${esc(e.name)}</strong> <span class="small">(no guest record)</span>${headshotHtml(e)}</td><td><form method="post" action="/podcast/act" onsubmit="return confirm('Delete this name and its headshot?')"><input type="hidden" name="id" value="${esc(e.id)}"><button name="do" value="delete_extra">Delete this entry</button></form></td></tr>`).join('');
+  const byName = `<h2>Headshot for someone not in the list</h2><p class="small">For a guest who recorded without a guest record. Type the name as it appears in the episode title (before the colon). This creates a headshot-only entry: no email address, no emails, not counted as a guest. The importer finds it by name.</p><form onsubmit="return false"><input name="who" placeholder="Guest name" size="26"> <span class="lwup" data-id="" data-name=""><input type="file" accept="image/jpeg,image/png,image/webp" style="max-width:15rem"></span> <button type="button" onclick="lwByName(this)">Upload headshot</button></form>${exRows ? `<table style="margin-top:.5rem"><tr><th>Headshot only (${ex.list.length})</th><th></th></tr>${exRows}</table>` : ''}`;
+  return page('Life on Words guests', `${UPLOAD_JS}<p><a href="/">Admin home</a> · <a href="/payouts">Payouts</a> · <a href="/logout">Sign out</a></p><h1>Life on Words guests</h1>${msg ? `<p class="ok">${esc(msg)}</p>` : ''}${warn}${missBox}
     <h2>Add guest</h2><form method="post" action="/podcast/add"><input name="name" placeholder="Name" required size="22"> <input name="email" type="email" placeholder="Email" required size="28"><br><textarea name="note" rows="2" cols="70" placeholder="Optional personal note, placed after the greeting and before the first line of the invitation (for example: Thanks for reaching out)"></textarea><br><label><input type="checkbox" name="accepted" value="1"> Add guest who already said yes (sends only the agreement, not the full invitation)</label><br><button>Add guest and send the email</button></form>
-    ${batch}<h2>Guests (${store.guests.filter((g) => !g.pending_send).length})</h2>
+    ${batch}${byName}<h2>Guests (${store.guests.filter((g) => !g.pending_send).length})</h2>
     <table><tr><th>Guest</th><th>Agreement</th><th>Booked time</th><th>Emails sent</th><th>Resched.</th><th>Status</th><th></th></tr>${rows || '<tr><td colspan="7">No guests yet.</td></tr>'}</table>
     <p class="small">Status: Invited, Accepted (button, or "already said yes"), Signed, Booked, No response, Needs Terry (plus Declined, which stops every email). Follow-ups: no reply to the invitation gets the day-3 reminder and a last note on day 10; a guest who said yes but has not signed gets a reminder on day 3 and a last one on day 10; a guest who signed but has not booked gets a nudge on day 5 and a last one on day 14. Seven days after the last one the status changes and you get one email. Nothing goes to a guest within 48 hours of another email.</p><p class="small">"Published" is set automatically when an episode in the feed carries the guest's name; setting a status by hand here overrides it. Reminders: one week before and two days before at 9:00 a.m. their time; the morning of at 7:00 a.m. their time (6:00 p.m. the evening before if the session starts before 9:00 a.m.).</p>`);
 }
@@ -174,13 +209,34 @@ async function adminPage(msg) {
 async function adminRoute(req, res, path, query) {
   if (path === '/podcast' && req.method === 'GET') return send(res, 200, await adminPage(query.get('msg') || '')), true;
   if (path === '/podcast/headshot-file') {
-    const store = await P.load(); const g = store.guests.find((x) => x.id === query.get('id'));
+    const store = await P.load(); let g = store.guests.find((x) => x.id === query.get('id'));
+    if (!g && /^x/.test(query.get('id') || '')) g = (await loadExtras()).list.find((x) => x.id === query.get('id'));
     const fp = g && headshotFile(g);
     if (!fp || !fs.existsSync(fp)) return send(res, 404, page('Not found', '<h1>No headshot yet</h1>')), true;
     const ext = path_.extname(fp).slice(1);
     const dl = query.get('download') ? { 'Content-Disposition': `attachment; filename="${String(g.name).replace(/[^A-Za-z0-9 _-]/g, '').trim().replace(/ +/g, '-') || 'guest'}-headshot.${ext}"` } : {};
     res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff', ...dl });
     return res.end(fs.readFileSync(fp)), true;
+  }
+  if (path === '/podcast/headshot-upload' && req.method === 'POST') {
+    const reply = (code, msg) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(code === 200 ? { ok: true, message: msg } : { ok: false, error: msg })); return true; };
+    let buf; try { buf = await readRaw(req, HEADSHOT_MAX); } catch { return reply(413, 'That file is larger than 10 MB. Nothing was saved.'); }
+    const ext = sniff(buf); if (!ext) return reply(415, 'That is not a JPG, PNG or WebP image. Nothing was saved.');
+    const store = await P.load(); const id = query.get('id'), nm = String(query.get('name') || '').trim();
+    try {
+      let g = id && store.guests.find((x) => x.id === id);
+      if (g) { const r = putHeadshot(g, buf, ext, '(uploaded by Terry)'); await P.save(store); return reply(200, `${g.name}: headshot ${r.replaced ? 'replaced' : 'uploaded'}.`); }
+      const ex = await loadExtras(); let e = id && ex.list.find((x) => x.id === id);
+      if (!e) {
+        if (!nm || nm.length > 80) return reply(400, 'Type the guest name first. Nothing was saved.');
+        const hit = matchGuest(store.guests, nm).list;
+        if (hit.length === 1 && norm(hit[0].name) === norm(nm)) { g = hit[0]; const r = putHeadshot(g, buf, ext, '(uploaded by Terry)'); await P.save(store); return reply(200, `${nm} is already in the guest list: headshot ${r.replaced ? 'replaced' : 'uploaded'} on that row.`); }
+        e = ex.list.find((x) => norm(x.name) === norm(nm));
+        if (!e) { e = { id: 'x' + crypto.randomBytes(5).toString('hex'), name: nm, created_at: new Date().toISOString() }; ex.list.push(e); }
+      }
+      const r = putHeadshot(e, buf, ext, ''); await saveExtras(ex);
+      return reply(200, `${e.name}: headshot ${r.replaced ? 'replaced' : 'uploaded'} (headshot-only entry, no guest record).`);
+    } catch (e) { console.error('hub headshot upload failed', e); return reply(500, 'The upload did not save: ' + e.message); }
   }
   if (path === '/podcast/pdf') {
     const store = await P.load(); const g = store.guests.find((x) => x.id === query.get('id'));
@@ -207,8 +263,17 @@ async function adminRoute(req, res, path, query) {
     return redirect(res, '/podcast?msg=' + encodeURIComponent(`Sent ${n} of ${pend.length}.${errs.length ? ' Problems: ' + errs.join('; ') : ''}`)), true;
   }
   if (path === '/podcast/act') {
-    const g = store.guests.find((x) => x.id === f.id);
+    let g = store.guests.find((x) => x.id === f.id);
+    let exs = null;
+    if (!g && /^x/.test(f.id || '')) { exs = await loadExtras(); g = exs.list.find((x) => x.id === f.id); }
     if (!g) return redirect(res, '/podcast?msg=' + encodeURIComponent('Guest not found.')), true;
+    if (exs) { // a headshot-only entry: only these three actions apply
+      let m2 = '';
+      if (f.do === 'remove_headshot' || f.do === 'delete_extra') { const fp = headshotFile(g); if (fp) { try { fs.unlinkSync(fp); } catch (e) { if (e.code !== 'ENOENT') return redirect(res, '/podcast?msg=' + encodeURIComponent(`${g.name}: could not delete the file (${e.message}); nothing changed.`)), true; } } delete g.headshot; if (f.do === 'delete_extra') { exs.list = exs.list.filter((x) => x !== g); m2 = `${g.name}: entry and headshot deleted.`; } else m2 = `${g.name}: headshot removed.`; }
+      else if (f.do === 'credit') { const c = String(f.credit || '').trim().slice(0, 500); if (c) g.photo_credit = c; else delete g.photo_credit; m2 = `${g.name}: photo credit ${c ? 'saved' : 'cleared'}.`; }
+      await saveExtras(exs);
+      return redirect(res, '/podcast?msg=' + encodeURIComponent(m2)), true;
+    }
     let msg = '';
     if (f.do === 'recorded' || f.do === 'edited') { g.pipeline = f.do; g.pipeline_manual = true; msg = `${g.name}: ${f.do}.`; }
     else if (f.do === 'accepted') { if (!g.accepted_at) g.accepted_at = new Date().toISOString(); g.log.push(`${new Date().toISOString().slice(0, 16)} accepted (marked by Terry)`); msg = `${g.name}: accepted. Follow-up reminders now use the accepted track.`; }
@@ -229,4 +294,4 @@ async function adminRoute(req, res, path, query) {
   }
   return false;
 }
-module.exports = { publicRoute, adminRoute, sweepHeadshots, matchGuest, _setHeadshotDir };
+module.exports = { publicRoute, adminRoute, sweepHeadshots, matchGuest, missingHeadshots, hasRecorded, loadExtras, _setHeadshotDir };
