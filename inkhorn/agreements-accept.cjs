@@ -189,5 +189,8 @@ const server = http.createServer(async (req, res) => {
   } catch (e) { console.error('request error', e.message); send(res, 500, donePage({ h: 'Something went wrong', p: 'Please try again in a few minutes.' })); }
 });
 
-if (require.main === module) server.listen(PORT, () => console.log('agreements-accept listening on', PORT));
+if (require.main === module) server.listen(PORT, () => {
+  console.log('agreements-accept listening on', PORT);
+  require('./podcast-routes.cjs').sweepHeadshots().catch((e) => console.error('headshot sweep failed:', e.message)); // orphan sweep: files in the headshot folder that no guest points at
+});
 module.exports = { parseTrack, parseNote, parseIssue, parsePay, plan, nextIssues };

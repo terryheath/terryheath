@@ -3,7 +3,9 @@
 //                          /podcast/webhook/<secret>      Cal.com webhook (PODCAST_WEBHOOK_SECRET env var is the <secret>)
 //                          /podcast/headshot?g=<token>    guest headshot: GET {has}, POST the raw image (jpg/png/webp, 10 MB); called from the guest guide at
 //                                                         terryheath.com/podcast/guests/ (CORS for that origin only); files live on the hub's /data volume
-//   behind the hub login:  /podcast/headshot-file?id=<guest id>[&download=1]   the saved headshot (thumbnail and download on the guest's row)
+//   server to server:      /podcast/api/headshot?name=<guest name>   Authorization: Bearer HUB_API_SECRET (env var, shared with the podcast-import service):
+//                                                         the headshot bytes + X-Photo-Credit (URL-encoded), or 404/409 JSON; riverside-to-ghost.js uses it
+//   behind the hub login:  /podcast/headshot-file?id=<guest id>[&download=1]   the saved headshot (thumbnail, download, Remove headshot, photo credit on the guest's row)
 //   behind the hub login:  /podcast                       guests, agreements, bookings, reminders, buttons
 //                          POST /podcast/add, /podcast/act, /podcast/send-batch;  GET /podcast/pdf?id=...
 const P = require('./podcast-lib.cjs');
@@ -24,7 +26,8 @@ const readBody = (req) => new Promise((res, rej) => { let b = ''; req.on('data',
 
 
 // ---- headshots (guest guide, 2026-11-15) --------------------------------------------------------------------------------------
-const HEADSHOT_DIR = process.env.HEADSHOT_DIR || '/data/headshots';
+let HEADSHOT_DIR = '/data/headshots'; // the hub volume (hub-files-volume): the ONLY place guest headshots live
+const _setHeadshotDir = (d) => { HEADSHOT_DIR = d; }; // tests only
 const HEADSHOT_MAX = 10 * 1024 * 1024;
 const GUIDE_ORIGIN = 'https://terryheath.com';
 const sniff = (b) => (b.length > 12 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff ? 'jpg' : b.length > 8 && b.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) ? 'png' : b.length > 12 && b.slice(0, 4).toString() === 'RIFF' && b.slice(8, 12).toString() === 'WEBP' ? 'webp' : null);
@@ -32,6 +35,49 @@ const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 const cors = (req) => (req.headers.origin === GUIDE_ORIGIN ? { 'Access-Control-Allow-Origin': GUIDE_ORIGIN, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600', Vary: 'Origin' } : { Vary: 'Origin' });
 const json = (req, res, code, o) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...cors(req) }); res.end(JSON.stringify(o)); };
 const readRaw = (req, max) => new Promise((ok, no) => { const chunks = []; let n = 0, over = false; req.on('data', (c) => { n += c.length; if (n > max) over = true; else if (!over) chunks.push(c); }); req.on('end', () => (over ? no(new Error('too large')) : ok(Buffer.concat(chunks)))); req.on('error', no); }); // reads (and discards) an oversize body so the browser gets the friendly 413, not a dropped connection
+// Startup sweep: delete every file in the headshot folder that no guest record points at (leftovers from removed guests or failed saves). Never runs
+// when the guest list can't be read or is empty, and skips files younger than 10 minutes (an upload writes the file just before it saves the record).
+async function sweepHeadshots(log = (m) => console.log(m)) {
+  if (!fs.existsSync(HEADSHOT_DIR)) { log('headshot sweep: no folder yet, nothing to do'); return 0; }
+  let store; try { store = await P.load(); } catch (e) { log(`headshot sweep: skipped, could not read the guest list (${e.message})`); return 0; }
+  if (!store.page || !store.guests.length) { log('headshot sweep: skipped, guest list is empty or missing'); return 0; }
+  const keep = new Set(store.guests.filter((g) => g.headshot && g.headshot.file).map((g) => path_.basename(g.headshot.file)));
+  let n = 0;
+  for (const f of fs.readdirSync(HEADSHOT_DIR)) {
+    const fp = path_.join(HEADSHOT_DIR, f);
+    let st; try { st = fs.statSync(fp); } catch { continue; }
+    if (!st.isFile() || keep.has(f) || Date.now() - st.mtimeMs < 10 * 60 * 1000) continue;
+    try { fs.unlinkSync(fp); n++; log(`headshot sweep: deleted ${f} (${st.size} bytes, not referenced by any guest)`); } catch (e) { log(`headshot sweep: could not delete ${f}: ${e.message}`); }
+  }
+  log(`headshot sweep: done, ${n} deleted, ${keep.size} kept, ${store.guests.length} guests`);
+  return n;
+}
+// Match a guest name from an episode title to one guest record: same name once case, accents, punctuation and "(...)" are ignored; failing that, every word of one
+// name appears in order in the other. More than one match is ambiguous (the importer then treats the headshot as missing).
+const norm = (s) => String(s || '').replace(/\(.*?\)/g, ' ').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').toLowerCase().trim();
+const subseq = (a, b) => { let i = 0; for (const t of a) { while (i < b.length && b[i] !== t) i++; if (i >= b.length) return false; i++; } return true; };
+function matchGuest(guests, name) {
+  const n = norm(name); if (!n) return { list: [] };
+  let list = guests.filter((g) => norm(g.name) === n);
+  if (!list.length) { const nt = n.split(' '); list = guests.filter((g) => { const gt = norm(g.name).split(' ').filter(Boolean); return gt.length && (subseq(nt, gt) || subseq(gt, nt)); }); }
+  return { list };
+}
+async function headshotApi(req, res, query) {
+  const secret = process.env.HUB_API_SECRET || '';
+  const got = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  const out = (code, o) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(o)); };
+  if (!secret || !got || !eq(got, secret)) return out(401, { ok: false, error: 'unauthorized' });
+  if (req.method !== 'GET') return out(405, { ok: false, error: 'GET only' });
+  const store = await P.load();
+  const { list } = matchGuest(store.guests, query.get('name'));
+  if (!list.length) return out(404, { ok: false, error: 'no guest with that name' });
+  if (list.length > 1) return out(409, { ok: false, error: `ambiguous: ${list.map((g) => g.name).join(', ')}` });
+  const g = list[0], fp = headshotFile(g);
+  if (!fp || !fs.existsSync(fp)) return out(404, { ok: false, error: 'guest has no headshot', guest: g.name });
+  const ext = path_.extname(fp).slice(1);
+  res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Photo-Credit': encodeURIComponent(g.photo_credit || ''), 'X-Guest-Name': encodeURIComponent(g.name) });
+  res.end(fs.readFileSync(fp));
+}
 const headshotFile = (g) => (g.headshot && g.headshot.file ? path_.join(HEADSHOT_DIR, path_.basename(g.headshot.file)) : null);
 async function headshotRoute(req, res, query) {
   if (req.method === 'OPTIONS') { res.writeHead(204, cors(req)); return res.end(); }
@@ -57,11 +103,12 @@ async function headshotRoute(req, res, query) {
   } catch (e) { console.error('headshot save failed', e); return json(req, res, 500, { ok: false, error: 'Sorry, the upload did not save. Please try again, or reply to my email and attach it.' }); }
   return json(req, res, 200, { ok: true, replaced });
 }
-const headshotHtml = (g) => (g.headshot ? `<br><a href="/podcast/headshot-file?id=${esc(g.id)}&download=1" title="Download headshot"><img src="/podcast/headshot-file?id=${esc(g.id)}" alt="Headshot of ${esc(g.name)}" style="width:64px;height:64px;object-fit:cover;border:1px solid #ccc;margin-top:.3rem"></a><br><span class="small">headshot ${esc(String(g.headshot.uploaded_at).slice(0, 10))} · <a href="/podcast/headshot-file?id=${esc(g.id)}&download=1">download</a></span>` : '');
+const headshotHtml = (g) => `${g.headshot ? `<br><a href="/podcast/headshot-file?id=${esc(g.id)}&download=1" title="Download headshot"><img src="/podcast/headshot-file?id=${esc(g.id)}" alt="Headshot of ${esc(g.name)}" style="width:64px;height:64px;object-fit:cover;border:1px solid #ccc;margin-top:.3rem"></a><br><span class="small">headshot ${esc(String(g.headshot.uploaded_at).slice(0, 10))} · <a href="/podcast/headshot-file?id=${esc(g.id)}&download=1">download</a></span><form method="post" action="/podcast/act" style="display:inline" onsubmit="return confirm('Remove this headshot? The file is deleted and cannot be restored.')"><input type="hidden" name="id" value="${esc(g.id)}"><button name="do" value="remove_headshot">Remove headshot</button></form>` : ''}<form method="post" action="/podcast/act" style="margin-top:.3rem"><input type="hidden" name="id" value="${esc(g.id)}"><input name="credit" value="${esc(g.photo_credit || '')}" placeholder="Photo credit (optional)" size="26" title="Used as the photo caption on the episode page. HTML links are allowed."><button name="do" value="credit">Save</button></form>`;
 
 // ---- public ----------------------------------------------------------------------------------------------------------------
 async function publicRoute(req, res, path, query) {
   if (path === '/podcast/headshot') return await headshotRoute(req, res, query), true;
+  if (path === '/podcast/api/headshot') return await headshotApi(req, res, query), true;
   if (path === '/podcast/book') {
     const token = query.get('token') || '';
     const store = await P.load();
@@ -166,6 +213,11 @@ async function adminRoute(req, res, path, query) {
     if (f.do === 'recorded' || f.do === 'edited') { g.pipeline = f.do; g.pipeline_manual = true; msg = `${g.name}: ${f.do}.`; }
     else if (f.do === 'accepted') { if (!g.accepted_at) g.accepted_at = new Date().toISOString(); g.log.push(`${new Date().toISOString().slice(0, 16)} accepted (marked by Terry)`); msg = `${g.name}: accepted. Follow-up reminders now use the accepted track.`; }
     else if (f.do === 'declined') { g.declined = true; g.declined_at = new Date().toISOString(); g.log.push(`${g.declined_at.slice(0, 16)} declined (marked by Terry): no more emails`); msg = `${g.name}: declined. No more emails will go to them.`; }
+    else if (f.do === 'remove_headshot') {
+      const fp = headshotFile(g);
+      if (fp) { try { fs.unlinkSync(fp); } catch (e) { if (e.code !== 'ENOENT') { msg = `${g.name}: could not delete the file (${e.message}); nothing changed.`; await P.save(store); return redirect(res, '/podcast?msg=' + encodeURIComponent(msg)), true; } } }
+      delete g.headshot; g.log.push(`${new Date().toISOString().slice(0, 16)} headshot removed (marked by Terry)`); msg = `${g.name}: headshot removed.`; }
+    else if (f.do === 'credit') { const c = String(f.credit || '').trim().slice(0, 500); if (c) g.photo_credit = c; else delete g.photo_credit; g.log.push(`${new Date().toISOString().slice(0, 16)} photo credit ${c ? 'set' : 'cleared'}`); msg = `${g.name}: photo credit ${c ? 'saved' : 'cleared'}.`; }
     else if (f.do === 'reopen') { delete g.declined; delete g.declined_at; g.log.push(`${new Date().toISOString().slice(0, 16)} reopened (no longer declined)`); msg = `${g.name}: reopened.`; }
     else if (f.do === 'pipeline') { g.pipeline = f.to; g.pipeline_manual = true; msg = `${g.name}: ${f.to}.`; }
     else if (f.do === 'resend_invite') { const kind = P.firstKind(g); const m = P.render(kind, g); await P.sendMail(g.email, m.subject, m.text); g.log.push(`${new Date().toISOString().slice(0, 16)} resent ${kind}`); msg = `Resent to ${g.name}.`; }
@@ -177,4 +229,4 @@ async function adminRoute(req, res, path, query) {
   }
   return false;
 }
-module.exports = { publicRoute, adminRoute };
+module.exports = { publicRoute, adminRoute, sweepHeadshots, matchGuest, _setHeadshotDir };

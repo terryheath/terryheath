@@ -15,7 +15,10 @@
  *   FEED_URL           default: the Life on Words feed
  *   BOOKSHOP_ID        Bookshop.org affiliate id (94291)
  *   ISBNDB_KEY         ISBNdb API key; checked first for book metadata
- *   HEADSHOT_DIR       default: ./headshots
+ *   HUB_URL            the admin hub (default https://admin.terryheath.com). Guest headshots and photo credits live ONLY there (uploaded by guests on
+ *                      terryheath.com/podcast/guests/, credit typed in the hub's /podcast list); this script fetches them per episode.
+ *   HUB_API_SECRET     shared secret for the hub's server-to-server endpoint /podcast/api/headshot (same value as on the hub service). Without it, or
+ *                      if the hub can't be reached, a guest counts as having no headshot (no publish, no newsletter).
  *   POST_STATUS        "draft" or "published"   (default: draft)
  *   NEWSLETTER_SLUG    Ghost newsletter slug to email on publish.
  *                      Omit to publish without sending.
@@ -57,7 +60,8 @@ const SHOP_ID = process.env.BOOKSHOP_ID;
 const SITE_URL = (process.env.SITE_URL || 'https://terryheath.com').replace(/\/+$/, '');
 const PODCAST_PATH = process.env.PODCAST_PATH ?? '/podcast';
 const ISBNDB_KEY = process.env.ISBNDB_KEY;
-const HEADSHOT_DIR = process.env.HEADSHOT_DIR || './headshots';
+const HUB_URL = (process.env.HUB_URL || 'https://admin.terryheath.com').replace(/\/+$/, '');
+const HUB_API_SECRET = process.env.HUB_API_SECRET || '';
 const POST_STATUS = process.env.POST_STATUS || 'draft';
 const NEWSLETTER_SLUG = process.env.NEWSLETTER_SLUG;
 const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS || '14', 10);
@@ -105,19 +109,6 @@ try {
   const raw = JSON.parse(fs.readFileSync(GUIDS_FILE, 'utf8'));
   if (Array.isArray(raw)) for (const g of raw) publishedGuidFile.add(g);
 } catch (e) {}
-
-let credits = {};
-{
-  const creditsPath = path.resolve(HEADSHOT_DIR, 'credits.json');
-  console.log(`credits: loading ${creditsPath}`);
-  try {
-    credits = JSON.parse(fs.readFileSync(creditsPath, 'utf8'));
-    const keys = Object.keys(credits);
-    console.log(`credits: ${keys.length} entries: ${keys.join(', ')}`);
-  } catch (e) {
-    console.warn(`credits: FAILED — ${e.message}`);
-  }
-}
 
 // ---------- books ----------
 
@@ -226,82 +217,34 @@ async function uploadLocal(filePath) {
   }
 }
 
-function normalizeForMatch(s) {
-  return s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')  // strip accent marks
-    .replace(/[^\w\s]/g, ' ')         // punctuation → space
-    .replace(/\s+/g, ' ')             // collapse whitespace
-    .toLowerCase()
-    .trim();
-}
-
-function isSubsequence(needle, haystack) {
-  let hi = 0;
-  for (const token of needle) {
-    while (hi < haystack.length && haystack[hi] !== token) hi++;
-    if (hi >= haystack.length) return false;
-    hi++;
-  }
-  return true;
-}
-
-const HEADSHOT_EXTS = ['.jpg', '.jpeg', '.png', '.webp'];
-
-// Returns the resolved file path or null.
-// Tries three tiers in order; stops at the first match.
-// Ambiguous matches (multiple files at the same tier) return null.
-function findHeadshot(guest) {
+// The guest's headshot and photo credit come from the admin hub, the only place they are kept. Returns
+//   { file: <temp file path>, credit: <caption or undefined>, bytes } when the hub has a headshot for this guest, else null.
+// Not found, ambiguous, unauthorized and "hub unreachable" all return null (the caller treats null as "no headshot": no publish, no newsletter),
+// each with its own clear log line. Read-only: safe on dry runs. The temp file is the caller's to delete.
+async function fetchHeadshot(guest) {
   if (!guest) return null;
-  let entries;
+  if (!HUB_API_SECRET) { console.warn(`  headshot lookup SKIPPED for "${guest}": HUB_API_SECRET is not set, treating as no headshot`); return null; }
+  let res;
   try {
-    entries = fs.readdirSync(HEADSHOT_DIR)
-      .filter(f => HEADSHOT_EXTS.includes(path.extname(f).toLowerCase()))
-      .map(f => ({ file: f, stem: path.basename(f, path.extname(f)) }));
-  } catch { return null; }
-
-  // Tier 1: exact stem match
-  const t1 = entries.filter(e => e.stem === guest);
-  if (t1.length === 1) {
-    console.log(`  headshot tier 1 (exact): ${t1[0].file}`);
-    return path.join(HEADSHOT_DIR, t1[0].file);
-  }
-  if (t1.length > 1) {
-    console.warn(`  headshot ambiguous (tier 1) for "${guest}": ${t1.map(e => e.file).join(', ')}`);
+    res = await fetch(`${HUB_URL}/podcast/api/headshot?name=${encodeURIComponent(guest)}`, { headers: { Authorization: `Bearer ${HUB_API_SECRET}` }, signal: AbortSignal.timeout(30000) });
+  } catch (e) {
+    console.warn(`  headshot lookup FAILED for "${guest}": the hub at ${HUB_URL} could not be reached (${e.message}); treating as no headshot`);
     return null;
   }
-
-  // Tier 2: case-folded, accent-stripped, punctuation-removed
-  const normGuest = normalizeForMatch(guest);
-  const t2 = entries.filter(e => normalizeForMatch(e.stem) === normGuest);
-  if (t2.length === 1) {
-    console.log(`  headshot tier 2 (normalized): ${t2[0].file}`);
-    return path.join(HEADSHOT_DIR, t2[0].file);
-  }
-  if (t2.length > 1) {
-    console.warn(`  headshot ambiguous (tier 2) for "${guest}": ${t2.map(e => e.file).join(', ')}`);
+  if (!res.ok) {
+    let why = ''; try { why = (await res.json()).error || ''; } catch {}
+    console.warn(`  headshot lookup for "${guest}": hub answered ${res.status}${why ? ` (${why})` : ''}; treating as no headshot`);
     return null;
   }
-
-  // Tier 3: bidirectional token subsequence.
-  // Either all guest tokens appear in the stem (handles middle names in filenames)
-  // or all stem tokens appear in the guest name (handles honorifics in RSS titles).
-  const guestTokens = normGuest.split(' ').filter(Boolean);
-  const t3 = entries.filter(e => {
-    const stemTokens = normalizeForMatch(e.stem).split(' ').filter(Boolean);
-    return isSubsequence(guestTokens, stemTokens)
-        || isSubsequence(stemTokens, guestTokens);
-  });
-  if (t3.length === 1) {
-    console.log(`  headshot tier 3 (token subsequence): ${t3[0].file}`);
-    return path.join(HEADSHOT_DIR, t3[0].file);
-  }
-  if (t3.length > 1) {
-    console.warn(`  headshot ambiguous (tier 3) for "${guest}": ${t3.map(e => e.file).join(', ')}`);
-    return null;
-  }
-
-  return null;
+  const type = res.headers.get('content-type') || '';
+  const ext = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' }[type];
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (!ext || buf.length < 100) { console.warn(`  headshot lookup for "${guest}": the hub sent something that is not an image (${type}, ${buf.length} bytes); treating as no headshot`); return null; }
+  let credit; try { credit = decodeURIComponent(res.headers.get('x-photo-credit') || '') || undefined; } catch { credit = undefined; }
+  const file = path.join(os.tmpdir(), `headshot-${guest.replace(/[^\w]+/g, '_')}-${process.pid}${ext}`);
+  fs.writeFileSync(file, buf);
+  console.log(`  headshot from the hub: ${buf.length} bytes (${type}); photo credit: ${credit ? `"${credit}"` : 'none set'}`);
+  return { file, credit, bytes: buf.length };
 }
 
 // ---------- content ----------
@@ -723,7 +666,7 @@ async function refreshOne(guid) {
   const post = found[0];
   const guest = guestFromTitle((item.title || '').trim());
   const html = await buildHtml(item, `${SITE_URL}${PODCAST_PATH}/${post.slug}/`, transcriptUrls.get(guid),
-    { headshotAlt: guest || undefined, headshotCaption: (guest && credits[guest]) || undefined });
+    { headshotAlt: guest || undefined }); // no headshot fetched: a refresh never touches the episode's existing images
 
   if (DRY_RUN) {
     console.log(`WOULD refresh  ${post.title}  (${post.status}, ${post.slug}) — ${html.length} chars`);
@@ -797,7 +740,8 @@ async function main() {
       nextEpisodeNo++;
     }
 
-    const shotPath = findHeadshot(guest);
+    const shot = await fetchHeadshot(guest);
+    const shotPath = shot ? shot.file : null;
     const missingHeadshot = !!guest && !shotPath;
     const wantPublish = POST_STATUS === 'published';
     const wantEmail   = wantPublish && NEWSLETTER_SLUG;
@@ -833,21 +777,22 @@ async function main() {
       else                                     label = 'WOULD create             ';
       console.log(`${label}  ${title}`
         + `${guest ? `  [${guest}]` : ''}`
-        + `${shotPath ? '  +headshot' : ''}`);
+        + `${shotPath ? '  +headshot' : ''}`
+        + `${shot && shot.credit ? `  caption: ${shot.credit}` : ''}`);
+      if (shotPath) { try { fs.unlinkSync(shotPath); } catch {} }
       created++; continue;
     }
 
     // Existing draft with missing headshot: can't upgrade yet; leave as-is.
     // (process.exitCode already set above.)
     if (existingDraft && !actualPublish) {
+      if (shotPath) { try { fs.unlinkSync(shotPath); } catch {} }
       skipped++; continue;
     }
 
     const feature = shotPath ? await uploadLocal(shotPath) : null;
-    const caption = (guest && credits[guest]) || undefined;
-    if (guest && feature) {
-      console.log(`  credit for ${guest}: ${caption ? `"${caption}"` : 'not found in credits.json'}`);
-    }
+    const caption = (shot && shot.credit) || undefined;
+    if (shotPath) { try { fs.unlinkSync(shotPath); } catch {} }
 
     try {
       if (existingDraft) {
