@@ -272,8 +272,6 @@ async function createEmailDraft(post, html, subject = post.title) {
     visibility: 'public',
     canonical_url: post.url,
     email_only: true,
-    // Without this Ghost uses the posting account (Terry), and the email header says "By Terry Heath" over a contributor's piece.
-    authors: [{ slug: 'inkhorn' }],
   }, { source: 'html' });
 }
 
