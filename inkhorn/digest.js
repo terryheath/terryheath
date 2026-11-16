@@ -230,12 +230,25 @@ function lowNote(now = new Date()) {
   return LOW_NOTE_SUNDAYS.includes(pacificDate) ? LOW_NOTE_HTML : '';
 }
 
+// ── One-off editor's notes (2026-11-15) ───────────────────────────────────────
+// data/digest-notes.json is a list of { "date": "YYYY-MM-DD" (the Pacific Sunday), "html": "<inner HTML of the note>" }. A note appears only in the
+// email sent on its date and never again (the date is the whole mechanism; nothing to remove afterwards, though old entries can be deleted).
+// It goes at the very top, above the Life on Words note. NOTE_DATE=YYYY-MM-DD makes a test run show that date's note (tests only).
+const NOTES_FILE = join(HERE, 'data', 'digest-notes.json');
+function editorNotes(now = new Date()) {
+  let list = []; try { list = JSON.parse(readFileSync(NOTES_FILE, 'utf8')); } catch { return ''; }
+  const day = process.env.NOTE_DATE || now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  return list.filter(n => n && n.date === day && n.html).map(n =>
+    `<p style="margin:0 0 22px;padding:12px 14px;background:#f6f3ee;font-size:15px;line-height:1.45;color:#1a1a1a">${n.html}</p>\n`).join('');
+}
+
 function emailHtml(post, body, alsoItems = null) {
   const isPoem = (post.tags || []).some(t => t.slug === 'poetry');
   const full = formatBody(body, isPoem);
   const byline = post.custom_excerpt ? `<p style="margin:0 0 24px;font-size:16px;font-style:italic;color:#555">${esc(post.custom_excerpt)}</p>` : '';
   return (
     `<!--kg-card-begin: html-->\n` +
+    editorNotes() +
     lowNote() +
     `<p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888">From ${esc(issueLabel(post))}</p>\n` +
     `<h1 style="margin:0 0 8px;font-size:28px;line-height:1.25;color:#1a1a1a">${esc(post.title)}</h1>\n` +
