@@ -224,7 +224,7 @@ const LOW_NOTE_SUNDAYS = ['2026-11-15', '2026-11-22', '2026-11-29', '2026-12-06'
 const LOW_NOTE_HTML =
   `<p style="margin:0 0 22px;padding:12px 14px;background:#f6f3ee;font-size:15px;line-height:1.45;color:#1a1a1a">` +
   `Life on Words, our interview podcast, now lives at <a href="https://terryheath.com/podcast/" style="color:#1a1a1a;font-weight:700">terryheath.com/podcast</a> ` +
-  `The full archive and every new episode are there.</p>\n`;
+  `as Inkhorn Review becomes part of the nonprofit Inkhorn Press. The full archive and every new episode are there.</p>\n`;
 function lowNote(now = new Date()) {
   const pacificDate = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   return LOW_NOTE_SUNDAYS.includes(pacificDate) ? LOW_NOTE_HTML : '';
