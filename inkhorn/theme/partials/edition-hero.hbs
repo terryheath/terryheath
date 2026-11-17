@@ -18,7 +18,7 @@
 
         <div class="ih-hero-info">
             <div class="ih-eyebrow ih-js-status-label" style="display:none"></div>
-            <h1 class="ih-hero-title">{{title}}</h1>
+            <{{#if h2}}h2{{else}}h1{{/if}} class="ih-hero-title">{{title}}</{{#if h2}}h2{{else}}h1{{/if}}>
             {{#if custom_excerpt}}
                 <p class="ih-hero-desc">{{custom_excerpt}}</p>
             {{/if}}

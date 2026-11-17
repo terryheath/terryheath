@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{meta_title page=(t " (Page %)")}}</title>
+    <title>{{#if statusCode}}{{#match statusCode 404}}Page not found{{else}}Something went wrong{{/match}} — {{@site.title}}{{else}}{{meta_title page=(t " (Page %)")}}{{/if}}</title>
     <link rel="stylesheet" href="{{asset "built/screen.css"}}">
     <style>
     /* 2026-11-17 audit fixes */
@@ -26,10 +26,12 @@
     </style>
 
     {{ghost_head}}
+<style>.lw-listen a{display:inline-block;padding:12px 4px}</style>
 </head>
 
 <body class='{{body_class}}{{{block "body_class"}}} is-head-{{#match @custom.navigation_layout "Logo on the left"}}left-logo{{else match @custom.navigation_layout "Logo in the middle"}}middle-logo{{else}}stacked{{/match}}{{#match @custom.title_font "=" "Elegant serif"}} has-serif-title{{/match}}{{#match @custom.body_font "=" "Elegant serif"}} has-serif-body{{/match}}'>
 <div class="site">
+{{#is "home"}}<h1 style="position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">{{@site.title}}</h1>{{/is}}
 
     <header id="gh-head" class="gh-head gh-outer">
         <div class="gh-head-inner gh-inner">

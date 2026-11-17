@@ -1,4 +1,5 @@
 {{!< default}}
+{{#contentFor "title"}}Inkhorn Review — Inkhorn Press{{#if pagination.prev}} (page {{pagination.page}}){{/if}}{{/contentFor}}
 {{!-- review.hbs — /review/ (index of the /review/ collection) --}}
 <main class="ip-page">
 <section class="ip-sec"><p class="ip-eyebrow">Quarterly journal</p><h1 class="ip-h1">Inkhorn Review</h1>
@@ -8,7 +9,7 @@
 {{!-- Current issue: the original edition hero, exactly as on the old Inkhorn Review home page. --}}
 {{#get "pages" filter="tag:hash-catalog+featured:true" order="published_at desc" include="tags" limit="1"}}
   {{#foreach pages}}
-    {{> "edition-hero" subscribe="true"}}
+    {{> "edition-hero" subscribe="true" h2="true"}}
   {{/foreach}}
 {{/get}}
 

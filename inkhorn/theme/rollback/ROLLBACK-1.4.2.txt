@@ -1,0 +1,1 @@
+Rollback for 1.4.2: upload rollback/inkhorn-1.4.1.zip as the theme (Admin session, POST /ghost/api/admin/themes/upload/). 1.4.2 adds unique page titles through contentFor/block, one h1 per page on /review/, and no other markup changes.

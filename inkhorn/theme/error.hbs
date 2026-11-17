@@ -1,4 +1,5 @@
 {{!< default}}
+{{#contentFor "title"}}{{#match statusCode 404}}Page not found{{else}}Something went wrong{{/match}} — {{@site.title}}{{/contentFor}}
 <main class="ip-page"><section class="ip-sec ip-404" id="ip-err" data-code="{{statusCode}}"><p class="ip-eyebrow">Error {{statusCode}}</p>
 <h1 class="ip-h1" id="ip-err-h">{{#match statusCode 404}}That page isn&rsquo;t here.{{else}}Something went wrong on our end.{{/match}}</h1>
 <p class="ip-lede" id="ip-err-p" style="margin:14px auto">{{#match statusCode 404}}Check the address for typos, or try one of these.{{else}}Please try again in a minute. If it keeps happening, write us.{{/match}}</p>
