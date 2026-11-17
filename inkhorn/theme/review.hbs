@@ -5,14 +5,12 @@
 <p class="ip-lede">A quarterly of poetry, short prose and art. Free to read online.</p>
 <nav class="ip-btns" aria-label="Departments"><a class="ip-btn alt" href="/poetry/">Poetry</a><a class="ip-btn alt" href="/fiction/">Fiction</a><a class="ip-btn alt" href="/nonfiction/">Nonfiction</a><a class="ip-btn alt" href="/art/">Art</a><a class="ip-btn alt" href="/review/founder-letter/">Founder&rsquo;s Letter</a><a class="ip-btn alt" href="/review/issues/">Issues</a></nav></section>
 
-{{#get "pages" filter="tag:hash-catalog+featured:true" order="published_at desc" include="tags" limit="1"}}{{#foreach pages}}
-<section class="ip-sec ip-hero">
-  {{#if feature_image}}<a class="ip-cover" href="{{url}}"><img src="{{img_url feature_image size="l"}}" alt="{{title}} cover" width="480" height="690"></a>{{/if}}
-  <div><p class="ip-eyebrow">Current issue</p><h2 class="ip-h1" style="font-size:48px">{{title}}</h2>
-  {{#if custom_excerpt}}<p class="ip-lede">{{custom_excerpt}}</p>{{/if}}
-  <div class="ip-btns"><a class="ip-btn" href="{{url}}">Full contents</a></div></div>
-</section>
-{{/foreach}}{{/get}}
+{{!-- Current issue: the original edition hero, exactly as on the old Inkhorn Review home page. --}}
+{{#get "pages" filter="tag:hash-catalog+featured:true" order="published_at desc" include="tags" limit="1"}}
+  {{#foreach pages}}
+    {{> "edition-hero" subscribe="true"}}
+  {{/foreach}}
+{{/get}}
 
 <section class="ip-sec" aria-labelledby="subs"><h2 class="ip-h2" id="subs">Subscribe to Inkhorn Review</h2>
 <div class="ip-grid">
@@ -21,7 +19,10 @@
   <a class="ip-card" href="#/portal/signup"><span class="k">Print</span><span class="t">$48 a year</span><span class="d">Four print issues.</span></a>
 </div></section>
 
-<section class="ip-sec" aria-labelledby="past"><h2 class="ip-h2" id="past">Latest pieces</h2>
-<div class="ip-rows">{{#foreach posts limit="12"}}<a href="{{url}}"><span class="what">{{title}}</span><span class="sub">{{primary_tag.name}}{{#if primary_author}}{{/if}}</span></a>{{/foreach}}</div>
-{{pagination}}</section>
+<section class="ip-sec" aria-labelledby="past"><h2 class="ip-h2" id="past">Past issues</h2>
+<div class="ip-grid">
+{{#get "pages" filter="tag:hash-catalog+featured:false" order="published_at desc" limit="100"}}{{#foreach pages}}
+<a class="ip-card" href="{{url}}">{{#if feature_image}}<span class="ip-cover" style="max-width:100%"><img src="{{img_url feature_image size="m"}}" alt="{{title}} cover" width="480" height="690" loading="lazy"></span>{{/if}}<span class="t">{{title}}</span></a>
+{{/foreach}}{{/get}}
+</div></section>
 </main>
