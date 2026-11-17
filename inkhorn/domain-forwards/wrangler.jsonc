@@ -1,0 +1,11 @@
+{
+  "name": "domain-forwards",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-31",
+  "routes": [
+    { "pattern": "bookfolk.org/*", "zone_name": "bookfolk.org" },
+    { "pattern": "www.bookfolk.org/*", "zone_name": "bookfolk.org" },
+    { "pattern": "weirdfriday.com/*", "zone_name": "weirdfriday.com" },
+    { "pattern": "www.weirdfriday.com/*", "zone_name": "weirdfriday.com" }
+  ]
+}
