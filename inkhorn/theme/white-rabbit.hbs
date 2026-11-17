@@ -1,0 +1,25 @@
+{{!< default}}
+{{!-- white-rabbit.hbs — /white-rabbit/ (collection index; White Rabbit look comes from html.wr) --}}
+<main class="ip-page">
+<section class="ip-sec ip-wr-hero">
+  <div style="flex:2 1 420px">
+    <p class="ip-eyebrow">Published only on Friday the 13th</p>
+    <h1>White Rabbit</h1>
+    <p class="ip-lede">Weird poetry, short prose and art.</p>
+    <div class="ip-clock"><div><span>Issue No. 1</span><b>Friday, August 13, 2027</b></div><div><span>The clock reads</span><b><span data-ip-status="wrdays">&hellip;</span></b></div></div>
+    <div class="ip-btns"><a class="ip-btn" href="/submit/">Submit to White Rabbit</a><a class="ip-btn alt" href="#wr-mail">Get it on the 13th</a></div>
+  </div>
+  <figure class="ip-engr"><img src="/content/images/2026/11/tenniel-white-rabbit-1865.jpg" alt="The White Rabbit consulting his pocket watch, engraving after John Tenniel, 1865" width="789" height="1207"><figcaption>After John Tenniel, 1865 (public domain)</figcaption></figure>
+</section>
+<section class="ip-sec" aria-labelledby="plates"><h2 class="ip-h2" id="plates">Down the hole</h2>
+{{#if posts}}<div class="ip-rows">{{#foreach posts}}<a href="{{url}}"><span class="what">{{title}}</span><span class="sub">{{primary_tag.name}}</span></a>{{/foreach}}</div>
+{{else}}<div class="ip-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+  <figure class="ip-engr"><img src="/content/images/2026/11/dore-crop.jpg" alt="Engraving by Gustave Doré for The Raven: a figure on the floor beneath a bust" width="640" height="960" loading="lazy"><figcaption>Poetry &middot; Gustave Doré, <i>The Raven</i>, 1884</figcaption></figure>
+  <figure class="ip-engr"><img src="/content/images/2026/11/clarke-poe.jpg" alt="Illustration by Harry Clarke for Poe's Tales of Mystery and Imagination" width="900" height="1176" loading="lazy"><figcaption>Prose &middot; Harry Clarke, <i>Tales of Mystery and Imagination</i></figcaption></figure>
+</div>
+<p class="ip-lede">Pieces appear here on August 13, 2027. Before then, <a href="/submit/">this space shows the open call</a>.</p>{{/if}}</section>
+<section class="ip-sec ip-wr-hero" aria-labelledby="wf"><figure class="ip-engr"><img src="/content/images/2026/11/manet-raven-1875.jpg" alt="Lithograph of the raven by Édouard Manet, 1875" width="1066" height="1400" loading="lazy" style="max-width:420px"><figcaption>Édouard Manet, 1875 (public domain)</figcaption></figure>
+<div style="flex:2 1 420px"><p class="ip-eyebrow">The same day</p><h2 class="ip-h2" id="wf">Weird Friday</h2><p class="ip-lede">A day of weird literature and art, launched with each issue of White Rabbit.</p><p><a href="/weird-friday/">Weird Friday</a></p></div></section>
+<section class="ip-sec" id="wr-mail" aria-labelledby="mail"><h2 class="ip-h2" id="mail">One email. Only on the 13th.</h2>
+<form class="ip-form" data-ip-newsletters novalidate><input type="checkbox" name="n" value="white-rabbit" checked hidden><label for="wr-em" style="display:block">Email address</label><input id="wr-em" name="email" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit">Follow the rabbit</button><p class="msg" role="status" aria-live="polite"></p></form></section>
+</main>

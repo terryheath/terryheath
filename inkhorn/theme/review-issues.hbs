@@ -1,0 +1,7 @@
+{{!< default}}
+<main class="ip-page"><section class="ip-sec"><h1 class="ip-h1">Issues</h1>
+<div class="ip-grid" style="margin-top:28px">
+{{#get "pages" filter="tag:hash-catalog" order="published_at desc" limit="100"}}{{#foreach pages}}
+<a class="ip-card" href="{{url}}">{{#if feature_image}}<span class="ip-cover" style="max-width:100%"><img src="{{img_url feature_image size="m"}}" alt="{{title}} cover" width="480" height="690" loading="lazy"></span>{{/if}}<span class="t">{{title}}</span></a>
+{{/foreach}}{{/get}}
+</div></section></main>
