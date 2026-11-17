@@ -44,7 +44,7 @@ const ALSO_SINCE_DAYS = Number(process.env.ALSO_SINCE_DAYS || 0);
 const DRY_RUN         = process.env.DRY_RUN === '1';
 const TEST_EMAIL      = process.env.TEST_EMAIL || 'terry@terryheath.com';
 const NOTICE_EMAIL    = process.env.NOTICE_EMAIL || 'terry@terryheath.com';
-const SITE_URL        = 'https://inkhornreview.com';
+const SITE_URL        = 'https://inkhorn.press';
 const NEWSLETTER      = 'inkhorn-review-digest';
 const SENT_TAG        = '#sent-weekly';
 const SENT_SLUG       = 'hash-sent-weekly';

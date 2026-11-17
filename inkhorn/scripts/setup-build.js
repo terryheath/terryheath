@@ -151,7 +151,7 @@ async function createThisWeekPost() {
   const html = `<!--kg-card-begin: html-->
 <p>Starting in January, the <em>Winter 2027</em> issue arrives one piece a week — exclusively for subscribers.</p>
 <p>Each week, a new poem or story from the issue lands here. Subscribers read it immediately; the full issue publishes later in the season.</p>
-<p><a href="https://inkhornreview.com/#/portal/signup">Subscribe to get every piece as it arrives →</a></p>
+<p><a href="https://inkhorn.press/#/portal/signup">Subscribe to get every piece as it arrives →</a></p>
 <!--kg-card-end: html-->`;
 
   await api('POST', '/posts/', {

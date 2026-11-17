@@ -74,7 +74,7 @@ async function main() {
     access:      p.visibility === 'paid' ? 'Subscribers' : 'Free',
     status:      p.status,
     published:   p.published_at ? p.published_at.slice(0, 10) : '',
-    url:         `https://inkhornreview.com/${p.primary_tag?.slug || 'post'}/${p.slug}/`,
+    url:         `https://inkhorn.press/review/${p.slug}/`,
   }));
 
   // Terminal output

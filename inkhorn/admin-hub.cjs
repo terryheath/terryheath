@@ -66,18 +66,18 @@ const SUBDOMAINS = [
   ['download.inkhornreview.com', 'Ebook delivery: per-order download links, and the shop admin at /admin.', 'Railway: inkhorn-shop-service'],
   ['address.inkhornreview.com', 'The address service: members give a print-subscription mailing address (writes SHIP blocks to member notes).', 'Railway: address-service'],
   ['muse.inkhornreview.com', 'Old Muse address; redirects to gomuse.io.', 'Railway: muse project'],
-  ['www.inkhornreview.com', 'Redirects to inkhornreview.com (a Cloudflare Worker).', 'Cloudflare'],
+  ['www.inkhornreview.com', 'Redirects to inkhorn.press (a Cloudflare Worker).', 'Cloudflare'],
   ['mail.inkhorn.press', 'Sending domain for the Inkhorn Ghost (Mailgun account terry@terryheath.com); email.mail is its tracking CNAME.', 'Mailgun'],
   ['mail.terryheath.com', 'Sending domain for the terryheath.com Ghost (same Mailgun account); email.mail is its tracking CNAME.', 'Mailgun'],
   ['ses.inkhornreview.com', 'Amazon SES MAIL FROM domain (SPF and bounce handling for DocuSeal and shop mail). Not a website.', 'AWS SES'],
-  ['inkhornreview.com', 'The magazine itself: Ghost, plus /ghost/ for Ghost Admin.', 'PikaPods: Ghost'],
+  ['inkhorn.press (was inkhornreview.com)', 'The magazine itself: Ghost, plus /ghost/ for Ghost Admin.', 'PikaPods: Ghost'],
 ];
 const LINKS = [
   ['Inkhorn', [
-    ['Ghost Admin', 'https://inkhornreview.com/ghost/', 'Write, schedule and edit posts and pages, members, newsletters, tiers, themes.'],
-    ['The live site', 'https://inkhornreview.com/', 'What readers see.'],
-    ['The Submissions page', 'https://inkhornreview.com/submissions/', 'Guidelines, free reading periods, pay (edited in Ghost Admin).'],
-    ['The agreements tracker (Ghost page)', 'https://inkhornreview.com/ghost/#/pages/6af4f4a0a7098200015eb89e', 'The raw record of every contributor agreement; the payouts page reads it. Edit only if you must.'],
+    ['Ghost Admin', 'https://inkhorn.press/ghost/', 'Write, schedule and edit posts and pages, members, newsletters, tiers, themes.'],
+    ['The live site', 'https://inkhorn.press/', 'What readers see.'],
+    ['The Submissions page', 'https://inkhorn.press/submissions/', 'Guidelines, free reading periods, pay (edited in Ghost Admin).'],
+    ['The agreements tracker (Ghost page)', 'https://inkhorn.press/ghost/#/pages/6af4f4a0a7098200015eb89e', 'The raw record of every contributor agreement; the payouts page reads it. Edit only if you must.'],
   ]],
   ['Agreements', [
     ['DocuSeal', 'https://sign.terryheath.com/', 'Templates, every sent and signed agreement, the API token.'],
@@ -99,7 +99,7 @@ const LINKS = [
     ['Railway: Shared Cron', 'https://railway.com/project/7865f281-fb8b-46e7-90bd-ffb6babf849d', 'The cron jobs (weekly digest, agreements, patreon sync, ...) and the agreements-accept web service.'],
     ['Railway: agreements', 'https://railway.com/project/7865f281-fb8b-46e7-90bd-ffb6babf849d/service/b69a9017-8d4f-4b4f-8c35-5e0736b306c5', 'The daily agreements cron: logs, variables (SCHEDULE_SIGNED), run history.'],
     ['Railway: muse', 'https://railway.com/project/9a9c6ef8-f93a-439a-b0f1-e6595a1d2a0d', 'Muse API, web and Postgres; announcement-email switches live here.'],
-    ['PikaPods', 'https://www.pikapods.com/pods', 'Ghost (inkhornreview.com), DocuSeal; backups, env vars, custom domains.'],
+    ['PikaPods', 'https://www.pikapods.com/pods', 'Ghost (inkhorn.press), DocuSeal; backups, env vars, custom domains.'],
     ['Cloudflare', 'https://dash.cloudflare.com/', 'DNS for every domain, the redirect Workers.'],
     ['AWS SES console', 'https://us-east-2.console.aws.amazon.com/ses/home?region=us-east-2', 'Sending identities, DKIM, SMTP credentials for DocuSeal and shop mail.'],
   ]],

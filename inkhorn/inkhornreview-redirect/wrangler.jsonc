@@ -1,0 +1,9 @@
+{
+  "name": "inkhornreview-redirect",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-31",
+  "routes": [
+    { "pattern": "inkhornreview.com/*", "zone_name": "inkhornreview.com" },
+    { "pattern": "www.inkhornreview.com/*", "zone_name": "inkhornreview.com" }
+  ]
+}

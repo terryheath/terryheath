@@ -1,21 +1,8 @@
+// inkhorn-press-redirect — after the 2026-11 switch inkhorn.press is the Ghost site itself.
+// This Worker now only serves www.inkhorn.press, sending it to the bare domain (path and query kept).
 export default {
   async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
-    const path = url.pathname.toLowerCase();
-
-    // Submission-related paths → inkhornreview.com/submissions
-    if (
-      path === "/submission" ||
-      path === "/submissions" ||
-      path.startsWith("/submission/") ||
-      path.startsWith("/submissions/") ||
-      path.startsWith("/apply/journal") ||
-      path.startsWith("/apply")
-    ) {
-      return Response.redirect("https://inkhornreview.com/submissions", 301);
-    }
-
-    // Everything else → inkhornreview.com root
-    return Response.redirect("https://inkhornreview.com/", 301);
+    const u = new URL(request.url);
+    return Response.redirect("https://inkhorn.press" + u.pathname + u.search, request.method === "GET" || request.method === "HEAD" ? 301 : 308);
   },
 };

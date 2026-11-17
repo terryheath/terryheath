@@ -148,8 +148,8 @@ function json(res, status, data) {
 
 function cors(res, req) {
   const origin = req.headers.origin || '';
-  // Allow inkhornreview.com only
-  if (/^https?:\/\/(www\.)?inkhornreview\.com$/.test(origin)) {
+  // Allow inkhorn.press (and the old inkhornreview.com) only
+  if (/^https?:\/\/(www\.)?(inkhorn\.press|inkhornreview\.com)$/.test(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

@@ -15,7 +15,7 @@ const path = require('path');
 
 const getKey = (s) => execSync(`security find-generic-password -s "${s}" -w`, { stdio: ['pipe', 'pipe', 'pipe'] }).toString().trim();
 const api = new GhostAdminAPI({ url: getKey('ghost-url-inkhorn'), key: getKey('ghost-admin-inkhorn'), version: 'v5.0' });
-const SITE = 'https://inkhornreview.com';
+const SITE = 'https://inkhorn.press';
 const pieces = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'editions-2026.json'), 'utf8')).pieces;
 const LOG = path.join(__dirname, '..', 'build-log.md');
 const [phase, flag] = process.argv.slice(2);
