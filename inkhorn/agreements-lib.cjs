@@ -225,7 +225,12 @@ async function sendAgreement(o) {
     if (o.allowUnknown) return { title: t, slug: null };
     throw new Error(`"${t}" is not in editions-2026.json for ${issue}`);
   });
-  const templateName = paid && noPull ? 'Inkhorn Review Contributor Agreement (Paid, Already Published)' : paid ? 'Inkhorn Review Contributor Agreement (Paid)' : 'Inkhorn Review Contributor Agreement';
+  // From Spring 2027 (releases on or after 2027-03-01) the Review is published by Inkhorn Press, so those agreements use the Inkhorn Press templates (built with PUBLISHER='Inkhorn Press' OUT_SUFFIX=-ip, DocuSeal templates 12 and 13).
+  // Earlier issues keep the Follow the Rabbit LLC wording. There is no Inkhorn Press 'Already Published' template (no Spring 2027 piece is out yet).
+  const byPress = rel >= '2027-03-01';
+  const templateName = paid && noPull ? 'Inkhorn Review Contributor Agreement (Paid, Already Published)'
+    : paid ? (byPress ? 'Inkhorn Review Contributor Agreement (Paid, Inkhorn Press)' : 'Inkhorn Review Contributor Agreement (Paid)')
+    : (byPress ? 'Inkhorn Review Contributor Agreement (Inkhorn Press)' : 'Inkhorn Review Contributor Agreement');
   const values = {
     'Legal name': name, 'Piece titles': titles.join('; '), 'Issue': issueName(issue), 'Issue release date': pretty(rel), 'Signing deadline': pretty(deadline),
     ...(paid ? { Amount: '$' + amount } : {}),

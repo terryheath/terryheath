@@ -7,11 +7,14 @@ const fs = require('fs');
 const path = require('path');
 const out = path.join(__dirname, '..', 'agreements');
 const W = 612, H = 792;
+// PUBLISHER and OUT_SUFFIX build the Inkhorn Press variant (Spring 2027 onward): PUBLISHER='Inkhorn Press' OUT_SUFFIX=-ip node scripts/build-agreement-pdfs.cjs
+const PUB = process.env.PUBLISHER || 'Follow the Rabbit LLC';
+const SUFFIX = process.env.OUT_SUFFIX || '';
 
 function build(paid, published) {
   const key = published ? 'published-paid' : paid ? 'paid' : 'unpaid';
   const doc = new PDFDocument({ size: 'LETTER', margins: { top: 60, bottom: 60, left: 64, right: 64 } });
-  doc.pipe(fs.createWriteStream(path.join(out, key + '.pdf')));
+  doc.pipe(fs.createWriteStream(path.join(out, key + SUFFIX + '.pdf')));
   const fields = [];
   let page = 0;
   doc.on('pageAdded', () => { page++; });
@@ -38,7 +41,7 @@ function build(paid, published) {
     doc.y = y + hh + 10; doc.x = L;
   };
   doc.font('Helvetica-Bold').fontSize(18).text('Inkhorn Review Contributor Agreement').moveDown(0.3);
-  p('Inkhorn Review, published by Follow the Rabbit LLC (the "Publisher"), and the contributor named below agree as follows.');
+  p('Inkhorn Review, published by ' + PUB + ' (the "Publisher"), and the contributor named below agree as follows.');
   h('The work');
   line('Contributor (legal name):', 'Legal name', 'text', 300, { readonly: true });
   line('Piece(s):', 'Piece titles', 'text', 380, { readonly: true });
@@ -65,7 +68,7 @@ function build(paid, published) {
     block('Payment details (Zelle or PayPal email or phone; or Wise email), if you chose cash:', 'Payment details', 400, 17, { required: false });
   }
   h('Rights');
-  p("You grant Inkhorn Review, published by Follow the Rabbit LLC, and its successors and assigns first serial rights; the right to keep the work in our online archive; the right to reprint it in anthologies drawn from Inkhorn's own archive; and the right to read it aloud on our podcast, Life on Words. For artwork, this also includes the non-exclusive right to use the image in promotion of the issue in which it appears. Payment upon initial publication covers all uses.");
+  p("You grant Inkhorn Review, published by " + PUB + ", and its successors and assigns first serial rights; the right to keep the work in our online archive; the right to reprint it in anthologies drawn from Inkhorn's own archive; and the right to read it aloud on our podcast, Life on Words. For artwork, this also includes the non-exclusive right to use the image in promotion of the issue in which it appears. Payment upon initial publication covers all uses.");
   p('We will not use your work to train AI models, and we will not license it to anyone who does.');
   p('All other rights remain with you, and all rights revert to you on publication. You may reprint your work wherever you like; we only ask that Inkhorn Review be credited as the first publisher.');
   p('You confirm the work is yours and has not been previously published. A personal blog, newsletter, or public social media post counts as published; work shared only in a workshop or private group is fine.');
@@ -84,7 +87,7 @@ function build(paid, published) {
     const lx = x1 + 236; doc.text('Date:', lx, y + 14, { lineBreak: false });
     box('Date', 'date', lx + doc.widthOfString('Date:') + 6, y + 10, 110, 18); }
   doc.end();
-  fs.writeFileSync(path.join(out, key + '.fields.json'), JSON.stringify(fields, null, 1));
+  fs.writeFileSync(path.join(out, key + SUFFIX + '.fields.json'), JSON.stringify(fields, null, 1));
 }
 fs.mkdirSync(out, { recursive: true });
 build(true, false);
