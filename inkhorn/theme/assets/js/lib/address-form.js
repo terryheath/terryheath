@@ -3,7 +3,7 @@
 (function () {
     'use strict';
 
-    var ADDRESS_SERVICE = 'https://address.inkhornreview.com';
+    var ADDRESS_SERVICE = 'https://address.inkhorn.press';
 
     var form = document.getElementById('ih-address-form');
     if (!form) return;

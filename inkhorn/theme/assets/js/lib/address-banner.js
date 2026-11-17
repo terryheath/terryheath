@@ -3,7 +3,7 @@
 (function () {
     'use strict';
 
-    var ADDRESS_SERVICE = 'https://address.inkhornreview.com';
+    var ADDRESS_SERVICE = 'https://address.inkhorn.press';
 
     function showBanner() {
         var banner = document.createElement('div');

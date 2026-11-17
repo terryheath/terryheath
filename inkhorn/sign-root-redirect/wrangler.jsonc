@@ -1,0 +1,8 @@
+{
+  "name": "sign-root-redirect",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "routes": [
+    { "pattern": "sign.terryheath.com/", "zone_name": "terryheath.com" }
+  ]
+}
