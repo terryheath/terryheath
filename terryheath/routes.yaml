@@ -14,7 +14,7 @@ collections:
   /:
     permalink: /{slug}/
     template: index
-    filter: primary_tag:-podcast
+    filter: tag:-podcast
 
 taxonomies:
   tag: /tag/{slug}/

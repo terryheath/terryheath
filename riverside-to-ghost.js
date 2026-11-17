@@ -305,7 +305,7 @@ async function booksSection(isbns) {
   for (const isbn of isbns) {
     const book = await lookupBook(isbn);
     const href = `https://bookshop.org/a/${SHOP_ID}/${isbn}`;
-    const label = book.title || isbn;
+    const label = book.title || `Find this book on Bookshop (ISBN ${isbn})`;
     const by = book.authors.length
       ? `<span style="font-size:.8rem;opacity:.65;display:block;margin-top:.15rem">${book.authors.join(', ')}</span>` : '';
     // Try each cover URL from the sources until one uploads
