@@ -75,8 +75,10 @@
             now: r.open ? 'Free reading period open through ' + MONTHS[r.until.getUTCMonth()] + ' ' + r.until.getUTCDate()
                         : 'Free reading period opens ' + MONTHS[r.from.getUTCMonth()] + ' 1',
             readingOpen: r.open,
+            readingbadge: r.open ? 'Free period open \u00b7 through ' + MONTHS[r.until.getUTCMonth()] + ' ' + r.until.getUTCDate() : 'Paid call open \u00b7 free period opens ' + MONTHS[r.from.getUTCMonth()] + ' 1',
             next: 'Inkhorn Review ' + SEASON[rel.getUTCMonth()] + ' ' + rel.getUTCFullYear() + ' — ' + MONTHS[rel.getUTCMonth()] + ' 1',
-            f13: fmt(f) + ' — ' + days + (days === 1 ? ' day' : ' days')
+            f13: fmt(f) + ' — ' + days + (days === 1 ? ' day' : ' days'),
+            wrdays: days + (days === 1 ? ' day' : ' days')
         };
     };
     function fill() {
@@ -90,4 +92,31 @@
         });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fill); else fill();
+}());
+
+// Newsletter form: signs the reader up through Ghost's member integrity + members API.
+(function () {
+    'use strict';
+    function init() {
+        document.querySelectorAll('[data-ip-newsletters]').forEach(function (f) {
+            f.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var msg = f.querySelector('.msg'), email = f.email.value.trim();
+                var slugs = Array.prototype.map.call(f.querySelectorAll('input[name=n]:checked'), function (i) { return i.value; });
+                if (!email) { msg.textContent = 'Enter your email address.'; return; }
+                if (!slugs.length) { msg.textContent = 'Choose at least one newsletter.'; return; }
+                msg.textContent = 'Subscribing…';
+                fetch('/members/api/integrity-token/').then(function (r) { return r.text(); }).then(function (token) {
+                    return fetch('/members/api/send-magic-link/', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, emailType: 'signup', integrityToken: token,
+                            newsletters: slugs.map(function (s) { return { slug: s }; }) })
+                    });
+                }).then(function (r) {
+                    msg.textContent = r.ok ? 'Check your email for a link to confirm.' : 'Something went wrong. Please try again, or write hello@inkhorn.press.';
+                }).catch(function () { msg.textContent = 'Something went wrong. Please try again, or write hello@inkhorn.press.'; });
+            });
+        });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 }());

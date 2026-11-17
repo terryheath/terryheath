@@ -1,0 +1,10 @@
+{{!-- Newsletter choices. Posts to Ghost's members API (works logged out); newsletter slugs are set in Ghost. --}}
+<form class="ip-form" data-ip-newsletters novalidate>
+  <label><input type="checkbox" name="n" value="inkhorn-review-digest" checked><span><strong>Inkhorn Review</strong> &mdash; one piece every Sunday</span></label>
+  <label><input type="checkbox" name="n" value="white-rabbit"><span><strong>White Rabbit</strong> &mdash; only on Friday the 13th</span></label>
+  <label><input type="checkbox" name="n" value="events"><span><strong>Events</strong> &mdash; Weird Friday, BookFolk, workshops</span></label>
+  <label for="em-{{id}}" style="display:block">Email address</label>
+  <input id="em-{{id}}" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+  <button type="submit">Subscribe</button>
+  <p class="msg" role="status" aria-live="polite"></p>
+</form>

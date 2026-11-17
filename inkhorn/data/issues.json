@@ -1,0 +1,4 @@
+{
+  "_note": "One entry per Inkhorn Review issue that exists. When a new issue tag is created in Ghost, add it here and run `node scripts/gen-routes.cjs`, then upload routes.yaml. Issues with no entry have no page, so no empty pages exist.",
+  "issues": ["autumn-2026", "winter-2026"]
+}

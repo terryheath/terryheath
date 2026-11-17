@@ -15,3 +15,6 @@
 
 /* Inkhorn: masthead, footer, home, archive, post, catalog, all pages */
 @import "inkhorn/inkhorn.css";
+
+/* Inkhorn Press shell */
+@import "inkhorn/press.css";

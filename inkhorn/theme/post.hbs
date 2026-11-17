@@ -27,7 +27,7 @@
         <div class="ih-post-issue-label">
             {{!-- Inkhorn issue link: inkhorn-2 wins over inkhorn-1; neither tag, no link.
                  Matched by tag name ({{#has}} compares names, not slugs). --}}
-            {{#has tag="Inkhorn Review No. 2"}}<a href="/winter-2026/" class="ih-post-issue-link">Inkhorn Review No.&nbsp;2 &middot; Winter 2026</a>{{else}}{{#has tag="Inkhorn Review No. 1"}}<a href="/autumn-2026/" class="ih-post-issue-link">Inkhorn Review No.&nbsp;1 &middot; Autumn 2026</a>{{/has}}{{/has}}
+            {{#has tag="Inkhorn Review No. 2"}}<a href="/review/winter-2026/" class="ih-post-issue-link">Inkhorn Review No.&nbsp;2 &middot; Winter 2026</a>{{else}}{{#has tag="Inkhorn Review No. 1"}}<a href="/review/autumn-2026/" class="ih-post-issue-link">Inkhorn Review No.&nbsp;1 &middot; Autumn 2026</a>{{/has}}{{/has}}
             {{#foreach tags}}
             {{#match slug "~^" "whiterabbit-"}}
                 {{#get "pages" filter="tag:{{slug}}" limit="1" include="tags"}}
