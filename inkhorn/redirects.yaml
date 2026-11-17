@@ -30,7 +30,6 @@
   '^/cart/?$': '/shop/cart/'
   '^/order-complete/?$': '/shop/order-complete/'
   '^/address/?$': '/shop/address/'
-  '^/submissions/?$': '/submit/'
   '^/patreon-supporters/?$': '/support/'
   '^/submit/review/?$': 'https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p'
   '^/submit/white-rabbit/?$': '/white-rabbit/'

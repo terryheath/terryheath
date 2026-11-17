@@ -131,7 +131,7 @@ const red = [
   ['^/order-complete/?$', '/shop/order-complete/'],
   ['^/address/?$', '/shop/address/'],
   // other pages
-  ['^/submissions/?$', '/submit/'],
+  // /submissions/ is NOT redirected: it is the guidelines and rights page the Duosuma calls link to.
   ['^/patreon-supporters/?$', '/support/'],
   ['^/submit/review/?$', 'https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p'],
   ['^/submit/white-rabbit/?$', '/white-rabbit/'],
