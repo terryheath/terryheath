@@ -54,7 +54,7 @@ Inkhorn Review's stack:
 - **sign.terryheath.com** is now proxied by Cloudflare (SSL mode full) and the Worker `sign-root-redirect` (`inkhorn/sign-root-redirect/`, route exactly `sign.terryheath.com/`) sends only the root to `/sign_in`; signing links, the API and every other path are untouched.
 - **Stripe (2026-11-17):** Follow the Rabbit LLC account: receipts on, support email hello@terryheath.com (public name already 'Follow the Rabbit LLC'). Inkhorn Press: expiring-card and upcoming-renewal emails on.
 - **Mailgun's recipient limit was lifted by Mailgun support on 2026-11-16** and the digest has gone out since; the 420 note under 'Newsletter sending' in the global notes is resolved.
-- **Open (needs Terry):** the shop IAM policy. Paste `~/Desktop/audit/shop-iam-policy.json` into IAM > Users > inkhorn-shop > inkhorn-shop-access (adds the `inkhorn.press` SES identity; I may not edit IAM), then set `SHOP_FROM='Inkhorn Press <hello@inkhorn.press>'` on Railway `inkhorn-shop-service`.
+- **Shop mail sender (2026-11-17):** `inkhorn-shop-service` sends as `Inkhorn Press <hello@inkhorn.press>` (`SHOP_FROM`). The `inkhorn-shop-access` IAM policy (copy: `~/Desktop/audit/shop-iam-policy.json`; Terry pasted it, I may not edit IAM) allows the identities `inkhornreview.com`, `inkhorn.press` and `hello@inkhorn.press` in us-east-2. SES: `inkhorn.press` exists in us-east-1 (since August) and was created in us-east-2 on 2026-11-17 with Deterministic Easy DKIM from us-east-1; the older line saying `inkhorn.press` is an SES identity in us-east-2 was wrong.
 
 ## The sites
 
