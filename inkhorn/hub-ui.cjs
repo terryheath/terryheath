@@ -8,7 +8,7 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 
 const CSS = `*{box-sizing:border-box}body{margin:0;font:16px/1.5 Georgia,serif;color:#222;background:#fff;overflow-wrap:anywhere}main{max-width:72rem;margin:0 auto;padding:1rem 1rem 4rem}
 h1{font-size:1.5rem;font-weight:normal}h2{font-size:1.15rem;margin:1.8rem 0 .3rem;border-bottom:1px solid #ccc}h2 small,h3 small{font-size:.75rem;color:#666;font-weight:normal}h3{font-weight:normal;margin:1.2rem 0 .3rem}
-ul{padding-left:1.2rem}li{margin:.2rem 0}li>a,p>a,td>a,summary{display:inline-flex;align-items:center;min-height:40px}summary{cursor:pointer}td>a{margin:.1rem 0}.why,.small,small{color:#555;font-size:.9rem}.status{background:#f4f1ea;border:1px solid #ccc;padding:.6rem 1rem}
+ul{padding-left:1.2rem}li{margin:.2rem 0}:focus-visible{outline:3px solid #1a56db;outline-offset:2px}.skip{position:absolute;left:-999px;top:0;background:#fff;padding:.5rem 1rem;border:2px solid #1a56db;z-index:10}.skip:focus{left:.5rem;top:.5rem}li>a,p>a,td>a,summary,small>a,.status a,.hint a{display:inline-flex;align-items:center;min-height:40px}small>a{padding:0 .3rem}summary{cursor:pointer}td>a{margin:.1rem 0}.why,.small,small{color:#555;font-size:.9rem}.status{background:#f4f1ea;border:1px solid #ccc;padding:.6rem 1rem}
 .warn{background:#fdecea;border:1px solid #e0a09a;padding:.5rem 1rem;color:#7a1f18}.ok{color:#1a6b2a}.bad{color:#a33}.hint{color:#666;font-size:.85rem}.note{background:#f4f1ea;border:1px solid #ccc;padding:.5rem 1rem}
 .hubnav{display:flex;flex-wrap:wrap;gap:.25rem 1rem;align-items:center;border-bottom:1px solid #ccc;margin:0 0 1rem}.hubnav a,.hubnav button.link{display:inline-flex;align-items:center;min-height:40px;padding:0 .4rem;color:#0b4f8a}
 .hubnav a.here{font-weight:bold;color:#222;text-decoration:none}.hubnav form{display:inline;margin:0}.hubnav button.link{background:none;border:0;font:inherit;cursor:pointer;text-decoration:underline}
@@ -30,9 +30,14 @@ const nav = (here, { csrf = '' } = {}) => {
 
 // here: 'home' | 'payouts' | 'podcast' | '' (signed-out pages show no nav)
 const page = (title, body, { here = '', extraHead = '', extraBody = '' } = {}) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}${here ? ' · Admin' : ''}</title>
-<style>${CSS}</style>${extraHead}</head><body><main>${here ? nav(here) : ''}${body}</main>${extraBody}</body></html>`;
+<style>${CSS}</style>${extraHead}</head><body><a class="skip" href="#content">Skip to content</a><main>${here ? nav(here) : ''}<div id="content" tabindex="-1">${body}</div></main>${extraBody}</body></html>`;
 
 // Wrap a table so it scrolls inside its own box; `cards` also stacks it on a phone.
-const table = (html, { cards = true, id = '' } = {}) => `<div class="tw"><table${cards ? ' class="cards"' : ''}${id ? ` id="${esc(id)}"` : ''}>${html}</table></div>`;
+const table = (html, { cards = true, id = '', label = '' } = {}) => {
+  // every table gets an accessible name: the label if given, else its first column headings
+  const heads = [...String(html).matchAll(/<th[^>]*>(.*?)<\/th>/g)].slice(0, 4).map((m) => m[1].replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+  const name = label || (heads.length ? 'Table with columns ' + heads.join(', ') : 'Table');
+  return `<div class="tw"><table aria-label="${esc(name)}"${cards ? ' class="cards"' : ''}${id ? ` id="${esc(id)}"` : ''}>${html}</table></div>`;
+};
 
 module.exports = { esc, CSS, nav, page, table };

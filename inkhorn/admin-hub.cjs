@@ -66,7 +66,7 @@ const SUBDOMAINS = [
   ['agreements.inkhornreview.com', 'The contributor confirm page (/accept) linked from the Duosuma acceptance letter. Public; the old payouts address redirects to admin.', 'Railway: agreements-accept service'],
   ['sign.terryheath.com', 'DocuSeal, where contributor and guest agreements are sent and signed. (sign.inkhornreview.com and sign.lifeonwords.com 301-redirect here, paths kept, via the sign-lifeonwords-redirect Worker.)', 'PikaPods: FTR DocuSeal'],
   ['download.inkhornreview.com', 'Ebook delivery: per-order download links, and the shop admin at /admin.', 'Railway: inkhorn-shop-service'],
-  ['address.inkhornreview.com', 'The address service: members give a print-subscription mailing address (writes SHIP blocks to member notes).', 'Railway: address-service'],
+  ['address.inkhornreview.com', 'The address service: members give a print-subscription mailing address (writes SHIP blocks to member notes). It also answers at address.inkhorn.press (DNS and certificate added 2026-11-17); the shop address form still calls the inkhornreview.com name until it is switched.', 'Railway: address-service'],
   ['muse.inkhornreview.com', 'Old Muse address; redirects to gomuse.io.', 'Railway: muse project'],
   ['www.inkhornreview.com', 'Redirects to inkhorn.press (a Cloudflare Worker, inkhornreview-redirect).', 'Cloudflare'],
   ['admin.inkhornreview.com', 'Old admin address: GET and HEAD requests redirect here with the path kept; other methods (old webhook URLs) are still served.', 'Railway: agreements-accept service'],
@@ -141,7 +141,7 @@ async function homeHtml() {
   } catch (e) { console.error('hub status failed', e.message); }
   const links = LINKS.map(([group, items]) => `<h2>${esc(group)}</h2><ul>${items.map(([name, url, why]) => `<li><a href="${esc(url)}">${esc(name)}</a><br><span class="why">${esc(why)}</span></li>`).join('')}</ul>`).join('');
   const subs = `<h2>Subdomains</h2><p class="why">Every *.terryheath.com and *.inkhornreview.com name in use. New admin tools go under admin.terryheath.com/&lt;path&gt;, not a new subdomain.</p>${UI.table(`<tr><th>Name</th><th>What it does</th><th>Runs on</th></tr>${SUBDOMAINS.map(([n, w, r]) => `<tr><td data-label="Name">${esc(n)}</td><td data-label="What it does">${esc(w)}</td><td data-label="Runs on">${esc(r)}</td></tr>`).join('')}`)}`;
-  return shell('Admin', `<h1>Admin</h1>${status}${links}${subs}`, 'home');
+  return shell('Home', `<h1>Admin</h1>${status}${links}${subs}`, 'home');
 }
 
 // ---- routing ----------------------------------------------------------------------------------------------------------------
