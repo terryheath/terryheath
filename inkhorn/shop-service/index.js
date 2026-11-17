@@ -199,6 +199,8 @@ app.post('/checkout', async (req, res) => {
 
     if (hasPrint) {
       sessionParams.shipping_address_collection = { allowed_countries: ['US'] };
+      // Said on the payment page itself, before the buyer pays (not only in the order email afterwards).
+      sessionParams.custom_text = { ...(sessionParams.custom_text || {}), shipping_address: { message: 'Print copies ship to U.S. addresses only. Outside the U.S., choose the ebook: it is delivered by email anywhere.' } };
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);

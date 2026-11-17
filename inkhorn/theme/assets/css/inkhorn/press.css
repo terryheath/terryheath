@@ -92,3 +92,23 @@ html.wr a:focus-visible,.wr-piece a:focus-visible{outline-color:#c9a77a}
 .ip-submit-card p,.ip-submit-card h2{font-family:var(--ip-serif)}.ip-submit-card.dark h2{font-family:'IM Fell English',serif}
 .ip-submit-card{color:var(--ip-ink)}.ip-submit-card.dark{color:#e9e2d0}.ip-submit-card.dark h2{color:#e9e2d0}
 html.wr .ip-btn.alt,.wr-piece .ip-btn.alt{color:var(--ip-ink)!important;background:none}
+
+/* theme 1.4.1 audit fixes */
+.ip-footer-note{display:block;font:14px var(--ip-sans);color:#d6cdbd;margin-top:6px}
+.ip-footer-links a{display:inline-block;padding:12px 0;min-height:24px}
+.ip-account .ih-cart-link{font:500 14px var(--ip-sans);padding:12px 4px;text-decoration:none;color:var(--ip-ink)}
+.ip-account .ih-cart-link[hidden]{display:none}
+.ip-strip a{color:#f6f1e7}.ip-strip .ip-wrap>span{display:flex;flex-wrap:wrap;gap:0 6px;text-wrap:balance}
+.ip-note{font:15px/1.5 var(--ip-sans);margin-top:24px;max-width:660px;color:var(--ip-muted)}
+.ip-prose{font-size:20px;line-height:1.5;max-width:660px}
+.ip-err-help{font:14px var(--ip-sans)}
+.ip-404 ul a{display:inline-block;padding:12px 4px}
+.ih-shop-intro{font:16px/1.5 var(--ip-sans);max-width:660px;margin:0 0 28px}
+.ih-cart-total{font:18px var(--ip-sans);margin:6px 0 14px}
+.ih-order-complete-heading{font-size:34px}
+@media(max-width:760px){.ip-rows a,.ip-nav a,.ip-nav summary{min-height:44px}.ip-contents a{display:block;padding:10px 0}
+ .ip-account{gap:6px}.ih-print-card-title,.ip-contents a,.ip-contrib a.work{min-height:32px}}
+.ip-submit-card .url{font:13px var(--ip-sans);opacity:.8}
+.ip-sec a[href="/events/"],.ih-hero-sub-link,.ih-cart-remove,.ip-strip a{display:inline-block;padding:11px 4px;min-height:24px}
+.ih-hero-sub-link{padding:11px 14px}
+.ip-sec>div>a:only-child,.ip-page p>a:only-child{padding-block:2px}

@@ -113,10 +113,8 @@ const red = [
   ['^/tag/(poetry|fiction|nonfiction|art|micro)/?$', '/$1/'],
   // issue pages and their genre sub-pages
   [`^/(${iss})/(poetry|fiction|nonfiction)/?$`, '/review/$1/'],
-  [`^/(${iss})/all/?$`, '/review/$1/'],
   [`^/(${iss})/?$`, '/review/$1/'],
-  [`^/(${seasons})-20[0-9][0-9]/?$`, '/review/'],
-  [`^/(${seasons})-20[0-9][0-9]/(poetry|fiction|nonfiction)/?$`, '/review/'],
+  // (no catch-alls for future issues: add an issue slug to data/issues.json when its tag exists)
   // pieces: /<issue>/<piece>/ and /<genre>/<piece>/
   [`^/(${seasons})-20[0-9][0-9]/([^/]+)/?$`, '/review/$2/'],
   ['^/(poetry|fiction|nonfiction|art|micro)/([^/]+)/?$', '/review/$2/'],
@@ -134,7 +132,6 @@ const red = [
   // /submissions/ is NOT redirected: it is the guidelines and rights page the Duosuma calls link to.
   ['^/patreon-supporters/?$', '/support/'],
   ['^/submit/review/?$', 'https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p'],
-  ['^/submit/white-rabbit/?$', '/white-rabbit/'],
   ['^/submit/muse/?$', 'https://gomuse.io'],
   ['^/muse/?$', 'https://gomuse.io'],
   ['^/author/[^/]+/?$', '/review/'],

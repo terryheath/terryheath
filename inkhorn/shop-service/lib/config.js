@@ -38,8 +38,10 @@ module.exports = {
   linkDays: 30,
   maxDownloads: 5,
 
-  fromOrders: 'Inkhorn Review <orders@inkhornreview.com>',
-  fromDelivery: 'Inkhorn Review <hello@inkhornreview.com>',
-  replyTo: 'hello@inkhornreview.com',
-  staffTo: 'hello@inkhornreview.com',
+  // ONE sender for everything a buyer receives (order confirmation and ebook links). SES allows this IAM user to send only from the inkhornreview.com
+  // identity; to move to hello@inkhorn.press, widen that policy in AWS and set SHOP_FROM='Inkhorn Press <hello@inkhorn.press>' in Railway.
+  fromOrders: env.SHOP_FROM || 'Inkhorn Review <hello@inkhornreview.com>',
+  fromDelivery: env.SHOP_FROM || 'Inkhorn Review <hello@inkhornreview.com>',
+  replyTo: env.SHOP_REPLY_TO || 'hello@inkhorn.press', // replies go to the address on the site, which reaches Terry
+  staffTo: env.SHOP_STAFF_TO || 'hello@terryheath.com',
 };

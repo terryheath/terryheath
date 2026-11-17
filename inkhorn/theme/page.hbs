@@ -1,6 +1,9 @@
 {{!< default}}
 
 {{#post}}
+{{#match slug "print-edition"}}
+  {{> "print-edition"}}
+{{else}}
 {{#has tag="#catalog"}}
   {{!-- Page is tagged #catalog: use book page layout --}}
   {{> "book-page"}}
@@ -12,4 +15,5 @@
     {{> "content" width="wide"}}
   </main>
 {{/has}}
+{{/match}}
 {{/post}}

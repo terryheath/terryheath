@@ -100,10 +100,11 @@ function purchaseEmail(session, lines, ebookLinks) {
   body += `\nTotal: $${((session.amount_total || 0) / 100).toFixed(2)}\n`;
 
   if (lines.some((l) => l.format === 'ebook' && !ebookLinks.some((k) => k.sku === l.sku && k.status === 'pending'))) {
-    body += `\nYour ebook download link is in a separate email from hello@inkhornreview.com.\n`;
+    const fromAddr = (String(cfg.fromDelivery).match(/<([^>]+)>/) || [, cfg.fromDelivery])[1];
+    body += `\nYour ebook download link comes in a separate email from ${fromAddr}, usually within a few minutes. If it has not arrived within an hour, check your spam folder, then reply to this email and we will send it again.\n`;
   }
   if (lines.some((l) => l.format === 'print')) {
-    body += `\nYour print order ships to U.S. addresses only. `;
+    body += `\nPrint orders ship to U.S. addresses only (this was shown at checkout). `;
     if (lines.some((l) => l.preorder && l.format === 'print')) body += `Preordered items ship on the release date.\n`;
   }
   body += `\nIf you have any questions, just reply to this email.\n\nInkhorn Review\n${cfg.siteUrl}`;

@@ -43,6 +43,7 @@
                 {{else}}
                     <a class="ip-signin" href="#/portal/account" data-portal="account">Account</a>
                 {{/unless}}
+                <a class="ih-cart-link" href="/shop/cart/" hidden>Cart (0)</a>
             </div>
         </div>
         {{#is "post"}}
@@ -59,10 +60,11 @@
     {{!-- ── SHARED FOOTER ───────────────────────────────────────────────── --}}
     <footer class="ip-footer">
         <div class="ip-footer-in">
-            <span><span class="ip-footer-brand">Inkhorn Press</span> &copy; {{date format="YYYY"}}</span>
+            <span><span class="ip-footer-brand">Inkhorn Press</span> &copy; {{date format="YYYY"}}<span class="ip-footer-note">A nonprofit publisher in Port Orchard, Washington</span></span>
             <nav class="ip-footer-links" aria-label="Footer">
                 <a href="/about/">About</a>
                 <a href="/support/">Support</a>
+                <a href="/shop/">Shop</a>
                 <a href="/privacy/">Privacy</a>
                 <a href="/terms/">Terms</a>
                 <a href="mailto:hello@inkhorn.press">hello@inkhorn.press</a>

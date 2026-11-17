@@ -76,7 +76,7 @@
                         : 'Free reading period opens ' + MONTHS[r.from.getUTCMonth()] + ' 1',
             readingOpen: r.open,
             readingbadge: r.open ? 'Free period open \u00b7 through ' + MONTHS[r.until.getUTCMonth()] + ' ' + r.until.getUTCDate() : 'Paid call open \u00b7 free period opens ' + MONTHS[r.from.getUTCMonth()] + ' 1',
-            next: 'Inkhorn Review ' + SEASON[rel.getUTCMonth()] + ' ' + rel.getUTCFullYear() + ' — ' + MONTHS[rel.getUTCMonth()] + ' 1',
+            next: 'Inkhorn Review ' + SEASON[rel.getUTCMonth()] + ' ' + rel.getUTCFullYear() + ' — ' + MONTHS[rel.getUTCMonth()] + '\u00a01',
             f13: fmt(f) + ' — ' + days + (days === 1 ? ' day' : ' days'),
             wrdays: days + (days === 1 ? ' day' : ' days')
         };

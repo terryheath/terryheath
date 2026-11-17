@@ -1,5 +1,13 @@
 {{!< default}}
-<main class="ip-page"><section class="ip-sec ip-404"><p class="ip-eyebrow">Error {{statusCode}}</p><h1 class="ip-h1">{{#match statusCode "404"}}That page isn&rsquo;t here.{{else}}Something went wrong.{{/match}}</h1>
-<p class="ip-lede" style="margin:14px auto">It may have moved. Try one of these.</p>
-<ul><li><a href="/">Home</a></li><li><a href="/review/">Inkhorn Review</a></li><li><a href="/white-rabbit/">White Rabbit</a></li><li><a href="/submit/">Submit</a></li><li><a href="/shop/">Shop</a></li></ul>
-<p style="font:14px var(--ip-sans)">Still stuck? <a href="mailto:hello@inkhorn.press">hello@inkhorn.press</a></p></section></main>
+<main class="ip-page"><section class="ip-sec ip-404" id="ip-err" data-code="{{statusCode}}"><p class="ip-eyebrow">Error {{statusCode}}</p>
+<h1 class="ip-h1" id="ip-err-h">{{#match statusCode 404}}That page isn&rsquo;t here.{{else}}Something went wrong on our end.{{/match}}</h1>
+<p class="ip-lede" id="ip-err-p" style="margin:14px auto">{{#match statusCode 404}}Check the address for typos, or try one of these.{{else}}Please try again in a minute. If it keeps happening, write us.{{/match}}</p>
+<ul><li><a href="/">Home</a></li><li><a href="/review/">Inkhorn Review</a></li><li><a href="/review/issues/">All issues</a></li><li><a href="/white-rabbit/">White Rabbit</a></li><li><a href="/submit/">Submit</a></li><li><a href="/shop/">Shop</a></li></ul>
+<p class="ip-err-help">Still stuck? <a href="mailto:hello@inkhorn.press">hello@inkhorn.press</a></p></section></main>
+<script>
+(function(){var p=location.pathname,h=document.getElementById('ip-err-h'),t=document.getElementById('ip-err-p');
+if(document.getElementById('ip-err').getAttribute('data-code')!=='404')return;
+if(/^\/by\/?$/.test(p)){h.textContent='There is no contributor list.';t.textContent='Each contributor has a page for their own work. Browse by issue instead.';}
+else if(/^\/by\/[^/]+/.test(p)){h.textContent='This contributor\u2019s work isn\u2019t published yet.';t.textContent='Pieces go live on each issue\u2019s release day, so this page will appear then. Check back, or browse the issues.';}
+})();
+</script>

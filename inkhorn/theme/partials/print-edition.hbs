@@ -1,0 +1,15 @@
+{{!-- print-edition.hbs — /shop/print-edition/ (rendered by page.hbs for the print-edition page) --}}
+<main class="ip-page"><section class="ip-sec"><p class="ip-eyebrow">Print Edition</p><h1 class="ip-h1">Inkhorn Review in print</h1>
+<p class="ip-lede">Four printed issues a year, mailed to you. Print copies ship to U.S. addresses only; outside the U.S. the Print subscription gives you the ebooks instead.</p>
+<div class="ip-grid" style="margin-top:32px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+<div class="ip-card"><span class="k">Print subscription</span><span class="t">$6 a month or $48 a year</span>
+<span class="d">Four printed issues a year, mailed to any U.S. address, plus the ebook of each. Ships to U.S. addresses only; ebooks only outside the U.S.</span>
+{{#if @member}}<span class="ip-btns"><a class="ip-btn" href="#/portal/account/plans" data-portal="account/plans">Manage your subscription</a><a class="ip-btn alt" href="/shop/address/">Add your mailing address</a></span>
+{{else}}<span class="ip-btns"><a class="ip-btn" href="#/portal/signup" data-portal="signup">Subscribe to Print</a><a class="ip-btn alt" href="#/portal/signin" data-portal="signin">Already a subscriber? Sign in</a></span>{{/if}}
+</div>
+<div class="ip-card"><span class="k">Single issue</span><span class="t">Inkhorn Review No. 1 &middot; Autumn 2026</span>
+<span class="d">The printed issue or the ebook, bought one at a time. Print ships to U.S. addresses only: $4 for the first book, $1 for each additional.</span>
+<span class="ip-btns"><a class="ip-btn" href="/inkhorn-review-no-1-autumn-2026/">Buy Issue No. 1</a><a class="ip-btn alt" href="/shop/">See the shop</a></span>
+</div></div>
+<p class="ip-note">Sold by Inkhorn Press, a nonprofit. Payments are handled by Stripe. Questions? <a href="mailto:hello@inkhorn.press">hello@inkhorn.press</a>.</p>
+</section></main>

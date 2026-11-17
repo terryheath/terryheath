@@ -34,6 +34,7 @@
     var count = cart.reduce(function (sum, item) { return sum + (item.quantity || 0); }, 0);
     document.querySelectorAll('.ih-cart-link').forEach(function (el) {
       el.textContent = 'Cart (' + count + ')';
+      if (count > 0) el.removeAttribute('hidden'); else el.setAttribute('hidden', '');
     });
   }
 
@@ -284,7 +285,7 @@
             if (!existing_conf) {
               var conf = document.createElement('div');
               conf.className = 'ih-add-confirm';
-              conf.innerHTML = 'Added. <a href="/cart/" class="ih-add-confirm-link">View cart</a>';
+              conf.innerHTML = 'Added. <a href="/shop/cart/" class="ih-add-confirm-link">View cart</a>';
               picker.appendChild(conf);
             }
           }
@@ -306,7 +307,7 @@
     if (!itemsEl || !summaryEl) return;
 
     if (!cart.length) {
-      itemsEl.innerHTML = '<p class="ih-cart-empty">Your cart is empty. <a href="/books/">Browse the shop</a>.</p>';
+      itemsEl.innerHTML = '<p class="ih-cart-empty">Your cart is empty. <a href="/shop/">Browse the shop</a>.</p>';
       summaryEl.innerHTML = '';
       return;
     }
@@ -361,6 +362,7 @@
       var sumHtml = '';
       sumHtml += '<div class="ih-cart-subtotal">Subtotal: ' + formatCents(subtotal) + '</div>';
       sumHtml += '<div class="ih-cart-shipping">Shipping: ' + shippingText + '</div>';
+      sumHtml += '<div class="ih-cart-total"><strong>Total: ' + formatCents(subtotal + (hasPrint ? shippingCents : 0)) + '</strong></div>';
       if (hasPrint) {
         sumHtml += '<p class="ih-cart-note">Ships to U.S. addresses only. $4 for the first book, $1 for each additional.</p>';
       }
@@ -470,7 +472,7 @@
     var orderEl = document.getElementById('ih-order-complete');
 
     if (!sessionId) {
-      orderEl.innerHTML = '<p class="ih-order-complete-intro">No order found. <a href="/books/">Browse our books \u2192</a></p>';
+      orderEl.innerHTML = '<h1 class="ih-order-complete-heading">No order to show</h1><p class="ih-order-complete-intro">This page shows your receipt right after you pay. If you just paid, check your email for the confirmation; if you did not, <a href="/shop/cart/">your cart</a> or <a href="/shop/">the shop</a> is the place to start. Questions? <a href="mailto:hello@inkhorn.press">hello@inkhorn.press</a>.</p>';
     } else {
       orderEl.innerHTML = '<h1 class="ih-order-complete-heading">Order Complete</h1><p>Loading your order&hellip;</p>';
 
