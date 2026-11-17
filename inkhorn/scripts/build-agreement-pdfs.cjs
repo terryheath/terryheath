@@ -90,7 +90,7 @@ function build(paid, published, ip) {
   p(ip ? "You grant Inkhorn Press and its successors and assigns first serial rights; the right to keep the work in our online archive; and the right to reprint it in anthologies drawn from Inkhorn Press's own archive." + tail
        : "You grant Inkhorn Review, published by " + PUB + ", and its successors and assigns first serial rights; the right to keep the work in our online archive; the right to reprint it in anthologies drawn from Inkhorn's own archive; and the right to read it aloud on our podcast, Life on Words." + tail);
   p('We will not use your work to train AI models, and we will not license it to anyone who does.');
-  p('All other rights remain with you, and all other rights revert to you on publication; the non-exclusive rights above continue. You may reprint your work wherever you like; we only ask that ' + (ip ? 'the publication named above' : 'Inkhorn Review') + ' be credited as the first publisher.');
+  p('All other rights remain with you. The non-exclusive rights above continue after publication. You may reprint your work wherever you like; we only ask that ' + (ip ? 'the publication named above' : 'Inkhorn Review') + ' be credited as the first publisher.');
   p('You confirm the work is yours and has not been previously published. A personal blog, newsletter, or public social media post counts as published; work shared only in a workshop or private group is fine.');
   h('Deadline');
   doc.font('Helvetica').fontSize(10.5).text(published
