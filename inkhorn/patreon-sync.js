@@ -228,4 +228,12 @@ async function main() {
   await upsertGhostPage(existing, ciHead);
 }
 
-main().catch(err => { console.error(err.message); process.exit(1); });
+main().catch(async err => {
+  console.error(err.message);
+  // a failed run also emails hello@terryheath.com (needs SMTP_USERNAME / SMTP_PASSWORD; otherwise it stays a log line only)
+  try {
+    const NM = (await import('module')).createRequire(import.meta.url)('./notice-mail.cjs');
+    if (NM.available()) await NM.sendNotice({ subject: 'Patreon supporter sync failed', html: '<p>The daily Patreon supporter sync did not finish, so the supporter list on inkhorn.press/support/ was not updated.</p><p>Error: ' + String(err.message).replace(/[<>&]/g, '') + '</p><p>It runs again tomorrow at 06:00 UTC. Logs: Railway > Shared Cron > patreon-sync.</p>', label: 'Inkhorn alert' });
+  } catch (e) { console.error('alert email failed:', e.message); }
+  process.exit(1);
+});

@@ -44,29 +44,33 @@ async function currentFor(api, data, rec) {
 
 // ---- apply ------------------------------------------------------------------------------------------------------------------
 // Replaces bio + name in print in editions-2026.json (committed to GitHub, theme re-uploaded if the byline changed) and in Ghost.
-async function applyBio(api, rec, signed, { commit = true } = {}) {
+async function applyBio(api, rec, signed, { commit = true, restore = null } = {}) {
   const data = await editionsLive();
   const cur = await currentFor(api, data, rec);
   if (!cur) throw new Error(`"${rec.title}" is not in editions-2026.json for ${rec.issue}`);
-  const name = signed.name_in_print || cur.author;
   const piece = cur.piece;
+  // what is there now, kept so the payouts page can offer Undo
+  const prev = { author: piece.author, bio: piece.bio, bio_html: piece.bio_html, custom_excerpt: piece.custom_excerpt, ghost_bio: cur.tag ? cur.tag.description : '', ghost_name: cur.tag ? cur.tag.name : null };
+  const name = restore ? restore.author : (signed.name_in_print || cur.author);
+  const ghostBio = restore ? restore.ghost_bio : signed.bio;
   const nameChanged = name !== piece.author;
-  piece.author = name; piece.bio = signed.bio; piece.bio_html = escHtml(signed.bio); piece.custom_excerpt = `by ${name}`; // nomination_line is kept as it is
+  if (restore) { piece.author = restore.author; piece.bio = restore.bio; piece.bio_html = restore.bio_html; piece.custom_excerpt = restore.custom_excerpt; }
+  else { piece.author = name; piece.bio = signed.bio; piece.bio_html = escHtml(signed.bio); piece.custom_excerpt = `by ${name}`; } // nomination_line is kept as it is
   const partials = require('./scripts/gen-edition-partials.cjs').generate(data.pieces);
   const files = { 'inkhorn/data/editions-2026.json': JSON.stringify(data, null, 2) + '\n' };
   const themeFiles = {};
   for (const [ed, text] of Object.entries(partials)) { files[`inkhorn/theme/partials/editions/${ed}.hbs`] = text; themeFiles[`partials/editions/${ed}.hbs`] = text; }
   let sha = null;
   if (commit) {
-    sha = await L.githubCommit(files, `Bio and name in print from the signed agreement: ${name} ("${rec.title}")\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`);
+    sha = await L.githubCommit(files, `${restore ? 'Undo: previous bio and name in print restored' : 'Bio and name in print from the signed agreement'}: ${name} ("${rec.title}")\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`);
     if (nameChanged) await L.uploadTheme(L.themeZip(themeFiles));
   }
   // Ghost: the contributor tag (name + bio) and the post's "by NAME" line
-  if (cur.tag) await api.tags.edit({ id: cur.tag.id, updated_at: cur.tag.updated_at, name, description: signed.bio });
-  else await api.tags.add({ name, slug: slugify(name), description: signed.bio });
+  if (cur.tag) await api.tags.edit({ id: cur.tag.id, updated_at: cur.tag.updated_at, name, description: ghostBio });
+  else await api.tags.add({ name, slug: slugify(name), description: ghostBio });
   const posts = await api.posts.browse({ filter: `slug:${rec.slug}`, fields: 'id,updated_at', limit: 1 });
-  if (posts.length) await api.posts.edit({ id: posts[0].id, updated_at: posts[0].updated_at, custom_excerpt: `by ${name}` });
-  return { name, nameChanged, sha };
+  if (posts.length) await api.posts.edit({ id: posts[0].id, updated_at: posts[0].updated_at, custom_excerpt: restore ? restore.custom_excerpt : `by ${name}` });
+  return { name, nameChanged, sha, prev };
 }
 
 // ---- cron entry: look at every signed record that has not been looked at ---------------------------------------------------------

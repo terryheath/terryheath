@@ -48,6 +48,14 @@ function zonedInstant(ymd, hour, min, tz) {
 }
 const localYmd = (date, tz) => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 const localHour = (date, tz) => Number(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', hour: 'numeric' }).format(date));
+// Follow-up emails go out at 9:00 a.m. (the guest's own time zone when they have booked, else Pacific): the first 9:00 a.m. at or after the nominal moment,
+// so nothing leaves at the odd hour the invitation happened to go out.
+function morningAtOrAfter(at, tz = PACIFIC) {
+  const day = localYmd(at, tz);
+  let m = zonedInstant(day, 9, 0, tz);
+  if (m < at) m = zonedInstant(shiftYmd(day, 1), 9, 0, tz);
+  return m;
+}
 const shiftYmd = (ymd, days) => { const d = new Date(`${ymd}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); };
 // "Tuesday, December 8 at 9:00 a.m. PST"
 function when(date, tz) {
@@ -103,12 +111,12 @@ function render(kind, g, extra = {}) {
   return { subject: fill(e.subject, v), text: fill(e.body, v) };
 }
 let transport = null;
-async function sendMail(to, subject, text) {
+async function sendMail(to, subject, text, from = null) {
   if (!transport) {
     const nodemailer = require('nodemailer');
     transport = nodemailer.createTransport({ host: process.env.SMTP_HOST || 'email-smtp.us-east-2.amazonaws.com', port: 587, secure: false, auth: { user: process.env.SMTP_USERNAME, pass: process.env.SMTP_PASSWORD } });
   }
-  await transport.sendMail({ from: process.env.PODCAST_FROM || 'Life on Words <hello@terryheath.com>', replyTo: 'hello@terryheath.com', to, subject, text });
+  await transport.sendMail({ from: from || process.env.PODCAST_FROM || 'Life on Words <hello@terryheath.com>', replyTo: 'hello@terryheath.com', to, subject, text });
 }
 // Sends an email kind to a guest and records it (never twice for the same key).
 async function sendKind(g, kind, key = kind, extra = {}) {
@@ -157,7 +165,8 @@ async function signedPdfUrl(g) {
 
 // ---- inviting ---------------------------------------------------------------------------------------------------------------
 const CAL_EVENT_URL = process.env.CAL_EVENT_URL || 'https://cal.com/terry-heath-gpfyhn/life-on-words-recording';
-const notifyTerry = (subject, text) => sendMail('hello@terryheath.com', subject, text).catch((e) => console.error('notify failed', e.message));
+// Notices to Terry carry their own sender and a subject label so they are easy to filter and never read as a message from a guest.
+const notifyTerry = (subject, text) => sendMail('hello@terryheath.com', `[Life on Words alert] ${subject.replace(/^Life on Words:\s*/, '')}`, text, 'Life on Words alerts <hello@terryheath.com>').catch((e) => console.error('notify failed', e.message));
 // Which first email a guest gets: the invitation, the two notices to the imported guests, or (already said yes) the agreement only.
 const firstKind = (g) => (g.kind === 'keep_date' ? 'keep_date' : g.kind === 'reschedule' ? 'reschedule_notice' : g.kind === 'accepted' ? 'agreement_only_accepted' : 'invite');
 // New guest: create the DocuSeal agreement and send the first email (the invitation with the optional personal note on top, or for a guest who already said yes the agreement only).
@@ -278,12 +287,12 @@ function planFollowUp(g, now = new Date()) {
   if (!track) {
     // Display only: a guest with a booked session and an unsigned agreement still gets the day-3 agreement_reminder (sent by the hourly job's own block, not this plan).
     const ag = g.agreement;
-    if (!g.pending_send && !g.declined && !g.cancelled && hasBooking(g) && ag && ag.status !== 'signed' && ag.sent_at && !g.reminders[`agreement_reminder:${ag.submission_id}`]) out.next = { kind: 'agreement_reminder', key: `agreement_reminder:${ag.submission_id}`, at: new Date(Date.parse(ag.sent_at) + 3 * DAY) };
+    if (!g.pending_send && !g.declined && !g.cancelled && hasBooking(g) && ag && ag.status !== 'signed' && ag.sent_at && !g.reminders[`agreement_reminder:${ag.submission_id}`]) out.next = { kind: 'agreement_reminder', key: `agreement_reminder:${ag.submission_id}`, at: morningAtOrAfter(new Date(Date.parse(ag.sent_at) + 3 * DAY), (g.booking && g.booking.tz) || PACIFIC) };
     return out;
   }
   const a = g.agreement;
   const base = track === 'no_response' ? new Date(a.sent_at) : track === 'accepted' ? new Date(Math.max(Date.parse(acceptedAt(g)), Date.parse(a.sent_at))) : new Date(a.signed_at || a.sent_at);
-  const steps = TRACKS[track].steps.map((st) => ({ kind: st.kind, key: `${st.kind}:${a.submission_id}`, at: new Date(base.getTime() + st.days * DAY), satisfied: !!(st.skipIfGot && st.skipIfGot.some((k) => gotKind(g, k))) }));
+  const steps = TRACKS[track].steps.map((st) => ({ kind: st.kind, key: `${st.kind}:${a.submission_id}`, at: morningAtOrAfter(new Date(base.getTime() + st.days * DAY)), satisfied: !!(st.skipIfGot && st.skipIfGot.some((k) => gotKind(g, k))) }));
   const pending = steps.filter((st) => !st.satisfied && !settled(g, st.key));
   const due = pending.filter((st) => st.at <= now);
   if (due.length) {
@@ -366,7 +375,7 @@ async function runHourly({ dry = false, now = new Date() } = {}) {
     }
     // one reminder if the agreement is still unsigned 3 days after it went out: for a guest with a booked session (the sign-by deadline matters most).
     // Everyone else is on a follow-up track below, which sends this same reminder on day 3 for the no-response track.
-    if (g.agreement && g.agreement.status !== 'signed' && hasBooking(g) && g.agreement.sent_at && now - new Date(g.agreement.sent_at) > 3 * 86400000 && !g.reminders[`agreement_reminder:${g.agreement.submission_id}`]) {
+    if (g.agreement && g.agreement.status !== 'signed' && hasBooking(g) && g.agreement.sent_at && now >= morningAtOrAfter(new Date(Date.parse(g.agreement.sent_at) + 3 * 86400000), (g.booking && g.booking.tz) || PACIFIC) && !g.reminders[`agreement_reminder:${g.agreement.submission_id}`]) {
       if (!dry) await sendKind(g, 'agreement_reminder', `agreement_reminder:${g.agreement.submission_id}`); did.push(`agreement reminder ${g.name}`);
     }
     // an unsigned guest whose deadline has passed loses the session (rule: signed before the one-week reminder time)

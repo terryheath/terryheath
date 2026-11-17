@@ -10,14 +10,15 @@ Quick tips:
 - Use Chrome or Edge (Safari can have issues)
 - Headphones help but aren't required
 - A quiet space with decent lighting; a window in front of you is ideal
-- The conversation runs about one hour`;
+- The conversation runs about an hour; the slot we've set aside is 90 minutes, so there's no rush`;
 const SESSION = `Your session: {when}
 Recording link: {studio_url}
 
 ${TIPS}
 
 {change_lines}`;
-// The booking confirmation and the three session reminders also carry the guest's own guest-guide link (the keep_date email does not).
+// The keep_date email, the booking confirmation and the three session reminders all carry the guest's own guest-guide link.
+// Sign-off rule: the invitation (first contact) carries the full signature (Terry Heath, Producer, Life on Words, Follow the Rabbit LLC); every later email ends with just '— Terry'.
 const SESSION_GUIDE = SESSION.replace('{change_lines}', 'Your guest guide: {guide_url}\n\n{change_lines}');
 
 const EMAILS = {
@@ -162,7 +163,7 @@ Sign here: {agreement_url}
 
 Your booking details are unchanged:
 
-${SESSION}
+${SESSION_GUIDE}
 
 ${SIGN}`,
   },
@@ -272,5 +273,12 @@ If none of the open Tuesdays work, reply with a few dates that might, and I'll s
 ${SIGN}`,
   },
 };
+
+// Every reminder and follow-up tells the guest how to stop them (no hub visit needed on their side).
+const DECLINE = `If this isn't for you, just reply "no thanks" and I won't write again.`;
+for (const k of ['agreement_reminder', 'final_note', 'accepted_reminder', 'accepted_final', 'booking_nudge', 'booking_final']) {
+  const e = EMAILS[k];
+  if (e && e.body.endsWith(`\n\n${SIGN}`) && !e.body.includes(DECLINE)) e.body = e.body.slice(0, -`\n\n${SIGN}`.length) + `\n\n${DECLINE}\n\n${SIGN}`;
+}
 
 module.exports = { EMAILS, STUDIO };

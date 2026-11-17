@@ -95,6 +95,8 @@ async function gfetch(method, p, body, key) {
 }
 // Emails a note to hello@terryheath.com through Ghost's email preview (needs GHOST_STAFF_TOKEN; integration keys get a 403).
 async function notify(api, subject, html, to = process.env.NOTICE_EMAIL || 'hello@terryheath.com') {
+  const NM = require('./notice-mail.cjs');
+  if (NM.available()) return NM.sendNotice({ to, subject, html, label: 'Inkhorn agreements' }); // clear sender and label; no Ghost "[TEST]" prefix
   const staff = process.env.GHOST_STAFF_TOKEN;
   if (!staff) throw new Error('GHOST_STAFF_TOKEN is required to send notices');
   const draft = await api.posts.add({ title: subject, status: 'draft', html }, { source: 'html' });
@@ -102,6 +104,13 @@ async function notify(api, subject, html, to = process.env.NOTICE_EMAIL || 'hell
   finally { await api.posts.delete({ id: draft.id }); }
 }
 
+// Who publishes an issue: Follow the Rabbit LLC published Autumn and Winter 2026; Inkhorn Press (the nonprofit) publishes from Spring 2027 on.
+function publisherOf(issue) {
+  const m = /(spring|summer|autumn|winter)[\s-]+(\d{4})/i.exec(String(issue || ''));
+  if (!m) return 'Follow the Rabbit LLC';
+  const month = { spring: 3, summer: 6, autumn: 9, winter: 12 }[m[1].toLowerCase()];
+  return Number(m[2]) * 100 + month >= 202703 ? 'Inkhorn Press' : 'Follow the Rabbit LLC';
+}
 // The email contributors get with their agreement (DocuSeal replaces {{submitter.link}} with the signing link).
 function agreementEmail({ paid, amount, greeting, titles, issue, release, deadline, published }) {
   const piece = titles.length > 1 ? 'your pieces ' + titles.map((t) => `"${t}"`).join(' and ') : `"${titles[0]}"`;
@@ -116,7 +125,7 @@ function agreementEmail({ paid, amount, greeting, titles, issue, release, deadli
   const pay = !paid ? '' : published
     ? `\n\nIn the agreement you can choose how you would like to be paid your $${amount}: cash (Zelle or PayPal in the U.S., Wise elsewhere), or a one-year Print subscription to Inkhorn Review (four quarterly issues mailed, plus the ebook of each) instead of cash. If you do not choose by ${deadline}, we will pay the cash.`
     : `\n\nPayment is $${amount}, sent on ${release} by Zelle or PayPal (U.S.) or Wise (elsewhere). In the agreement you will choose between cash and a one-year Print subscription to Inkhorn Review (four quarterly issues mailed, plus the ebook of each) instead of cash.`;
-  const body = `Hello ${greeting},\n\n${intro}\n\n${what}\n\n${dl}${pay}\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\nInkhorn Review\nPublished by Follow the Rabbit LLC`;
+  const body = `Hello ${greeting},\n\n${intro}\n\n${what}\n\n${dl}${pay}\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\nInkhorn Review\nPublished by ${publisherOf(issue)}`;
   return { subject, body };
 }
 
@@ -255,7 +264,7 @@ async function remindSubmission(r, days) {
   const when = days === 1 ? 'tomorrow' : `in ${days} days`;
   const body = `Hello ${first},\n\nA reminder: your Inkhorn Review contributor agreement for "${r.title}" is due ${pretty(r.deadline)}, ${when}. ` +
     (published ? `Your piece stays published either way; if you have not chosen between cash and the Print subscription by then, we will pay the cash.` : `Inkhorn Review cannot publish a piece without the signed agreement, and the piece will be withdrawn from the issue if it is not signed by then.`) +
-    `\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\nInkhorn Review\nPublished by Follow the Rabbit LLC`;
+    `\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\nInkhorn Review\nPublished by ${publisherOf(r.issue)}`;
   await ds('PUT', `/submitters/${sm.id}`, { send_email: true, message: { subject: `Reminder: your Inkhorn Review contributor agreement is due ${pretty(r.deadline)}`, body } });
   return true;
 }
@@ -266,4 +275,4 @@ function releaseSlot(issue, position) {
   return new Date(Date.UTC(...(() => { const r = releaseDate(issue); return [r.y, r.m - 1, r.d, 12, 0, 0]; })()) + (position - 1) * 60000);
 }
 
-module.exports = { resolvedSlug, releaseSlot, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
+module.exports = { publisherOf, resolvedSlug, releaseSlot, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };

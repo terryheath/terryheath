@@ -8,6 +8,8 @@ const crypto = require('crypto');
 const L = require('./agreements-lib.cjs');
 const P = require('./payouts-lib.cjs');
 const PR = require('./podcast-routes.cjs');
+const UI = require('./hub-ui.cjs');
+const PL = require('./podcast-lib.cjs');
 
 const SECRET = () => process.env.ADMIN_SESSION_SECRET || '';
 const SETUP = () => process.env.ADMIN_SETUP_TOKEN || '';
@@ -52,12 +54,12 @@ const tries = new Map();
 const tooMany = (ip) => { const now = Date.now(); const a = (tries.get(ip) || []).filter((t) => now - t < 15 * 60e3); a.push(now); tries.set(ip, a); return a.length > 8; };
 
 // ---- pages ------------------------------------------------------------------------------------------------------------------
-const shell = (title, body) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title>
-<style>body{margin:0;font:16px/1.5 Georgia,serif;color:#222;background:#fff}main{max-width:62rem;margin:0 auto;padding:1.5rem 1rem 4rem}h1{font-size:1.5rem}h2{font-size:1.15rem;margin:1.8rem 0 .3rem;border-bottom:1px solid #ccc}
-ul{padding-left:1.2rem}li{margin:.35rem 0}.why{color:#555;font-size:.9rem}.status{background:#f4f1ea;border:1px solid #ccc;padding:.6rem 1rem}.warn{color:#a33}table{border-collapse:collapse}td,th{border:1px solid #ddd;padding:.25rem .5rem;text-align:left;vertical-align:top}
-input{font:inherit;padding:.4rem;margin:.2rem 0;width:18rem;max-width:100%}button{font:inherit;padding:.4rem 1rem}nav a{margin-right:1rem}</style></head><body><main>${body}</main></body></html>`;
-const loginPage = (msg) => shell('Admin sign in', `<h1>Admin</h1>${msg ? `<p class="warn">${esc(msg)}</p>` : ''}<form method="post" action="/login"><p><input type="password" name="password" placeholder="Password" autofocus autocomplete="current-password" required></p><p><button>Sign in</button></p></form><p class="why">You stay signed in for 30 days on this browser.</p>`);
-const setupPage = (token, msg) => shell('Set the admin password', `<h1>Set the admin password</h1>${msg ? `<p class="warn">${esc(msg)}</p>` : ''}<form method="post" action="/setup"><input type="hidden" name="token" value="${esc(token)}"><p><input type="password" name="password" placeholder="Password (12+ characters)" minlength="12" required autocomplete="new-password"></p><p><input type="password" name="again" placeholder="Again" minlength="12" required autocomplete="new-password"></p><p><button>Save and sign in</button></p></form><p class="why">Only a hash is stored. To set a new password later, delete the private Ghost page "Admin hub login" and visit /setup again with the setup token.</p>`);
+const shell = (title, body, here = '') => UI.page(title, body, { here });
+// Only same-site paths are allowed as a sign-in return target.
+const safeNext = (n) => (typeof n === 'string' && /^\/[A-Za-z0-9_\-./?=&%]*$/.test(n) && !n.startsWith('//') && !/^\/(login|logout|setup|forgot|reset)/.test(n) ? n : '/');
+const loginPage = (msg, next = '/', note = '') => shell('Admin sign in', `<h1>Admin</h1>${msg ? `<p class="warn" role="alert">${esc(msg)}</p>` : ''}${note ? `<p class="note">${esc(note)}</p>` : ''}<form method="post" action="/login"><input type="hidden" name="next" value="${esc(next)}"><p><label for="pw" class="why">Password</label><br><input id="pw" type="password" name="password" autofocus autocomplete="current-password" required></p><p><button>Sign in</button></p></form><p class="why">You stay signed in for 30 days on this browser.</p>
+<details><summary>Forgot the password?</summary><p class="why">We can email a one-time link to hello@terryheath.com (valid for 30 minutes) that lets you set a new password.</p><form method="post" action="/forgot"><button class="ghost">Email me a reset link</button></form></details>`);
+const setupPage = (token, msg, { reset = false } = {}) => shell(reset ? 'Choose a new admin password' : 'Set the admin password', `<h1>${reset ? 'Choose a new admin password' : 'Set the admin password'}</h1>${msg ? `<p class="warn" role="alert">${esc(msg)}</p>` : ''}<form method="post" action="${reset ? '/reset' : '/setup'}"><input type="hidden" name="token" value="${esc(token)}"><p><label class="why" for="p1">New password (12+ characters)</label><br><input id="p1" type="password" name="password" minlength="12" required autocomplete="new-password"></p><p><label class="why" for="p2">Again</label><br><input id="p2" type="password" name="again" minlength="12" required autocomplete="new-password"></p><p><button>Save and sign in</button></p></form><p class="why">Only a hash is stored. If you lose the password, use "Forgot the password?" on the sign-in page; it emails a link to hello@terryheath.com.</p>`);
 
 const SUBDOMAINS = [
   ['admin.terryheath.com', 'This hub (moved from admin.inkhornreview.com on 2026-11-13, which redirects here). Every admin tool goes under a path here (admin.terryheath.com/<path>), not a new subdomain.', 'Railway: agreements-accept service'],
@@ -66,7 +68,10 @@ const SUBDOMAINS = [
   ['download.inkhornreview.com', 'Ebook delivery: per-order download links, and the shop admin at /admin.', 'Railway: inkhorn-shop-service'],
   ['address.inkhornreview.com', 'The address service: members give a print-subscription mailing address (writes SHIP blocks to member notes).', 'Railway: address-service'],
   ['muse.inkhornreview.com', 'Old Muse address; redirects to gomuse.io.', 'Railway: muse project'],
-  ['www.inkhornreview.com', 'Redirects to inkhorn.press (a Cloudflare Worker).', 'Cloudflare'],
+  ['www.inkhornreview.com', 'Redirects to inkhorn.press (a Cloudflare Worker, inkhornreview-redirect).', 'Cloudflare'],
+  ['admin.inkhornreview.com', 'Old admin address: GET and HEAD requests redirect here with the path kept; other methods (old webhook URLs) are still served.', 'Railway: agreements-accept service'],
+  ['followtherabbit.terryheath.com', 'The Follow the Rabbit landing page.', 'Cloudflare Pages: followtherabbit'],
+  ['send.terryheath.com', 'Amazon SES MAIL FROM domain for guest mail sent from hello@terryheath.com. Not a website.', 'AWS SES'],
   ['mail.inkhorn.press', 'Sending domain for the Inkhorn Ghost (Mailgun account terry@terryheath.com); email.mail is its tracking CNAME.', 'Mailgun'],
   ['mail.terryheath.com', 'Sending domain for the terryheath.com Ghost (same Mailgun account); email.mail is its tracking CNAME.', 'Mailgun'],
   ['ses.inkhornreview.com', 'Amazon SES MAIL FROM domain (SPF and bounce handling for DocuSeal and shop mail). Not a website.', 'AWS SES'],
@@ -76,11 +81,11 @@ const LINKS = [
   ['Inkhorn', [
     ['Ghost Admin', 'https://inkhorn.press/ghost/', 'Write, schedule and edit posts and pages, members, newsletters, tiers, themes.'],
     ['The live site', 'https://inkhorn.press/', 'What readers see.'],
-    ['The Submissions page', 'https://inkhorn.press/submissions/', 'Guidelines, free reading periods, pay (edited in Ghost Admin).'],
+    ['The Submissions page (guidelines and rights)', 'https://inkhorn.press/submissions/', 'Guidelines, free reading periods, pay (edited in Ghost Admin).'],
     ['The agreements tracker (Ghost page)', 'https://inkhorn.press/ghost/#/pages/6af4f4a0a7098200015eb89e', 'The raw record of every contributor agreement; the payouts page reads it. Edit only if you must.'],
   ]],
   ['Agreements', [
-    ['DocuSeal', 'https://sign.terryheath.com/', 'Templates, every sent and signed agreement, the API token.'],
+    ['DocuSeal', 'https://sign.terryheath.com/sign_in', 'Templates, every sent and signed agreement, the API token.'],
     ['Life on Words guests', '/podcast', 'Guest agreements, bookings and reminders for the podcast; add a guest and send the invitation.'],
     ['Payouts', '/payouts', 'Signed or not, pay and subscription choices, bios to Apply or Ignore, print mailing lists (CSV).'],
     ['Contributor confirm page', 'https://agreements.inkhornreview.com/accept', 'What the Duosuma acceptance letter links to; sends the agreement when a contributor confirms. Public.'],
@@ -92,7 +97,8 @@ const LINKS = [
   ]],
   ['Shop and money', [
     ['Ebook admin', 'https://download.inkhornreview.com/admin', 'Resend or revoke download links, download history, file check (password in Keychain inkhorn-shop-admin).'],
-    ['Stripe dashboard', 'https://dashboard.stripe.com/', 'Payments, subscriptions, refunds (Inkhorn Review account).'],
+    ['Stripe: Inkhorn Press (nonprofit)', 'https://dashboard.stripe.com/', 'Shop checkout, donations, Duosuma fees and tips, inkhorn.press memberships. Switch to the Inkhorn Press account in the dashboard menu.'],
+    ['Stripe: Follow the Rabbit LLC', 'https://dashboard.stripe.com/', 'terryheath.com tips and donations only. Switch to the Follow the Rabbit LLC account in the dashboard menu.'],
   ]],
   ['Muse', [['gomuse.io Admin', 'https://gomuse.io/admin', 'Issues, people, email (including the announcement emails), flagged pieces.']]],
   ['Hosting', [
@@ -118,6 +124,8 @@ async function homeHtml() {
       const next = L.daysBetween(today, open[0].deadline);
       parts.push(`<li><strong>${esc(L.issueName(issue))}: ${open.length} unsigned</strong>, next deadline ${esc(open[0].deadline)} (${next} day${next === 1 ? '' : 's'} left; ${open.filter((r) => L.daysBetween(today, r.deadline) <= 3).length} within 3 days)<br><span class="why">${open.map((r) => `${esc(r.contributor)} (${L.daysBetween(today, r.deadline)}d)`).join(', ')}</span></li>`);
     }
+    const refundOpen = rows.filter((r) => r.signed && r.refund_flag && !r.refund && !r.refund_dismissed && !r.refund_skipped).length;
+    let guestsOpen = null; try { guestsOpen = (await PL.load()).guests.filter((g) => !g.pending_send && ['Needs Terry', 'No response'].includes(PL.statusOf(g))).length; } catch { guestsOpen = null; }
     const upcoming = issues.filter((i) => L.ymd(L.releaseDate(i)) >= today).sort((a, b) => L.ymd(L.releaseDate(a)).localeCompare(L.ymd(L.releaseDate(b))))[0];
     let pay = '<li>No issue is waiting to release.</li>';
     if (upcoming) {
@@ -128,19 +136,23 @@ async function homeHtml() {
       pay = `<li><strong>${esc(L.issueName(upcoming))}, releases ${esc(L.pretty(L.ymd(L.releaseDate(upcoming))))}:</strong> cash to send $${cash} (signed), up to $${toCome} more if the rest sign; ${subs} Print subscription${subs === 1 ? '' : 's'} chosen.</li>`;
     }
     status = `<div class="status"><p><strong>Unsigned agreements</strong></p><ul>${parts.join('') || '<li>No agreements yet.</li>'}</ul>
-      <p><strong>Bios waiting for you:</strong> ${waiting.length}${waiting.length ? ' (<a href="/payouts">Apply or Ignore</a>)' : ''}</p>
+      <p><strong>Needs a decision:</strong> ${waiting.length} bio${waiting.length === 1 ? '' : 's'} waiting${waiting.length ? ' (<a href="/payouts#bios">Apply or Ignore</a>)' : ''} · ${refundOpen} fee refund${refundOpen === 1 ? '' : 's'} to check${refundOpen ? ' (<a href="/payouts#refunds">see which</a>)' : ''}${guestsOpen !== null ? ` · ${guestsOpen} Life on Words guest${guestsOpen === 1 ? '' : 's'} needing you${guestsOpen ? ' (<a href="/podcast?show=needs">see who</a>)' : ''}` : ''}</p>
       <p><strong>Payments due at the next release</strong></p><ul>${pay}</ul></div>`;
   } catch (e) { console.error('hub status failed', e.message); }
   const links = LINKS.map(([group, items]) => `<h2>${esc(group)}</h2><ul>${items.map(([name, url, why]) => `<li><a href="${esc(url)}">${esc(name)}</a><br><span class="why">${esc(why)}</span></li>`).join('')}</ul>`).join('');
-  const subs = `<h2>Subdomains</h2><p class="why">Every *.terryheath.com and *.inkhornreview.com name in use. New admin tools go under admin.terryheath.com/&lt;path&gt;, not a new subdomain.</p><table><tr><th>Name</th><th>What it does</th><th>Runs on</th></tr>${SUBDOMAINS.map(([n, w, r]) => `<tr><td>${esc(n)}</td><td>${esc(w)}</td><td>${esc(r)}</td></tr>`).join('')}</table>`;
-  return shell('Admin', `<h1>Admin</h1><nav><a href="/">Home</a><a href="/payouts">Payouts</a><a href="/podcast">Life on Words</a><a href="/logout">Sign out</a></nav>${status}${links}${subs}`);
+  const subs = `<h2>Subdomains</h2><p class="why">Every *.terryheath.com and *.inkhornreview.com name in use. New admin tools go under admin.terryheath.com/&lt;path&gt;, not a new subdomain.</p>${UI.table(`<tr><th>Name</th><th>What it does</th><th>Runs on</th></tr>${SUBDOMAINS.map(([n, w, r]) => `<tr><td data-label="Name">${esc(n)}</td><td data-label="What it does">${esc(w)}</td><td data-label="Runs on">${esc(r)}</td></tr>`).join('')}`)}`;
+  return shell('Admin', `<h1>Admin</h1>${status}${links}${subs}`, 'home');
 }
 
 // ---- routing ----------------------------------------------------------------------------------------------------------------
 const readBody = (req) => new Promise((res, rej) => { let b = ''; req.on('data', (c) => { b += c; if (b.length > 20000) { req.destroy(); rej(new Error('too large')); } }); req.on('end', () => res(b)); });
 const send = (res, code, html, extra = {}) => { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...extra }); res.end(html); };
 const redirect = (res, to) => { res.writeHead(303, { Location: to, 'Cache-Control': 'no-store' }); res.end(); };
-const nf = (res) => send(res, 404, shell('Not found', '<h1>Not found</h1>'));
+const nf = (res, signed = false) => send(res, 404, shell('Not found', '<h1>Not found</h1><p>There is nothing at this address. Use the menu above, or go to <a href="/">the admin home</a>.</p>', signed ? 'x' : ''));
+// Paths that exist behind the sign-in; anything else is a plain 404 even when signed out (so a typo never looks like a session problem).
+const KNOWN = (path) => path === '/' || path === '/payouts' || path === '/payouts.csv' || path === '/payouts/bio' || path === '/payouts/refund' || path === '/podcast' || path.startsWith('/podcast/');
+const sameSite = (req) => { const o = req.headers.origin; if (o) { try { return new URL(o).host === req.headers.host; } catch { return false; } } return req.headers['sec-fetch-site'] === 'same-origin'; };
+const resets = new Map(); // one-time reset links already used (token -> true), memory only; links also expire after 30 minutes
 
 async function handle(req, res, ip) {
   const [path, ...qs] = req.url.split('?');
@@ -165,18 +177,45 @@ async function handle(req, res, ip) {
     if (req.method !== 'POST') return redirect(res, '/');
     if (tooMany(ip)) return send(res, 429, loginPage('Too many tries. Wait 15 minutes.'));
     const f = Object.fromEntries(new URLSearchParams(await readBody(req)));
-    if (!eq(scrypt(f.password || '', auth.salt), auth.hash)) return send(res, 401, loginPage('Wrong password.'));
+    if (!eq(scrypt(f.password || '', auth.salt), auth.hash)) return send(res, 401, loginPage('Wrong password. Try again, or use "Forgot the password?" below.', safeNext(f.next)));
+    setCookie(res, cookieFor(), DAYS30);
+    return redirect(res, safeNext(f.next));
+  }
+  // Signing out needs a real click (POST from this site). A plain GET, a prefetch or a link checker does nothing.
+  if (path === '/logout') {
+    if (req.method !== 'POST') return redirect(res, '/');
+    if (!sameSite(req)) return send(res, 403, shell('No', '<h1>No</h1><p>Sign out from the Sign out button in the admin menu.</p>'));
+    setCookie(res, '', 0);
+    return redirect(res, '/');
+  }
+  // Lost password: email a one-time link (30 minutes) to hello@terryheath.com. It always goes to that address, whoever asks.
+  if (path === '/forgot' && req.method === 'POST' && auth) {
+    if (!sameSite(req)) return send(res, 403, shell('No', '<h1>No</h1>'));
+    if (tooMany(ip)) return send(res, 429, loginPage('Too many tries. Wait 15 minutes.'));
+    const exp = Math.floor(Date.now() / 1000) + 30 * 60;
+    const tok = `${exp}.${sign('reset' + exp)}`;
+    try { await PL.sendMail('hello@terryheath.com', '[Admin hub] Reset link for the admin password', `Someone asked to reset the admin hub password (probably you).\n\nChoose a new password here within 30 minutes:\nhttps://admin.terryheath.com/reset?t=${tok}\n\nIf you did not ask for this, ignore this email; nothing changes until the link is used.\n\n— Admin hub`); } catch (e) { console.error('reset mail failed:', e.message); return send(res, 500, loginPage('The reset email could not be sent. Check the SMTP settings of the agreements-accept service.')); }
+    return send(res, 200, loginPage('', '/', 'A reset link was sent to hello@terryheath.com. It works for 30 minutes.'));
+  }
+  if (path === '/reset' && auth) {
+    const valid = (t) => { const [e, sig] = String(t || '').split('.'); return !!e && !!sig && Number(e) > Date.now() / 1000 && eq(sig, sign('reset' + e)) && !resets.has(t); };
+    if (req.method === 'GET') return valid(query.get('t')) ? send(res, 200, setupPage(query.get('t'), '', { reset: true })) : send(res, 410, loginPage('That reset link has expired or was already used. Ask for a new one below.'));
+    const f = Object.fromEntries(new URLSearchParams(await readBody(req)));
+    if (!sameSite(req) || !valid(f.token)) return send(res, 410, loginPage('That reset link has expired or was already used. Ask for a new one below.'));
+    if ((f.password || '').length < 12) return send(res, 400, setupPage(f.token, 'Use at least 12 characters.', { reset: true }));
+    if (f.password !== f.again) return send(res, 400, setupPage(f.token, 'The two passwords differ.', { reset: true }));
+    resets.set(f.token, true);
+    await saveAuth(f.password);
     setCookie(res, cookieFor(), DAYS30);
     return redirect(res, '/');
   }
-  if (path === '/logout') { setCookie(res, '', 0); return redirect(res, '/'); }
 
   if (!auth) return nf(res); // not set up yet: nothing to see (visit /setup?token=... once)
-  if (!signedIn(req)) return send(res, 200, loginPage());
+  if (!signedIn(req)) return KNOWN(path) && req.method === 'GET' ? send(res, 401, loginPage('', safeNext(req.url))) : KNOWN(path) ? send(res, 401, loginPage('Your session ended. Sign in and try again.')) : nf(res);
 
   if (path === '/podcast' || path.startsWith('/podcast/')) { if (await PR.adminRoute(req, res, path, query)) return; }
   if (path === '/') return send(res, 200, await homeHtml());
-  if (path === '/payouts') return send(res, 200, (await P.payoutsHtml()).replace('<main>', '<main><p><a href="/">Admin home</a> · <a href="/logout">Sign out</a></p>' + (new URL(req.url, 'http://x').searchParams.get('msg') ? `<p><strong>${esc(new URL(req.url, 'http://x').searchParams.get('msg'))}</strong></p>` : '')), { 'Cache-Control': 'no-store', 'Content-Type': 'text/html; charset=utf-8' });
+  if (path === '/payouts') return send(res, 200, await P.payoutsHtml({ msg: query.get('msg') || '' }));
   if (path === '/payouts.csv') {
     const issue = String(query.get('issue') || '');
     const { rows } = await P.payoutsData();
@@ -187,9 +226,10 @@ async function handle(req, res, ip) {
     const origin = req.headers.origin; // same-site only (the cookie is SameSite=Lax too)
     if (origin && new URL(origin).host !== req.headers.host) return send(res, 403, shell('No', '<h1>No</h1>'));
     const f = Object.fromEntries(new URLSearchParams(await readBody(req)));
-    const out = await P.payoutsBio(f);
+    if (f.do === 'preview') { try { return send(res, 200, await P.payoutsBioPreview(f)); } catch (e) { return redirect(res, '/payouts?msg=' + encodeURIComponent('Could not prepare the preview: ' + e.message)); } }
+    let out; try { out = await P.payoutsBio(f); } catch (e) { out = 'FAILED: ' + e.message; }
     console.log('PAYOUTS BIO', f.do, out);
-    return redirect(res, '/payouts');
+    return redirect(res, '/payouts?msg=' + encodeURIComponent(out));
   }
   if (path === '/payouts/refund' && req.method === 'POST') {
     const origin = req.headers.origin;
@@ -199,6 +239,6 @@ async function handle(req, res, ip) {
     console.log('PAYOUTS REFUND', f.do, out);
     return redirect(res, '/payouts?msg=' + encodeURIComponent(out));
   }
-  return nf(res);
+  return nf(res, true);
 }
 module.exports = { handle, SUBDOMAINS, LINKS };

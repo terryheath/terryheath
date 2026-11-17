@@ -22,7 +22,7 @@
 // Railway cron is "0 14,15 * * 0" (UTC): 7am Pacific is 14:00Z in summer time and 15:00Z in winter time, so
 // the run that is not 7am Pacific exits at once.
 //
-// Required env vars: GHOST_API_URL, GHOST_ADMIN_KEY. Optional: TEST_EMAIL, NOTICE_EMAIL (default terry@terryheath.com).
+// Required env vars: GHOST_API_URL, GHOST_ADMIN_KEY. Optional: TEST_EMAIL, NOTICE_EMAIL (default hello@terryheath.com), SMTP_USERNAME + SMTP_PASSWORD (notices then go through SES with an [Inkhorn alert] label instead of Ghost's "[TEST]" preview).
 // (The free-member welcome emails no longer pull pieces: the welcome step was removed 2026-11-11, so nothing here tags #welcome-used.)
 // ALSO=1 adds an "Also at Inkhorn" section after the piece (the latest Founder's Letter, Gallery and Muse, one row each,
 //   flagged NEW when newer than the previous weekly email). OFF by default until Terry approves it; ALSO_SINCE_DAYS overrides the window.
@@ -31,6 +31,7 @@ import GhostAdminAPI from '@tryghost/admin-api';
 import { createHmac } from 'crypto';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import { dirname, join } from 'path';
 import { esc } from './digest-html.js';
 
@@ -42,8 +43,8 @@ const TEST_SLUGS      = (process.env.TEST_SLUGS || '').split(',').map(x => x.tri
 const ALSO_ENABLED    = process.env.ALSO === '1';
 const ALSO_SINCE_DAYS = Number(process.env.ALSO_SINCE_DAYS || 0);
 const DRY_RUN         = process.env.DRY_RUN === '1';
-const TEST_EMAIL      = process.env.TEST_EMAIL || 'terry@terryheath.com';
-const NOTICE_EMAIL    = process.env.NOTICE_EMAIL || 'terry@terryheath.com';
+const TEST_EMAIL      = process.env.TEST_EMAIL || 'hello@terryheath.com';
+const NOTICE_EMAIL    = process.env.NOTICE_EMAIL || 'hello@terryheath.com';
 const SITE_URL        = 'https://inkhorn.press';
 const NEWSLETTER      = 'inkhorn-review-digest';
 const SENT_TAG        = '#sent-weekly';
@@ -293,6 +294,8 @@ async function notifyNoneLeft() {
                `<p>Publish the next print issue's pieces (tag inkhorn-N), or remove ${SENT_TAG} from pieces you want back in the pool.</p>`;
   console.log(`No eligible pieces left. Notifying ${NOTICE_EMAIL}.`);
   if (MODE !== 'send') return;
+  const NM = createRequire(import.meta.url)('./notice-mail.cjs');
+  if (NM.available()) { await NM.sendNotice({ to: NOTICE_EMAIL, subject: 'Weekly Inkhorn piece: none left', html }); return; }
   const draft = await api.posts.add({ title: 'Weekly Inkhorn piece: none left', html, status: 'draft', tags: [{ name: EMAIL_TAG }] }, { source: 'html' });
   try { await sendTest(draft.id, NOTICE_EMAIL); } finally { await api.posts.delete({ id: draft.id }); }
 }

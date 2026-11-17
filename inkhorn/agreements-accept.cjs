@@ -164,9 +164,6 @@ const server = http.createServer(async (req, res) => {
     if (host.startsWith('admin.inkhornreview.com') && (req.method === 'GET' || req.method === 'HEAD')) { res.writeHead(301, { Location: 'https://admin.terryheath.com' + req.url }); return res.end(); }
     if (/^admin\./i.test(host)) return await hub.handle(req, res, ip); // admin.terryheath.com: the admin hub
     if (path === '/health') return send(res, 200, 'ok');
-    if (path === '/payouts' || path === '/payouts.csv' || path === '/payouts/') { // retired: the payouts page lives at admin.terryheath.com/payouts
-      res.writeHead(301, { Location: 'https://admin.terryheath.com/payouts' }); return res.end();
-    }
     if (path !== '/accept' && path !== '/accept/') return send(res, 404, page('<h1>Not found</h1>'));
     if (req.method === 'GET') {
       console.log('GET /accept raw=', JSON.stringify(raw).slice(0, 600));
