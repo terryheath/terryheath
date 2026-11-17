@@ -5,80 +5,68 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{#is "post,page"}}{{meta_title}}{{else}}{{#is "tag"}}{{#tag}}{{#if meta_title}}{{this.meta_title}}{{else}}{{name}} — {{@site.title}}{{/if}}{{/tag}}{{else}}{{@site.title}}{{/is}}{{/is}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Libre+Franklin:wght@400;500;600&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{asset "built/screen.css"}}">
+    <script>if(/^\/white-rabbit(\/|$)/.test(location.pathname))document.documentElement.className+=" wr"</script>
     {{ghost_head}}
 </head>
 
-<body class="{{body_class}}">
+<body class="{{body_class}}{{#has tag="white-rabbit"}} wr-piece{{/has}}">
+<a class="ip-skip" href="#ip-main">Skip to content</a>
 <div class="site">
 
-    {{!-- ── MASTHEAD ─────────────────────────────────────────────────────── --}}
-    <header id="ih-masthead">
-        <div class="ih-mast-top">
-            <div class="ih-wordmark-group">
-                <a class="ih-wordmark" href="{{@site.url}}">{{@site.title}}</a>
-                <div class="ih-tagline">{{@site.description}}</div>
-            </div>
-
-            {{!-- Desktop actions --}}
-            <div class="ih-mast-actions-desktop">
-                <a href="/cart/" class="ih-cart-link">Cart (0)</a>
+    {{!-- ── SHARED HEADER (Inkhorn Press) ───────────────────────────────── --}}
+    <header class="ip-header">
+        <div class="ip-header-in">
+            <a class="ip-brand" href="/">Inkhorn Press</a>
+            <button class="ip-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="ip-nav">Menu</button>
+            <nav class="ip-nav" id="ip-nav" aria-label="Main">
+                <details class="ip-read">
+                    <summary>Read</summary>
+                    <div class="ip-read-menu">
+                        <a href="/review/">Inkhorn Review</a>
+                        <a href="/white-rabbit/">White Rabbit</a>
+                        <a href="https://gomuse.io" rel="noopener">Muse &#8599;</a>
+                    </div>
+                </details>
+                <a href="/submit/">Submit</a>
+                <a href="/shop/">Shop</a>
+                <a href="/events/">Events</a>
+                <a href="/support/">Support</a>
+                <a href="/about/">About</a>
+            </nav>
+            <div class="ip-account">
                 {{#unless @member}}
-                    <a href="#/portal/signin" data-portal="signin">Sign in</a>
-                    <a href="#/portal/signup/free">Sign up</a>
-                    <a href="#/portal/signup" class="ih-subscribe-btn" data-portal="signup">Subscribe</a>
+                    <a class="ip-signin" href="#/portal/signin" data-portal="signin">Sign in</a>
+                    <a class="ip-subscribe" href="#/portal/signup" data-portal="signup">Subscribe</a>
                 {{else}}
-                    <a href="#/portal/account" data-portal="account">Account</a>
+                    <a class="ip-signin" href="#/portal/account" data-portal="account">Account</a>
                 {{/unless}}
             </div>
-
-            {{!-- Phone hamburger --}}
-            <button class="ih-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="ih-nav-overlay">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1c1a17" stroke-width="1.8" stroke-linecap="round">
-                    <line x1="4" y1="7" x2="20" y2="7"></line>
-                    <line x1="4" y1="12" x2="20" y2="12"></line>
-                    <line x1="4" y1="17" x2="20" y2="17"></line>
-                </svg>
-            </button>
         </div>
-
-        {{!-- Phone actions (below wordmark, above nav rule) --}}
-        <div class="ih-mast-actions-phone">
-            <a href="/cart/" class="ih-cart-link">Cart (0)</a>
-            {{#unless @member}}
-                <a href="#/portal/signup" class="ih-subscribe-btn" data-portal="signup">Subscribe</a>
-                <a href="#/portal/signup/free">Sign up</a>
-                <a href="#/portal/signin" data-portal="signin">Sign in</a>
-            {{else}}
-                <a href="#/portal/account" data-portal="account">Account</a>
-            {{/unless}}
-        </div>
-
-        {{!-- Desktop nav (from Ghost navigation settings) --}}
-        <nav class="ih-nav">
-            {{navigation}}
-        </nav>
-
-        {{!-- Phone nav overlay --}}
-        <nav class="ih-nav-overlay" id="ih-nav-overlay">
-            {{navigation}}
-        </nav>
+        {{#is "post"}}{{#unless @custom.hide_subbar}}
+        <div class="ip-subbar" aria-label="Publications"><div class="ip-subbar-in">
+            <a href="/review/">Inkhorn Review</a><a href="/white-rabbit/">White Rabbit</a><a href="https://gomuse.io">Muse &#8599;</a>
+        </div></div>
+        {{/unless}}{{/is}}
     </header>
 
-    <div class="site-content">
+    <div class="site-content" id="ip-main">
         {{{body}}}
     </div>
 
-    {{!-- ── FOOTER ──────────────────────────────────────────────────────── --}}
-    <footer id="ih-footer">
-        <div>{{@site.title}} &copy; {{date format="YYYY"}} &middot; ISSN 3144-1998 (Online)</div>
-        <div class="ih-footer-links">
-            <a href="#/portal/signup/free">Sign up</a>
-            <a href="#/portal/signup" data-portal="signup">Subscribe</a>
-            <a href="https://www.patreon.com/cw/inkhornreview" target="_blank" rel="noopener">Patreon</a>
-            <a href="#" id="ih-tip-link">Tip Us</a>
-            <a href="/privacy/">Privacy</a>
-            <a href="/terms/">Terms</a>
+    {{!-- ── SHARED FOOTER ───────────────────────────────────────────────── --}}
+    <footer class="ip-footer">
+        <div class="ip-footer-in">
+            <span><span class="ip-footer-brand">Inkhorn Press</span> &copy; {{date format="YYYY"}}</span>
+            <nav class="ip-footer-links" aria-label="Footer">
+                <a href="/about/">About</a>
+                <a href="/support/">Support</a>
+                <a href="/privacy/">Privacy</a>
+                <a href="/terms/">Terms</a>
+                <a href="mailto:hello@inkhorn.press">hello@inkhorn.press</a>
+            </nav>
         </div>
     </footer>
 

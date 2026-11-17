@@ -36,3 +36,58 @@
         initNav();
     }
 }());
+
+// Inkhorn Press: shared header menu + live status strip (dates computed, never typed in).
+(function () {
+    'use strict';
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var SEASON = {2:'Spring',5:'Summer',8:'Autumn',11:'Winter'};
+    var DAY = 86400000;
+    function fmt(d) { return MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate() + (', ' + d.getUTCFullYear()); }
+    function nextRelease(now) {
+        var y = now.getUTCFullYear(), m, i;
+        for (i = 0; i < 6; i++) {
+            m = [2,5,8,11][i % 4]; if (i >= 4) y = now.getUTCFullYear() + 1;
+            var d = new Date(Date.UTC(y, m, 1, 12));
+            if (d > now) return d;
+        }
+    }
+    // Free reading periods: every Feb, May, Aug and Nov (the whole month).
+    function reading(now) {
+        var m = now.getUTCMonth(), y = now.getUTCFullYear();
+        if (m % 3 === 1) return { open: true, until: new Date(Date.UTC(y, m + 1, 0)) };
+        var nm = m + ((1 - m % 3) + 3) % 3, ny = y + (nm > 11 ? 1 : 0);
+        return { open: false, from: new Date(Date.UTC(ny, nm % 12, 1)) };
+    }
+    function friday13(now) {
+        var first = Date.UTC(2027, 7, 13); // White Rabbit No. 1
+        var d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 13));
+        for (var i = 0; i < 60; i++) {
+            if (d.getUTCDay() === 5 && d.getTime() >= first && d.getTime() + DAY > now.getTime()) return d;
+            d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 13));
+        }
+    }
+    window.ipStatus = function (now) {
+        now = now || new Date();
+        var r = reading(now), rel = nextRelease(now), f = friday13(now);
+        var days = Math.ceil((f.getTime() - Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) / DAY);
+        return {
+            now: r.open ? 'Free reading period open through ' + MONTHS[r.until.getUTCMonth()] + ' ' + r.until.getUTCDate()
+                        : 'Free reading period opens ' + MONTHS[r.from.getUTCMonth()] + ' 1',
+            readingOpen: r.open,
+            next: 'Inkhorn Review ' + SEASON[rel.getUTCMonth()] + ' ' + rel.getUTCFullYear() + ' — ' + MONTHS[rel.getUTCMonth()] + ' 1',
+            f13: fmt(f) + ' — ' + days + (days === 1 ? ' day' : ' days')
+        };
+    };
+    function fill() {
+        var s = window.ipStatus();
+        document.querySelectorAll('[data-ip-status]').forEach(function (el) {
+            var k = el.getAttribute('data-ip-status'); if (s[k] != null) el.textContent = s[k];
+        });
+        var btn = document.querySelector('.ip-menu-btn'), nav = document.getElementById('ip-nav');
+        if (btn && nav) btn.addEventListener('click', function () {
+            var o = nav.classList.toggle('open'); btn.setAttribute('aria-expanded', o ? 'true' : 'false');
+        });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fill); else fill();
+}());
