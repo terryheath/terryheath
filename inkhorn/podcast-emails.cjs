@@ -97,7 +97,7 @@ ${SIGN}`,
     subject: 'Your Life on Words session: {when}',
     body: `Hello {first},
 
-You're booked. I'm looking forward to the conversation.
+You're booked. I'm looking forward to the conversation. Cal.com, which holds the calendar, also sends you its own confirmation with a calendar invitation; it is the same booking, so there is nothing more to do.
 
 ${SESSION_GUIDE}
 
