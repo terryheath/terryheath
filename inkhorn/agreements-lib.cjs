@@ -48,7 +48,12 @@ async function saveTracker(api, tracker) {
 // --- dates ---------------------------------------------------------------------------------------
 const SEASON_MONTH = { spring: 3, summer: 6, autumn: 9, winter: 12 };
 // Release date of an issue slug like winter-2026: the 1st of Mar/Jun/Sep/Dec of that year (issues go live at 12:00 UTC, very early morning Pacific).
+// Non-seasonal issues (White Rabbit numbers, Muse issues) live in data/publication-issues.json.
+const SPECIAL = (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'publication-issues.json'), 'utf8')); } catch (e) { return {}; } })();
+const special = (issue) => (issue && !String(issue).startsWith('_') && SPECIAL[issue]) || null;
 function releaseDate(issue) {
+  const sp = special(issue);
+  if (sp) { const [y, m, d] = sp.release.split('-').map(Number); return { y, m, d }; }
   const [season, year] = issue.split('-');
   return { y: +year, m: SEASON_MONTH[season], d: 1 };
 }
@@ -56,7 +61,12 @@ const ymd = (o) => `${o.y}-${String(o.m).padStart(2, '0')}-${String(o.d).padStar
 function addDays(dateStr, n) { const d = new Date(dateStr + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 const todayPacific = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
 const pretty = (dateStr) => new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-const issueName = (issue) => { const [s, y] = issue.split('-'); return `${s[0].toUpperCase()}${s.slice(1)} ${y}`; };
+// Which publication an accepted piece is for: Inkhorn Review unless the issue is registered as White Rabbit or Muse.
+const publicationOf = (issue) => (special(issue) || {}).publication || 'Inkhorn Review';
+// The Issue field on the agreement ("Autumn 2026", "No. 1").
+const issueLabel = (issue) => { const sp = special(issue); if (sp) return sp.label; const [s, y] = issue.split('-'); return `${s[0].toUpperCase()}${s.slice(1)} ${y}`; };
+// Display name for lists and emails ("Autumn 2026", "White Rabbit No. 1").
+const issueName = (issue) => { const sp = special(issue); return sp ? `${sp.publication} ${sp.label}` : issueLabel(issue); };
 
 // --- editions data ---------------------------------------------------------------------------------
 const editionsPath = path.join(__dirname, 'data', 'editions-2026.json');
@@ -106,26 +116,29 @@ async function notify(api, subject, html, to = process.env.NOTICE_EMAIL || 'hell
 
 // Who publishes an issue: Follow the Rabbit LLC published Autumn and Winter 2026; Inkhorn Press (the nonprofit) publishes from Spring 2027 on.
 function publisherOf(issue) {
+  if (special(issue)) return 'Inkhorn Press';
   const m = /(spring|summer|autumn|winter)[\s-]+(\d{4})/i.exec(String(issue || ''));
   if (!m) return 'Follow the Rabbit LLC';
   const month = { spring: 3, summer: 6, autumn: 9, winter: 12 }[m[1].toLowerCase()];
   return Number(m[2]) * 100 + month >= 202703 ? 'Inkhorn Press' : 'Follow the Rabbit LLC';
 }
 // The email contributors get with their agreement (DocuSeal replaces {{submitter.link}} with the signing link).
-function agreementEmail({ paid, amount, greeting, titles, issue, release, deadline, published }) {
+function agreementEmail({ paid, amount, greeting, titles, issue, release, deadline, published, publication = 'Inkhorn Review', byPress = false }) {
   const piece = titles.length > 1 ? 'your pieces ' + titles.map((t) => `"${t}"`).join(' and ') : `"${titles[0]}"`;
-  const subject = `Your Inkhorn Review contributor agreement: ${issue}`;
+  const subject = byPress ? `Your ${publication} contributor agreement: ${issue}` : `Your Inkhorn Review contributor agreement: ${issue}`;
   const intro = published
-    ? `Thank you for contributing to Inkhorn Review. ${piece[0] === 'y' ? 'Your pieces' : piece} appeared in our ${issue} issue, and we are putting the terms in writing.`
-    : `Thank you for contributing to Inkhorn Review. ${piece[0] === 'y' ? 'Your pieces are' : piece + ' is'} slated for our ${issue} issue, which releases on ${release}.`;
-  const what = `Please read and sign your contributor agreement. It covers the rights you grant Inkhorn Review (first serial rights, the online archive, anthologies drawn from our own archive, and a reading on our podcast, Life on Words), our promise not to use your work to train AI, and the details we need for print: your name as it should appear, a short bio, and a mailing address. It takes about five minutes.`;
+    ? `Thank you for contributing to ${publication}. ${piece[0] === 'y' ? 'Your pieces' : piece} appeared in our ${issue} issue, and we are putting the terms in writing.`
+    : `Thank you for contributing to ${publication}. ${piece[0] === 'y' ? 'Your pieces are' : piece + ' is'} slated for ${byPress && publication !== 'Inkhorn Review' ? publication + ' ' + issue : 'our ' + issue + ' issue'}, which releases on ${release}.`;
+  const what = byPress
+    ? `Please read and sign your contributor agreement. It covers the rights you grant Inkhorn Press (first serial rights, the online archive, and anthologies drawn from Inkhorn Press's own archive), our promise not to use your work to train AI, and the details we need for print: your name as it should appear, a short bio, and a mailing address. It takes about five minutes.`
+    : `Please read and sign your contributor agreement. It covers the rights you grant Inkhorn Review (first serial rights, the online archive, anthologies drawn from our own archive, and a reading on our podcast, Life on Words), our promise not to use your work to train AI, and the details we need for print: your name as it should appear, a short bio, and a mailing address. It takes about five minutes.`;
   const dl = published
     ? `Please sign by ${deadline}.`
-    : `Please sign by ${deadline}. Inkhorn Review cannot publish a piece without the signed agreement; if it is not signed by then, the piece will be withdrawn from the issue.`;
+    : `Please sign by ${deadline}. ${byPress ? publication : 'Inkhorn Review'} cannot publish a piece without the signed agreement; if it is not signed by then, the piece will be withdrawn from the issue.`;
   const pay = !paid ? '' : published
     ? `\n\nIn the agreement you can choose how you would like to be paid your $${amount}: cash (Zelle or PayPal in the U.S., Wise elsewhere), or a one-year Print subscription to Inkhorn Review (four quarterly issues mailed, plus the ebook of each) instead of cash. If you do not choose by ${deadline}, we will pay the cash.`
     : `\n\nPayment is $${amount}, sent on ${release} by Zelle or PayPal (U.S.) or Wise (elsewhere). In the agreement you will choose between cash and a one-year Print subscription to Inkhorn Review (four quarterly issues mailed, plus the ebook of each) instead of cash.`;
-  const body = `Hello ${greeting},\n\n${intro}\n\n${what}\n\n${dl}${pay}\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\nInkhorn Review\nPublished by ${publisherOf(issue)}`;
+  const body = `Hello ${greeting},\n\n${intro}\n\n${what}\n\n${dl}${pay}\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\n${publication}\nPublished by ${publisherOf(issue)}`;
   return { subject, body };
 }
 
@@ -199,7 +212,9 @@ async function applyPulls(pulled, { commit = true, upload = true } = {}) {
 }
 
 // Pay for one work: $25 poem / micro / flash / prose up to 1,000 words; $40 prose over 1,000 words and printed art; online-only is unpaid.
-function payFor(spec) {
+// Rates per publication. CLAUDE.md has no White Rabbit rates, so White Rabbit uses the Review rates (2026-11-17). Muse pays nothing (policy 2026-11-11).
+function payFor(spec, publication = 'Inkhorn Review') {
+  if (publication === 'Muse') return 0;
   const [kind, extra] = spec.trim().toLowerCase().split(':');
   const online = extra === 'online' || /:online$/.test(spec.toLowerCase()) || spec.toLowerCase().includes('online');
   if (online) return 0;
@@ -225,17 +240,16 @@ async function sendAgreement(o) {
     if (o.allowUnknown) return { title: t, slug: null };
     throw new Error(`"${t}" is not in editions-2026.json for ${issue}`);
   });
-  // From Spring 2027 (releases on or after 2027-03-01) the Review is published by Inkhorn Press, so those agreements use the Inkhorn Press templates (built with PUBLISHER='Inkhorn Press' OUT_SUFFIX=-ip, DocuSeal templates 12 and 13).
-  // Earlier issues keep the Follow the Rabbit LLC wording. There is no Inkhorn Press 'Already Published' template (no Spring 2027 piece is out yet).
-  const byPress = rel >= '2027-03-01';
-  const templateName = paid && noPull ? 'Inkhorn Review Contributor Agreement (Paid, Already Published)'
-    : paid ? (byPress ? 'Inkhorn Review Contributor Agreement (Paid, Inkhorn Press)' : 'Inkhorn Review Contributor Agreement (Paid)')
-    : (byPress ? 'Inkhorn Review Contributor Agreement (Inkhorn Press)' : 'Inkhorn Review Contributor Agreement');
+  const byPress = publisherOf(issue) === 'Inkhorn Press';
+  const publication = publicationOf(issue);
+  const templateName = byPress
+    ? 'Inkhorn Press Contributor Agreement' + (paid && noPull ? ' (Paid, Already Published)' : paid ? ' (Paid)' : '')
+    : paid && noPull ? 'Inkhorn Review Contributor Agreement (Paid, Already Published)' : paid ? 'Inkhorn Review Contributor Agreement (Paid)' : 'Inkhorn Review Contributor Agreement';
   const values = {
-    'Legal name': name, 'Piece titles': titles.join('; '), 'Issue': issueName(issue), 'Issue release date': pretty(rel), 'Signing deadline': pretty(deadline),
+    'Legal name': name, 'Piece titles': titles.join('; '), ...(byPress ? { Publication: publication } : {}), 'Issue': issueLabel(issue), 'Issue release date': pretty(rel), 'Signing deadline': pretty(deadline),
     ...(paid ? { Amount: '$' + amount } : {}),
   };
-  const mail = agreementEmail({ paid, amount, greeting: o.greeting || name.split(' ')[0], titles, issue: issueName(issue), release: pretty(rel), deadline: pretty(deadline), published: noPull });
+  const mail = agreementEmail({ paid, amount, greeting: o.greeting || name.split(' ')[0], titles, issue: issueLabel(issue), release: pretty(rel), deadline: pretty(deadline), published: noPull, publication, byPress });
   const info = { name, email, template: templateName, values, deadline, noPull, mail };
   if (o.preview || o.dry) return info;
   const tpls = await ds('GET', '/templates?limit=100');
@@ -245,18 +259,19 @@ async function sendAgreement(o) {
   const tracker = await loadTracker(api);
   const dup = tracker.records.find((r) => r.status !== 'expired' && ((o.duosumaTok && r.duosuma_tok === o.duosumaTok) || (r.issue === issue && pieces.some((p) => norm(p.title) === norm(r.title)))));
   if (dup) { const e = new Error(`already sent for "${dup.title}" (${dup.contributor}, submission ${dup.submission_id}); not sending again`); e.duplicate = dup; throw e; }
-  const subs = await ds('POST', '/submissions', { template_id: tpl.id, send_email: true, message: { subject: mail.subject, body: mail.body }, submitters: [{ role: 'Contributor', email, name, values }] });
+  const subs = await ds('POST', '/submissions', { template_id: tpl.id, send_email: !o.noEmail, message: { subject: mail.subject, body: mail.body }, submitters: [{ role: 'Contributor', email, name, values }] });
   const sub = subs[0];
   for (const p of pieces) {
     tracker.records.push({
-      issue, slug: p.slug, title: p.title, contributor: name, email, template: paid && noPull ? 'published-paid' : paid ? 'paid' : 'unpaid', amount: paid ? amount : 0,
+      issue, publication, slug: p.slug, title: p.title, contributor: name, email, template: paid && noPull ? 'published-paid' : paid ? 'paid' : 'unpaid', amount: paid ? amount : 0,
       submission_id: sub.submission_id, submitter_slug: sub.slug, sent: today, deadline, status: 'sent', choice: null, pay_method: null,
-      on_deadline: noPull ? 'record-cash-default' : 'pull', reminded: false, pulled: false, comp_granted: false,
+      on_deadline: noPull ? 'record-cash-default' : 'pull', reminded: false,
+      ...(o.noEmail ? { remind7: true, remind3: true, draft_only: true } : {}), // noEmail: DocuSeal sent nothing, and the cron must not send reminders either until the link has gone out pulled: false, comp_granted: false,
       ...(o.duosumaTok ? { duosuma_tok: o.duosumaTok } : {}),
     });
   }
   await saveTracker(api, tracker);
-  return { ...info, submission_id: sub.submission_id, records: pieces.length };
+  return { ...info, submission_id: sub.submission_id, records: pieces.length, link: `${DOCUSEAL_URL}/s/${sub.slug}` };
 }
 
 // Re-sends DocuSeal's signature-request email to the contributor as a reminder (7 and 3 days before the deadline).
@@ -267,10 +282,11 @@ async function remindSubmission(r, days) {
   const published = r.on_deadline === 'record-cash-default';
   const first = (r.contributor || '').replace(/\(.*?\)/g, '').trim().split(/\s+/)[0] || 'there';
   const when = days === 1 ? 'tomorrow' : `in ${days} days`;
-  const body = `Hello ${first},\n\nA reminder: your Inkhorn Review contributor agreement for "${r.title}" is due ${pretty(r.deadline)}, ${when}. ` +
-    (published ? `Your piece stays published either way; if you have not chosen between cash and the Print subscription by then, we will pay the cash.` : `Inkhorn Review cannot publish a piece without the signed agreement, and the piece will be withdrawn from the issue if it is not signed by then.`) +
-    `\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\nInkhorn Review\nPublished by ${publisherOf(r.issue)}`;
-  await ds('PUT', `/submitters/${sm.id}`, { send_email: true, message: { subject: `Reminder: your Inkhorn Review contributor agreement is due ${pretty(r.deadline)}`, body } });
+  const pub = r.publication || publicationOf(r.issue);
+  const body = `Hello ${first},\n\nA reminder: your ${pub} contributor agreement for "${r.title}" is due ${pretty(r.deadline)}, ${when}. ` +
+    (published ? `Your piece stays published either way; if you have not chosen between cash and the Print subscription by then, we will pay the cash.` : `${pub} cannot publish a piece without the signed agreement, and the piece will be withdrawn from the issue if it is not signed by then.`) +
+    `\n\nSign here: {{submitter.link}}\n\nIf you have questions, just reply to this email.\n\n${pub}\nPublished by ${publisherOf(r.issue)}`;
+  await ds('PUT', `/submitters/${sm.id}`, { send_email: true, message: { subject: `Reminder: your ${pub} contributor agreement is due ${pretty(r.deadline)}`, body } });
   return true;
 }
 const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 86400000);
@@ -280,4 +296,4 @@ function releaseSlot(issue, position) {
   return new Date(Date.UTC(...(() => { const r = releaseDate(issue); return [r.y, r.m - 1, r.d, 12, 0, 0]; })()) + (position - 1) * 60000);
 }
 
-module.exports = { publisherOf, resolvedSlug, releaseSlot, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, findPiece, editionsPath };
+module.exports = { publisherOf, resolvedSlug, releaseSlot, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, issueLabel, publicationOf, findPiece, editionsPath };

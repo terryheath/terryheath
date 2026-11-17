@@ -9,9 +9,14 @@
  *   --work "poem|prose:1200|art" works out the amount (one entry per title: poem/micro/flash $25, prose up to 1,000 words $25, prose over
  *   1,000 words $40, printed art $40; add :online or `art:online` for online-only work, which is unpaid). --amount overrides it.
  *   --amount 0 sends the unpaid template; > 0 sends the paid template with that amount (total for all titles).
+ *   --issue is a season slug (winter-2026) or a slug registered in data/publication-issues.json (white-rabbit-no-1); the issue decides the
+ *   publication and the agreement set: Autumn and Winter 2026 Review issues use the Follow the Rabbit LLC templates, everything else the
+ *   Inkhorn Press templates (Publication field filled in). White Rabbit pieces are not in editions-2026.json, so add --allow-unknown.
  *   Deadline: release date minus 30 days, or --deadline-days N from today (Winter 2026 uses 14).
  *   --no-pull: the piece is already published, so a missed deadline never unpublishes it (cron records "cash by default"); uses the
  *   "(Paid, Already Published)" template, which has no withdrawal clause.
+ *   --no-email: create the DocuSeal submission and the tracker record but send nothing (DocuSeal emails nobody and the cron's reminders are
+ *   switched off for it); prints the signing link so you can put it in your own message.
  *   --preview: prints only the email subject and body.
  *   --dry: prints what would be sent and changes nothing.
  * Needs the Keychain items docuseal-inkhorn-token, ghost-url-inkhorn, ghost-admin-inkhorn (or env DOCUSEAL_TOKEN, GHOST_*).
@@ -23,12 +28,13 @@ const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i < 0 ?
   const name = arg('name'), email = arg('email'), issue = arg('issue');
   const titles = String(arg('titles', '')).split('|').map((s) => s.trim()).filter(Boolean);
   const work = arg('work');
-  const amount = arg('amount') !== undefined ? Number(arg('amount')) : work ? String(work).split('|').reduce((n, w) => n + L.payFor(w), 0) : 0;
+  const amount = arg('amount') !== undefined ? Number(arg('amount')) : work ? String(work).split('|').reduce((n, w) => n + L.payFor(w, L.publicationOf(issue)), 0) : 0;
   const r = await L.sendAgreement({
     name, email, issue, titles, amount, deadlineDays: arg('deadline-days'), noPull: !!arg('no-pull'), greeting: arg('greeting'),
-    allowUnknown: !!arg('allow-unknown'), dry: !!arg('dry'), preview: !!arg('preview'),
+    allowUnknown: !!arg('allow-unknown'), noEmail: !!arg('no-email'), dry: !!arg('dry'), preview: !!arg('preview'),
   });
   if (arg('preview')) { console.log(`Subject: ${r.mail.subject}\n\n${r.mail.body}`); return; }
   console.log(JSON.stringify({ name, email, template: r.template, values: r.values, deadline: r.deadline, noPull: r.noPull }, null, 1));
-  if (!arg('dry')) console.log(`Sent submission ${r.submission_id} to ${email}; deadline ${r.deadline}; ${r.records} record(s) added.`);
+  if (!arg('dry') && arg('no-email')) console.log(`Created submission ${r.submission_id} (nothing sent); signing link ${r.link}; deadline ${r.deadline}; ${r.records} record(s) added.`);
+  else if (!arg('dry')) console.log(`Sent submission ${r.submission_id} to ${email}; deadline ${r.deadline}; ${r.records} record(s) added.`);
 })().catch((e) => { console.error(e.message); process.exit(1); });

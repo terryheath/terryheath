@@ -1,0 +1,4 @@
+{
+  "_note": "Issues that are not Inkhorn Review seasons. Key = the issue slug used in the agreements tracker. publication: Inkhorn Review | White Rabbit | Muse. label: what the agreement's Issue field shows. release: ISO release date (the agreement deadline is 30 days before). Add a Muse issue here before sending its first agreement.",
+  "white-rabbit-no-1": { "publication": "White Rabbit", "label": "No. 1", "release": "2027-08-13" }
+}

@@ -7,15 +7,21 @@ const fs = require('fs');
 const path = require('path');
 const out = path.join(__dirname, '..', 'agreements');
 const W = 612, H = 792;
-// PUBLISHER and OUT_SUFFIX build the Inkhorn Press variant (Spring 2027 onward): PUBLISHER='Inkhorn Press' OUT_SUFFIX=-ip node scripts/build-agreement-pdfs.cjs
-const PUB = process.env.PUBLISHER || 'Follow the Rabbit LLC';
-const SUFFIX = process.env.OUT_SUFFIX || '';
+// Two sets. LLC (no suffix): Follow the Rabbit LLC wording for the Autumn and Winter 2026 Review issues (podcast right kept).
+// Inkhorn Press ('-ip' suffix): one agreement for every Inkhorn Press publication (Inkhorn Review from Spring 2027, White Rabbit, Muse);
+// the publication comes from the read-only "Publication" field, the podcast right is gone.
+// Usage: node scripts/build-agreement-pdfs.cjs   (builds both sets)
+const PUB = 'Follow the Rabbit LLC';
 
-function build(paid, published) {
+function build(paid, published, ip) {
+  const SUFFIX = ip ? '-ip' : '';
   const key = published ? 'published-paid' : paid ? 'paid' : 'unpaid';
   const doc = new PDFDocument({ size: 'LETTER', margins: { top: 60, bottom: 60, left: 64, right: 64 } });
   doc.pipe(fs.createWriteStream(path.join(out, key + SUFFIX + '.pdf')));
   const fields = [];
+  // plain-text copy of everything drawn on the pages (for review): agreements/<key>[-ip].txt
+  const lines = []; const dt = doc.text.bind(doc);
+  doc.text = (t, ...rest) => { lines.push(String(t)); return dt(t, ...rest); };
   let page = 0;
   doc.on('pageAdded', () => { page++; });
   const L = 64;
@@ -40,19 +46,31 @@ function build(paid, published) {
     box(name, 'text', L, y, w, hh, o);
     doc.y = y + hh + 10; doc.x = L;
   };
-  doc.font('Helvetica-Bold').fontSize(18).text('Inkhorn Review Contributor Agreement').moveDown(0.3);
-  p('Inkhorn Review, published by ' + PUB + ' (the "Publisher"), and the contributor named below agree as follows.');
+  doc.font('Helvetica-Bold').fontSize(18).text(ip ? 'Inkhorn Press Contributor Agreement' : 'Inkhorn Review Contributor Agreement').moveDown(0.3);
+  p(ip ? 'Inkhorn Press (the "Publisher") and the contributor named below agree as follows.'
+       : 'Inkhorn Review, published by ' + PUB + ' (the "Publisher"), and the contributor named below agree as follows.');
   h('The work');
   line('Contributor (legal name):', 'Legal name', 'text', 300, { readonly: true });
   line('Piece(s):', 'Piece titles', 'text', 380, { readonly: true });
-  { const y = doc.y; doc.font('Helvetica').fontSize(10.5).text('Issue:', L, y, { lineBreak: false });
+  if (ip) {
+    // Publication, Issue and Release date on one row
+    const y = doc.y; doc.font('Helvetica').fontSize(10.5);
+    let x = L;
+    for (const [label, name, w] of [['Publication:', 'Publication', 104], ['Issue:', 'Issue', 74], ['Release date:', 'Issue release date', 100]]) {
+      doc.text(label, x, y, { lineBreak: false });
+      const bx = x + doc.widthOfString(label) + 5; box(name, 'text', bx, y - 3, w, 17, { readonly: true });
+      x = bx + w + 12;
+    }
+    doc.y = y + 25; doc.x = L;
+  } else { const y = doc.y; doc.font('Helvetica').fontSize(10.5).text('Issue:', L, y, { lineBreak: false });
     const x1 = L + doc.widthOfString('Issue:') + 6; box('Issue', 'text', x1, y - 3, 150, 17, { readonly: true });
     const lx = x1 + 150 + 16; doc.text('Release date:', lx, y, { lineBreak: false });
     box('Issue release date', 'text', lx + doc.widthOfString('Release date:') + 6, y - 3, 150, 17, { readonly: true });
     doc.y = y + 25; doc.x = L; }
   if (paid) {
     h('Payment');
-    p("Inkhorn Review pays $25 per poem, micro or flash piece, and per prose piece of 1,000 words or fewer, and $40 per prose piece over 1,000 words and per piece of printed artwork. Online-only work, art included, is not paid. Payment is sent on the issue's release day by Zelle or PayPal (U.S.) or Wise (elsewhere). Payment on initial publication covers all uses described in this agreement.");
+    p(ip ? "The amount for the piece is shown below. Payment is sent on the release day by Zelle or PayPal (U.S.) or Wise (elsewhere). Payment on initial publication covers all uses described in this agreement."
+         : "Inkhorn Review pays $25 per poem, micro or flash piece, and per prose piece of 1,000 words or fewer, and $40 per prose piece over 1,000 words and per piece of printed artwork. Online-only work, art included, is not paid. Payment is sent on the issue's release day by Zelle or PayPal (U.S.) or Wise (elsewhere). Payment on initial publication covers all uses described in this agreement.");
     line('Amount due for this piece:', 'Amount', 'text', 100, { readonly: true });
     p('Choose one (required):');
     doc.font('Helvetica').fontSize(10.5);
@@ -68,14 +86,16 @@ function build(paid, published) {
     block('Payment details (Zelle or PayPal email or phone; or Wise email), if you chose cash:', 'Payment details', 400, 17, { required: false });
   }
   h('Rights');
-  p("You grant Inkhorn Review, published by " + PUB + ", and its successors and assigns first serial rights; the right to keep the work in our online archive; the right to reprint it in anthologies drawn from Inkhorn's own archive; and the right to read it aloud on our podcast, Life on Words. For artwork, this also includes the non-exclusive right to use the image in promotion of the issue in which it appears. Payment upon initial publication covers all uses.");
+  const tail = ' For artwork, this also includes the non-exclusive right to use the image in promotion of the issue in which it appears.' + (paid ? ' Payment upon initial publication covers all uses.' : '');
+  p(ip ? "You grant Inkhorn Press and its successors and assigns first serial rights; the right to keep the work in our online archive; and the right to reprint it in anthologies drawn from Inkhorn Press's own archive." + tail
+       : "You grant Inkhorn Review, published by " + PUB + ", and its successors and assigns first serial rights; the right to keep the work in our online archive; the right to reprint it in anthologies drawn from Inkhorn's own archive; and the right to read it aloud on our podcast, Life on Words." + tail);
   p('We will not use your work to train AI models, and we will not license it to anyone who does.');
-  p('All other rights remain with you, and all rights revert to you on publication. You may reprint your work wherever you like; we only ask that Inkhorn Review be credited as the first publisher.');
+  p('All other rights remain with you, and all other rights revert to you on publication; the non-exclusive rights above continue. You may reprint your work wherever you like; we only ask that ' + (ip ? 'the publication named above' : 'Inkhorn Review') + ' be credited as the first publisher.');
   p('You confirm the work is yours and has not been previously published. A personal blog, newsletter, or public social media post counts as published; work shared only in a workshop or private group is fine.');
   h('Deadline');
   doc.font('Helvetica').fontSize(10.5).text(published
     ? 'Your piece has already been published and will stay published. Please sign by the date below. If you have not chosen between cash and the Print subscription by then, you will be paid the cash.'
-    : 'Inkhorn Review cannot publish a piece without this signed agreement. It must be signed by the date below, or the piece will be withdrawn from the issue.', { lineGap: 2 }).moveDown(0.4);
+    : (ip ? 'The publication named above' : 'Inkhorn Review') + ' cannot publish a piece without this signed agreement. It must be signed by the date below, or the piece will be withdrawn from the issue.', { lineGap: 2 }).moveDown(0.4);
   line('Signing deadline:', 'Signing deadline', 'text', 130, { readonly: true });
   h('For the print edition');
   line('Name as it should appear in print:', 'Name in print', 'text', 280);
@@ -88,9 +108,8 @@ function build(paid, published) {
     box('Date', 'date', lx + doc.widthOfString('Date:') + 6, y + 10, 110, 18); }
   doc.end();
   fs.writeFileSync(path.join(out, key + SUFFIX + '.fields.json'), JSON.stringify(fields, null, 1));
+  fs.writeFileSync(path.join(out, key + SUFFIX + '.txt'), lines.join('\n') + '\n');
 }
 fs.mkdirSync(out, { recursive: true });
-build(true, false);
-build(false, false);
-build(true, true);
+for (const ip of [false, true]) { build(true, false, ip); build(false, false, ip); build(true, true, ip); }
 console.log('built');
