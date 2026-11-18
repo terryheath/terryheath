@@ -3,7 +3,7 @@ namespace Inkhorn;
 
 add_action('init', function () {
   $kind = site()['kind'];
-  $common = ['public' => true, 'show_in_rest' => true, 'has_archive' => false, 'supports' => ['title', 'editor', 'thumbnail', 'excerpt', 'custom-fields', 'page-attributes']];
+  $common = ['public' => true, 'show_in_rest' => true, 'supports' => ['title', 'editor', 'thumbnail', 'excerpt', 'custom-fields', 'page-attributes']];
 
   // every type is registered on every site (the importer writes across the network); only the right sites show them in the admin menu
   $ui = function (array $kinds) use ($kind) { return in_array($kind, $kinds, true); };
