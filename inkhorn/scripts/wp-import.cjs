@@ -60,7 +60,7 @@ function clean(html) {
   for (const cp of pages.filter((p) => (p.tags || []).some((t) => t.slug === 'hash-catalog'))) {
     const j = (/<script id="ih-book"[^>]*>([\s\S]*?)<\/script>/.exec(cp.codeinjection_head || '') || [])[1];
     let d = {}; try { d = JSON.parse(j); } catch (e) { /* no shop data on this page */ }
-    await put({ site: 'hub', type: 'ih_book', slug: cp.slug, title: cp.title, content: '', excerpt: cp.custom_excerpt || '', status: cp.status === 'published' ? 'publish' : 'draft', thumbnail_url: cp.feature_image,
+    await put({ site: 'hub', type: 'ih_book', slug: cp.slug, title: cp.title, content: '', excerpt: cp.custom_excerpt || '', status: cp.status === 'published' ? 'publish' : cp.status === 'scheduled' ? 'future' : 'draft', date: cp.published_at, thumbnail_url: cp.feature_image,
       meta: { ih_sku: d.sku || '', ih_isbn: d.isbn || '', ih_preorder: !!d.preorder } });
     console.log('book', cp.slug, d.sku);
   }

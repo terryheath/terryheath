@@ -40,7 +40,24 @@ async function loadPages() {
   return bySku;
 }
 
+// WordPress: the same information from the network's catalog endpoint (a book scheduled for the future is a preorder).
+async function loadFromWp() {
+  const res = await fetch(process.env.WP_URL.replace(/\/$/, '') + '/wp-json/inkhorn/v1/catalog');
+  if (!res.ok) throw new Error(`WordPress catalog lookup failed: ${res.status}`);
+  const bySku = new Map();
+  for (const b of await res.json()) {
+    if (!b.sku) continue;
+    if (!bySku.has(b.sku) || b.status === 'scheduled') bySku.set(b.sku, { status: b.status, publishedAt: b.published_at });
+  }
+  return bySku;
+}
+
 async function catalog() {
+  if (process.env.WP_URL && (process.env.CATALOG_SOURCE || '').toLowerCase() === 'wp') {
+    if (cache && Date.now() - cacheAt < TTL) return cache;
+    try { cache = await loadFromWp(); cacheAt = Date.now(); } catch (err) { if (!cache) throw err; console.error('catalog refresh failed, using stale copy:', err.message); }
+    return cache;
+  }
   if (!cfg.ghostUrl || !cfg.ghostAdminKey) return new Map();
   if (cache && Date.now() - cacheAt < TTL) return cache;
   try {
