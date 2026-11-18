@@ -42,6 +42,7 @@ function import_item(\WP_REST_Request $r) {
       'post_status' => $d['status'] ?? 'publish', 'post_excerpt' => $d['excerpt'] ?? '', 'menu_order' => (int) ($d['menu_order'] ?? 0),
     ];
     if (!empty($d['date'])) { $arr['post_date_gmt'] = gmdate('Y-m-d H:i:s', strtotime($d['date'])); $arr['post_date'] = get_date_from_gmt($arr['post_date_gmt']); }
+    if ($found && !empty($d['skip_if_exists'])) { return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID), 'existed' => true]; }
     if ($found) { $arr['ID'] = $found[0]->ID; }
     kses_remove_filters();
     $id = wp_insert_post($arr, true);

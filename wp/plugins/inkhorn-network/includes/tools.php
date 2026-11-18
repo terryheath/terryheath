@@ -64,6 +64,19 @@ add_action('rest_api_init', function () {
     }
     return $out;
   }]);
+  register_rest_route('inkhorn/v1', '/month-notes', ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
+    $from = gmdate('Y-m-d H:i:s', strtotime((string) $r['from'])); $to = gmdate('Y-m-d H:i:s', strtotime((string) $r['to']));
+    $out = [];
+    foreach (['terryheath' => 'post', 'review' => 'ih_piece', 'lifeonwords' => 'ih_episode'] as $key => $type) {
+      $bid = site_id_for($key); if (!$bid) { continue; }
+      switch_to_blog($bid);
+      foreach (get_posts(['post_type' => $type, 'post_status' => 'publish', 'numberposts' => 100, 'date_query' => [['after' => $from, 'before' => $to, 'inclusive' => true, 'column' => 'post_date_gmt']]]) as $p) {
+        $out[$key][] = ['title' => get_the_title($p), 'url' => get_permalink($p), 'at' => $p->post_date_gmt];
+      }
+      restore_current_blog();
+    }
+    return $out;
+  }]);
   register_rest_route('inkhorn/v1', '/catalog', ['methods' => 'GET', 'permission_callback' => '__return_true', 'callback' => function () {
     $out = [];
     foreach (get_posts(['post_type' => 'ih_book', 'numberposts' => 100, 'post_status' => ['publish', 'future']]) as $b) {
