@@ -66,6 +66,31 @@ db.exec(`
     detail     TEXT
   );
   CREATE INDEX IF NOT EXISTS events_session ON events (session_id);
+
+  -- Memberships (replace Ghost tiers). One row per entitlement: paid by Stripe subscription, or complimentary.
+  CREATE TABLE IF NOT EXISTS members (
+    email           TEXT PRIMARY KEY,
+    name            TEXT,
+    stripe_customer TEXT,
+    created_at      TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS memberships (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    email               TEXT NOT NULL REFERENCES members(email),
+    publication         TEXT NOT NULL,                       -- 'review' | 'whiterabbit'
+    kind                TEXT NOT NULL,                       -- 'ebook' | 'print'
+    source              TEXT NOT NULL,                       -- 'stripe' | 'comp' (granted from a signed agreement that chose a subscription)
+    stripe_subscription TEXT,
+    status              TEXT NOT NULL,                       -- 'active' | 'past_due' | 'canceled' | 'expired'
+    period_end          TEXT,                                -- paid: end of the current period; comp: expiry
+    note                TEXT,                                -- e.g. 'Subscription taken in place of payment: <piece> (<issue>)'
+    ref                 TEXT,                                -- agreement submission id for comps
+    created_at          TEXT NOT NULL,
+    updated_at          TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS memberships_stripe ON memberships (stripe_subscription, publication) WHERE stripe_subscription IS NOT NULL;
+  CREATE UNIQUE INDEX IF NOT EXISTS memberships_comp ON memberships (ref, publication) WHERE source = 'comp' AND ref IS NOT NULL;
+  CREATE INDEX IF NOT EXISTS memberships_email ON memberships (email);
 `);
 
 function tx(fn) {

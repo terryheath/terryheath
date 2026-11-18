@@ -50,7 +50,25 @@ async function updateStatuses(tracker, events) {
   }
 }
 
+// Subscription taken in place of payment: granted in the shop service (the membership store that replaces Ghost tiers) when the agreement is signed.
+// Review contributors get Review Print, White Rabbit contributors get White Rabbit Print. Ghost comps stay on until Ghost is switched off (GHOST_COMPS=off).
+async function grantShopComp(r) {
+  const base = process.env.SHOP_SERVICE_URL, token = process.env.MEMBER_API_TOKEN;
+  if (!base || !token) return null;
+  const pub = (r.publication || L.publicationOf(r.issue)) === 'White Rabbit' ? 'whiterabbit' : 'review';
+  const res = await fetch(base.replace(/\/$/, '') + '/membership/grant', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Member-Token': token },
+    body: JSON.stringify({ email: r.email, name: r.contributor, publication: pub, kind: 'print', months: 12, ref: String(r.submission_id),
+      note: `Subscription taken in place of payment: ${r.title} (${L.issueName(r.issue)})` }),
+  });
+  if (!res.ok) throw new Error('shop grant failed: ' + res.status + ' ' + (await res.text()).slice(0, 200));
+  return res.json();
+}
+
 async function grantComp(api, r, events) {
+  const shop = await grantShopComp(r);
+  if (shop) { r.comp_granted = true; r.comp_expires = shop.expires || r.comp_expires || null; r.comp_store = 'shop'; }
+  if ((process.env.GHOST_COMPS || 'on') === 'off') { if (shop) events.comps.push(r); return; }
   const tiers = (await L.gfetch('GET', '/tiers/?limit=all')).tiers;
   const print = tiers.find((t) => t.name === 'Print' && t.active);
   if (!print) throw new Error('Print tier not found');

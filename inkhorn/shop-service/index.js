@@ -8,6 +8,7 @@ const cfg = require('./lib/config');
 const catalog = require('./lib/catalog');
 const orders = require('./lib/orders');
 const downloads = require('./lib/downloads');
+const memberships = require('./lib/memberships');
 const adminRouter = require('./lib/admin');
 const { startReleaseJob } = require('./lib/release');
 
@@ -33,6 +34,7 @@ app.use(express.json());
 
 // ── DOWNLOADS AND ADMIN ──────────────────────────────────────────────────────
 app.use('/d', downloads);
+app.use('/membership', memberships.router(stripe));
 app.use('/admin', adminRouter({
   stripe,
   // every active ebook product with its file key, for the admin file check
@@ -266,6 +268,13 @@ app.post('/webhook', async (req, res) => {
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    if (await memberships.handleEvent(stripe, event)) return res.json({ received: true });
+  } catch (err) {
+    console.error('membership event handling failed:', err.message);
+    return res.status(500).json({ error: 'processing failed, please retry' });
   }
 
   if (event.type === 'checkout.session.completed') {
