@@ -58,6 +58,15 @@ add_action('rest_api_init', function () {
     if ($out && $out['contributor']) { switch_to_blog(get_main_site_id()); $c = get_posts(['post_type' => 'ih_contributor', 'name' => $out['contributor'], 'numberposts' => 1, 'post_status' => 'any']); $out['contributor_bio'] = $c ? get_post_meta($c[0]->ID, 'ih_bio', true) : ''; restore_current_blog(); }
     return $out ?: new \WP_Error('nf', 'not found', ['status' => 404]);
   }]);
+  register_rest_route('inkhorn/v1', '/contributor-meta', ['methods' => 'POST', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
+    $d = $r->get_json_params(); $allowed = ['ih_shelf', 'ih_url'];
+    switch_to_blog(get_main_site_id());
+    $c = get_posts(['post_type' => 'ih_contributor', 'name' => sanitize_title($d['slug']), 'numberposts' => 1, 'post_status' => 'any']);
+    if (!$c) { restore_current_blog(); return new \WP_Error('nf', 'no such contributor', ['status' => 404]); }
+    foreach (($d['meta'] ?? []) as $k => $v) { if (in_array($k, $allowed, true)) { update_post_meta($c[0]->ID, $k, $v); } }
+    restore_current_blog();
+    return ['ok' => true];
+  }]);
   register_rest_route('inkhorn/v1', '/bio', ['methods' => 'POST', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
     $d = $r->get_json_params(); switch_to_blog(get_main_site_id());
     $c = get_posts(['post_type' => 'ih_contributor', 'name' => sanitize_title($d['contributor']), 'numberposts' => 1, 'post_status' => 'any']);

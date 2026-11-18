@@ -18,4 +18,14 @@ add_action('wp_enqueue_scripts', function () {
 function asset_ver() { return (string) @filemtime(INKHORN_DIR . '/assets/inkhorn.css') ?: '0'; }
 
 add_action('wp_head', function () { echo '<meta name="theme-color" content="' . esc_attr(site()['accent']) . '">'; });
-add_filter('wp_robots', function ($r) { return $r; });
+/** Open Graph / Twitter tags: pieces use their issue's cover, issues and books their own image (replaces the Ghost og-webhook). */
+add_action('wp_head', function () {
+  $img = ''; $title = wp_get_document_title(); $url = '';
+  if (is_singular('ih_piece')) { $iss = get_post((int) get_post_meta(get_the_ID(), 'ih_issue_id', true)); $img = $iss ? get_the_post_thumbnail_url($iss, 'large') : ''; }
+  elseif (is_singular()) { $img = get_the_post_thumbnail_url(get_the_ID(), 'large'); }
+  elseif (is_front_page() && site()['kind'] === 'publication') { $c = current_issue(); $img = $c ? get_the_post_thumbnail_url($c, 'large') : ''; }
+  if (is_singular()) { $url = get_permalink(); }
+  echo '<meta property="og:site_name" content="' . esc_attr(site()['name']) . '"><meta property="og:title" content="' . esc_attr($title) . '"><meta property="og:type" content="' . (is_singular() ? 'article' : 'website') . '">';
+  if ($url) { echo '<meta property="og:url" content="' . esc_url($url) . '">'; }
+  if ($img) { echo '<meta property="og:image" content="' . esc_url($img) . '"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="' . esc_url($img) . '">'; }
+});

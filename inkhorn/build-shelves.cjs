@@ -342,6 +342,23 @@ async function main() {
   // codeinjection_head. shelves.json is no longer committed or fetched.
   // console.log(`\nWrote shelves.json — ${Object.keys(shelves).length} contributor(s)`);
 
+  // --- WordPress (CMS=wp): the shelf is stored on the contributor record (field ih_shelf) and printed on their hub page ---
+  if ((process.env.CMS || "").toLowerCase() === "wp") {
+    const esc = (x) => String(x || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    let ok = 0, bad = 0;
+    for (const [slug, entry] of Object.entries(shelves)) {
+      if (!entry.books || !entry.books.length) continue;
+      let h = `<div class="ih-book-shelf"><h2>Books by ${esc(entry.name)}</h2><ul class="ih-list">`;
+      for (const b of entry.books) {
+        const href = b.isbn ? `https://bookshop.org/a/94291/${b.isbn}` : "#";
+        h += `<li><a href="${esc(href)}" target="_blank" rel="noopener"><span class="ih-pt">${esc(b.title)}</span>${b.authors ? `<span class="ih-pa">${esc(b.authors)}</span>` : ""}</a></li>`;
+      }
+      h += `</ul></div>`;
+      const r = await fetch(process.env.WP_URL.replace(/\/$/, "") + "/wp-json/inkhorn/v1/contributor-meta", { method: "POST", headers: { "X-Import-Token": process.env.INKHORN_IMPORT_TOKEN || "", "Content-Type": "application/json" }, body: JSON.stringify({ slug, meta: { ih_shelf: h } }) });
+      if (r.ok) ok++; else { bad++; console.log(`  WP  ${slug}: ${r.status}`); }
+    }
+    console.log(`\nWordPress update: ${ok} shelves written, ${bad} errors`);
+  } else
   // --- Write shelf data to Ghost tag codeinjection_head ---
   if (GHOST_API_URL && GHOST_ADMIN_KEY) {
     const [kid, secret] = GHOST_ADMIN_KEY.split(":");

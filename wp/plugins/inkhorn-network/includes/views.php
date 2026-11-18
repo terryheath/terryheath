@@ -223,6 +223,7 @@ function view_contributor($c) {
   if (m($c->ID, 'ih_bio')) { $h .= '<p class="ih-bio">' . e(m($c->ID, 'ih_bio')) . '</p>'; }
   if (m($c->ID, 'ih_url')) { $h .= '<p><a href="' . a(m($c->ID, 'ih_url')) . '" rel="me noopener">' . e(preg_replace('#^https?://(www\.)?#', '', rtrim(m($c->ID, 'ih_url'), '/'))) . '</a></p>'; }
   $h .= '</div></div>';
+  if (m($c->ID, 'ih_shelf')) { $h .= wp_kses_post(m($c->ID, 'ih_shelf')); }
   $work = contributor_work($c->post_name);
   foreach ($work as $pub => $items) {
     $h .= '<section><h2>' . e($pub) . '</h2><ul class="ih-list">';
