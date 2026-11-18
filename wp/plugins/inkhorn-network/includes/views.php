@@ -333,6 +333,11 @@ function view_search() {
 /** Dispatcher: what the current request shows. */
 function render_page() {
   $k = site()['kind'];
+  $v = get_query_var('ih_view');
+  if ($v === 'signin') { return view_signin(); }
+  if ($v === 'account') { return view_account(); }
+  if ($v === 'preferences') { return view_preferences(); }
+  if ($v === 'subscribe') { return view_subscribe(); }
   if (is_404()) { return view_404(); }
   if (is_search()) { return view_search(); }
   if (is_front_page() || is_home()) {

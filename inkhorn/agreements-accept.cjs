@@ -151,6 +151,33 @@ async function confirm(f) {
 }
 
 
+// Read-only data for the WordPress contributor account: a contributor's agreements (with the signed PDF from DocuSeal) and payments.
+async function contributorApi(req, res, raw) {
+  const tok = process.env.MEMBER_API_TOKEN, got = String(req.headers['x-member-token'] || '');
+  const ok = tok && got.length === tok.length && require('crypto').timingSafeEqual(Buffer.from(got), Buffer.from(tok));
+  const json = (code, o) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(o)); };
+  if (!ok) return json(401, { error: 'unauthorized' });
+  const email = (new URLSearchParams(raw).get('email') || '').trim().toLowerCase();
+  const api = L.ghost(); const tracker = await L.loadTracker(api);
+  const mine = tracker.records.filter((r) => String(r.email).toLowerCase() === email);
+  const agreements = [], payments = [], seen = new Set();
+  for (const r of mine) {
+    let pdf = '', signedAt = '';
+    if (r.status === 'signed' && r.submission_id) {
+      try { const sub = await L.ds('GET', `/submissions/${r.submission_id}`); pdf = (sub.documents && sub.documents[0] && sub.documents[0].url) || ''; signedAt = ((sub.submitters && sub.submitters[0] && sub.submitters[0].completed_at) || '').slice(0, 10); } catch (e) { /* DocuSeal unreachable: list without the PDF */ }
+    }
+    agreements.push({ title: r.title, publication: r.publication || L.publicationOf(r.issue), issue: L.issueLabel(r.issue), signed: r.status === 'signed', signed_at: signedAt || (r.signed_at || '').slice(0, 10), pdf });
+    if (r.template !== 'unpaid' && r.amount) {
+      const rel = L.pretty(L.ymd(L.releaseDate(r.issue)));
+      const line = r.status !== 'signed' ? `$${r.amount} · waiting for your signed agreement`
+        : r.choice === 'subscription' ? `Subscription taken in place of payment (Print membership, $${r.amount} piece)`
+        : `$${r.amount} · ${r.paid_at ? 'paid ' + r.paid_at : 'due ' + rel}${r.pay_method ? ' · ' + r.pay_method : ''}`;
+      payments.push({ title: r.title, line });
+    }
+  }
+  json(200, { agreements, payments });
+}
+
 const readBody = (req) => new Promise((res, rej) => { let b = ''; req.on('data', (c) => { b += c; if (b.length > 20000) { req.destroy(); rej(new Error('too large')); } }); req.on('end', () => res(b)); });
 const send = (res, code, html) => { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(html); };
 
@@ -164,6 +191,7 @@ const server = http.createServer(async (req, res) => {
     if (host.startsWith('admin.inkhornreview.com') && (req.method === 'GET' || req.method === 'HEAD')) { res.writeHead(301, { Location: 'https://admin.terryheath.com' + req.url }); return res.end(); }
     if (/^admin\./i.test(host)) return await hub.handle(req, res, ip); // admin.terryheath.com: the admin hub
     if (path === '/health') return send(res, 200, 'ok');
+    if (path === '/api/contributor') return await contributorApi(req, res, raw); // WordPress account page (token auth)
     if (path !== '/accept' && path !== '/accept/') return send(res, 404, page('<h1>Not found</h1>'));
     if (req.method === 'GET') {
       console.log('GET /accept raw=', JSON.stringify(raw).slice(0, 600));

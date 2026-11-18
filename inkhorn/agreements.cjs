@@ -39,6 +39,7 @@ async function updateStatuses(tracker, events) {
     if (!s || s.status !== 'completed') continue;
     const vals = Object.fromEntries((s.values || []).map((v) => [v.field, v.value]));
     const pc = String(vals['Payment choice'] || '');
+    try { await L.wpContributorAccount({ email: recs[0].email, name: String(vals['Name in print'] || recs[0].contributor).trim(), bio: String(vals['Bio'] || '').trim() }); } catch (e) { console.error('contributor account:', e.message); }
     for (const r of recs) {
       r.status = 'signed'; r.signed_at = s.completed_at;
       if (r.template !== 'unpaid') {

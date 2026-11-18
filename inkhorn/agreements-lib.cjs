@@ -274,6 +274,15 @@ async function sendAgreement(o) {
   return { ...info, submission_id: sub.submission_id, records: pieces.length, link: `${DOCUSEAL_URL}/s/${sub.slug}` };
 }
 
+// Creates (or finds) the contributor's account on the WordPress hub when an agreement is signed: name and bio come from the agreement.
+async function wpContributorAccount({ email, name, bio }) {
+  const base = process.env.WP_URL, tok = process.env.INKHORN_IMPORT_TOKEN;
+  if (!base || !tok) return null;
+  const r = await fetch(base.replace(/\/$/, '') + '/wp-json/inkhorn/v1/contributor-account', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Import-Token': tok }, body: JSON.stringify({ email, name, bio }) });
+  if (!r.ok) throw new Error('wp account failed: ' + r.status);
+  return r.json();
+}
+
 // Re-sends DocuSeal's signature-request email to the contributor as a reminder (7 and 3 days before the deadline).
 async function remindSubmission(r, days) {
   const sub = await ds('GET', `/submissions/${r.submission_id}`);
@@ -296,4 +305,4 @@ function releaseSlot(issue, position) {
   return new Date(Date.UTC(...(() => { const r = releaseDate(issue); return [r.y, r.m - 1, r.d, 12, 0, 0]; })()) + (position - 1) * 60000);
 }
 
-module.exports = { publisherOf, resolvedSlug, releaseSlot, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, issueLabel, publicationOf, findPiece, editionsPath };
+module.exports = { publisherOf, resolvedSlug, releaseSlot, remindSubmission, daysBetween, sendAgreement, payFor, applyPulls, githubCommit, themeZip, uploadTheme, agreementEmail, gfetch, notify, DOCUSEAL_URL, ghost, ds, loadTracker, saveTracker, releaseDate, ymd, addDays, todayPacific, pretty, issueName, issueLabel, publicationOf, wpContributorAccount, findPiece, editionsPath };
