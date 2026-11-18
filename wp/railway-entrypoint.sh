@@ -3,6 +3,8 @@
 # Env: WP_DOMAIN (host the network lives on; a Railway address while testing, inkhorn.press at cutover),
 #      WORDPRESS_DB_* (from the MySQL service), WP_ADMIN_USER / WP_ADMIN_PASSWORD / WP_ADMIN_EMAIL.
 set -e
+# the uploads volume is mounted root-owned: let Apache's user write to it
+mkdir -p /var/www/html/wp-content/uploads && chown -R www-data:www-data /var/www/html/wp-content/uploads
 # Apache must have exactly one MPM (prefork, which mod_php needs)
 rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*
 ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load
