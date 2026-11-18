@@ -11,7 +11,7 @@ const LM = require('../listmonk.cjs');
 const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 const date = process.argv[2] || new Date().toISOString().slice(0, 10);
-const out = path.join(__dirname, '..', 'backups', date + '-network'); fs.mkdirSync(out, { recursive: true });
+const out = path.join(process.env.BACKUP_DIR || path.join(require('os').homedir(), 'inkhorn-backups'), date + '-network'); // outside the repo: subscriber and contributor emails fs.mkdirSync(out, { recursive: true });
 const wp = async (p) => { const r = await fetch(WP + '/wp-json/inkhorn/v1' + p, { headers: { 'X-Import-Token': TOKEN } }); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); };
 (async () => {
   const content = await wp('/export'); fs.writeFileSync(path.join(out, 'content.json'), JSON.stringify(content, null, 2));
