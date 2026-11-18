@@ -44,7 +44,7 @@ if (!slug) {
 // ── Credentials & JWT ─────────────────────────────────────────────────────────
 
 const ADMIN_KEY = process.env.INKHORN_ADMIN_API_KEY;
-if (!ADMIN_KEY || !ADMIN_KEY.includes(':')) {
+if ((process.env.CMS || '').toLowerCase() !== 'wp' && (!ADMIN_KEY || !ADMIN_KEY.includes(':'))) {
   console.error('INKHORN_ADMIN_API_KEY is not set or is not in id:secret format.');
   console.error('  export INKHORN_ADMIN_API_KEY=$(security find-generic-password -s "ghost-admin-inkhorn" -w)');
   process.exit(1);
@@ -61,7 +61,7 @@ function getKeychain(service) {
   }
 }
 
-const GHOST_URL = getKeychain('ghost-url-inkhorn').replace(/\/$/, '');
+const GHOST_URL = (process.env.CMS || '').toLowerCase() === 'wp' ? '' : getKeychain('ghost-url-inkhorn').replace(/\/$/, '');
 
 function makeJWT(adminKey) {
   const [id, hexSecret] = adminKey.split(':');
@@ -79,7 +79,17 @@ function adminHeaders() {
 
 // ── Admin API fetches ─────────────────────────────────────────────────────────
 
+// WordPress mode (CMS=wp): the same Ghost-shaped data from the network's issue-pieces endpoint.
+const WPMODE = (process.env.CMS || '').toLowerCase() === 'wp';
+const wpCache = {};
+async function wpIssue(slug) {
+  if (wpCache[slug]) return wpCache[slug];
+  const res = await fetch(`${process.env.WP_URL.replace(/\/$/, '')}/wp-json/inkhorn/v1/issue-pieces?issue=${encodeURIComponent(slug)}`, { headers: { 'X-Import-Token': process.env.INKHORN_IMPORT_TOKEN || '' } });
+  if (!res.ok) throw new Error(`WordPress issue-pieces ${slug}: HTTP ${res.status}`);
+  return (wpCache[slug] = await res.json());
+}
 async function fetchTag(tagSlug) {
+  if (WPMODE) { const d = await wpIssue(tagSlug); return { id: 'issue:' + d.issue.slug, name: d.issue.name, slug: d.issue.slug, description: '', feature_image: d.issue.feature_image }; }
   const url = `${GHOST_URL}/ghost/api/admin/tags/slug/${encodeURIComponent(tagSlug)}/`;
   const res = await fetch(url, { headers: adminHeaders() });
   if (!res.ok) throw new Error(`Failed to fetch tag "${tagSlug}": HTTP ${res.status}`);
@@ -89,6 +99,7 @@ async function fetchTag(tagSlug) {
 }
 
 async function fetchTagById(tagId) {
+  if (WPMODE) { for (const d of Object.values(wpCache)) for (const p of d.posts) for (const t of p.tags) if (t.id === tagId) return { ...t, description: t.description || '' }; throw new Error(`Tag not found: ${tagId}`); }
   const url = `${GHOST_URL}/ghost/api/admin/tags/${encodeURIComponent(tagId)}/`;
   const res = await fetch(url, { headers: adminHeaders() });
   if (!res.ok) throw new Error(`Failed to fetch tag id "${tagId}": HTTP ${res.status}`);
@@ -98,6 +109,7 @@ async function fetchTagById(tagId) {
 }
 
 async function fetchPosts(tagSlug, statuses) {
+  if (WPMODE) { const d = await wpIssue(tagSlug); return d.posts.filter((p) => statuses.includes(p.status)); }
   const statusFilter = statuses.length === 1
     ? `status:${statuses[0]}`
     : `status:[${statuses.join(',')}]`;

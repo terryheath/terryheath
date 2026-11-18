@@ -49,6 +49,23 @@ add_action('rest_api_init', function () {
     restore_current_blog();
     return ['ok' => true, 'was' => $prev];
   }]);
+  // Ghost-shaped pieces of one issue (any status), for the ebook builder: tags are the issue, the genre and the contributor, in that order.
+  register_rest_route('inkhorn/v1', '/issue-pieces', ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
+    switch_to_blog(site_id_for('review'));
+    $iss = get_posts(['post_type' => 'ih_issue', 'name' => sanitize_title((string) $r['issue']), 'numberposts' => 1, 'post_status' => 'any']);
+    if (!$iss) { restore_current_blog(); return new \WP_Error('nf', 'no such issue', ['status' => 404]); }
+    $i = $iss[0]; $label = get_post_meta($i->ID, 'ih_label', true) ?: get_the_title($i); $rel = get_post_meta($i->ID, 'ih_release', true);
+    $out = ['issue' => ['slug' => $i->post_name, 'name' => $label, 'feature_image' => get_the_post_thumbnail_url($i, 'full') ?: null], 'posts' => []];
+    foreach (get_posts(['post_type' => 'ih_piece', 'numberposts' => -1, 'post_status' => 'any', 'meta_key' => 'ih_position', 'orderby' => 'meta_value_num', 'order' => 'ASC', 'meta_query' => [['key' => 'ih_issue_id', 'value' => $i->ID, 'type' => 'NUMERIC']]]) as $p) {
+      $g = piece_genre($p); $pos = (int) get_post_meta($p->ID, 'ih_position', true); $cs = trim(explode(',', (string) get_post_meta($p->ID, 'ih_contributors', true))[0]);
+      $tags = [['id' => 'issue:' . $i->post_name, 'name' => $label, 'slug' => $i->post_name], ['id' => 'genre:' . ($g ? $g->slug : ''), 'name' => $g ? $g->name : '', 'slug' => $g ? $g->slug : '']];
+      if ($cs) { $tags[] = ['id' => 'c:' . $cs, 'name' => get_post_meta($p->ID, 'ih_author_name', true), 'slug' => $cs, 'description' => get_post_meta($p->ID, 'ih_bio', true)]; }
+      $out['posts'][] = ['id' => (string) $p->ID, 'title' => get_the_title($p), 'slug' => $p->post_name, 'html' => $p->post_content, 'status' => $p->post_status === 'future' ? 'scheduled' : ($p->post_status === 'publish' ? 'published' : 'draft'),
+        'published_at' => gmdate('c', strtotime(($rel ?: gmdate('Y-m-d')) . ' 12:00:00 UTC') + ($pos - 1) * 60), 'custom_excerpt' => 'by ' . get_post_meta($p->ID, 'ih_author_name', true), 'tags' => $tags];
+    }
+    restore_current_blog();
+    return $out;
+  }]);
   register_rest_route('inkhorn/v1', '/piece-bio', ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
     switch_to_blog(site_id_for((string) ($r['site'] ?: 'review')));
     $q = get_posts(['post_type' => 'ih_piece', 'name' => sanitize_title((string) $r['slug']), 'numberposts' => 1, 'post_status' => 'any']);
