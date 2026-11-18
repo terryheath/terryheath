@@ -30,6 +30,7 @@ function import_item(\WP_REST_Request $r) {
   $d = $r->get_json_params();
   $bid = site_id_for((string) ($d['site'] ?? 'hub'));
   if (!$bid) { return new \WP_Error('no_site', 'unknown site', ['status' => 400]); }
+  if (!defined('INKHORN_IMPORTING')) { define('INKHORN_IMPORTING', true); }
   require_once ABSPATH . 'wp-admin/includes/media.php';
   require_once ABSPATH . 'wp-admin/includes/file.php';
   require_once ABSPATH . 'wp-admin/includes/image.php';
