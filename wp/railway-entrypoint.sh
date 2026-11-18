@@ -33,5 +33,14 @@ if (file_exists(__DIR__ . '/.multisite')) {
     touch /var/www/html/.multisite
     chown www-data:www-data /var/www/html/.multisite
   fi
+  # the network's sites (idempotent): press hub is site 1; the rest are subdirectory sites; terryheath and lifeonwords get mapped domains at cutover
+  if [ -f /var/www/html/.multisite ]; then
+    for spec in "review:Inkhorn Review" "whiterabbit:White Rabbit" "muse:Muse" "terryheath:Terry Heath" "lifeonwords:Life on Words"; do
+      slug="${spec%%:*}"; title="${spec#*:}"
+      wp site list --allow-root --field=path 2>/dev/null | grep -qx "/${slug}/" || wp site create --allow-root --slug="$slug" --title="$title" --email="${WP_ADMIN_EMAIL:-hello@inkhorn.press}" || true
+    done
+    wp theme enable inkhorn --network --allow-root || true
+    wp theme activate inkhorn --allow-root || true
+  fi
 ) &
 exec docker-entrypoint.sh "$@"
