@@ -64,8 +64,9 @@ HT
       slug="${spec%%:*}"; title="${spec#*:}"
       wp site list --allow-root --field=path 2>/dev/null | grep -qx "/${slug}/" || wp site create --allow-root --slug="$slug" --title="$title" --email="${WP_ADMIN_EMAIL:-hello@inkhorn.press}" || true
     done
+    wp plugin activate inkhorn-network --network --allow-root || true
     wp theme enable inkhorn --network --allow-root || true
-    wp theme activate inkhorn --allow-root || true
+    for url in $(wp site list --allow-root --field=url); do wp theme activate inkhorn --url="$url" --allow-root || true; done
   fi
 ) &
 exec docker-entrypoint.sh "$@"

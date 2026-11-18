@@ -1,1 +1,23 @@
-{ "$schema": "https://schemas.wp.org/trunk/theme.json", "version": 3, "settings": { "layout": { "contentSize": "34rem", "wideSize": "64rem" } }, "styles": { "color": { "background": "#FBFAF7", "text": "#1c1a17" } } }
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "appearanceTools": false,
+    "layout": { "contentSize": "34rem", "wideSize": "70rem" },
+    "color": { "custom": false, "defaultPalette": false, "palette": [
+      { "slug": "ground", "color": "#FBFAF7", "name": "Ground" },
+      { "slug": "ink", "color": "#2C2A26", "name": "Ink" },
+      { "slug": "mute", "color": "#67645D", "name": "Muted" },
+      { "slug": "accent", "color": "#4F5B66", "name": "Accent (set per site)" }
+    ] },
+    "typography": { "fontFamilies": [
+      { "slug": "garamond", "name": "EB Garamond", "fontFamily": "'EB Garamond', Georgia, serif" },
+      { "slug": "karla", "name": "Karla", "fontFamily": "'Karla', system-ui, sans-serif" }
+    ] }
+  },
+  "styles": {
+    "color": { "background": "var(--wp--preset--color--ground)", "text": "var(--wp--preset--color--ink)" },
+    "typography": { "fontFamily": "var(--wp--preset--font-family--garamond)", "fontSize": "19px", "lineHeight": "1.55" },
+    "spacing": { "blockGap": "0" }
+  }
+}
