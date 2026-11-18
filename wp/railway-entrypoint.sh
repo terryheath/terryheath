@@ -26,6 +26,21 @@ if (file_exists(__DIR__ . '/.multisite')) {
   # wait for wp-config.php (written by the stock entrypoint) and the database, then install once
   for i in $(seq 1 90); do [ -f /var/www/html/wp-config.php ] && mysqladmin ping -h"${WORDPRESS_DB_HOST%%:*}" -P"${WORDPRESS_DB_HOST##*:}" -u"$WORDPRESS_DB_USER" -p"$WORDPRESS_DB_PASSWORD" --silent 2>/dev/null && break; sleep 2; done
   cd /var/www/html
+  echo "[inkhorn] network bootstrap starting"
+  cat > /var/www/html/.htaccess <<'HT'
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteRule ^([_0-9a-zA-Z-]+/)?wp-admin$ $1wp-admin/ [R=301,L]
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+RewriteRule ^([_0-9a-zA-Z-]+/)?(wp-(content|admin|includes).*) $2 [L]
+RewriteRule ^([_0-9a-zA-Z-]+/)?(.*\.php)$ $2 [L]
+RewriteRule . index.php [L]
+HT
+  chown www-data:www-data /var/www/html/.htaccess
   # the .multisite flag lives in the container, so recreate it on every boot when the network tables already exist
   if mysql -h"${WORDPRESS_DB_HOST%%:*}" -P"${WORDPRESS_DB_HOST##*:}" -u"$WORDPRESS_DB_USER" -p"$WORDPRESS_DB_PASSWORD" "$WORDPRESS_DB_NAME" -N -e "SHOW TABLES LIKE 'wp_blogs'" 2>/dev/null | grep -q wp_blogs; then
     touch /var/www/html/.multisite; chown www-data:www-data /var/www/html/.multisite
