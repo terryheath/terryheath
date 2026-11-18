@@ -6,6 +6,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+const STORE = require('./store.cjs');
 const DOCUSEAL_URL = (process.env.DOCUSEAL_URL || 'https://sign.terryheath.com').replace(/\/$/, '');
 const TRACKER_SLUG = 'agreements-tracker';
 const kc = (s) => execSync(`security find-generic-password -s "${s}" -w`, { stdio: ['pipe', 'pipe', 'pipe'] }).toString().trim();
@@ -30,6 +31,7 @@ async function ds(method, p, body) {
 
 // --- tracker -------------------------------------------------------------------------------------
 async function loadTracker(api) {
+  if (STORE.wp()) { const r = await STORE.load(TRACKER_SLUG); return { page: { version: r.version }, records: Array.isArray(r.value) ? r.value : [] }; }
   const r = await api.pages.browse({ filter: `slug:${TRACKER_SLUG}`, limit: 1, fields: 'id,slug,codeinjection_head,updated_at' });
   if (!r.length) return { page: null, records: [] };
   let records = [];
@@ -37,6 +39,7 @@ async function loadTracker(api) {
   return { page: r[0], records };
 }
 async function saveTracker(api, tracker) {
+  if (STORE.wp()) { tracker.page = { version: await STORE.save(TRACKER_SLUG, tracker.records, tracker.page && tracker.page.version) }; return; }
   const json = JSON.stringify(tracker.records, null, 1);
   if (!tracker.page) {
     tracker.page = await api.pages.add({ title: 'Agreements tracker (private)', slug: TRACKER_SLUG, status: 'draft', codeinjection_head: json });

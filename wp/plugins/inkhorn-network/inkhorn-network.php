@@ -20,3 +20,4 @@ require_once __DIR__ . '/includes/import.php';
 require_once __DIR__ . '/includes/account.php';
 require_once __DIR__ . '/includes/shop.php';
 require_once __DIR__ . '/includes/feed.php';
+require_once __DIR__ . '/includes/store.php';

@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const L = require('./agreements-lib.cjs');
 const { EMAILS, STUDIO } = require('./podcast-emails.cjs');
 
+const STORE = require('./store.cjs');
 const PAGE = 'podcast-guests';
 const HUB = 'https://admin.terryheath.com';
 const TEMPLATE_NAME = 'Life on Words — Guest Agreement';
@@ -15,6 +16,7 @@ const AGREEMENT_VERSION = '2026-11-13';
 
 // ---- store ------------------------------------------------------------------------------------------------------------------
 async function load(api = L.ghost()) {
+  if (STORE.wp()) { const r = await STORE.load(PAGE); return { page: { version: r.version }, guests: Array.isArray(r.value) ? r.value : [] }; }
   const r = await api.pages.browse({ filter: `slug:${PAGE}`, limit: 1, fields: 'id,codeinjection_head,updated_at' });
   if (!r.length) return { page: null, guests: [] };
   let guests = [];
@@ -22,6 +24,7 @@ async function load(api = L.ghost()) {
   return { page: r[0], guests };
 }
 async function save(store, api = L.ghost()) {
+  if (STORE.wp()) { store.page = { version: await STORE.save(PAGE, store.guests, store.page && store.page.version) }; return; }
   const json = JSON.stringify(store.guests, null, 1);
   if (!store.page) store.page = await api.pages.add({ title: 'Life on Words guests (private)', slug: PAGE, status: 'draft', codeinjection_head: json });
   else store.page = await api.pages.edit({ id: store.page.id, updated_at: store.page.updated_at, codeinjection_head: json });

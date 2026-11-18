@@ -79,14 +79,17 @@ async function headshotApi(req, res, query) {
 }
 // Headshots for people who have no guest record (recorded without one): a separate private Ghost page, so they can never be emailed, counted as guests or
 // touched by the hourly job. Shape: [{id, name, photo_credit, headshot:{file,bytes,type,uploaded_at}, created_at}]. Matched by name like guests.
+const STORE = require('./store.cjs');
 const EXTRA_PAGE = 'podcast-headshots';
 async function loadExtras(api = L.ghost()) {
+  if (STORE.wp()) { const r = await STORE.load(EXTRA_PAGE); return { page: { version: r.version }, list: Array.isArray(r.value) ? r.value : [] }; }
   const r = await api.pages.browse({ filter: `slug:${EXTRA_PAGE}`, limit: 1, fields: 'id,codeinjection_head,updated_at' });
   if (!r.length) return { page: null, list: [] };
   let list = []; try { list = JSON.parse(r[0].codeinjection_head || '[]'); } catch { list = []; }
   return { page: r[0], list };
 }
 async function saveExtras(ex, api = L.ghost()) {
+  if (STORE.wp()) { ex.page = { version: await STORE.save(EXTRA_PAGE, ex.list, ex.page && ex.page.version) }; return; }
   const json = JSON.stringify(ex.list, null, 1);
   if (!ex.page) ex.page = await api.pages.add({ title: 'Life on Words headshots without a guest record (private)', slug: EXTRA_PAGE, status: 'draft', codeinjection_head: json });
   else ex.page = await api.pages.edit({ id: ex.page.id, updated_at: ex.page.updated_at, codeinjection_head: json });

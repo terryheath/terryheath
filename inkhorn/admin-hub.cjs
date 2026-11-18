@@ -18,10 +18,12 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const eq = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
 
 // ---- password hash (stored in a private Ghost page) -------------------------------------------------------------------------
+const STORE = require('./store.cjs');
 let authCache = null;
 const MEMORY_ONLY = process.env.ADMIN_AUTH_STORE === 'memory'; // local tests only: never touches the real Ghost page; never set on Railway
 async function loadAuth() {
   if (authCache || MEMORY_ONLY) return authCache;
+  if (STORE.wp()) { const r = await STORE.load('admin-hub-auth'); authCache = r.value || null; return authCache; }
   const r = await L.ghost().pages.browse({ filter: 'slug:admin-hub-auth', limit: 1, fields: 'id,codeinjection_head,updated_at' });
   if (!r.length) return null;
   try { authCache = JSON.parse(r[0].codeinjection_head || 'null'); } catch { authCache = null; }
@@ -32,6 +34,7 @@ async function saveAuth(pw) {
   const salt = crypto.randomBytes(16).toString('hex');
   const data = { salt, hash: scrypt(pw, salt) };
   if (MEMORY_ONLY) { authCache = data; return; }
+  if (STORE.wp()) { await STORE.save('admin-hub-auth', data); authCache = data; return; }
   const api = L.ghost();
   const r = await api.pages.browse({ filter: 'slug:admin-hub-auth', limit: 1, fields: 'id,updated_at' });
   if (r.length) await api.pages.edit({ id: r[0].id, updated_at: r[0].updated_at, codeinjection_head: JSON.stringify(data) });
