@@ -66,6 +66,21 @@ add_action('rest_api_init', function () {
     restore_current_blog();
     return $out;
   }]);
+  // Full content export of every site (backup): posts, pages and all Inkhorn types with their fields.
+  register_rest_route('inkhorn/v1', '/export', ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function () {
+    $out = [];
+    foreach (get_sites(['number' => 50]) as $s) {
+      switch_to_blog($s->blog_id); $items = [];
+      foreach (get_posts(['post_type' => ['post', 'page', 'ih_issue', 'ih_piece', 'ih_contributor', 'ih_book', 'ih_episode', 'ih_guest'], 'post_status' => 'any', 'numberposts' => -1]) as $p) {
+        $meta = []; foreach (get_post_meta($p->ID) as $k => $v) { if ($k[0] !== '_' ) { $meta[$k] = $v[0]; } }
+        $terms = wp_get_object_terms($p->ID, get_object_taxonomies($p->post_type), ['fields' => 'names']);
+        $items[] = ['id' => $p->ID, 'type' => $p->post_type, 'slug' => $p->post_name, 'title' => $p->post_title, 'status' => $p->post_status, 'date' => $p->post_date_gmt, 'content' => $p->post_content, 'excerpt' => $p->post_excerpt, 'meta' => $meta, 'terms' => is_wp_error($terms) ? [] : $terms, 'thumbnail' => get_the_post_thumbnail_url($p, 'full')];
+      }
+      $out[trim($s->path, '/') ?: 'hub'] = ['domain' => $s->domain, 'items' => $items];
+      restore_current_blog();
+    }
+    return $out;
+  }]);
   register_rest_route('inkhorn/v1', '/piece-bio', ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
     switch_to_blog(site_id_for((string) ($r['site'] ?: 'review')));
     $q = get_posts(['post_type' => 'ih_piece', 'name' => sanitize_title((string) $r['slug']), 'numberposts' => 1, 'post_status' => 'any']);
