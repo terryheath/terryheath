@@ -82,7 +82,15 @@ async function grantComp(api, r, events) {
   events.comps.push(r);
 }
 
+const WPMODE = () => (process.env.CMS || '').toLowerCase() === 'wp';
+async function wpPostStatus(slug, status, date) {
+  const res = await fetch(process.env.WP_URL.replace(/\/$/, '') + '/wp-json/inkhorn/v1/post-status', { method: 'POST', headers: { 'X-Import-Token': process.env.INKHORN_IMPORT_TOKEN || '', 'Content-Type': 'application/json' }, body: JSON.stringify({ site: 'review', type: 'ih_piece', slug, status, date }) });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('WordPress post-status ' + res.status);
+  return res.json();
+}
 async function pullPost(api, r) {
+  if (WPMODE()) { const o = await wpPostStatus(r.slug, 'draft'); return !o ? 'not found in WordPress' : o.was === 'draft' ? 'already draft' : 'set to draft'; }
   const found = await api.posts.browse({ filter: `slug:${r.slug}`, limit: 1, fields: 'id,status,updated_at' });
   if (!found.length) return 'not found in Ghost';
   if (found[0].status === 'draft') return 'already draft';
@@ -149,7 +157,8 @@ async function weeklyStatus(api, tracker, today) {
 
   // Pulled pieces leave the running order: edit editions-2026.json + the partials, commit to GitHub, upload the theme.
   const toApply = tracker.records.filter((r) => r.pulled && !r.applied && r.on_deadline === 'pull');
-  if (toApply.length && !DRY) {
+  if (toApply.length && WPMODE()) { for (const r of toApply) r.applied = true; } // WordPress: pulling a piece to draft is the whole change; there is no running-order file or theme to rebuild
+  else if (toApply.length && !DRY) {
     try {
       const res = await L.applyPulls(toApply);
       for (const r of toApply) r.applied = true;
@@ -159,7 +168,21 @@ async function weeklyStatus(api, tracker, today) {
 
   // A piece whose agreement is signed gets scheduled at its slot on release day: 12:00 UTC plus (print position - 1) minutes. Unsigned pieces
   // stay drafts. Only draft pieces of issues that have not released yet are touched, and only if the slot is still in the future.
-  if (!DRY && process.env.SCHEDULE_SIGNED === 'on') { // OFF unless SCHEDULE_SIGNED=on on the Railway `agreements` service (held 2026-11-11 pending Terry's say-so on release times)
+  if (!DRY && process.env.SCHEDULE_SIGNED === 'on' && WPMODE()) {
+    // WordPress: a signed piece is scheduled at its slot on release day (12:00 UTC plus its print position minus 1 minutes); pieces of unreleased issues only
+    for (const r of tracker.records) {
+      if (r.status !== 'signed' || r.on_deadline !== 'pull' || !r.slug || r.scheduled) continue;
+      try {
+        const info = await (await fetch(process.env.WP_URL.replace(/\/$/, '') + `/wp-json/inkhorn/v1/piece-bio?site=review&slug=${encodeURIComponent(r.slug)}`, { headers: { 'X-Import-Token': process.env.INKHORN_IMPORT_TOKEN || '' } })).json();
+        const pos = Number(info.position || 0); if (!pos) continue;
+        const slot = L.releaseSlot(r.issue, pos);
+        if (slot.getTime() < Date.now() + 5 * 60000) continue;
+        const o = await wpPostStatus(r.slug, 'future', slot.toISOString());
+        if (o && o.was === 'draft') events.scheduled.push({ ...r, slot: slot.toISOString() });
+        r.scheduled = true;
+      } catch (e) { console.error('scheduling failed for', r.slug, e.message); }
+    }
+  } else if (!DRY && process.env.SCHEDULE_SIGNED === 'on') { // OFF unless SCHEDULE_SIGNED=on on the Railway `agreements` service (held 2026-11-11 pending Terry's say-so on release times)
     const editions = JSON.parse(require('fs').readFileSync(L.editionsPath, 'utf8')).pieces;
     for (const r of tracker.records) {
       if (r.status !== 'signed' || r.on_deadline !== 'pull' || !r.slug || r.scheduled) continue;

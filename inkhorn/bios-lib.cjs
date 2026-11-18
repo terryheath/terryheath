@@ -11,6 +11,12 @@ const L = require('./agreements-lib.cjs');
 
 const slugify = (s) => String(s).toLowerCase().replace(/[’']/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// WordPress mode (CMS=wp): contributor bios live on the network (contributor record and the piece), not in Ghost tags and editions-2026.json.
+const WPMODE = () => (process.env.CMS || '').toLowerCase() === 'wp';
+async function wp(method, path, body) {
+  const r = await fetch(process.env.WP_URL.replace(/\/$/, '') + '/wp-json/inkhorn/v1' + path, { method, headers: { 'X-Import-Token': process.env.INKHORN_IMPORT_TOKEN || '', 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) throw new Error(`WordPress ${method} ${path}: ${r.status}`); return r.json();
+}
 const clean = (s) => String(s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
 // ---- what the contributor typed -------------------------------------------------------------------------------------------
@@ -29,12 +35,16 @@ async function githubFile(path) {
   const j = await r.json();
   return Buffer.from(j.content, 'base64').toString('utf8');
 }
-const editionsLive = async () => (process.env.GITHUB_TOKEN ? JSON.parse(await githubFile('inkhorn/data/editions-2026.json')) : JSON.parse(require('fs').readFileSync(L.editionsPath, 'utf8')));
+const editionsLive = async () => WPMODE() ? { wp: true } : (process.env.GITHUB_TOKEN ? JSON.parse(await githubFile('inkhorn/data/editions-2026.json')) : JSON.parse(require('fs').readFileSync(L.editionsPath, 'utf8')));
 
 const pieceOf = (data, rec) => data.pieces.find((p) => p.edition === rec.issue && (rec.slug ? L.resolvedSlug(p) === rec.slug : false));
 
 // ---- what is there now ------------------------------------------------------------------------------------------------------
 async function currentFor(api, data, rec) {
+  if (WPMODE()) {
+    let p; try { p = await wp('GET', `/piece-bio?site=review&slug=${encodeURIComponent(rec.slug || '')}`); } catch { return null; }
+    return { piece: { author: p.author, bio: p.bio, custom_excerpt: `by ${p.author}`, contributor: p.contributor }, tag: p.contributor ? { description: p.contributor_bio, name: p.author } : null, json_bio: clean(p.bio), ghost_bio: clean(p.contributor_bio), author: p.author };
+  }
   const piece = pieceOf(data, rec);
   if (!piece) return null;
   const tags = await api.tags.browse({ filter: `slug:${slugify(piece.author)}`, limit: 1 });
@@ -45,6 +55,15 @@ async function currentFor(api, data, rec) {
 // ---- apply ------------------------------------------------------------------------------------------------------------------
 // Replaces bio + name in print in editions-2026.json (committed to GitHub, theme re-uploaded if the byline changed) and in Ghost.
 async function applyBio(api, rec, signed, { commit = true, restore = null } = {}) {
+  if (WPMODE()) {
+    const cur = await currentFor(api, null, rec);
+    if (!cur) throw new Error(`"${rec.title}" is not on the site yet`);
+    const prev = { author: cur.author, bio: cur.piece.bio, bio_html: '', custom_excerpt: cur.piece.custom_excerpt, ghost_bio: cur.ghost_bio, ghost_name: cur.author };
+    const name = restore ? restore.author : (signed.name_in_print || cur.author);
+    const bio = restore ? (restore.ghost_bio || restore.bio) : signed.bio;
+    await wp('POST', '/bio', { contributor: cur.piece.contributor || slugify(cur.author), name, bio });
+    return { name, nameChanged: name !== cur.author, sha: null, prev };
+  }
   const data = await editionsLive();
   const cur = await currentFor(api, data, rec);
   if (!cur) throw new Error(`"${rec.title}" is not in editions-2026.json for ${rec.issue}`);

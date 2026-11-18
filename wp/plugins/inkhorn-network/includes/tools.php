@@ -37,8 +37,26 @@ add_action('rest_api_init', function () {
     if (!$q) { restore_current_blog(); return new \WP_Error('nf', 'not found', ['status' => 404]); }
     $arr = ['ID' => $q[0]->ID, 'post_status' => in_array($d['status'], ['draft', 'publish', 'future'], true) ? $d['status'] : 'draft'];
     if (!empty($d['date'])) { $arr['post_date_gmt'] = gmdate('Y-m-d H:i:s', strtotime($d['date'])); $arr['post_date'] = get_date_from_gmt($arr['post_date_gmt']); }
-    wp_update_post($arr); $prev = $q[0]->post_status; restore_current_blog();
+    wp_update_post($arr); $prev = $q[0]->post_status;
+    // a piece leaving an issue closes the gap in the print running order
+    if (($d['type'] ?? 'ih_piece') === 'ih_piece' && $arr['post_status'] === 'draft' && $prev !== 'draft') {
+      $iid = (int) get_post_meta($q[0]->ID, 'ih_issue_id', true);
+      if ($iid) {
+        $n = 0;
+        foreach (get_posts(['post_type' => 'ih_piece', 'numberposts' => -1, 'post_status' => ['publish', 'future'], 'meta_key' => 'ih_position', 'orderby' => 'meta_value_num', 'order' => 'ASC', 'meta_query' => [['key' => 'ih_issue_id', 'value' => $iid, 'type' => 'NUMERIC']]]) as $sib) { update_post_meta($sib->ID, 'ih_position', ++$n); }
+      }
+    }
+    restore_current_blog();
     return ['ok' => true, 'was' => $prev];
+  }]);
+  register_rest_route('inkhorn/v1', '/piece-bio', ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
+    switch_to_blog(site_id_for((string) ($r['site'] ?: 'review')));
+    $q = get_posts(['post_type' => 'ih_piece', 'name' => sanitize_title((string) $r['slug']), 'numberposts' => 1, 'post_status' => 'any']);
+    $out = null;
+    if ($q) { $p = $q[0]; $out = ['title' => get_the_title($p), 'author' => get_post_meta($p->ID, 'ih_author_name', true), 'bio' => get_post_meta($p->ID, 'ih_bio', true), 'contributor' => get_post_meta($p->ID, 'ih_contributors', true), 'position' => (int) get_post_meta($p->ID, 'ih_position', true)]; }
+    restore_current_blog();
+    if ($out && $out['contributor']) { switch_to_blog(get_main_site_id()); $c = get_posts(['post_type' => 'ih_contributor', 'name' => $out['contributor'], 'numberposts' => 1, 'post_status' => 'any']); $out['contributor_bio'] = $c ? get_post_meta($c[0]->ID, 'ih_bio', true) : ''; restore_current_blog(); }
+    return $out ?: new \WP_Error('nf', 'not found', ['status' => 404]);
   }]);
   register_rest_route('inkhorn/v1', '/bio', ['methods' => 'POST', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
     $d = $r->get_json_params(); switch_to_blog(get_main_site_id());
