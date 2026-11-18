@@ -3,6 +3,10 @@
 # Env: WP_DOMAIN (host the network lives on; a Railway address while testing, inkhorn.press at cutover),
 #      WORDPRESS_DB_* (from the MySQL service), WP_ADMIN_USER / WP_ADMIN_PASSWORD / WP_ADMIN_EMAIL.
 set -e
+# Apache must have exactly one MPM (prefork, which mod_php needs)
+rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*
+ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load
+ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf
 : "${WP_DOMAIN:?WP_DOMAIN is required}"
 export WORDPRESS_CONFIG_EXTRA="
 if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') { \$_SERVER['HTTPS'] = 'on'; }
