@@ -40,7 +40,7 @@ function clean(html) {
   const api = L.ghost();
   const all = async (res, opts) => { const out = []; for (let p = 1; ; p++) { const b = await api[res].browse({ ...opts, limit: 100, page: p }); out.push(...b); if (b.length < 100) break; } return out; };
   const posts = await all('posts', { include: 'tags,authors', formats: 'html', filter: 'status:[published,scheduled]' });
-  const pages = await all('pages', { include: 'tags', formats: 'html', filter: 'status:published' });
+  const pages = await all('pages', { include: 'tags', formats: 'html', filter: 'status:[published,scheduled,draft]' });
   const tags = await all('tags', {});
   const tagBySlug = Object.fromEntries(tags.map((t) => [t.slug, t]));
   const editions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'editions-2026.json'), 'utf8')).pieces;
@@ -52,8 +52,17 @@ function clean(html) {
     const cat = pages.find((p) => (p.tags || []).some((t) => t.slug === 'hash-catalog') && new RegExp(ed.replace('-', '.*'), 'i').test(p.slug + ' ' + p.title));
     const label = ed.replace(/^(\w)/, (c) => c.toUpperCase()).replace('-', ' ');
     const r = await put({ site: 'review', type: 'ih_issue', slug: ed, title: label, content: '', status: 'publish', thumbnail_url: cat && cat.feature_image,
-      meta: { ih_label: label, ih_release: L.ymd(L.releaseDate(ed)), ih_shop_url: '', ih_current: ed === 'autumn-2026' } });
+      meta: { ih_label: label, ih_release: L.ymd(L.releaseDate(ed)), ih_shop_url: cat ? 'shop/' + cat.slug + '/' : '', ih_current: ed === 'autumn-2026' } });
     issueIds[ed] = r.id; console.log('issue', ed, r.id);
+  }
+
+  // shop: each catalog page (a book that can be bought) becomes a hub product page
+  for (const cp of pages.filter((p) => (p.tags || []).some((t) => t.slug === 'hash-catalog'))) {
+    const j = (/<script id="ih-book"[^>]*>([\s\S]*?)<\/script>/.exec(cp.codeinjection_head || '') || [])[1];
+    let d = {}; try { d = JSON.parse(j); } catch (e) { /* no shop data on this page */ }
+    await put({ site: 'hub', type: 'ih_book', slug: cp.slug, title: cp.title, content: '', excerpt: cp.custom_excerpt || '', status: cp.status === 'published' ? 'publish' : 'draft', thumbnail_url: cp.feature_image,
+      meta: { ih_sku: d.sku || '', ih_isbn: d.isbn || '', ih_preorder: !!d.preorder } });
+    console.log('book', cp.slug, d.sku);
   }
 
   // contributors (hub directory) and pieces (review site)

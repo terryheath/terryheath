@@ -21,10 +21,13 @@ function token_key($t) { return 'ih_tok_' . substr(hash('sha256', $t), 0, 32); }
 /** Pages that are not posts: /signin/, /account/, /preferences/ (hub only). */
 add_action('init', function () {
   add_rewrite_rule('^(signin|account|preferences|subscribe)/?$', 'index.php?ih_view=$matches[1]', 'top');
+  add_rewrite_rule('^shop/(cart|order-complete|address|print-edition)/?$', 'index.php?ih_view=$matches[1]', 'top');
+  add_rewrite_rule('^shop/?$', 'index.php?ih_view=shop', 'top');
+  add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?ih_view=book&ih_book_slug=$matches[1]', 'top');
   add_rewrite_rule('^signin/verify/?$', 'index.php?ih_view=verify', 'top');
   add_rewrite_rule('^signin/out/?$', 'index.php?ih_view=out', 'top');
 });
-add_filter('query_vars', function ($v) { $v[] = 'ih_view'; return $v; });
+add_filter('query_vars', function ($v) { $v[] = 'ih_view'; $v[] = 'ih_book_slug'; return $v; });
 add_action('template_redirect', function () {
   $v = get_query_var('ih_view'); if (!$v) { return; }
   if ($v === 'verify') {

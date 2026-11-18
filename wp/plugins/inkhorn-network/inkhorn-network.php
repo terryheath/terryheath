@@ -18,3 +18,4 @@ require_once __DIR__ . '/includes/blocks.php';
 require_once __DIR__ . '/includes/subscribe.php';
 require_once __DIR__ . '/includes/import.php';
 require_once __DIR__ . '/includes/account.php';
+require_once __DIR__ . '/includes/shop.php';

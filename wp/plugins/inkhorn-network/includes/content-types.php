@@ -38,7 +38,7 @@ add_action('init', function () {
     'ih_issue' => ['ih_label' => 'string', 'ih_note' => 'string', 'ih_release' => 'string', 'ih_shop_url' => 'string', 'ih_current' => 'boolean'],
     'ih_piece' => ['ih_issue_id' => 'integer', 'ih_position' => 'integer', 'ih_author_name' => 'string', 'ih_contributors' => 'string', 'ih_bio' => 'string', 'ih_nomination' => 'string', 'ih_online_only' => 'boolean'],
     'ih_contributor' => ['ih_bio' => 'string', 'ih_url' => 'string', 'ih_headshot_id' => 'integer', 'ih_email' => 'string', 'ih_names' => 'string'],
-    'ih_book' => ['ih_buy_url' => 'string', 'ih_year' => 'string', 'ih_blurb' => 'string'],
+    'ih_book' => ['ih_buy_url' => 'string', 'ih_year' => 'string', 'ih_blurb' => 'string', 'ih_sku' => 'string', 'ih_isbn' => 'string', 'ih_preorder' => 'boolean'],
     'ih_episode' => ['ih_guest_id' => 'integer', 'ih_audio_url' => 'string', 'ih_guid' => 'string', 'ih_number' => 'integer', 'ih_duration' => 'string'],
     'ih_guest' => ['ih_bio' => 'string', 'ih_url' => 'string', 'ih_headshot_id' => 'integer'],
   ];

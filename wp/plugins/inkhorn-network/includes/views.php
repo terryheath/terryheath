@@ -18,6 +18,9 @@ function hub_link($path) {
   return $u;
 }
 
+/** "Buy the print issue" goes straight to that issue's product page in the hub shop (stored as a hub path like shop/<book>/). */
+function shop_link($v) { if (!$v) { return ''; } return preg_match('#^https?://#', $v) ? $v : hub_link($v); }
+
 function btn($href, $label, $extra = '') {
   return '<a class="ih-btn" href="' . a($href) . '"' . $extra . '>' . e($label) . '</a>';
 }
@@ -143,7 +146,7 @@ function view_issue($issue) {
   foreach (genre_order() as $g) { if (!empty($groups[$g])) { $names[] = strtolower(get_term_by('slug', $g, 'ih_genre')->name ?? $g); } }
   $kinds = $names ? implode(', ', array_slice($names, 0, 2)) . (count($names) > 2 ? ' and more' : '') : '';
   $first = $pieces ? get_permalink($pieces[0]) : '';
-  $shop = m($issue->ID, 'ih_shop_url');
+  $shop = shop_link(m($issue->ID, 'ih_shop_url'));
   $h = '<main class="ih-main"><section class="ih-hero" aria-label="' . ($is_cur ? 'Current issue' : 'Issue') . '">' . cover($issue, 'Cover of ' . $label)
      . '<div class="ih-hero-t"><p class="ih-kicker">' . ($is_cur ? 'The current issue' : 'Issue') . '</p><h1>' . e($label) . '</h1>';
   $note = m($issue->ID, 'ih_note');
@@ -183,7 +186,7 @@ function view_piece($p) {
     foreach ($list as $n => $q) { if ($q->ID === $p->ID) { $i = $n; } }
     $prev = ($i !== null && $i > 0) ? $list[$i - 1] : null;
     $next = ($i !== null && $i < count($list) - 1) ? $list[$i + 1] : null;
-    $shop = m($issue->ID, 'ih_shop_url');
+    $shop = shop_link(m($issue->ID, 'ih_shop_url'));
     $h .= '<nav class="ih-pn" aria-label="More from this issue"><div>';
     if ($prev) { $h .= '<a href="' . a(get_permalink($prev)) . '"><span>PREVIOUS</span><b>' . e(get_the_title($prev)) . '</b><i>' . e(m($prev->ID, 'ih_author_name')) . '</i></a>'; }
     $h .= '</div><div class="ih-pn-c">' . ($shop ? btn($shop, 'Buy the print issue') : '') . '</div><div class="ih-pn-r">';
@@ -338,6 +341,8 @@ function render_page() {
   if ($v === 'account') { return view_account(); }
   if ($v === 'preferences') { return view_preferences(); }
   if ($v === 'subscribe') { return view_subscribe(); }
+  if (in_array($v, ['shop', 'cart', 'order-complete', 'address', 'print-edition'], true)) { return view_shop_page($v); }
+  if ($v === 'book') { return view_book(); }
   if (is_404()) { return view_404(); }
   if (is_search()) { return view_search(); }
   if (is_front_page() || is_home()) {
