@@ -16,3 +16,4 @@ require_once __DIR__ . '/includes/content-types.php';
 require_once __DIR__ . '/includes/views.php';
 require_once __DIR__ . '/includes/blocks.php';
 require_once __DIR__ . '/includes/subscribe.php';
+require_once __DIR__ . '/includes/import.php';
