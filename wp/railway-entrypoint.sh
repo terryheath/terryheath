@@ -13,7 +13,7 @@ if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PR
 define('WP_ALLOW_MULTISITE', true);
 define('DISALLOW_FILE_EDIT', true);
 define('WP_DEFAULT_THEME', 'inkhorn');
-if (file_exists(WP_CONTENT_DIR . '/uploads/.multisite')) {
+if (file_exists(__DIR__ . '/wp-content/uploads/.multisite')) {
   define('MULTISITE', true);
   define('SUBDOMAIN_INSTALL', false);
   define('DOMAIN_CURRENT_SITE', '${WP_DOMAIN}');
