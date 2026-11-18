@@ -3,3 +3,4 @@ node_modules/
 .DS_Store
 inkhorn/.book-cache.json
 inkhorn/build/
+inkhorn/shop-service/data/*.db*
