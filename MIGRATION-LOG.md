@@ -24,4 +24,6 @@ Started 2026-11-17 from `~/Desktop/platform-migration-prompt.md` and `~/Desktop/
 - Agreements tracker (30 records) and DocuSeal (sign.terryheath.com, templates 3, 5, 6, 12, 13, 15).
 
 ## Decisions made so far
+- **Memberships (Terry, 2026-11-18):** move to the shop service with Stripe subscriptions in the existing accounts (Inkhorn Press for inkhorn.press, Follow the Rabbit LLC for terryheath.com). Existing Stripe subscriptions keep billing unchanged: nobody re-subscribes, nothing cancels when Ghost disconnects. Stripe customer portal for self-service; membership status in the member account. White Rabbit add-on: Ebook $7/yr, Print $14/yr; White Rabbit contributors who choose Print get White Rabbit Print free, as Review contributors get Review Print.
+- **Subscription in place of payment (Terry's correction, 2026-11-18):** when a signed agreement chooses a subscription, it is granted automatically on signing, as Ghost does now. The 9 existing complimentary members carry over with their Print membership intact (they are not turned into plain email subscribers). The contributor account shows it under Payments as the subscription taken in place of payment.
 - None beyond the prompt's own defaults.
