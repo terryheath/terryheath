@@ -66,7 +66,11 @@ HT
     done
     wp plugin activate inkhorn-network --network --allow-root || true
     wp theme enable inkhorn --network --allow-root || true
-    for url in $(wp site list --allow-root --field=url); do wp theme activate inkhorn --url="$url" --allow-root || true; done
+    for url in $(wp site list --allow-root --field=url); do
+      wp theme activate inkhorn --url="$url" --allow-root || true
+      wp option update permalink_structure '/%postname%/' --url="$url" --allow-root || true
+      wp rewrite flush --hard --url="$url" --allow-root || true
+    done
   fi
 ) &
 exec docker-entrypoint.sh "$@"

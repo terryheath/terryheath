@@ -15,10 +15,17 @@ const slugify = (s) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
 
 async function put(o) {
   if (DRY) { console.log('would import', o.site, o.type, o.slug); return { id: 0 }; }
-  const r = await fetch(WP + '/wp-json/inkhorn/v1/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Import-Token': TOKEN }, body: JSON.stringify(o) });
-  const t = await r.text();
-  if (!r.ok) throw new Error(`${o.site}/${o.type}/${o.slug}: ${r.status} ${t.slice(0, 200)}`);
-  return JSON.parse(t);
+  let last;
+  for (let i = 0; i < 5; i++) {
+    try {
+      const r = await fetch(WP + '/wp-json/inkhorn/v1/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Import-Token': TOKEN }, body: JSON.stringify(o) });
+      const t = await r.text();
+      if (r.ok) return JSON.parse(t);
+      last = `${r.status} ${t.slice(0, 200)}`;
+    } catch (e) { last = e.message; }
+    await new Promise((res) => setTimeout(res, 4000 * (i + 1)));
+  }
+  throw new Error(`${o.site}/${o.type}/${o.slug}: ${last}`);
 }
 
 /** Ghost html to WordPress content. Poems: one <p> per stanza with <br> line breaks and no empty paragraphs between. */
@@ -78,8 +85,19 @@ function clean(html) {
     }
   }
 
-  // report what was NOT copied
+  // posts outside the issue data (earlier online pieces): same type, no issue
   const covered = new Set(editions.map((e) => e.slug).filter(Boolean));
-  const left = posts.filter((p) => !covered.has(p.slug) && !(p.tags || []).some((t) => t.visibility === 'internal'));
-  console.log('Ghost posts not copied (not in the issue data):', left.map((p) => p.slug).join(', ') || 'none');
+  const left = posts.filter((p) => !covered.has(p.slug) && !(p.tags || []).some((t) => t.visibility === 'internal') && !(p.tags || []).some((t) => ['podcast', 'digest', 'life-on-words'].includes(t.slug)));
+  const genres = ['fiction', 'poetry', 'nonfiction', 'art', 'micro'];
+  for (const p of left) {
+    const g = (p.tags || []).find((t) => genres.includes(t.slug));
+    const by = (p.custom_excerpt || '').replace(/^by\s+/i, '') || (p.authors && p.authors[0] && p.authors[0].name) || '';
+    const ct = (p.tags || []).find((t) => t.visibility === 'public' && slugify(t.name) === slugify(by));
+    if (ct && !seen.has(ct.slug)) { seen.add(ct.slug); await put({ site: 'hub', type: 'ih_contributor', slug: ct.slug, title: by, content: '', status: 'publish', meta: { ih_bio: ct.description || '' } }); }
+    await put({ site: 'review', type: 'ih_piece', slug: p.slug, title: p.title, content: clean(p.html), status: p.status === 'scheduled' ? 'future' : 'publish', date: p.published_at,
+      terms: g ? { ih_genre: [g.name.charAt(0).toUpperCase() + g.name.slice(1)] } : {}, thumbnail_url: p.feature_image,
+      meta: { ih_issue_id: 0, ih_author_name: by, ih_contributors: ct ? ct.slug : '', ih_bio: (ct && ct.description) || '' } });
+    process.stdout.write('+');
+  }
+  console.log('\nearlier posts copied:', left.length);
 })().catch((e) => { console.error(e.message); process.exit(1); });
