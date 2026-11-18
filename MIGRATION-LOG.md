@@ -31,3 +31,34 @@ Started 2026-11-17 from `~/Desktop/platform-migration-prompt.md` and `~/Desktop/
 - **Memberships (Terry, 2026-11-18):** move to the shop service with Stripe subscriptions in the existing accounts (Inkhorn Press for inkhorn.press, Follow the Rabbit LLC for terryheath.com). Existing Stripe subscriptions keep billing unchanged: nobody re-subscribes, nothing cancels when Ghost disconnects. Stripe customer portal for self-service; membership status in the member account. White Rabbit add-on: Ebook $7/yr, Print $14/yr; White Rabbit contributors who choose Print get White Rabbit Print free, as Review contributors get Review Print.
 - **Subscription in place of payment (Terry's correction, 2026-11-18):** when a signed agreement chooses a subscription, it is granted automatically on signing, as Ghost does now. The 9 existing complimentary members carry over with their Print membership intact (they are not turned into plain email subscribers). The contributor account shows it under Payments as the subscription taken in place of payment.
 - None beyond the prompt's own defaults.
+
+
+## Ghost-dependent code: new versions (2026-11-18)
+Switch-over is by environment variable or by pointing the Railway cron at the new file at cutover; nothing live changes before then.
+| Old (Ghost) | New (WordPress / listmonk) | How it is switched on |
+|---|---|---|
+| `agreements-lib.cjs` tracker, `podcast-lib.cjs` guests, `podcast-routes.cjs` headshots, `admin-hub.cjs` login | same files, private stores via `inkhorn/store.cjs` + `wp/.../includes/store.php`; copy with `scripts/store-migrate.cjs` | `STORE_MODE=wp` |
+| `agreements.cjs` (pull to draft, schedule signed pieces, running order), `bios-lib.cjs`, `payouts-lib.cjs` | same files, WordPress branch; endpoints `post-status`, `piece-bio`, `bio` in `includes/tools.php` | `CMS=wp` |
+| `agreements.cjs` Ghost comps | grant in the shop service (`/membership/grant`), White Rabbit contributors get White Rabbit Print | on now; Ghost comps off with `GHOST_COMPS=off` |
+| `digest.js` | `digest-listmonk.js` (campaign on the Inkhorn Review list) | cron command at cutover |
+| `terryheath-digest.js` | `terryheath-digest-wp.js` | cron command at cutover |
+| `scheduler-check.js` | `scheduler-check-wp.js` (WordPress scheduled posts + listmonk campaigns) | cron command at cutover |
+| `patreon-sync.js` | `patreon-sync-wp.js` (store `patreon-supporters`, shown on the hub Support page) | cron command at cutover |
+| `shop-service/lib/catalog.js` | WordPress catalog endpoint | `CATALOG_SOURCE=wp` + `WP_URL` |
+| `build-ebook.js`, `build-shelves.cjs` | same files, WordPress branch (`issue-pieces`, `contributor-meta`) | `CMS=wp` |
+| `scripts/backup-ghost.cjs` | `scripts/backup-network.cjs` (to `~/inkhorn-backups`) | run by hand / cron |
+| `og-webhook`, `scripts/set-og-images.js` | retired: Open Graph tags come from the theme (`includes/blocks.php`) | n/a |
+| `subscribe-newsletter.js`, `scripts/export-mailing-list.js` | retired: listmonk import/export (`scripts/listmonk-import.cjs`) | n/a |
+| `build-editions.cjs`, `check-editions.cjs`, `catalog-pages.cjs`, `archive-report.js`, `gen-edition-partials.cjs`, `gen-routes.cjs`, `setup-build.js`, `tag-*.cjs/js`, `poem-wrap.js`, `update-bios.js`, `reschedule.js`, `schedule-drip.js`, `ghost-fetch.cjs`, `inkhorn/theme/` | retired: issues, pieces, positions, bios and covers are records in WordPress (`wp-import.cjs` did the one-time copy) | n/a |
+| `riverside-to-ghost.js`, `podcast-import` service | still to rewrite (episodes: WordPress `ih_episode` via the import endpoint) | open |
+| `address-service`, `shop-service` Ghost-member address page | Print addresses come from Stripe Checkout (shipping address) and from the signed agreement; `/address/` redirects to `/account/` | open: confirm the address-service is no longer needed |
+| `routes.yaml` / `redirects.yaml` generation | `wp/mu-plugins/inkhorn-redirects.json`; `scripts/test-wp-redirects.cjs`: 191 live Ghost URLs, 0 failing | done |
+
+## Heuristics audit
+- Pass 1 (2026-11-18, automated part): contrast of every text/background pair in the palette is 4.5:1 or better (ink 13.7, muted 5.7, accents 4.9 to 6.7, accents on tints 4.5 to 6.0); all buttons and fields are 44px tall; focus outlines on; one `main` landmark per page; skip link from the block theme; phone breakpoint at 640px. Still to do: full pass over every page type, the email templates, preferences and account on a phone-width screen, keyboard walkthrough; repeat until a fresh pass finds nothing.
+
+## Not done yet
+- SES: needs the AWS console sign-in (password / 2FA). After it: `scripts/ses-smtp-user.cjs` creates the SMTP user, listmonk and WordPress get the SMTP settings, test send to Terry only.
+- DocuSeal move from PikaPods to Railway (needs the pod's data; see below).
+- Mapped domains, cross-domain sign-in cookie, DNS, SSL: cutover only, after Terry's go-ahead.
+- Shutdown list and costs: after cutover, for Terry's explicit yes.
