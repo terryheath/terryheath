@@ -8,7 +8,7 @@ namespace Inkhorn;
  */
 add_action('rest_api_init', function () {
   $perm = function (\WP_REST_Request $r) { $t = getenv('INKHORN_IMPORT_TOKEN'); return $t && hash_equals($t, (string) $r->get_header('x-import-token')); };
-  $ok = ['agreements-tracker', 'podcast-guests', 'podcast-headshots', 'admin-hub-auth'];
+  $ok = ['agreements-tracker', 'podcast-guests', 'podcast-headshots', 'admin-hub-auth', 'scheduler-alerts'];
   register_rest_route('inkhorn/v1', '/store/(?P<key>[a-z-]+)', [
     ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) use ($ok) {
       if (!in_array($r['key'], $ok, true)) { return new \WP_Error('bad', 'unknown store', ['status' => 404]); }
