@@ -79,6 +79,7 @@ const SUBDOMAINS = [
 ];
 const LINKS = [
   ['Inkhorn', [
+    ['Profile changes', '/profiles', 'Contributor headshot, bio and website changes waiting for your approval (nothing goes live until you approve).'],
     ['Ghost Admin', 'https://inkhorn.press/ghost/', 'Write, schedule and edit posts and pages, members, newsletters, tiers, themes.'],
     ['The live site', 'https://inkhorn.press/', 'What readers see.'],
     ['The Submissions page (guidelines and rights)', 'https://inkhorn.press/submissions/', 'Guidelines, free reading periods, pay (edited in Ghost Admin).'],
@@ -150,7 +151,7 @@ const send = (res, code, html, extra = {}) => { res.writeHead(code, { 'Content-T
 const redirect = (res, to) => { res.writeHead(303, { Location: to, 'Cache-Control': 'no-store' }); res.end(); };
 const nf = (res, signed = false) => send(res, 404, shell('Not found', '<h1>Not found</h1><p>There is nothing at this address. Use the menu above, or go to <a href="/">the admin home</a>.</p>', signed ? 'x' : ''));
 // Paths that exist behind the sign-in; anything else is a plain 404 even when signed out (so a typo never looks like a session problem).
-const KNOWN = (path) => path === '/' || path === '/payouts' || path === '/payouts.csv' || path === '/payouts/bio' || path === '/payouts/refund' || path === '/podcast' || path.startsWith('/podcast/');
+const KNOWN = (path) => path === '/' || path === '/payouts' || path === '/payouts.csv' || path === '/payouts/bio' || path === '/payouts/refund' || path === '/profiles' || path === '/profiles/decide' || path === '/podcast' || path.startsWith('/podcast/');
 const sameSite = (req) => { const o = req.headers.origin; if (o) { try { return new URL(o).host === req.headers.host; } catch { return false; } } return req.headers['sec-fetch-site'] === 'same-origin'; };
 const resets = new Map(); // one-time reset links already used (token -> true), memory only; links also expire after 30 minutes
 
@@ -239,6 +240,30 @@ async function handle(req, res, ip) {
     console.log('PAYOUTS REFUND', f.do, out);
     return redirect(res, '/payouts?msg=' + encodeURIComponent(out));
   }
+  if (path === '/profiles') return send(res, 200, await profilesHtml(query.get('msg') || ''));
+  if (path === '/profiles/decide' && req.method === 'POST') {
+    if (!sameSite(req)) return send(res, 403, shell('No', '<h1>No</h1>'));
+    const f = Object.fromEntries(new URLSearchParams(await readBody(req)));
+    let out; try { await wpFetch('POST', '/pending/' + encodeURIComponent(f.id), { do: f.do === 'approve' ? 'approve' : 'reject' }); out = f.do === 'approve' ? 'Approved: the changes are live.' : 'Rejected: nothing changed.'; } catch (e) { out = 'FAILED: ' + e.message; }
+    return redirect(res, '/profiles?msg=' + encodeURIComponent(out));
+  }
   return nf(res, true);
+}
+// Contributor profile changes (headshot, bio, website) wait here for approval; nothing goes live on the WordPress hub until approved.
+async function wpFetch(method, p, body) {
+  const base = process.env.WP_URL, tok = process.env.INKHORN_IMPORT_TOKEN;
+  if (!base || !tok) throw new Error('WP_URL and INKHORN_IMPORT_TOKEN are not set');
+  const r = await fetch(base.replace(/\/$/, '') + '/wp-json/inkhorn/v1' + p, { method, headers: { 'Content-Type': 'application/json', 'X-Import-Token': tok }, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) throw new Error(`WordPress ${r.status}`); return r.json();
+}
+async function profilesHtml(msg) {
+  let list = []; let err = '';
+  try { list = await wpFetch('GET', '/pending'); } catch (e) { err = e.message; }
+  const e2 = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const img = (u) => (u ? `<img src="${e2(u)}" alt="" width="72" height="72" style="border-radius:50%;object-fit:cover">` : '<span class="small">no photo</span>');
+  const rows = list.map((c) => `<div class="bio"><p><strong>${e2(c.name)}</strong></p><div class="cols"><div><b>Live now</b><p>${img(c.now.headshot)}</p><p>${e2(c.now.bio) || '<em>no bio</em>'}</p><p>${e2(c.now.url)}</p></div>
+    <div><b>Waiting</b><p>${img(c.pending.headshot || c.now.headshot)}</p><p>${e2(c.pending.bio)}</p><p>${e2(c.pending.url)}</p></div></div>
+    <form method="post" action="/profiles/decide" class="act"><input type="hidden" name="id" value="${c.id}"><button name="do" value="approve">Approve</button> <button name="do" value="reject" class="ghost">Reject</button></form></div>`).join('');
+  return shell('Profile changes', `<h1>Profile changes <small>${list.length}</small></h1>${msg ? `<p class="status">${e2(msg)}</p>` : ''}${err ? `<p class="bad">Could not reach WordPress: ${e2(err)}</p>` : ''}${rows || '<p class="ok">Nothing is waiting.</p>'}`, 'profiles');
 }
 module.exports = { handle, SUBDOMAINS, LINKS };

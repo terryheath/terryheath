@@ -218,3 +218,30 @@ add_action('rest_api_init', function () {
     },
   ]);
 });
+
+/** Admin hub: pending profile changes (list, approve, reject). Same server token. */
+add_action('rest_api_init', function () {
+  $perm = function (\WP_REST_Request $r) { $t = getenv('INKHORN_IMPORT_TOKEN'); return $t && hash_equals($t, (string) $r->get_header('x-import-token')); };
+  register_rest_route('inkhorn/v1', '/pending', ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function () {
+    switch_to_blog(get_main_site_id());
+    $out = [];
+    foreach (get_posts(['post_type' => 'ih_contributor', 'numberposts' => -1, 'post_status' => 'any', 'meta_key' => 'ih_pending', 'meta_compare' => 'EXISTS']) as $c) {
+      $p = get_post_meta($c->ID, 'ih_pending', true); if (!$p) { continue; }
+      $out[] = ['id' => $c->ID, 'name' => $c->post_title, 'now' => ['bio' => get_post_meta($c->ID, 'ih_bio', true), 'url' => get_post_meta($c->ID, 'ih_url', true), 'headshot' => get_post_meta($c->ID, 'ih_headshot_id', true) ? wp_get_attachment_image_url((int) get_post_meta($c->ID, 'ih_headshot_id', true), 'thumbnail') : ''],
+        'pending' => ['bio' => $p['bio'] ?? '', 'url' => $p['url'] ?? '', 'headshot' => !empty($p['headshot_id']) ? wp_get_attachment_image_url((int) $p['headshot_id'], 'thumbnail') : '', 'at' => $p['at'] ?? 0]];
+    }
+    restore_current_blog();
+    return $out;
+  }]);
+  register_rest_route('inkhorn/v1', '/pending/(?P<id>\d+)', ['methods' => 'POST', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
+    switch_to_blog(get_main_site_id());
+    $id = (int) $r['id']; $d = $r->get_json_params(); $p = get_post_meta($id, 'ih_pending', true);
+    if ($p && ($d['do'] ?? '') === 'approve') {
+      update_post_meta($id, 'ih_bio', $p['bio'] ?? ''); update_post_meta($id, 'ih_url', $p['url'] ?? '');
+      if (!empty($p['headshot_id'])) { update_post_meta($id, 'ih_headshot_id', (int) $p['headshot_id']); }
+    }
+    delete_post_meta($id, 'ih_pending');
+    restore_current_blog();
+    return ['ok' => true];
+  }]);
+});
