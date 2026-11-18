@@ -19,6 +19,9 @@ async function draftCampaign({ name, subject, listSlugs, brand, html, fromEmail,
   return api('POST', '/campaigns', { name, subject, lists: lists.map((l) => l.id), type: 'regular', content_type: 'html', body: html, template_id: await templateId(brand), from_email: fromEmail || undefined, messenger: 'email', headers: [], send_at: sendAt || null });
 }
 const setStatus = (id, status) => api('PUT', `/campaigns/${id}/status`, { status });
-const testSend = async (id, to, c) => api('POST', `/campaigns/${id}/test`, { ...(c || {}), subscribers: [to] });
+const testSend = async (id, to, c) => {
+  c = c || await api('GET', `/campaigns/${id}`);
+  return api('POST', `/campaigns/${id}/test`, { name: c.name, subject: c.subject, lists: (c.lists || []).map((l) => (typeof l === 'object' ? l.id : l)), from_email: c.from_email, content_type: c.content_type, body: c.body, template_id: c.template_id, messenger: c.messenger || 'email', headers: c.headers || [], subscribers: [to] });
+};
 const campaigns = (q = '') => api('GET', '/campaigns?per_page=all' + q).then((d) => d.results);
 module.exports = { api, listBySlug, templateId, draftCampaign, setStatus, testSend, campaigns, BRAND_TEMPLATE };
