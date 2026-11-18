@@ -15,7 +15,7 @@
  *   3b. Contributor reminders: DocuSeal re-sends the signature request 7 and 3 days before each deadline (once each).
  *   3c. Every Monday and Thursday: emails Terry the unsigned list per issue with days left (stops per issue once all are signed).
  *   3d. Bios and addresses from signed agreements (bios-lib.cjs): a blank bio is filled in automatically; an existing one is left for Terry on the payouts page.
- *   4. A signed agreement with the subscription choice gets a complimentary Print membership (one year) in Ghost; the email asks
+ *   4. A signed agreement with the subscription choice gets a complimentary Print subscription (one year) in Ghost; the email asks
  *      Terry to add them to the print mailing list.
  * Env: GITHUB_TOKEN, DOCUSEAL_TOKEN (DOCUSEAL_URL optional), GHOST_API_URL, GHOST_ADMIN_KEY, GHOST_STAFF_TOKEN, optional NOTICE_EMAIL,
  *      AGREEMENTS_MODE=dry (print what would happen, change nothing), FORCE=1 (skip the 8am check).
@@ -51,13 +51,13 @@ async function updateStatuses(tracker, events) {
   }
 }
 
-// Subscription taken in place of payment: granted in the shop service (the membership store that replaces Ghost tiers) when the agreement is signed.
+// Subscription taken in place of payment: granted in the shop service (the subscription store that replaces Ghost tiers) when the agreement is signed.
 // Review contributors get Review Print, White Rabbit contributors get White Rabbit Print. Ghost comps stay on until Ghost is switched off (GHOST_COMPS=off).
 async function grantShopComp(r) {
   const base = process.env.SHOP_SERVICE_URL, token = process.env.MEMBER_API_TOKEN;
   if (!base || !token) return null;
   const pub = (r.publication || L.publicationOf(r.issue)) === 'White Rabbit' ? 'whiterabbit' : 'review';
-  const res = await fetch(base.replace(/\/$/, '') + '/membership/grant', {
+  const res = await fetch(base.replace(/\/$/, '') + '/subscription/grant', {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Member-Token': token },
     body: JSON.stringify({ email: r.email, name: r.contributor, publication: pub, kind: 'print', months: 12, ref: String(r.submission_id),
       note: `Subscription taken in place of payment: ${r.title} (${L.issueName(r.issue)})` }),
@@ -224,7 +224,7 @@ async function weeklyStatus(api, tracker, today) {
   if (events.applied) parts.push(`<h3>Running order updated</h3><p>Removed ${events.applied.removed.map((t) => `<em>${esc(t)}</em>`).join(', ')} from the winter running order, committed to GitHub (${events.applied.sha ? events.applied.sha.slice(0, 7) : 'no commit'}) and uploaded the theme.</p>`);
   if (events.applyError) parts.push(`<h3>Running order NOT updated</h3><p>${esc(events.applyError)}. It will retry at the next run; or run <code>node inkhorn/scripts/apply-pulls.cjs</code> and deploy by hand.</p>`);
   if (events.cashDefault.length) parts.push(`<h3>Already published; no choice made by the deadline — recorded "cash by default"</h3>${list(events.cashDefault)}`);
-  if (events.comps.length) parts.push(`<h3>Chose the Print subscription — complimentary Print membership granted</h3>${list(events.comps, (r) => ` — through ${r.comp_expires}`)}<p>Add them to the print mailing list.</p>`);
+  if (events.comps.length) parts.push(`<h3>Chose the Print subscription — complimentary Print subscription granted</h3>${list(events.comps, (r) => ` — through ${r.comp_expires}`)}<p>Add them to the print mailing list.</p>`);
   if (events.contribReminders.length) parts.push(`<h3>Reminders sent to contributors</h3>${list(events.contribReminders, (r) => ` — ${r.left} day(s) left`)}`);
   if (events.scheduled.length) parts.push(`<h3>Signed: scheduled for release day</h3>${list(events.scheduled, (r) => ` — scheduled ${r.slot.replace('T', ' ').slice(0, 16)} UTC`)}`);
   const filled = events.bios.filter((b) => b.kind === 'filled'), waiting = events.bios.filter((b) => b.kind === 'pending');

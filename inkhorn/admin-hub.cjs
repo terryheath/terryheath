@@ -101,7 +101,7 @@ const LINKS = [
   ]],
   ['Shop and money', [
     ['Ebook admin', 'https://download.inkhornreview.com/admin', 'Resend or revoke download links, download history, file check (password in Keychain inkhorn-shop-admin).'],
-    ['Stripe: Inkhorn Press (nonprofit)', 'https://dashboard.stripe.com/', 'Shop checkout, donations, Duosuma fees and tips, inkhorn.press memberships. Switch to the Inkhorn Press account in the dashboard menu.'],
+    ['Stripe: Inkhorn Press (nonprofit)', 'https://dashboard.stripe.com/', 'Shop checkout, donations, Duosuma fees and tips, inkhorn.press subscriptions. Switch to the Inkhorn Press account in the dashboard menu.'],
     ['Stripe: Follow the Rabbit LLC', 'https://dashboard.stripe.com/', 'terryheath.com tips and donations only. Switch to the Follow the Rabbit LLC account in the dashboard menu.'],
   ]],
   ['Muse', [['gomuse.io Admin', 'https://gomuse.io/admin', 'Issues, people, email (including the announcement emails), flagged pieces.']]],

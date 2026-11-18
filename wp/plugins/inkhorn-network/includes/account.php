@@ -20,8 +20,8 @@ function token_key($t) { return 'ih_tok_' . substr(hash('sha256', $t), 0, 32); }
 
 /** Pages that are not posts: /signin/, /account/, /preferences/ (hub only). */
 add_action('init', function () {
-  add_rewrite_rule('^(signin|account|preferences|subscribe)/?$', 'index.php?ih_view=$matches[1]', 'top');
-  add_rewrite_rule('^shop/(cart|order-complete|address|print-edition)/?$', 'index.php?ih_view=$matches[1]', 'top');
+  add_rewrite_rule('^(signin|account|newsletter)/?$', 'index.php?ih_view=$matches[1]', 'top');
+  add_rewrite_rule('^shop/(cart|order-complete|subscriptions)/?$', 'index.php?ih_view=$matches[1]', 'top');
   add_rewrite_rule('^shop/?$', 'index.php?ih_view=shop', 'top');
   add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?ih_view=book&ih_book_slug=$matches[1]', 'top');
   add_rewrite_rule('^signin/verify/?$', 'index.php?ih_view=verify', 'top');
@@ -85,7 +85,7 @@ function my_contributor($email) {
   return $c ? $c[0] : null;
 }
 
-/** Calls the shop service (membership store). */
+/** Calls the shop service (subscription store). */
 function shop($method, $path, $body = null) {
   $base = getenv('SHOP_SERVICE_URL'); $tok = getenv('MEMBER_API_TOKEN');
   if (!$base || !$tok) { return null; }
@@ -109,7 +109,7 @@ add_action('template_redirect', function () {
   if (!wp_verify_nonce($_POST['_n'] ?? '', 'ih_account_' . $email)) { wp_die('Please reload the page and try again.', '', 400); }
   $do = $_POST['do'] ?? '';
   if ($do === 'portal') {
-    $r = shop('POST', '/membership/portal', ['email' => $email, 'return_url' => home_url('/account/')]);
+    $r = shop('POST', '/subscription/portal', ['email' => $email, 'return_url' => home_url('/account/')]);
     if ($r && !empty($r['url'])) { wp_redirect($r['url']); exit; }
     wp_safe_redirect(add_query_arg('msg', 'noportal', home_url('/account/'))); exit;
   }
@@ -146,18 +146,18 @@ function view_account() {
   if ($msg === 'pending') { $h .= '<p class="ih-note" role="status">Thank you. Your changes are waiting for approval; nothing is public until then.</p>'; }
   if ($msg === 'noportal') { $h .= '<p class="ih-note" role="status">There is no paid subscription to manage for this address.</p>'; }
 
-  // Membership
-  $st = shop('GET', '/membership/status?email=' . rawurlencode($email));
-  $h .= '<section><h2>Membership</h2>';
-  if ($st && $st['memberships']) {
+  // Subscriptions (paid Ebook and Print plans, and the Print subscription taken in place of payment)
+  $st = shop('GET', '/subscription/status?email=' . rawurlencode($email));
+  $h .= '<section><h2>Subscriptions</h2>';
+  if ($st && $st['subscriptions']) {
     $h .= '<ul class="ih-list">';
-    foreach ($st['memberships'] as $m) {
+    foreach ($st['subscriptions'] as $m) {
       $what = ($m['publication'] === 'review' ? 'Inkhorn Review' : 'White Rabbit') . ' ' . ucfirst($m['kind']);
       $how = $m['source'] === 'comp' ? 'Subscription taken in place of payment' : 'Paid subscription';
       $h .= '<li><span class="ih-pt">' . e($what) . '</span><span class="ih-pa">' . e($how) . ' · ' . e($m['status']) . ($m['until'] ? ' · through ' . e(substr($m['until'], 0, 10)) : '') . '</span></li>';
     }
     $h .= '</ul><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="portal"><p><button class="ih-btn" type="submit">Manage billing</button></p></form>';
-  } else { $h .= '<p class="ih-sub" style="text-align:left">You have no membership yet.</p><p>' . btn(home_url('/subscribe/'), 'See memberships') . '</p>'; }
+  } else { $h .= '<p class="ih-sub" style="text-align:left">You have no subscription yet.</p><p>' . btn(home_url('/shop/subscriptions/'), 'See subscriptions') . '</p>'; }
   $h .= '</section>';
 
   // Contributor sections
@@ -216,28 +216,28 @@ function lm_subscriber_by_uuid($uuid) {
 }
 
 add_action('template_redirect', function () {
-  if (get_query_var('ih_view') !== 'preferences' || $_SERVER['REQUEST_METHOD'] !== 'POST') { return; }
+  if (get_query_var('ih_view') !== 'newsletter' || $_SERVER['REQUEST_METHOD'] !== 'POST') { return; }
   $uuid = sanitize_text_field($_POST['id'] ?? ''); $sub = lm_subscriber_by_uuid($uuid);
-  if (!$sub) { wp_safe_redirect(home_url('/preferences/?msg=nope')); exit; }
+  if (!$sub) { wp_safe_redirect(home_url('/newsletter/?msg=nope')); exit; }
   $map = lm_lists_by_slug(); $all = array_values($map);
   $chosen = ($_POST['do'] ?? '') === 'none' ? [] : array_values(array_intersect($all, array_map(function ($s) use ($map) { return $map[$s] ?? 0; }, (array) ($_POST['lists'] ?? []))));
   $drop = array_values(array_diff($all, $chosen));
   if ($chosen) { lm('PUT', '/subscribers/lists', ['ids' => [(int) $sub['id']], 'action' => 'add', 'target_list_ids' => $chosen, 'status' => 'confirmed']); }
   if ($drop) { lm('PUT', '/subscribers/lists', ['ids' => [(int) $sub['id']], 'action' => 'unsubscribe', 'target_list_ids' => $drop]); }
-  wp_safe_redirect(add_query_arg(['id' => $uuid, 'msg' => ($_POST['do'] ?? '') === 'none' ? 'none' : 'saved'], home_url('/preferences/'))); exit;
+  wp_safe_redirect(add_query_arg(['id' => $uuid, 'msg' => ($_POST['do'] ?? '') === 'none' ? 'none' : 'saved'], home_url('/newsletter/'))); exit;
 });
 
-function view_preferences() {
+function view_newsletter() {
   $uuid = sanitize_text_field($_GET['id'] ?? ''); $msg = $_GET['msg'] ?? '';
   $sub = $uuid ? lm_subscriber_by_uuid($uuid) : null;
-  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Manage email</h1>';
+  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Newsletter</h1>';
   if ($msg === 'saved') { $h .= '<p class="ih-note" style="text-align:center" role="status">Saved. Your choices apply to the next email.</p>'; }
   if ($msg === 'none') { $h .= '<p class="ih-note" style="text-align:center" role="status">You are unsubscribed from every list. You can come back any time.</p>'; }
   if ($msg === 'nope') { $h .= '<p class="ih-note" style="text-align:center" role="alert">That link did not work. Use the link in your latest email, or sign up again below.</p>'; }
   if (!$sub) { return $h . '<p class="ih-note" style="margin:0 auto;text-align:center">Not on a list yet? Choose the ones you want.</p>' . signup('Your lists') . '</main>'; }
   $on = []; foreach (($sub['lists'] ?? []) as $l) { if (($l['subscription_status'] ?? '') !== 'unsubscribed') { foreach (($l['tags'] ?? []) as $t) { $on[$t] = true; } } }
   $groups = ['Inkhorn Press' => ['inkhorn-review', 'white-rabbit', 'muse', 'events'], 'Terry Heath' => ['writing', 'digest', 'new-books'], 'Life on Words' => ['life-on-words']];
-  $h .= '<p class="ih-sub" style="text-align:center">' . e($sub['email']) . '</p><form class="ih-form" method="post" action="' . a(home_url('/preferences/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '">';
+  $h .= '<p class="ih-sub" style="text-align:center">' . e($sub['email']) . '</p><form class="ih-form" method="post" action="' . a(home_url('/newsletter/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '">';
   foreach ($groups as $g => $slugs) {
     $h .= '<fieldset><legend style="position:static;font:500 13px Karla,sans-serif;letter-spacing:.12em;color:var(--ih-accent);margin:24px 0 8px;display:block;width:100%">' . e(strtoupper($g)) . '</legend>';
     foreach ($slugs as $s) { $h .= '<label style="display:flex;gap:10px;min-height:44px;align-items:center"><input type="checkbox" name="lists[]" value="' . a($s) . '"' . (!empty($on[$s]) ? ' checked' : '') . '> ' . e(LIST_LABELS[$s] ?? $s) . '</label>'; }
@@ -246,26 +246,26 @@ function view_preferences() {
   return $h . '<div class="ih-btns" style="justify-content:center"><button class="ih-btn" type="submit" name="do" value="save">Save my choices</button><button class="ih-btn" type="submit" name="do" value="none">Unsubscribe from all</button></div></form></main>';
 }
 
-function view_subscribe() {
-  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Memberships</h1><div class="ih-grid" style="max-width:760px;margin:0 auto">';
+function view_subscriptions() {
+  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Subscriptions</h1><div class="ih-grid" style="max-width:760px;margin:0 auto">';
   foreach ([['review-ebook', 'Inkhorn Review Ebook', '$20 a year', 'The ebook of each quarterly issue.'], ['review-print', 'Inkhorn Review Print', '$48 a year', 'Four printed issues a year, mailed to any U.S. address, plus the ebook of each.']] as $t) {
-    $h .= '<div class="ih-gi"><h3>' . e($t[1]) . '</h3><p>' . e($t[2]) . '</p><p>' . e($t[3]) . '</p><form method="post" action="' . a(rest_url('inkhorn/v1/member-checkout')) . '"><input type="hidden" name="tier" value="' . a($t[0]) . '">'
+    $h .= '<div class="ih-gi"><h3>' . e($t[1]) . '</h3><p>' . e($t[2]) . '</p><p>' . e($t[3]) . '</p><form method="post" action="' . a(rest_url('inkhorn/v1/subscription-checkout')) . '"><input type="hidden" name="tier" value="' . a($t[0]) . '">'
        . '<p><label><input type="checkbox" name="wr" value="ebook"> Add White Rabbit Ebook, $7 a year</label><br><label><input type="checkbox" name="wr" value="print"> Add White Rabbit Print, $14 a year</label></p><button class="ih-btn" type="submit">Subscribe</button></form></div>';
   }
   return $h . '</div></main>';
 }
 
 add_action('rest_api_init', function () {
-  register_rest_route('inkhorn/v1', '/member-checkout', [
+  register_rest_route('inkhorn/v1', '/subscription-checkout', [
     'methods' => 'POST', 'permission_callback' => '__return_true',
     'callback' => function (\WP_REST_Request $r) {
       $wr = (array) $r->get_param('wr'); $wr = in_array('print', $wr, true) ? 'print' : (in_array('ebook', $wr, true) ? 'ebook' : null);
       $base = getenv('SHOP_SERVICE_URL');
-      $resp = wp_remote_post(rtrim($base, '/') . '/membership/checkout', ['timeout' => 20, 'headers' => ['Content-Type' => 'application/json'],
+      $resp = wp_remote_post(rtrim($base, '/') . '/subscription/checkout', ['timeout' => 20, 'headers' => ['Content-Type' => 'application/json'],
         'body' => wp_json_encode(['tier' => sanitize_text_field((string) $r->get_param('tier')), 'whiterabbit' => $wr, 'email' => session_email() ?: null])]);
       $d = is_wp_error($resp) ? null : json_decode(wp_remote_retrieve_body($resp), true);
       if (!empty($d['url'])) { wp_redirect($d['url']); exit; }
-      wp_safe_redirect(add_query_arg('msg', 'failed', home_url('/subscribe/'))); exit;
+      wp_safe_redirect(add_query_arg('msg', 'failed', home_url('/shop/subscriptions/'))); exit;
     },
   ]);
 });

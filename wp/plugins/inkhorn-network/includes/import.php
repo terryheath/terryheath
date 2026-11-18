@@ -43,6 +43,7 @@ function import_item(\WP_REST_Request $r) {
       'post_status' => $d['status'] ?? 'publish', 'post_excerpt' => $d['excerpt'] ?? '', 'menu_order' => (int) ($d['menu_order'] ?? 0),
     ];
     if (!empty($d['date'])) { $arr['post_date_gmt'] = gmdate('Y-m-d H:i:s', strtotime($d['date'])); $arr['post_date'] = get_date_from_gmt($arr['post_date_gmt']); }
+    if ($found && !empty($d['only_content'])) { kses_remove_filters(); wp_update_post(['ID' => $found[0]->ID, 'post_content' => $d['content'] ?? '']); kses_init_filters(); return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID)]; }
     if ($found && !empty($d['skip_if_exists'])) { return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID), 'existed' => true]; }
     if ($found) { $arr['ID'] = $found[0]->ID; }
     kses_remove_filters();
@@ -61,6 +62,18 @@ function import_item(\WP_REST_Request $r) {
     }
     foreach (($d['meta'] ?? []) as $k => $v) { update_post_meta($id, $k, $v); }
     foreach (($d['terms'] ?? []) as $tax => $names) { wp_set_object_terms($id, (array) $names, $tax); }
+    if (!empty($d['thumbnail_b64'])) { // image sent with the item (podcast headshots from the hub)
+      $tmp = wp_tempnam($d['thumbnail_name'] ?? 'upload.jpg');
+      file_put_contents($tmp, base64_decode($d['thumbnail_b64']));
+      $att = media_handle_sideload(['name' => $d['thumbnail_name'] ?? 'upload.jpg', 'tmp_name' => $tmp], $id);
+      if (!is_wp_error($att)) { set_post_thumbnail($id, $att); $thumb_att = $att; } else { $thumb_error = $att->get_error_message(); @unlink($tmp); }
+    }
+    if (!empty($d['guest_name'])) { // link the episode to its guest (created on first sight); the guest takes the headshot when it has none
+      $gs = get_posts(['post_type' => 'ih_guest', 'name' => sanitize_title($d['guest_name']), 'numberposts' => 1, 'post_status' => 'any']);
+      $gid = $gs ? $gs[0]->ID : wp_insert_post(['post_type' => 'ih_guest', 'post_title' => $d['guest_name'], 'post_name' => sanitize_title($d['guest_name']), 'post_status' => 'publish']);
+      update_post_meta($id, 'ih_guest_id', $gid);
+      if (!empty($thumb_att) && !get_post_thumbnail_id($gid)) { set_post_thumbnail($gid, $thumb_att); }
+    }
     if (!empty($d['thumbnail_url'])) {
       $have = get_post_meta($id, '_ih_thumb_src', true);
       if ($have !== $d['thumbnail_url']) {

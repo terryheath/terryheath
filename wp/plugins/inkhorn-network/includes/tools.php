@@ -81,6 +81,13 @@ add_action('rest_api_init', function () {
     }
     return $out;
   }]);
+  register_rest_route('inkhorn/v1', '/episodes-state', ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function () {
+    switch_to_blog(site_id_for('lifeonwords')); $out = [];
+    foreach (get_posts(['post_type' => 'ih_episode', 'numberposts' => -1, 'post_status' => ['publish', 'future', 'draft']]) as $p) {
+      $out[] = ['id' => $p->ID, 'slug' => $p->post_name, 'status' => $p->post_status === 'draft' ? 'draft' : 'published', 'guid' => get_post_meta($p->ID, 'ih_guid', true), 'number' => (int) get_post_meta($p->ID, 'ih_number', true)];
+    }
+    restore_current_blog(); return $out;
+  }]);
   register_rest_route('inkhorn/v1', '/piece-bio', ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) {
     switch_to_blog(site_id_for((string) ($r['site'] ?: 'review')));
     $q = get_posts(['post_type' => 'ih_piece', 'name' => sanitize_title((string) $r['slug']), 'numberposts' => 1, 'post_status' => 'any']);

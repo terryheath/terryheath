@@ -8,7 +8,7 @@ const cfg = require('./lib/config');
 const catalog = require('./lib/catalog');
 const orders = require('./lib/orders');
 const downloads = require('./lib/downloads');
-const memberships = require('./lib/memberships');
+const subscriptions = require('./lib/subscriptions');
 const adminRouter = require('./lib/admin');
 const { startReleaseJob } = require('./lib/release');
 
@@ -34,7 +34,7 @@ app.use(express.json());
 
 // ── DOWNLOADS AND ADMIN ──────────────────────────────────────────────────────
 app.use('/d', downloads);
-app.use('/membership', memberships.router(stripe));
+app.use('/subscription', subscriptions.router(stripe));
 app.use('/admin', adminRouter({
   stripe,
   // every active ebook product with its file key, for the admin file check
@@ -213,6 +213,23 @@ app.post('/checkout', async (req, res) => {
   }
 });
 
+// ── GET /donate/checkout?amount=25 ────────────────────────────────────────────
+// One-time gift to Inkhorn Press (the Donate page links here). Redirects to Stripe Checkout; amounts $5 to $5,000.
+app.get('/donate/checkout', async (req, res) => {
+  try {
+    const dollars = Math.round(Number(req.query.amount));
+    if (!(dollars >= 5 && dollars <= 5000)) return res.status(400).send('Choose an amount between $5 and $5,000.');
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ price_data: { currency: 'usd', unit_amount: dollars * 100, product_data: { name: 'Gift to Inkhorn Press' } }, quantity: 1 }],
+      submit_type: 'donate',
+      success_url: `${cfg.siteUrl}/donate/?thanks=1`, cancel_url: `${cfg.siteUrl}/donate/`,
+      metadata: { kind: 'donation' },
+    });
+    res.redirect(303, session.url);
+  } catch (err) { console.error('GET /donate/checkout error:', err.message); res.status(500).send('Checkout failed. Please try again.'); }
+});
+
 // ── GET /order ─────────────────────────────────────────────────────────────────
 // Shown on the order-complete page. Never returns a download link: those are only emailed.
 app.get('/order', async (req, res) => {
@@ -271,13 +288,13 @@ app.post('/webhook', async (req, res) => {
   }
 
   try {
-    if (await memberships.handleEvent(stripe, event)) return res.json({ received: true });
+    if (await subscriptions.handleEvent(stripe, event)) return res.json({ received: true });
   } catch (err) {
-    console.error('membership event handling failed:', err.message);
+    console.error('subscription event handling failed:', err.message);
     return res.status(500).json({ error: 'processing failed, please retry' });
   }
 
-  if (event.type === 'checkout.session.completed') {
+  if (event.type === 'checkout.session.completed' && !(event.data.object.metadata && event.data.object.metadata.kind === 'donation')) {
     try {
       const fullSession = await stripe.checkout.sessions.retrieve(event.data.object.id, {
         expand: ['line_items', 'line_items.data.price.product'],

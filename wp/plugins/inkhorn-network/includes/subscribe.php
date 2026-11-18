@@ -6,7 +6,7 @@ namespace Inkhorn;
  * Env on the wordpress service: LISTMONK_URL (the public listmonk address). The list uuids live in the network option inkhorn_listmonk_lists.
  */
 add_action('rest_api_init', function () {
-  register_rest_route('inkhorn/v1', '/subscribe', [
+  register_rest_route('inkhorn/v1', '/newsletter-signup', [
     'methods' => 'POST', 'permission_callback' => '__return_true',
     'callback' => function (\WP_REST_Request $req) {
       $email = sanitize_email((string) $req->get_param('email'));
@@ -14,7 +14,7 @@ add_action('rest_api_init', function () {
       $wants_json = strpos((string) $req->get_header('accept'), 'application/json') !== false;
       $fail = function ($msg, $code = 400) use ($wants_json) {
         if ($wants_json) { return new \WP_REST_Response(['ok' => false, 'message' => $msg], $code); }
-        wp_safe_redirect(add_query_arg('subscribed', '0', wp_get_referer() ?: home_url('/'))); exit;
+        wp_safe_redirect(add_query_arg('signed-up', '0', wp_get_referer() ?: home_url('/'))); exit;
       };
       if (!is_email($email)) { return $fail('Please enter a valid email address.'); }
       if (!$lists) { return $fail('Choose at least one list.'); }
@@ -25,7 +25,7 @@ add_action('rest_api_init', function () {
       $pub = wp_remote_post(rtrim($url, '/') . '/subscription/form', ['timeout' => 15, 'body' => ['email' => $email, 'name' => '', 'l' => $uuids, 'nonce' => '']]);
       if (is_wp_error($pub)) { return $fail('Something went wrong. Please try again.', 502); }
       if ($wants_json) { return new \WP_REST_Response(['ok' => true, 'message' => 'Thank you. Check your email to confirm.']); }
-      wp_safe_redirect(add_query_arg('subscribed', '1', wp_get_referer() ?: home_url('/'))); exit;
+      wp_safe_redirect(add_query_arg('signed-up', '1', wp_get_referer() ?: home_url('/'))); exit;
     },
   ]);
 });

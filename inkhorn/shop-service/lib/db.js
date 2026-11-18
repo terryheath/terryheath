@@ -8,6 +8,9 @@ const cfg = require('./config');
 fs.mkdirSync(cfg.dataDir, { recursive: true });
 const db = new DatabaseSync(path.join(cfg.dataDir, 'shop.db'));
 
+// the table was first called memberships: rename it once so existing rows are kept
+try { if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='memberships'").get()) { db.exec('ALTER TABLE memberships RENAME TO subscriptions'); db.exec('DROP INDEX IF EXISTS memberships_stripe'); db.exec('DROP INDEX IF EXISTS memberships_comp'); db.exec('DROP INDEX IF EXISTS memberships_email'); } } catch (e) { console.error('subscriptions table rename failed:', e.message); }
+
 db.exec(`
   PRAGMA journal_mode = WAL;
   PRAGMA foreign_keys = ON;
@@ -67,14 +70,14 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS events_session ON events (session_id);
 
-  -- Memberships (replace Ghost tiers). One row per entitlement: paid by Stripe subscription, or complimentary.
+  -- Subscriptions (replace Ghost tiers). One row per entitlement: paid by Stripe subscription, or complimentary.
   CREATE TABLE IF NOT EXISTS members (
     email           TEXT PRIMARY KEY,
     name            TEXT,
     stripe_customer TEXT,
     created_at      TEXT NOT NULL
   );
-  CREATE TABLE IF NOT EXISTS memberships (
+  CREATE TABLE IF NOT EXISTS subscriptions (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     email               TEXT NOT NULL REFERENCES members(email),
     publication         TEXT NOT NULL,                       -- 'review' | 'whiterabbit'
@@ -88,9 +91,9 @@ db.exec(`
     created_at          TEXT NOT NULL,
     updated_at          TEXT NOT NULL
   );
-  CREATE UNIQUE INDEX IF NOT EXISTS memberships_stripe ON memberships (stripe_subscription, publication) WHERE stripe_subscription IS NOT NULL;
-  CREATE UNIQUE INDEX IF NOT EXISTS memberships_comp ON memberships (ref, publication) WHERE source = 'comp' AND ref IS NOT NULL;
-  CREATE INDEX IF NOT EXISTS memberships_email ON memberships (email);
+  CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_stripe ON subscriptions (stripe_subscription, publication) WHERE stripe_subscription IS NOT NULL;
+  CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_comp ON subscriptions (ref, publication) WHERE source = 'comp' AND ref IS NOT NULL;
+  CREATE INDEX IF NOT EXISTS subscriptions_email ON subscriptions (email);
 `);
 
 function tx(fn) {

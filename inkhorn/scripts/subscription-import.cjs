@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Copies Ghost's paid and complimentary members into the shop service's membership store (idempotent).
- *   node inkhorn/scripts/membership-import.cjs [--dry]
+ * Copies Ghost's paid and complimentary members into the shop service's subscription store (idempotent).
+ *   node inkhorn/scripts/subscription-import.cjs [--dry]
  * Paid members keep their existing Stripe subscription (nothing is re-subscribed or cancelled); complimentary Print/Ebook members keep their tier and expiry.
  * Env: SHOP_SERVICE_URL (default the Railway address). Keychain: inkhorn-member-api-token plus the Ghost items.
  */
@@ -27,8 +27,8 @@ const TOKEN = process.env.MEMBER_API_TOKEN || execSync('security find-generic-pa
       if (!tiers.length) console.log('no Ebook/Print tier:', m.email, status, (m.tiers || []).map((t) => t.name).join(','));
     }
   }
-  console.log(out.length, 'memberships:', out.map((o) => `${o.email} ${o.kind} ${o.source} ${o.until || ''}`).join('\n  '));
+  console.log(out.length, 'subscriptions:', out.map((o) => `${o.email} ${o.kind} ${o.source} ${o.until || ''}`).join('\n  '));
   if (DRY) return;
-  const res = await fetch(SHOP + '/membership/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Member-Token': TOKEN }, body: JSON.stringify({ members: out }) });
+  const res = await fetch(SHOP + '/subscription/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Member-Token': TOKEN }, body: JSON.stringify({ members: out }) });
   console.log(res.status, await res.text());
 })().catch((e) => { console.error(e.message); process.exit(1); });

@@ -1,8 +1,38 @@
 [
- {"site":"hub","slug":"events","title":"Events","content":"<p class=\"ih-note\">Festivals now; workshops and seminars later.</p><ul class=\"ih-list\"><li><a href=\"/weird-friday/\"><span class=\"ih-pt\">Weird Friday</span><span class=\"ih-pa\">Friday, August 13, 2027 · Details coming soon. Subscribe to Events below to hear first.</span></a></li><li><a href=\"/bookfolk/\"><span class=\"ih-pt\">BookFolk Festival</span><span class=\"ih-pa\">July 17–18, 2027 · Quincy Square, Bremerton, WA</span></a></li></ul><h2>Workshops and seminars</h2><p>Details coming soon. Subscribe to Events below to hear first.</p>"},
- {"site":"hub","slug":"weird-friday","title":"Weird Friday","content":"<p class=\"ih-note\">A day of weird literature and art, held on Friday the 13th. The first is August 13, 2027.</p><p><b>Date</b><br>Friday, August 13, 2027</p><p><b>Location</b><br>Details coming soon.</p><p><b>Program</b><br>Details coming soon.</p><p><a class=\"ih-btn\" href=\"/whiterabbit/\">About White Rabbit</a> <a class=\"ih-btn\" href=\"/events/\">All events</a></p>"},
- {"site":"hub","slug":"bookfolk","title":"BookFolk Festival","content":"<p class=\"ih-note\">July 17 and 18, 2027, at Quincy Square on 4th Street (between Pacific and Washington Avenues) in Bremerton, Washington. Inkhorn Review has a booth.</p><p><b>Schedule</b><br>Details coming soon.</p><p><b>Authors and exhibitors</b><br>Details coming soon.</p><p><a class=\"ih-btn\" href=\"https://bookfolk.org\" rel=\"noopener\">bookfolk.org</a> <a class=\"ih-btn\" href=\"/events/\">All events</a></p>"},
- {"site":"hub","slug":"support","title":"Support the press","content":"<p class=\"ih-note\">Inkhorn Press is a nonprofit publisher. Your gift pays contributors and keeps every journal free to read online.</p><p><a class=\"ih-btn\" href=\"/donate/\">Give to Inkhorn Press</a> <a class=\"ih-btn\" href=\"https://www.patreon.com/cw/inkhornreview\" rel=\"noopener\">Give monthly on Patreon</a></p><p>Give to Inkhorn Press is a one-time gift to the press, paid by card through Stripe. Patreon is a separate service: monthly gifts there go to the Inkhorn Review Patreon page.</p><h2>Who publishes what</h2><p>Inkhorn Press publishes White Rabbit and holds the events. <em>Inkhorn Review</em>’s Autumn 2026 and Winter 2026 issues are published by Follow the Rabbit LLC, and from Spring 2027 Inkhorn Press publishes the Review.</p><p>Questions about a gift? Write <a href=\"mailto:hello@inkhorn.press\">hello@inkhorn.press</a>.</p>"},
- {"site":"hub","slug":"submit","title":"Submit your work","content":"<p class=\"ih-note\">Each publication reads separately. Choose where your work belongs; each button opens that journal’s call.</p><h2>Inkhorn Review</h2><p>Poetry, especially in form; fiction; nonfiction; art.</p><ul><li>Free reading periods every Feb, May, Aug and Nov: up to 3 poems, 1 flash or 1 prose piece</li><li>Paid call open all year: $5, refunded once you sign a contributor agreement</li><li>Art: traditional media only, no photography or digital art</li></ul><p><a class=\"ih-btn\" href=\"https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p\">Submit to Inkhorn Review</a> Opens the call on Duotrope.</p><h2>White Rabbit</h2><p>Weird poetry, short prose and art, for Issue No. 1 on Friday, August 13, 2027.</p><ul><li>Details coming soon. Subscribe to White Rabbit to be told when the call opens.</li></ul><h2>Muse</h2><p>Post a poem or short prose, and readers decide what gets published each season.</p><ul><li>Issues January 1, April 1, July 1 and October 1</li><li>Free to post</li></ul><p><a class=\"ih-btn\" href=\"https://gomuse.io\">Post on Muse ↗</a> Opens gomuse.io.</p>"},
- {"site":"hub","slug":"home","title":"Home","content":"<p>Inkhorn Press.</p>"}
+ {
+  "site": "hub",
+  "slug": "events",
+  "title": "Events",
+  "content": "<p class=\"ih-note\">Festivals now; workshops and seminars later.</p><ul class=\"ih-list\"><li><a href=\"/weird-friday/\"><span class=\"ih-pt\">Weird Friday</span><span class=\"ih-pa\">Friday, August 13, 2027 \u00b7 Details coming soon. Sign up for the Events newsletter below to hear first.</span></a></li><li><a href=\"/bookfolk/\"><span class=\"ih-pt\">BookFolk Festival</span><span class=\"ih-pa\">July 17\u201318, 2027 \u00b7 Quincy Square, Bremerton, WA</span></a></li></ul><h2>Workshops and seminars</h2><p>Details coming soon. Sign up for the Events newsletter below to hear first.</p>"
+ },
+ {
+  "site": "hub",
+  "slug": "weird-friday",
+  "title": "Weird Friday",
+  "content": "<p class=\"ih-note\">A day of weird literature and art, held on Friday the 13th. The first is August 13, 2027.</p><p><b>Date</b><br>Friday, August 13, 2027</p><p><b>Location</b><br>Details coming soon.</p><p><b>Program</b><br>Details coming soon.</p><p><a class=\"ih-btn\" href=\"/whiterabbit/\">About White Rabbit</a> <a class=\"ih-btn\" href=\"/events/\">All events</a></p>"
+ },
+ {
+  "site": "hub",
+  "slug": "bookfolk",
+  "title": "BookFolk Festival",
+  "content": "<p class=\"ih-note\">July 17 and 18, 2027, at Quincy Square on 4th Street (between Pacific and Washington Avenues) in Bremerton, Washington. Inkhorn Review has a booth.</p><p><b>Schedule</b><br>Details coming soon.</p><p><b>Authors and exhibitors</b><br>Details coming soon.</p><p><a class=\"ih-btn\" href=\"https://bookfolk.org\" rel=\"noopener\">bookfolk.org</a> <a class=\"ih-btn\" href=\"/events/\">All events</a></p>"
+ },
+ {
+  "site": "hub",
+  "slug": "donate",
+  "title": "Donate",
+  "content": "<p class=\"ih-note\">Inkhorn Press is a nonprofit publisher. Your gift pays contributors and keeps every journal free to read online.</p><p>A one-time gift, paid by card through Stripe:</p><p><a class=\"ih-btn\" href=\"https://inkhorn-shop-service-production.up.railway.app/donate/checkout?amount=10\">$10</a> <a class=\"ih-btn\" href=\"https://inkhorn-shop-service-production.up.railway.app/donate/checkout?amount=25\">$25</a> <a class=\"ih-btn\" href=\"https://inkhorn-shop-service-production.up.railway.app/donate/checkout?amount=50\">$50</a> <a class=\"ih-btn\" href=\"https://inkhorn-shop-service-production.up.railway.app/donate/checkout?amount=100\">$100</a></p><p>Prefer to give monthly? <a href=\"https://www.patreon.com/cw/inkhornreview\" rel=\"noopener\">Patreon</a> is a separate service; monthly gifts there go to the Inkhorn Review Patreon page.</p><h2>Who publishes what</h2><p>Inkhorn Press publishes White Rabbit and holds the events. <em>Inkhorn Review</em>\u2019s Autumn 2026 and Winter 2026 issues are published by Follow the Rabbit LLC, and from Spring 2027 Inkhorn Press publishes the Review.</p><p>Questions about a gift? Write <a href=\"mailto:hello@inkhorn.press\">hello@inkhorn.press</a>.</p>"
+ },
+ {
+  "site": "hub",
+  "slug": "submit",
+  "title": "Submit your work",
+  "content": "<p class=\"ih-note\">Each publication reads separately. Choose where your work belongs; each button opens that journal\u2019s call.</p><h2>Inkhorn Review</h2><p>Poetry, especially in form; fiction; nonfiction; art.</p><ul><li>Free reading periods every Feb, May, Aug and Nov: up to 3 poems, 1 flash or 1 prose piece</li><li>Paid call open all year: $5, refunded once you sign a contributor agreement</li><li>Art: traditional media only, no photography or digital art</li></ul><p><a class=\"ih-btn\" href=\"https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p\">Submit to Inkhorn Review</a> Opens the call on Duotrope.</p><h2>White Rabbit</h2><p>Weird poetry, short prose and art, for Issue No. 1 on Friday, August 13, 2027.</p><ul><li>Details coming soon. Sign up for the White Rabbit newsletter to be told when the call opens.</li></ul><h2>Muse</h2><p>Post a poem or short prose, and readers decide what gets published each season.</p><ul><li>Issues January 1, April 1, July 1 and October 1</li><li>Free to post</li></ul><p><a class=\"ih-btn\" href=\"https://gomuse.io\">Post on Muse \u2197</a> Opens gomuse.io.</p>"
+ },
+ {
+  "site": "hub",
+  "slug": "home",
+  "title": "Home",
+  "content": "<p>Inkhorn Press.</p>"
+ }
 ]

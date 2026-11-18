@@ -2,6 +2,18 @@
   "_note": "Ordered 301 rules for old inkhorn.press (and inkhornreview.com) paths. First match wins. 'from' is a regex on the path (no query); the query string is kept. Tested by inkhorn/scripts/test-wp-redirects.cjs.",
   "rules": [
     {
+      "from": "^/support/?$",
+      "to": "/donate/"
+    },
+    {
+      "from": "^/preferences/?$",
+      "to": "/newsletter/"
+    },
+    {
+      "from": "^/subscribe/?$",
+      "to": "/shop/subscriptions/"
+    },
+    {
       "from": "^/submit/review/?$",
       "to": "https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p"
     },
@@ -35,7 +47,7 @@
     },
     {
       "from": "^/patreon-supporters/?$",
-      "to": "/support/"
+      "to": "/donate/"
     },
     {
       "from": "^/(tag/podcast|podcast|life-on-words)(/.*)?$",

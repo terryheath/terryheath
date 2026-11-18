@@ -1,8 +1,8 @@
 'use strict';
 
-// Memberships: Stripe subscriptions (Inkhorn Press account) plus complimentary grants from signed agreements.
+// Subscriptions: Stripe subscriptions (Inkhorn Press account) plus complimentary grants from signed agreements.
 //   Review Ebook $20/yr, Review Print $48/yr (Print includes the ebook). White Rabbit add-on: Ebook $7/yr, Print $14/yr.
-// Prices are looked up by Stripe lookup_key (created by scripts/stripe-membership-setup.cjs): review-ebook-yearly, review-print-yearly,
+// Prices are looked up by Stripe lookup_key (created by scripts/stripe-subscription-setup.cjs): review-ebook-yearly, review-print-yearly,
 // whiterabbit-ebook-yearly, whiterabbit-print-yearly.
 const express = require('express');
 const crypto = require('crypto');
@@ -27,7 +27,7 @@ function upsertMember(email, name, customer) {
   return email;
 }
 
-/** Records or updates the memberships a Stripe subscription carries (one per publication it has an item for). */
+/** Records or updates the subscriptions a Stripe subscription carries (one per publication it has an item for). */
 function recordSubscription(sub, email) {
   const when = sub.status === 'active' || sub.status === 'trialing' ? 'active' : sub.status === 'past_due' ? 'past_due' : 'canceled';
   const end = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
@@ -42,26 +42,26 @@ function recordSubscription(sub, email) {
       else if ((iv === 'year' && amt === 4800) || (iv === 'month' && amt === 600)) t = { id: 'review-print', pub: 'review', kind: 'print' };
       else continue;
     }
-    const ex = db.prepare('SELECT id FROM memberships WHERE stripe_subscription = ? AND publication = ?').get(sub.id, t.pub);
-    if (ex) db.prepare('UPDATE memberships SET kind = ?, status = ?, period_end = ?, updated_at = ? WHERE id = ?').run(t.kind, when, end, iso(), ex.id);
-    else db.prepare('INSERT INTO memberships (email, publication, kind, source, stripe_subscription, status, period_end, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    const ex = db.prepare('SELECT id FROM subscriptions WHERE stripe_subscription = ? AND publication = ?').get(sub.id, t.pub);
+    if (ex) db.prepare('UPDATE subscriptions SET kind = ?, status = ?, period_end = ?, updated_at = ? WHERE id = ?').run(t.kind, when, end, iso(), ex.id);
+    else db.prepare('INSERT INTO subscriptions (email, publication, kind, source, stripe_subscription, status, period_end, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
       .run(norm(email), t.pub, t.kind, 'stripe', sub.id, when, end, iso(), iso());
     n++;
   }
   return n;
 }
 
-/** Complimentary membership, for a contributor whose signed agreement chose a subscription instead of payment. */
+/** Complimentary subscription, for a contributor whose signed agreement chose a subscription instead of payment. */
 function grantComp({ email, name, publication, kind = 'print', months = 12, ref, note }) {
   if (!['review', 'whiterabbit'].includes(publication) || !['ebook', 'print'].includes(kind)) throw new Error('bad publication or kind');
   const e = upsertMember(email, name);
   const end = new Date(); end.setMonth(end.getMonth() + Number(months));
   return tx(() => {
-    const ex = ref ? db.prepare("SELECT id FROM memberships WHERE source = 'comp' AND ref = ? AND publication = ?").get(String(ref), publication) : null;
+    const ex = ref ? db.prepare("SELECT id FROM subscriptions WHERE source = 'comp' AND ref = ? AND publication = ?").get(String(ref), publication) : null;
     if (ex) return { id: ex.id, existed: true };
-    const r = db.prepare("INSERT INTO memberships (email, publication, kind, source, status, period_end, note, ref, created_at, updated_at) VALUES (?, ?, ?, 'comp', 'active', ?, ?, ?, ?, ?)")
+    const r = db.prepare("INSERT INTO subscriptions (email, publication, kind, source, status, period_end, note, ref, created_at, updated_at) VALUES (?, ?, ?, 'comp', 'active', ?, ?, ?, ?, ?)")
       .run(e, publication, kind, end.toISOString(), note || 'Subscription taken in place of payment', ref ? String(ref) : null, iso(), iso());
-    logEvent('membership_comp', { detail: `${e} ${publication} ${kind} until ${end.toISOString().slice(0, 10)}` });
+    logEvent('subscription_comp', { detail: `${e} ${publication} ${kind} until ${end.toISOString().slice(0, 10)}` });
     return { id: Number(r.lastInsertRowid), existed: false, expires: end.toISOString().slice(0, 10) };
   });
 }
@@ -69,14 +69,14 @@ function grantComp({ email, name, publication, kind = 'print', months = 12, ref,
 function status(email) {
   email = norm(email);
   const now = iso();
-  const rows = db.prepare('SELECT * FROM memberships WHERE email = ? ORDER BY id').all(email);
+  const rows = db.prepare('SELECT * FROM subscriptions WHERE email = ? ORDER BY id').all(email);
   const live = rows.filter((r) => (r.status === 'active' || r.status === 'past_due') && (!r.period_end || r.period_end > now));
   // Print includes the ebook of the same publication
   const has = (pub, kind) => live.some((r) => r.publication === pub && (r.kind === kind || (kind === 'ebook' && r.kind === 'print')));
   return {
     email,
     entitlements: { review_ebook: has('review', 'ebook'), review_print: has('review', 'print'), whiterabbit_ebook: has('whiterabbit', 'ebook'), whiterabbit_print: has('whiterabbit', 'print') },
-    memberships: rows.map((r) => ({ publication: r.publication, kind: r.kind, source: r.source, status: r.status, until: r.period_end, note: r.note })),
+    subscriptions: rows.map((r) => ({ publication: r.publication, kind: r.kind, source: r.source, status: r.status, until: r.period_end, note: r.note })),
     customer: (db.prepare('SELECT stripe_customer FROM members WHERE email = ?').get(email) || {}).stripe_customer || null,
   };
 }
@@ -110,7 +110,7 @@ function router(stripe) {
       const wantsPrint = tier.endsWith('print') || whiterabbit === 'print';
       const params = {
         mode: 'subscription', line_items: items, billing_address_collection: 'auto',
-        success_url: `${cfg.siteUrl}/account/?membership=ok`, cancel_url: `${cfg.siteUrl}/subscribe/`,
+        success_url: `${cfg.siteUrl}/account/?subscription=ok`, cancel_url: `${cfg.siteUrl}/shop/subscriptions/`,
         subscription_data: { metadata: { tier, whiterabbit: whiterabbit || '' } },
       };
       if (email) params.customer_email = email;
@@ -118,7 +118,7 @@ function router(stripe) {
       if (cfg.automaticTax) params.automatic_tax = { enabled: true };
       const s = await stripe.checkout.sessions.create(params);
       res.json({ url: s.url });
-    } catch (err) { console.error('membership checkout:', err.message); res.status(500).json({ error: 'Checkout failed' }); }
+    } catch (err) { console.error('subscription checkout:', err.message); res.status(500).json({ error: 'Checkout failed' }); }
   });
 
   // Token: Stripe customer portal for a member { email, return_url }
@@ -128,7 +128,7 @@ function router(stripe) {
       if (!st.customer) return res.status(404).json({ error: 'no Stripe customer for this email' });
       const s = await stripe.billingPortal.sessions.create({ customer: st.customer, return_url: req.body.return_url || `${cfg.siteUrl}/account/` });
       res.json({ url: s.url });
-    } catch (err) { console.error('membership portal:', err.message); res.status(500).json({ error: 'Portal failed' }); }
+    } catch (err) { console.error('subscription portal:', err.message); res.status(500).json({ error: 'Portal failed' }); }
   });
 
   r.get('/status', auth, (req, res) => res.json(status(req.query.email)));
@@ -137,9 +137,9 @@ function router(stripe) {
     let n = 0;
     for (const m of (req.body && req.body.members) || []) {
       upsertMember(m.email, m.name, m.stripe_customer);
-      const ex = db.prepare('SELECT id FROM memberships WHERE email = ? AND publication = ? AND kind = ? AND source = ? AND COALESCE(ref, \'\') = ?').get(norm(m.email), m.publication, m.kind, m.source, m.ref || '');
+      const ex = db.prepare('SELECT id FROM subscriptions WHERE email = ? AND publication = ? AND kind = ? AND source = ? AND COALESCE(ref, \'\') = ?').get(norm(m.email), m.publication, m.kind, m.source, m.ref || '');
       if (ex) continue;
-      db.prepare('INSERT INTO memberships (email, publication, kind, source, stripe_subscription, status, period_end, note, ref, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      db.prepare('INSERT INTO subscriptions (email, publication, kind, source, stripe_subscription, status, period_end, note, ref, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
         .run(norm(m.email), m.publication, m.kind, m.source, m.stripe_subscription || null, m.status || 'active', m.until || null, m.note || null, m.ref || null, iso(), iso());
       n++;
     }
@@ -148,7 +148,7 @@ function router(stripe) {
   return r;
 }
 
-/** Webhook side: returns true when the event was a membership event (so the order code leaves it alone). */
+/** Webhook side: returns true when the event was a subscription event (so the order code leaves it alone). */
 async function handleEvent(stripe, event) {
   if (event.type === 'checkout.session.completed' && event.data.object.mode === 'subscription') {
     const s = event.data.object;

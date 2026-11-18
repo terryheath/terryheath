@@ -170,7 +170,7 @@ async function contributorApi(req, res, raw) {
     if (r.template !== 'unpaid' && r.amount) {
       const rel = L.pretty(L.ymd(L.releaseDate(r.issue)));
       const line = r.status !== 'signed' ? `$${r.amount} · waiting for your signed agreement`
-        : r.choice === 'subscription' ? `Subscription taken in place of payment (Print membership, $${r.amount} piece)`
+        : r.choice === 'subscription' ? `Subscription taken in place of payment (Print subscription, $${r.amount} piece)`
         : `$${r.amount} · ${r.paid_at ? 'paid ' + r.paid_at : 'due ' + rel}${r.pay_method ? ' · ' + r.pay_method : ''}`;
       payments.push({ title: r.title, line });
     }

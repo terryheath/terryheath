@@ -33,7 +33,7 @@ function press_bar() {
     . '<a class="ih-bar-name" href="' . a(hub_url()) . '">INKHORN PRESS</a>'
     . '<a href="' . a(pub_url('review')) . '">Review</a><a href="' . a(pub_url('whiterabbit')) . '">White Rabbit</a><a href="' . a(pub_url('muse')) . '">Muse</a></div>'
     . '<div class="ih-bar-r"><a href="' . a(hub_link('shop/')) . '">Shop</a><a href="' . a(hub_link('contributors/')) . '">Contributors</a>'
-    . '<a href="' . a(hub_link('preferences/')) . '">Subscribe</a><a href="' . a(hub_link('support/')) . '">Support</a></div></div></nav>';
+    . '<a href="' . a(hub_link('newsletter/')) . '">Newsletter</a><a href="' . a(hub_link('donate/')) . '">Donate</a></div></div></nav>';
   return $h;
 }
 
@@ -54,13 +54,13 @@ function site_header() {
       if (!empty($s['submit'])) { $nav[] = ['Submit', $s['submit']]; }
       break;
     case 'hub':
-      $nav = [['About', home_url('/about/')], ['Publications', home_url('/#publications')], ['Shop', home_url('/shop/')], ['Contributors', home_url('/contributors/')], ['Support', home_url('/support/')]];
+      $nav = [['About', home_url('/about/')], ['Publications', home_url('/#publications')], ['Shop', home_url('/shop/')], ['Contributors', home_url('/contributors/')], ['Donate', home_url('/donate/')]];
       break;
     case 'author':
       $nav = [['Writing', home_url('/')], ['Books', home_url('/books/')], ['Podcast', 'https://lifeonwords.com/'], ['About', home_url('/about/')]];
       break;
     case 'podcast':
-      $nav = [['Episodes', home_url('/episodes/')], ['Guests', home_url('/guests/')], ['About', home_url('/about/')], ['Subscribe', home_url('/#subscribe')]];
+      $nav = [['Episodes', home_url('/episodes/')], ['Guests', home_url('/guests/')], ['About', home_url('/about/')], ['Newsletter', home_url('/#newsletter')]];
       break;
   }
   $h = '<header class="ih-head"><a class="ih-title" href="' . a(home_url('/')) . '">' . e($s['name']) . '</a><nav aria-label="' . a($s['name']) . '">';
@@ -73,7 +73,7 @@ function site_footer() {
   $line = $s['kind'] === 'hub' ? 'Inkhorn Press is a nonprofit.'
     : ($s['bar'] ? e($s['name']) . ' is a publication of Inkhorn Press, a nonprofit.' : e($s['name']) . '.');
   return '<footer class="ih-foot"><div class="ih-foot-in"><span>' . $line . '</span><div><a href="' . a(hub_link('privacy/')) . '">Privacy</a>'
-    . '<a href="' . a(hub_link('terms/')) . '">Terms</a><a href="' . a(hub_link('preferences/')) . '">Manage email</a></div></div></footer>';
+    . '<a href="' . a(hub_link('terms/')) . '">Terms</a><a href="' . a(hub_link('newsletter/')) . '">Newsletter preferences</a></div></div></footer>';
 }
 
 /* ---------- signup ---------- */
@@ -82,9 +82,9 @@ function signup($title = '', $all_lists = true) {
   $s = site(); $mine = $s['lists'];
   $family = ($s['kind'] === 'author') ? ['writing', 'digest', 'new-books'] : (($s['kind'] === 'podcast') ? ['life-on-words'] : ['inkhorn-review', 'white-rabbit', 'muse', 'events']);
   $title = $title ?: 'Get ' . $s['short'] . ' by email.';
-  $h = '<section class="ih-signup" id="subscribe" aria-label="Newsletter"><p class="ih-lead">' . e($title) . '</p>'
+  $h = '<section class="ih-signup" id="newsletter" aria-label="Newsletter"><p class="ih-lead">' . e($title) . '</p>'
      . '<p class="ih-sub">Choose the lists you want; change them any time.</p>'
-     . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/subscribe')) . '" data-ih-signup>';
+     . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-signup')) . '" data-ih-signup>';
   if (count($family) > 1) {
     $h .= '<fieldset><legend>Lists</legend>';
     foreach ($family as $l) {
@@ -96,7 +96,7 @@ function signup($title = '', $all_lists = true) {
   }
   $h .= '<input type="hidden" name="from" value="' . a(site_key()) . '"><div class="ih-row"><label for="ih-em" class="ih-sr">Email address</label>'
      . '<input id="ih-em" type="email" name="email" required autocomplete="email" placeholder="you@example.com">'
-     . '<button type="submit" class="ih-btn">Subscribe</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form></section>';
+     . '<button type="submit" class="ih-btn">Sign up</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form></section>';
   return $h;
 }
 
@@ -267,7 +267,7 @@ function view_hub() {
        . '</a><h3><a href="' . a($url) . '">' . e($name) . '</a></h3><p>' . e($lines[$k]) . '</p>' . ($lab ? '<p><a href="' . a($url) . '">' . e($lab) . ' &rarr;</a></p>' : '') . '</div>';
   }
   $h .= '</div></section><section aria-label="From the shop" class="ih-shop"><div class="ih-shop-h"><h2 class="ih-h2">From the shop</h2><a href="' . a(home_url('/shop/')) . '">Visit the shop &rarr;</a></div></section>'
-     . '<section aria-label="Support the press" class="ih-support"><h2 class="ih-h2">Support the press</h2><p>Inkhorn Press is a nonprofit. Gifts pay contributors and print the issues.</p><p>' . btn(home_url('/support/'), 'Donate') . '</p></section>'
+     . '<section aria-label="Donate" class="ih-support"><h2 class="ih-h2">Donate</h2><p>Inkhorn Press is a nonprofit. Gifts pay contributors and print the issues.</p><p>' . btn(home_url('/donate/'), 'Donate') . '</p></section>'
      . signup('Get Inkhorn Press by email.') . '</main>';
   return $h;
 }
@@ -305,7 +305,7 @@ function view_episode($p) {
 
 function view_generic($p) {
   $extra = '';
-  if (site_key() === 'hub' && $p && $p->post_name === 'support') { // supporters list kept fresh by patreon-sync-wp.js
+  if (site_key() === 'hub' && $p && $p->post_name === 'donate') { // supporters list kept fresh by patreon-sync-wp.js
     $row = get_site_option('inkhorn_store_patreon-supporters', null); $d = $row ? json_decode($row['json'], true) : null;
     if ($d && !empty($d['names'])) { $extra = '<h2>Thank you to our Patreon supporters</h2><p>' . e(implode(', ', $d['names'])) . (!empty($d['anonymous']) ? ' and ' . (int) $d['anonymous'] . ' anonymous supporter' . ($d['anonymous'] > 1 ? 's' : '') : '') . '.</p>'; }
   }
@@ -345,9 +345,8 @@ function render_page() {
   $v = get_query_var('ih_view');
   if ($v === 'signin') { return view_signin(); }
   if ($v === 'account') { return view_account(); }
-  if ($v === 'preferences') { return view_preferences(); }
-  if ($v === 'subscribe') { return view_subscribe(); }
-  if (in_array($v, ['shop', 'cart', 'order-complete', 'address', 'print-edition'], true)) { return view_shop_page($v); }
+  if ($v === 'newsletter') { return view_newsletter(); }
+  if (in_array($v, ['shop', 'cart', 'order-complete', 'subscriptions'], true)) { return view_shop_page($v); }
   if ($v === 'book') { return view_book(); }
   if (is_404()) { return view_404(); }
   if (is_search()) { return view_search(); }
