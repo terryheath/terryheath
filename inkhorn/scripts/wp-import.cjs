@@ -53,7 +53,7 @@ function clean(html) {
     const label = ed.replace(/^(\w)/, (c) => c.toUpperCase()).replace('-', ' ');
     const r = await put({ site: 'review', type: 'ih_issue', slug: ed, title: label, content: '', status: 'publish', thumbnail_url: cat && cat.feature_image,
       meta: { ih_label: label, ih_release: L.ymd(L.releaseDate(ed)), ih_shop_url: cat ? 'shop/' + cat.slug + '/' : '', ih_current: ed === 'autumn-2026' } });
-    issueIds[ed] = r.id; console.log('issue', ed, r.id);
+    issueIds[ed] = r.id; console.log('issue', ed, r.id, 'cover:', cat ? (cat.feature_image || 'none') : 'no catalog page', 'thumbnail:', r.thumbnail, r.thumb_error || '');
   }
 
   // shop: each catalog page (a book that can be bought) becomes a hub product page
