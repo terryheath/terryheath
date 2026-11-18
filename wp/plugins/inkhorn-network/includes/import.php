@@ -65,10 +65,10 @@ function import_item(\WP_REST_Request $r) {
       $have = get_post_meta($id, '_ih_thumb_src', true);
       if ($have !== $d['thumbnail_url']) {
         $att = media_sideload_image($d['thumbnail_url'], $id, null, 'id');
-        if (!is_wp_error($att)) { set_post_thumbnail($id, $att); update_post_meta($id, '_ih_thumb_src', $d['thumbnail_url']); }
+        if (!is_wp_error($att)) { set_post_thumbnail($id, $att); update_post_meta($id, '_ih_thumb_src', $d['thumbnail_url']); } else { $thumb_error = $att->get_error_message(); }
       }
     }
-    return ['id' => $id, 'url' => get_permalink($id)];
+    return ['id' => $id, 'url' => get_permalink($id), 'thumbnail' => (bool) get_post_thumbnail_id($id), 'thumb_error' => $thumb_error ?? null];
   } finally { restore_current_blog(); }
 }
 
