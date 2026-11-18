@@ -194,8 +194,56 @@ function view_account() {
   return $h . '</main>';
 }
 
+/** listmonk, server to server (reading and changing one subscriber's lists). Env: LISTMONK_URL, LISTMONK_API_USER, LISTMONK_API_TOKEN. */
+function lm($method, $path, $body = null) {
+  $u = getenv('LISTMONK_URL'); $user = getenv('LISTMONK_API_USER') ?: 'automation'; $tok = getenv('LISTMONK_API_TOKEN');
+  if (!$u || !$tok) { return null; }
+  $r = wp_remote_request(rtrim($u, '/') . '/api' . $path, ['method' => $method, 'timeout' => 15, 'headers' => ['Authorization' => 'token ' . $user . ':' . $tok, 'Content-Type' => 'application/json'], 'body' => $body ? wp_json_encode($body) : null]);
+  if (is_wp_error($r) || wp_remote_retrieve_response_code($r) >= 300) { return null; }
+  $d = json_decode(wp_remote_retrieve_body($r), true);
+  return $d['data'] ?? true;
+}
+function lm_lists_by_slug() {
+  $out = [];
+  $d = lm('GET', '/lists?per_page=all');
+  foreach (($d['results'] ?? []) as $l) { foreach (($l['tags'] ?? []) as $t) { $out[$t] = (int) $l['id']; } }
+  return $out;
+}
+function lm_subscriber_by_uuid($uuid) {
+  if (!preg_match('/^[0-9a-f-]{36}$/i', $uuid)) { return null; }
+  $d = lm('GET', '/subscribers?per_page=1&query=' . rawurlencode("subscribers.uuid = '" . $uuid . "'"));
+  return $d['results'][0] ?? null;
+}
+
+add_action('template_redirect', function () {
+  if (get_query_var('ih_view') !== 'preferences' || $_SERVER['REQUEST_METHOD'] !== 'POST') { return; }
+  $uuid = sanitize_text_field($_POST['id'] ?? ''); $sub = lm_subscriber_by_uuid($uuid);
+  if (!$sub) { wp_safe_redirect(home_url('/preferences/?msg=nope')); exit; }
+  $map = lm_lists_by_slug(); $all = array_values($map);
+  $chosen = ($_POST['do'] ?? '') === 'none' ? [] : array_values(array_intersect($all, array_map(function ($s) use ($map) { return $map[$s] ?? 0; }, (array) ($_POST['lists'] ?? []))));
+  $drop = array_values(array_diff($all, $chosen));
+  if ($chosen) { lm('PUT', '/subscribers/lists', ['ids' => [(int) $sub['id']], 'action' => 'add', 'target_list_ids' => $chosen, 'status' => 'confirmed']); }
+  if ($drop) { lm('PUT', '/subscribers/lists', ['ids' => [(int) $sub['id']], 'action' => 'unsubscribe', 'target_list_ids' => $drop]); }
+  wp_safe_redirect(add_query_arg(['id' => $uuid, 'msg' => ($_POST['do'] ?? '') === 'none' ? 'none' : 'saved'], home_url('/preferences/'))); exit;
+});
+
 function view_preferences() {
-  return '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Manage email</h1>' . '<p class="ih-note" style="margin:0 auto;text-align:center">Choose the lists you want. Changes apply right away.</p>' . signup('Your lists') . '</main>';
+  $uuid = sanitize_text_field($_GET['id'] ?? ''); $msg = $_GET['msg'] ?? '';
+  $sub = $uuid ? lm_subscriber_by_uuid($uuid) : null;
+  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Manage email</h1>';
+  if ($msg === 'saved') { $h .= '<p class="ih-note" style="text-align:center" role="status">Saved. Your choices apply to the next email.</p>'; }
+  if ($msg === 'none') { $h .= '<p class="ih-note" style="text-align:center" role="status">You are unsubscribed from every list. You can come back any time.</p>'; }
+  if ($msg === 'nope') { $h .= '<p class="ih-note" style="text-align:center" role="alert">That link did not work. Use the link in your latest email, or sign up again below.</p>'; }
+  if (!$sub) { return $h . '<p class="ih-note" style="margin:0 auto;text-align:center">Not on a list yet? Choose the ones you want.</p>' . signup('Your lists') . '</main>'; }
+  $on = []; foreach (($sub['lists'] ?? []) as $l) { if (($l['subscription_status'] ?? '') !== 'unsubscribed') { foreach (($l['tags'] ?? []) as $t) { $on[$t] = true; } } }
+  $groups = ['Inkhorn Press' => ['inkhorn-review', 'white-rabbit', 'muse', 'events'], 'Terry Heath' => ['writing', 'digest', 'new-books'], 'Life on Words' => ['life-on-words']];
+  $h .= '<p class="ih-sub" style="text-align:center">' . e($sub['email']) . '</p><form class="ih-form" method="post" action="' . a(home_url('/preferences/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '">';
+  foreach ($groups as $g => $slugs) {
+    $h .= '<fieldset><legend style="position:static;font:500 13px Karla,sans-serif;letter-spacing:.12em;color:var(--ih-accent);margin:24px 0 8px;display:block;width:100%">' . e(strtoupper($g)) . '</legend>';
+    foreach ($slugs as $s) { $h .= '<label style="display:flex;gap:10px;min-height:44px;align-items:center"><input type="checkbox" name="lists[]" value="' . a($s) . '"' . (!empty($on[$s]) ? ' checked' : '') . '> ' . e(LIST_LABELS[$s] ?? $s) . '</label>'; }
+    $h .= '</fieldset>';
+  }
+  return $h . '<div class="ih-btns" style="justify-content:center"><button class="ih-btn" type="submit" name="do" value="save">Save my choices</button><button class="ih-btn" type="submit" name="do" value="none">Unsubscribe from all</button></div></form></main>';
 }
 
 function view_subscribe() {
