@@ -69,3 +69,17 @@ function import_item(\WP_REST_Request $r) {
     return ['id' => $id, 'url' => get_permalink($id)];
   } finally { restore_current_blog(); }
 }
+
+/** Network option writer for the setup scripts (list uuids etc.), same token. */
+add_action('rest_api_init', function () {
+  register_rest_route('inkhorn/v1', '/option', [
+    'methods' => 'POST',
+    'permission_callback' => function (\WP_REST_Request $r) { $t = getenv('INKHORN_IMPORT_TOKEN'); return $t && hash_equals($t, (string) $r->get_header('x-import-token')); },
+    'callback' => function (\WP_REST_Request $r) {
+      $d = $r->get_json_params();
+      if (!in_array($d['name'] ?? '', ['inkhorn_listmonk_lists'], true)) { return new \WP_Error('bad', 'option not allowed', ['status' => 400]); }
+      update_site_option($d['name'], $d['value']);
+      return ['ok' => true];
+    },
+  ]);
+});
