@@ -3,6 +3,7 @@
 Started 2026-11-17 from `~/Desktop/platform-migration-prompt.md` and `~/Desktop/inkhorn-family-mockups.zip` (12 `.dc.html` mockups: Main, Review, WhiteRabbit, Combined, Piece, Hub, Contributor, Account, Submit, TerryHeath, LifeOnWords, Episode).
 
 ## Status
+- 2026-11-18 (approved by Terry: build everything, spending OK; memberships move to the shop service with Stripe subscriptions; White Rabbit add-on Ebook $7/yr, Print $14/yr; WR contributors who choose Print get WR Print free): Railway services created in project Shared Cron (`7865f281-...`): `Postgres` and `MySQL` (official Railway templates), `listmonk` (image `listmonk/listmonk:latest`, v6.2.0, installs idempotently on start; temp URL https://listmonk-production-b3fcccbe.up.railway.app, admin `terry`, password in Keychain `listmonk-admin-password`), `wordpress` (built from `wp/` in this repo, official `wordpress:6-php8.3-apache` plus wp-cli; first boot runs `wp core multisite-install`; temp URL https://wordpress-production-754b3e08.up.railway.app, admin `terry`, password in Keychain `wp-network-admin-password`; volume at `wp-content/uploads`). listmonk login verified.
 - 2026-11-17: read the prompt and mockups, inventoried what depends on Ghost, wrote this log. **Nothing built or deployed yet.** Waiting on the two items under "Gate" below.
 
 ## Gate (needs Terry before anything is created on Railway)
