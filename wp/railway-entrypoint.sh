@@ -48,6 +48,9 @@ HT
   if dbphp "SHOW TABLES LIKE 'wp_blogs'"; then
     touch /var/www/html/wp-content/uploads/.multisite; chown www-data:www-data /var/www/html/wp-content/uploads/.multisite
   fi
+  ls -la /var/www/html/wp-content/uploads/ | sed 's/^/[inkhorn] ls /' 
+  grep -n "multisite" /var/www/html/wp-config.php | head -5 | sed 's/^/[inkhorn] cfg /'
+  wp eval 'var_dump(defined("MULTISITE"), is_multisite(), defined("DOMAIN_CURRENT_SITE"));' --allow-root 2>&1 | sed 's/^/[inkhorn] eval /'
   if ! wp core is-installed --allow-root 2>/dev/null; then
     wp core multisite-install --allow-root --url="https://${WP_DOMAIN}" --title="Inkhorn Press" \
       --admin_user="${WP_ADMIN_USER:-terry}" --admin_password="${WP_ADMIN_PASSWORD}" --admin_email="${WP_ADMIN_EMAIL:-hello@inkhorn.press}" \
