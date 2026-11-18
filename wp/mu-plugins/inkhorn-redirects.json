@@ -111,6 +111,26 @@
       "to": "/review/"
     },
     {
+      "from": "^/by/(poetry|fiction|nonfiction|art|micro)/?$",
+      "to": "/review/genre/$1/"
+    },
+    {
+      "from": "^/by/((?:autumn|winter|spring|summer)-20[0-9][0-9])/?$",
+      "to": "/review/issues/$1/"
+    },
+    {
+      "from": "^/by/inkhorn-[0-9]+/?$",
+      "to": "/review/issues/autumn-2026/"
+    },
+    {
+      "from": "^/by/letter/?$",
+      "to": "/review/about/"
+    },
+    {
+      "from": "^/by/(podcast|life-on-words|digest)/?$",
+      "to": "https://lifeonwords.com/"
+    },
+    {
       "from": "^/(?:by|tag)/([^/]+)/?$",
       "to": "/contributors/$1/"
     },
