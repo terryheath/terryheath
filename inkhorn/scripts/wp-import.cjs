@@ -87,7 +87,8 @@ function clean(html) {
 
   // posts outside the issue data (earlier online pieces): same type, no issue
   const covered = new Set(editions.map((e) => e.slug).filter(Boolean));
-  const left = posts.filter((p) => !covered.has(p.slug) && !(p.tags || []).some((t) => t.visibility === 'internal') && !(p.tags || []).some((t) => ['podcast', 'digest', 'life-on-words'].includes(t.slug)));
+  const SKIP = ['hash-weekly-email', 'hash-digest', 'hash-catalog', 'podcast', 'digest', 'life-on-words'];
+  const left = posts.filter((p) => !covered.has(p.slug) && !(p.tags || []).some((t) => SKIP.includes(t.slug)));
   const genres = ['fiction', 'poetry', 'nonfiction', 'art', 'micro'];
   for (const p of left) {
     const g = (p.tags || []).find((t) => genres.includes(t.slug));
@@ -100,4 +101,24 @@ function clean(html) {
     process.stdout.write('+');
   }
   console.log('\nearlier posts copied:', left.length);
+  // static hub pages written for the new site (events, support, submit, ...)
+  for (const pg of JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'wp-pages.json'), 'utf8'))) { await put({ site: pg.site, type: 'page', slug: pg.slug, title: pg.title, content: pg.content, status: 'publish' }); console.log('page', pg.site, pg.slug); }
+
+  // every person tag becomes a contributor (even without a piece in the issue data); the other public tags are topics and redirect to the Review
+  const people = new Set(seen);
+  const topics = [];
+  for (const t of tags) {
+    if (t.visibility !== 'public' || t.slug.startsWith('hash-') || /^(autumn|winter|spring|summer)-20/.test(t.slug) || /^inkhorn-\d+$/.test(t.slug) || genres.includes(t.slug) || ['white-rabbit', 'white-rabbit-no-1', 'letter', 'podcast', 'digest', 'life-on-words'].includes(t.slug)) continue;
+    if (people.has(t.slug)) continue;
+    const byPerson = posts.some((p) => (p.tags || []).some((x) => x.slug === t.slug) && slugify((p.custom_excerpt || '').replace(/^by\s+/i, '')) === t.slug);
+    if (byPerson) { people.add(t.slug); await put({ site: 'hub', type: 'ih_contributor', slug: t.slug, title: t.name, content: '', status: 'publish', meta: { ih_bio: t.description || '' } }); }
+    else topics.push(t.slug);
+  }
+  const rp = path.join(__dirname, '..', '..', 'wp', 'mu-plugins', 'inkhorn-redirects.json');
+  const rj = JSON.parse(fs.readFileSync(rp, 'utf8'));
+  rj.rules = rj.rules.filter((r) => r._topics !== true);
+  const idx = rj.rules.findIndex((r) => r.from.includes('(?:by|tag)/([^/]+)'));
+  if (topics.length) rj.rules.splice(idx, 0, { _topics: true, from: '^/(?:by|tag)/(' + topics.join('|') + ')/?$', to: '/review/' });
+  fs.writeFileSync(rp, JSON.stringify(rj, null, 2) + '\n');
+  console.log('topic tags redirected to /review/:', topics.length, '; contributors:', people.size);
 })().catch((e) => { console.error(e.message); process.exit(1); });
