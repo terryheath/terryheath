@@ -70,8 +70,9 @@ function site_header() {
 
 function site_footer() {
   $s = site();
-  $line = $s['kind'] === 'hub' ? 'Inkhorn Press is a nonprofit.'
-    : ($s['bar'] ? e($s['name']) . ' is a publication of Inkhorn Press, a nonprofit.' : e($s['name']) . '.');
+  if ($s['bar']) { $line = 'Inkhorn Press is a 501(c)(3) nonprofit press.'; }
+  elseif ($s['kind'] === 'podcast') { $line = 'Life on Words, hosted by <a href="https://terryheath.com/">Terry Heath</a>, is produced by Follow the Rabbit LLC.'; }
+  else { $line = 'terryheath.com is published by Follow the Rabbit LLC.'; }
   return '<footer class="ih-foot"><div class="ih-foot-in"><span>' . $line . '</span><div><a href="' . a(hub_link('privacy/')) . '">Privacy</a>'
     . '<a href="' . a(hub_link('terms/')) . '">Terms</a><a href="' . a(hub_link('newsletter/')) . '">Newsletter preferences</a></div></div></footer>';
 }
@@ -81,7 +82,7 @@ function site_footer() {
 function signup($title = '', $all_lists = true) {
   $s = site(); $mine = $s['lists'];
   $family = ($s['kind'] === 'author') ? ['writing', 'digest', 'new-books'] : (($s['kind'] === 'podcast') ? ['life-on-words'] : ['inkhorn-review', 'white-rabbit', 'muse', 'events']);
-  $title = $title ?: 'Get ' . $s['short'] . ' by email.';
+  $title = 'Get News & Updates by Email'; // one heading on every site
   $h = '<section class="ih-signup" id="newsletter" aria-label="Newsletter"><p class="ih-lead">' . e($title) . '</p>'
      . '<p class="ih-sub">Choose the lists you want; change them any time.</p>'
      . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-signup')) . '" data-ih-signup>';
@@ -96,7 +97,7 @@ function signup($title = '', $all_lists = true) {
   }
   $h .= '<input type="hidden" name="from" value="' . a(site_key()) . '"><div class="ih-row"><label for="ih-em" class="ih-sr">Email address</label>'
      . '<input id="ih-em" type="email" name="email" required autocomplete="email" placeholder="you@example.com">'
-     . '<button type="submit" class="ih-btn">Sign up</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form></section>';
+     . '<button type="submit" class="ih-btn">Sign Up</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form></section>';
   return $h;
 }
 
@@ -250,6 +251,32 @@ function view_archive() {
   return $h . '</div></main>';
 }
 
+/** Prices from the shop service (cached ten minutes): sku => print price in cents. */
+function shop_prices() {
+  $c = get_transient('ih_shop_prices'); if (is_array($c)) { return $c; }
+  $out = []; $base = getenv('SHOP_SERVICE_URL');
+  if ($base) {
+    $r = wp_remote_get(rtrim($base, '/') . '/products', ['timeout' => 8]);
+    if (!is_wp_error($r) && wp_remote_retrieve_response_code($r) === 200) {
+      foreach ((array) json_decode(wp_remote_retrieve_body($r), true) as $sku => $p) { foreach (($p['formats'] ?? []) as $f) { if (($f['format'] ?? '') === 'print') { $out[$sku] = (int) $f['price_cents']; } } }
+    }
+  }
+  set_transient('ih_shop_prices', $out, 10 * MINUTE_IN_SECONDS);
+  return $out;
+}
+/** "From the shop" on the hub home: the books on sale, as in the mockup (cover, title, kind and price). */
+function shop_strip() {
+  $prices = shop_prices();
+  $h = '<section aria-label="From the shop" class="ih-shop"><div class="ih-shop-h"><h2 class="ih-h2" style="text-align:left">From the shop</h2><a href="' . a(home_url('/shop/')) . '">Visit the shop &rarr;</a></div><div class="ih-grid ih-shop-grid">';
+  foreach (get_posts(['post_type' => 'ih_book', 'numberposts' => 4, 'post_status' => ['publish', 'future'], 'orderby' => 'date', 'order' => 'DESC']) as $b) {
+    $img = get_the_post_thumbnail_url($b, 'medium'); $sku = m($b->ID, 'ih_sku');
+    $meta = 'Print issue' . (isset($prices[$sku]) ? ' · $' . number_format($prices[$sku] / 100, 2) : '');
+    $h .= '<a class="ih-gi" href="' . a(home_url('/shop/' . $b->post_name . '/')) . '">' . ($img ? '<div class="ih-cover"><img src="' . a($img) . '" alt="" width="480" height="690" loading="lazy"></div>' : '<div class="ih-cover ih-cover-e"></div>')
+       . '<span class="ih-pt">' . e(get_the_title($b)) . '</span><span class="ih-pa">' . e($meta) . '</span></a>';
+  }
+  return $h . '</div></section>';
+}
+
 function view_hub() {
   $h = '<main class="ih-main"><section id="publications" aria-label="Publications"><h2 class="ih-h2">Our publications</h2><div class="ih-grid">';
   $lines = ['review' => 'A quarterly of poetry, short prose and art.', 'whiterabbit' => 'Published only on Friday the 13th.', 'muse' => 'A magazine for writers.'];
@@ -266,7 +293,7 @@ function view_hub() {
     $h .= '<div class="ih-gi"><a href="' . a($url) . '" aria-label="' . a($name . ($lab ? ': ' . $lab : '')) . '">' . ($img ? '<div class="ih-cover"><img src="' . a($img) . '" alt="" width="480" height="690"></div>' : '<div class="ih-cover ih-cover-e"></div>')
        . '</a><h3><a href="' . a($url) . '">' . e($name) . '</a></h3><p>' . e($lines[$k]) . '</p>' . ($lab ? '<p><a href="' . a($url) . '">' . e($lab) . ' &rarr;</a></p>' : '') . '</div>';
   }
-  $h .= '</div></section><section aria-label="From the shop" class="ih-shop"><div class="ih-shop-h"><h2 class="ih-h2">From the shop</h2><a href="' . a(home_url('/shop/')) . '">Visit the shop &rarr;</a></div></section>'
+  $h .= '</div></section>' . shop_strip()
      . '<section aria-label="Donate" class="ih-support"><h2 class="ih-h2">Donate</h2><p>Inkhorn Press is a nonprofit. Gifts pay contributors and print the issues.</p><p>' . btn(home_url('/donate/'), 'Donate') . '</p></section>'
      . signup('Get Inkhorn Press by email.') . '</main>';
   return $h;

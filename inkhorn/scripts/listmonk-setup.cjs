@@ -17,13 +17,14 @@ const BRANDS = {
   hub: ['Inkhorn Press', '#4F5B66', '#EDEFF1'], review: ['Inkhorn Review', '#5E7268', '#EEF1EE'], whiterabbit: ['White Rabbit', '#7A6478', '#F1EDF0'],
   muse: ['Muse', '#5D6F86', '#EEF1F5'], terryheath: ['Terry Heath', '#7A664B', '#F3EFE8'], lifeonwords: ['Life on Words', '#4E6E6E', '#EDF2F2'],
 };
+const FOOT = { 'Terry Heath': 'terryheath.com is published by Follow the Rabbit LLC.', 'Life on Words': 'Life on Words, hosted by Terry Heath, is produced by Follow the Rabbit LLC.' };
 const template = (name, accent, tint, nonprofit) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ .Campaign.Subject }}</title></head>
 <body style="margin:0;background:#FBFAF7;color:#2C2A26;font-family:'EB Garamond',Georgia,serif;font-size:19px;line-height:1.55">
 <div style="max-width:560px;margin:0 auto;padding:40px 24px">
 <p style="margin:0 0 32px;font-family:Karla,Arial,sans-serif;font-size:13px;letter-spacing:.06em;color:${accent}">${name.toUpperCase()}</p>
 {{ template "content" . }}
 <hr style="border:0;border-top:1px solid #ECE8E0;margin:48px 0 20px">
-<p style="margin:0;font-family:Karla,Arial,sans-serif;font-size:13px;color:#67645D">${nonprofit ? name + ' is a publication of Inkhorn Press, a nonprofit.' : name + '.'}<br>
+<p style="margin:0;font-family:Karla,Arial,sans-serif;font-size:13px;color:#67645D">${FOOT[name] || 'Inkhorn Press is a 501(c)(3) nonprofit press.'}<br>
 <a href="{{ UnsubscribeURL }}" style="color:#67645D">Unsubscribe</a> · <a href="https://inkhorn.press/newsletter/?id={{ .Subscriber.UUID }}" style="color:#67645D">Newsletter preferences</a></p>
 </div>{{ TrackView }}</body></html>`;
 

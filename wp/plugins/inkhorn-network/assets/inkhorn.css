@@ -67,3 +67,6 @@ ul{list-style:none;margin:0;padding:0}
 .ih-foot-in div{display:flex;flex-wrap:wrap;gap:20px}.ih-foot a{color:var(--ih-mute)}
 @media(max-width:640px){.ih-hero h1{font-size:44px}.ih-piece h1{font-size:36px}.ih-main{padding:48px 24px 80px}.ih-pn{grid-template-columns:1fr}.ih-pn-r{text-align:left}.ih-head{padding-top:48px}.ih-title{font-size:34px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+input[type=checkbox],input[type=radio]{accent-color:var(--ih-accent);width:18px;height:18px}
+.ih-shop-grid{margin-top:32px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:40px}.ih-shop-grid .ih-gi{display:block}
