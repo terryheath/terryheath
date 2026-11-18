@@ -47,6 +47,16 @@ function import_item(\WP_REST_Request $r) {
     $id = wp_insert_post($arr, true);
     kses_init_filters();
     if (is_wp_error($id)) { return $id; }
+    // images inside the content: copy Ghost-hosted ones into this site's media library and point the content at the copies
+    if (!empty($arr['post_content']) && preg_match_all('#<img[^>]+src="([^"]+/content/images/[^"]+)"#i', $arr['post_content'], $mm)) {
+      $new = $arr['post_content'];
+      foreach (array_unique($mm[1]) as $src) {
+        $url = $src;
+        $att = media_sideload_image($url, $id, null, 'src');
+        if (!is_wp_error($att)) { $new = str_replace($src, $att, $new); }
+      }
+      if ($new !== $arr['post_content']) { kses_remove_filters(); wp_update_post(['ID' => $id, 'post_content' => $new]); kses_init_filters(); }
+    }
     foreach (($d['meta'] ?? []) as $k => $v) { update_post_meta($id, $k, $v); }
     foreach (($d['terms'] ?? []) as $tax => $names) { wp_set_object_terms($id, (array) $names, $tax); }
     if (!empty($d['thumbnail_url'])) {

@@ -1,0 +1,85 @@
+#!/usr/bin/env node
+/**
+ * Copies the inkhorn.press Ghost site into the WordPress network (review, hub).
+ *   node inkhorn/scripts/wp-import.cjs [--dry]
+ * Needs: Ghost keychain items (as agreements-lib.cjs), WP_URL (default the Railway address) and Keychain inkhorn-wp-import-token.
+ * Idempotent: every item is upserted by (site, type, slug).
+ */
+const { execSync } = require('child_process');
+const L = require('../agreements-lib.cjs');
+const fs = require('fs'), path = require('path');
+const DRY = process.argv.includes('--dry');
+const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
+const slugify = (s) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+async function put(o) {
+  if (DRY) { console.log('would import', o.site, o.type, o.slug); return { id: 0 }; }
+  const r = await fetch(WP + '/wp-json/inkhorn/v1/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Import-Token': TOKEN }, body: JSON.stringify(o) });
+  const t = await r.text();
+  if (!r.ok) throw new Error(`${o.site}/${o.type}/${o.slug}: ${r.status} ${t.slice(0, 200)}`);
+  return JSON.parse(t);
+}
+
+/** Ghost html to WordPress content. Poems: one <p> per stanza with <br> line breaks and no empty paragraphs between. */
+function clean(html) {
+  return String(html || '')
+    .replace(/<!--kg-card-(begin|end):[^>]*-->/g, '')
+    .replace(/<p>\s*(?:&nbsp;|<br\s*\/?>)?\s*<\/p>/g, '')
+    .replace(/\n{3,}/g, '\n\n').trim();
+}
+
+(async () => {
+  const api = L.ghost();
+  const all = async (res, opts) => { const out = []; for (let p = 1; ; p++) { const b = await api[res].browse({ ...opts, limit: 100, page: p }); out.push(...b); if (b.length < 100) break; } return out; };
+  const posts = await all('posts', { include: 'tags,authors', formats: 'html', filter: 'status:[published,scheduled]' });
+  const pages = await all('pages', { include: 'tags', formats: 'html', filter: 'status:published' });
+  const tags = await all('tags', {});
+  const tagBySlug = Object.fromEntries(tags.map((t) => [t.slug, t]));
+  const editions = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'editions-2026.json'), 'utf8')).pieces;
+  const postBySlug = Object.fromEntries(posts.map((p) => [p.slug, p]));
+
+  // issues (Review site): cover from the catalog page, Autumn is the current issue until Winter releases
+  const issueIds = {};
+  for (const ed of [...new Set(editions.map((e) => e.edition))]) {
+    const cat = pages.find((p) => (p.tags || []).some((t) => t.slug === 'hash-catalog') && new RegExp(ed.replace('-', '.*'), 'i').test(p.slug + ' ' + p.title));
+    const label = ed.replace(/^(\w)/, (c) => c.toUpperCase()).replace('-', ' ');
+    const r = await put({ site: 'review', type: 'ih_issue', slug: ed, title: label, content: '', status: 'publish', thumbnail_url: cat && cat.feature_image,
+      meta: { ih_label: label, ih_release: L.ymd(L.releaseDate(ed)), ih_shop_url: '', ih_current: ed === 'autumn-2026' } });
+    issueIds[ed] = r.id; console.log('issue', ed, r.id);
+  }
+
+  // contributors (hub directory) and pieces (review site)
+  const seen = new Set();
+  for (const e of editions) {
+    const gp = postBySlug[e.slug || L.resolvedSlug(e)] || null;
+    const cslug = slugify(e.author);
+    if (!seen.has(cslug)) {
+      seen.add(cslug);
+      await put({ site: 'hub', type: 'ih_contributor', slug: cslug, title: e.author, content: '', status: 'publish', meta: { ih_bio: e.bio || '' } });
+    }
+    const scheduled = gp ? gp.status === 'scheduled' : e.edition === 'winter-2026';
+    await put({
+      site: 'review', type: 'ih_piece', slug: e.slug || (gp && gp.slug) || slugify(e.title), title: e.title,
+      content: clean(gp ? gp.html : ''), status: scheduled ? 'future' : 'publish', date: gp && gp.published_at, menu_order: e.position,
+      terms: { ih_genre: [e.genre.charAt(0).toUpperCase() + e.genre.slice(1)] },
+      meta: { ih_issue_id: issueIds[e.edition], ih_position: e.position, ih_author_name: e.author, ih_contributors: cslug, ih_bio: e.bio || '', ih_nomination: e.nomination_line || '', ih_online_only: !!e.online_only },
+    });
+    process.stdout.write('.');
+  }
+  console.log('\npieces done:', editions.length);
+
+  // pages
+  const keep = { about: ['hub', 'review'], privacy: ['hub'], terms: ['hub'], support: ['hub'], submissions: ['review'], readers: ['review'] };
+  for (const p of pages) {
+    for (const site of keep[p.slug] || []) {
+      await put({ site, type: 'page', slug: p.slug, title: p.title, content: clean(p.html), status: 'publish' });
+      console.log('page', site, p.slug);
+    }
+  }
+
+  // report what was NOT copied
+  const covered = new Set(editions.map((e) => e.slug).filter(Boolean));
+  const left = posts.filter((p) => !covered.has(p.slug) && !(p.tags || []).some((t) => t.visibility === 'internal'));
+  console.log('Ghost posts not copied (not in the issue data):', left.map((p) => p.slug).join(', ') || 'none');
+})().catch((e) => { console.error(e.message); process.exit(1); });
