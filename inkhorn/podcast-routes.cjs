@@ -94,6 +94,50 @@ async function saveExtras(ex, api = L.ghost()) {
   if (!ex.page) ex.page = await api.pages.add({ title: 'Life on Words headshots without a guest record (private)', slug: EXTRA_PAGE, status: 'draft', codeinjection_head: json });
   else ex.page = await api.pages.edit({ id: ex.page.id, updated_at: ex.page.updated_at, codeinjection_head: json });
 }
+// ---- guest suggestions ("who else should I talk to?" on the guest guide) -----------------------------------------------------
+// Stored in the private draft Ghost page `podcast-suggestions` (JSON), like the headshot extras: no email address is ever mailed
+// from here, nothing is sent to the person suggested, and a suggestion is NEVER a guest record. Terry reads them on /podcast and
+// adds a guest by hand if he wants one.
+const SUGGEST_PAGE = 'podcast-suggestions';
+async function loadSuggestions(api = L.ghost()) {
+  if (STORE.wp()) { const r = await STORE.load(SUGGEST_PAGE); return { page: { version: r.version }, list: Array.isArray(r.value) ? r.value : [] }; }
+  const r = await api.pages.browse({ filter: `slug:${SUGGEST_PAGE}`, limit: 1, fields: 'id,codeinjection_head,updated_at' });
+  if (!r.length) return { page: null, list: [] };
+  let list = []; try { list = JSON.parse(r[0].codeinjection_head || '[]'); } catch { list = []; }
+  return { page: r[0], list };
+}
+async function saveSuggestions(sg, api = L.ghost()) {
+  if (STORE.wp()) { sg.page = { version: await STORE.save(SUGGEST_PAGE, sg.list, sg.page && sg.page.version) }; return; }
+  const json = JSON.stringify(sg.list, null, 1);
+  if (!sg.page) sg.page = await api.pages.add({ title: 'Life on Words guest suggestions (private)', slug: SUGGEST_PAGE, status: 'draft', codeinjection_head: json });
+  else sg.page = await api.pages.edit({ id: sg.page.id, updated_at: sg.page.updated_at, codeinjection_head: json });
+}
+const SUGGEST_HITS = new Map(); // ip -> [timestamps]; in memory only, so a restart forgives
+const suggestOk = (ip) => {
+  const now = Date.now(), cut = now - 3600e3;
+  const hits = (SUGGEST_HITS.get(ip) || []).filter((t) => t > cut);
+  if (hits.length >= 6) { SUGGEST_HITS.set(ip, hits); return false; }
+  hits.push(now); SUGGEST_HITS.set(ip, hits);
+  if (SUGGEST_HITS.size > 5000) for (const [k, v] of SUGGEST_HITS) if (!v.some((t) => t > cut)) SUGGEST_HITS.delete(k);
+  return true;
+};
+const clip = (s, n) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, n);
+async function suggestRoute(req, res) {
+  if (req.method === 'OPTIONS') { res.writeHead(204, cors(req)); return res.end(); }
+  if (req.method !== 'POST') return json(req, res, 405, { ok: false, error: 'POST only' });
+  let f; try { f = JSON.parse((await readRaw(req, 20000)).toString('utf8')); } catch { return json(req, res, 400, { ok: false, error: 'Something went wrong sending that. Please try again.' }); }
+  if (clip(f.website, 80)) return json(req, res, 200, { ok: true, message: 'Thank you.' }); // honeypot: look successful, store nothing
+  const who = clip(f.who, 200);
+  if (!who) return json(req, res, 400, { ok: false, error: 'Please put in a name.' });
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '?';
+  if (!suggestOk(ip)) return json(req, res, 429, { ok: false, error: "That's a few suggestions in a row — please try again later." });
+  const sg = await loadSuggestions();
+  sg.list.push({ id: 's' + crypto.randomBytes(6).toString('hex'), who, why: clip(f.why, 1200), how: clip(f.how, 400), from_name: clip(f.from_name, 120), from_email: clip(f.from_email, 160), at: new Date().toISOString() });
+  if (sg.list.length > 500) sg.list = sg.list.slice(-500);
+  await saveSuggestions(sg);
+  return json(req, res, 200, { ok: true, message: 'Thank you — that goes straight to Terry.' });
+}
+
 // Write an uploaded image for a record (guest or extra): new file first, then the record, then the old file is deleted. Returns {replaced}.
 function putHeadshot(rec, buf, ext, who) {
   fs.mkdirSync(HEADSHOT_DIR, { recursive: true });
@@ -143,6 +187,7 @@ function missingHeadshots(guests, now = Date.now()) {
 async function publicRoute(req, res, path, query) {
   if (path === '/podcast/headshot') return await headshotRoute(req, res, query), true;
   if (path === '/podcast/api/headshot') return await headshotApi(req, res, query), true;
+  if (path === '/podcast/suggest') return await suggestRoute(req, res), true;
   if (path === '/podcast/book') {
     const token = query.get('token') || '';
     const store = await P.load();
@@ -218,7 +263,11 @@ async function adminPage(msg, show = '') {
   const missBox = `<h2>Missing headshots (${miss.length})</h2>${miss.length ? `<ul style="margin:.3rem 0;padding-left:1.2rem">${miss.filter((m) => m.at != null).map(missLine).join('')}</ul>${miss.some((m) => m.at == null) ? `<details><summary class="small">${miss.filter((m) => m.at == null).length} more with no session date yet</summary><ul style="padding-left:1.2rem">${miss.filter((m) => m.at == null).map(missLine).join('')}</ul></details>` : ''}<p class="small">Soonest session first. Guests already recorded are marked RECORDED. Nobody is emailed from this list.</p>` : '<p class="ok">Everyone has a headshot.</p>'}`;
   const exRows = ex.list.map((e) => `<tr><td><strong>${esc(e.name)}</strong> <span class="small">(no guest record)</span>${headshotHtml(e)}</td><td><form method="post" action="/podcast/act" onsubmit="return confirm('Delete this name and its headshot?')"><input type="hidden" name="id" value="${esc(e.id)}"><button name="do" value="delete_extra">Delete this entry</button></form></td></tr>`).join('');
   const byName = `<h2>Headshot for someone not in the list</h2><p class="small">For a guest who recorded without a guest record. Type the name as it appears in the episode title (before the colon). This creates a headshot-only entry: no email address, no emails, not counted as a guest. The importer finds it by name.</p><form onsubmit="return false"><input name="who" aria-label="Guest name as it appears in the episode title" placeholder="Guest name" size="26"> <span class="lwup" data-id="" data-name=""><input type="file" accept="image/jpeg,image/png,image/webp" aria-label="Headshot photo for this person (JPG, PNG or WebP, up to 10 MB)" style="max-width:15rem"></span> <button type="button" onclick="lwByName(this)">Upload headshot</button></form>${exRows ? `<table style="margin-top:.5rem"><tr><th>Headshot only (${ex.list.length})</th><th></th></tr>${exRows}</table>` : ''}`;
-  return page('Life on Words guests', `${UPLOAD_JS}<h1>Life on Words guests</h1>${msg ? `<p class="note" role="status">${esc(msg)}</p>` : ''}${warn}${missBox}
+  const sg = await loadSuggestions();
+  const open = sg.list.filter((s) => !s.dismissed).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const sgLine = (s) => `<tr><td><strong>${esc(s.who)}</strong><br><span class="small">suggested ${esc(String(s.at).slice(0, 10))}${s.from_name ? ` by ${esc(s.from_name)}` : ''}${s.from_email ? ` &lt;${esc(s.from_email)}&gt;` : ''}</span>${s.why ? `<br>${esc(s.why)}` : ''}${s.how ? `<br><span class="small"><strong>Way in:</strong> ${esc(s.how)}</span>` : ''}</td><td><form method="post" action="/podcast/act"><input type="hidden" name="id" value="${esc(s.id)}"><button name="do" value="dismiss_suggestion">Done with this</button></form></td></tr>`;
+  const sgBox = `<h2>Suggested guests (${open.length})</h2><p class="small">From the "who else should I talk to?" form on the <a href="${GUIDE_ORIGIN}/podcast/guests/">guest guide</a>. Nobody here has been contacted and nothing is sent from this list — add a guest above when you want one. "Done with this" just hides the row.</p>${open.length ? UI.table(`<tr><th>Suggestion</th><th></th></tr>${open.map(sgLine).join('')}`) : '<p class="small">Nothing suggested yet.</p>'}`;
+  return page('Life on Words guests', `${UPLOAD_JS}<h1>Life on Words guests</h1>${msg ? `<p class="note" role="status">${esc(msg)}</p>` : ''}${warn}${missBox}${sgBox}
     <h2>Add guest</h2><form method="post" action="/podcast/add"><input name="name" aria-label="Guest name" placeholder="Name" required size="22"> <input name="email" type="email" aria-label="Guest email address" placeholder="Email" required size="28"><br><textarea name="note" aria-label="Optional personal note" rows="2" cols="70" placeholder="Optional personal note, placed after the greeting and before the first line of the invitation (for example: Thanks for reaching out)"></textarea><br><label><input type="checkbox" name="accepted" value="1"> Add guest who already said yes (sends only the agreement, not the full invitation)</label><br><button>Add guest and send the email</button></form>
     ${batch}${byName}<h2>Guests (${store.guests.filter((g) => !g.pending_send).length})</h2>
     <div class="filters" role="group" aria-label="Filter guests"><button type="button" data-f="all" class="on">All</button><button type="button" data-f="needs">Needs you</button><button type="button" data-f="soon">Session in the next 7 days</button><button type="button" data-f="nohs">No headshot</button><button type="button" data-f="open">Not booked yet</button></div><p class="small" id="fcount"></p>
@@ -287,6 +336,12 @@ async function adminRoute(req, res, path, query) {
     return redirect(res, '/podcast?msg=' + encodeURIComponent(`Sent ${n} of ${pend.length}.${errs.length ? ' Problems: ' + errs.join('; ') : ''}`)), true;
   }
   if (path === '/podcast/act') {
+    if (f.do === 'dismiss_suggestion') { // a suggestion, not a guest: hide the row, email nobody
+      const sg = await loadSuggestions(); const s = sg.list.find((x) => x.id === f.id);
+      if (!s) return redirect(res, '/podcast?msg=' + encodeURIComponent('That suggestion is already gone.')), true;
+      s.dismissed = new Date().toISOString(); await saveSuggestions(sg);
+      return redirect(res, '/podcast?msg=' + encodeURIComponent(`Hidden: ${s.who}.`)), true;
+    }
     let g = store.guests.find((x) => x.id === f.id);
     let exs = null;
     if (!g && /^x/.test(f.id || '')) { exs = await loadExtras(); g = exs.list.find((x) => x.id === f.id); }
