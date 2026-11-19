@@ -79,3 +79,5 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ih-accent);width:18px;
 .ih-bar a,.ih-head nav a,.ih-foot a{min-width:44px;justify-content:center}
 .ih-gi h3 a,.ih-gi p a{display:inline-flex;align-items:center;min-height:44px}
 .ih-form fieldset label,.ih-chk{display:flex;align-items:center;gap:10px;min-height:44px}
+
+.ih-gi form label{display:flex;align-items:center;gap:10px;min-height:44px}

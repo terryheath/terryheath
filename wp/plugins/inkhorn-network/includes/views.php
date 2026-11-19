@@ -65,7 +65,8 @@ function site_header() {
   }
   // the site name is the page's h1 on a home page that has no h1 of its own (hub, terryheath.com, lifeonwords.com)
   $own_h1 = $s['kind'] === 'publication';
-  $tag = (is_front_page() && !$own_h1) ? 'h1' : 'p';
+  $req = trailingslashit((string) strtok($_SERVER['REQUEST_URI'] ?? '/', '?')); $is_home_url = ($req === trailingslashit((string) wp_parse_url(home_url('/'), PHP_URL_PATH)));
+  $tag = ($is_home_url && !$own_h1) ? 'h1' : 'p';
   $h = '<header class="ih-head"><' . $tag . ' class="ih-title" style="margin:0"><a href="' . a(home_url('/')) . '" style="color:inherit">' . e($s['name']) . '</a></' . $tag . '><nav aria-label="' . a($s['name']) . '">';
   foreach ($nav as $n) { $h .= '<a href="' . a($n[1]) . '">' . e($n[0]) . '</a>'; }
   return $h . '</nav></header>';

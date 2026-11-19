@@ -33,6 +33,7 @@ const WORDS = [
   [/Ghost \(website and memberships, hosted by PikaPods\)/g, 'WordPress (website, hosted by Railway)'],
   [/Mailgun \(email delivery\), Amazon SES \(order and agreement emails\)/g, 'listmonk (email lists), Amazon SES (email delivery)'],
   [/we use Ghost's built-in analytics, which counts visits and pages viewed without building a profile of you\. Cookies are used to keep members signed in\./g, 'we use no advertising trackers. A cookie is set only when you sign in to your account.'],
+  [/Subscribe to the newsletter/g, 'Sign up for the newsletter'],
   [/Purchases, memberships and tips/g, 'Purchases, subscriptions and donations'],
   [/Subscribers and members/g, 'Newsletter readers and subscribers'],
   [/your membership tier/g, 'your subscription'],
