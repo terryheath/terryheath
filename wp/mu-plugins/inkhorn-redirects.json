@@ -22,7 +22,7 @@
       "to": "/whiterabbit/"
     },
     {
-      "from": "^/(submit/muse|muse)/?$",
+      "from": "^/submit/muse/?$",
       "to": "https://gomuse.io"
     },
     {
