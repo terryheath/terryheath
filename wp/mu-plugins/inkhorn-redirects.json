@@ -118,11 +118,6 @@
       "to": "/review/work/$2/"
     },
     {
-      "_topics": true,
-      "from": "^/(?:by|tag)/(news|grief|guilt|animals|fathers|mothers|aging|the-body|solitude|class|memory|watching|childhood|marriage|catastrophe|freedom|sexuality|alan-katz|susan-wiggs|ben-rockwood|christina-braver|kirby-larson|sheila-roberts|elena-taylor|family|religion|patrons|maureen-mcquerry|allie-millington|aleks-merilo|william-garvey|sanya-hundal-bery|sam-agar|xingyu-zhao|low-1|low-2|low-3|low-4|low-5|low-6|low-7|low-8|low-9|low-10|s-t-joshi|low-11|withdrawn)/?$",
-      "to": "/review/"
-    },
-    {
       "from": "^/by/(poetry|fiction|nonfiction|art|micro)/?$",
       "to": "/review/genre/$1/"
     },
@@ -141,6 +136,11 @@
     {
       "from": "^/by/(podcast|life-on-words|digest)/?$",
       "to": "https://lifeonwords.com/"
+    },
+    {
+      "_topics": true,
+      "from": "^/(?:by|tag)/(news|grief|guilt|animals|fathers|mothers|aging|the-body|solitude|class|memory|watching|childhood|marriage|catastrophe|freedom|sexuality|alan-katz|susan-wiggs|ben-rockwood|christina-braver|kirby-larson|sheila-roberts|elena-taylor|family|religion|patrons|maureen-mcquerry|allie-millington|aleks-merilo|william-garvey|sanya-hundal-bery|sam-agar|xingyu-zhao|low-1|low-2|low-3|low-4|low-5|low-6|low-7|low-8|low-9|low-10|s-t-joshi|low-11|withdrawn)/?$",
+      "to": "/review/"
     },
     {
       "from": "^/(?:by|tag)/([^/]+)/?$",
