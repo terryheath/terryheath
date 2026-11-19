@@ -69,7 +69,9 @@ async function grantShopComp(r) {
 async function grantComp(api, r, events) {
   const shop = await grantShopComp(r);
   if (shop) { r.comp_granted = true; r.comp_expires = shop.expires || r.comp_expires || null; r.comp_store = 'shop'; }
-  if ((process.env.GHOST_COMPS || 'on') === 'off') { if (shop) events.comps.push(r); return; }
+  // Ghost has no White Rabbit tier: a White Rabbit contributor must never get a Review Print comp there. White Rabbit Print exists only in the shop service.
+  const isWR = (r.publication || L.publicationOf(r.issue)) === 'White Rabbit';
+  if (isWR || (process.env.GHOST_COMPS || 'on') === 'off') { if (shop) events.comps.push(r); return; }
   const tiers = (await L.gfetch('GET', '/tiers/?limit=all')).tiers;
   const print = tiers.find((t) => t.name === 'Print' && t.active);
   if (!print) throw new Error('Print tier not found');
