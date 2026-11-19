@@ -28,9 +28,21 @@ async function put(o) {
   throw new Error(`${o.site}/${o.type}/${o.slug}: ${last}`);
 }
 
+// The new stack and the new words (Newsletter, Donate, Subscriptions): applied to imported page text.
+const WORDS = [
+  [/Ghost \(website and memberships, hosted by PikaPods\)/g, 'WordPress (website, hosted by Railway)'],
+  [/Mailgun \(email delivery\), Amazon SES \(order and agreement emails\)/g, 'listmonk (email lists), Amazon SES (email delivery)'],
+  [/we use Ghost's built-in analytics, which counts visits and pages viewed without building a profile of you\. Cookies are used to keep members signed in\./g, 'we use no advertising trackers. A cookie is set only when you sign in to your account.'],
+  [/Purchases, memberships and tips/g, 'Purchases, subscriptions and donations'],
+  [/Subscribers and members/g, 'Newsletter readers and subscribers'],
+  [/your membership tier/g, 'your subscription'],
+  [/memberships/g, 'subscriptions'], [/Memberships/g, 'Subscriptions'], [/membership/g, 'subscription'], [/Membership/g, 'Subscription'],
+];
+const words = (h) => WORDS.reduce((t, [a, b]) => t.replace(a, b), String(h || ''));
+
 /** Ghost html to WordPress content. Poems: one <p> per stanza with <br> line breaks and no empty paragraphs between. */
 function clean(html) {
-  return String(html || '')
+  return words(String(html || ''))
     .replace(/<!--kg-card-(begin|end):[^>]*-->/g, '')
     .replace(/<p>\s*(?:&nbsp;|<br\s*\/?>)?\s*<\/p>/g, '')
     .replace(/\n{3,}/g, '\n\n').trim();

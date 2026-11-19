@@ -10,7 +10,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .ih-bar-l,.ih-bar-r{display:flex;flex-wrap:wrap;gap:20px;align-items:center}
 .ih-bar a{color:var(--ih-mute)}.ih-bar .ih-bar-name{color:var(--ih-ink);font-weight:500;letter-spacing:.04em}
 .ih-head{max-width:1120px;margin:0 auto;padding:72px 32px 24px;text-align:center}
-.ih-title{font-size:44px;letter-spacing:.01em;color:var(--ih-accent)}
+.ih-title{font-size:44px;font-weight:400;letter-spacing:.01em;color:var(--ih-accent)}.ih-title a{color:var(--ih-accent)!important}
 .ih-head nav{margin-top:20px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px 28px;font:14px 'Karla',system-ui,sans-serif}
 .ih-head nav a{color:var(--ih-mute)}.ih-head nav a:first-child{color:var(--ih-ink)}
 .ih-main{max-width:1160px;margin:0 auto;padding:72px 36px 120px}
@@ -70,3 +70,8 @@ ul{list-style:none;margin:0;padding:0}
 
 input[type=checkbox],input[type=radio]{accent-color:var(--ih-accent);width:18px;height:18px}
 .ih-shop-grid{margin-top:32px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:40px}.ih-shop-grid .ih-gi{display:block}
+
+@media(max-width:640px){
+  .ih-bar a,.ih-head nav a,.ih-foot a,.ih-back a,.ih-all a,.ih-shop-h a,.ih-eyebrow a,.ih-title{display:inline-flex;align-items:center;min-height:44px;padding:0 6px}
+  .ih-bar-in{padding:0 20px;gap:0 18px}.ih-foot-in{gap:0 18px}.ih-head nav{gap:0 14px}
+}
