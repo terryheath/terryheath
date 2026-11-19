@@ -66,7 +66,7 @@ function site_header() {
   // the site name is the page's h1 on a home page that has no h1 of its own (hub, terryheath.com, lifeonwords.com)
   $own_h1 = $s['kind'] === 'publication';
   $req = trailingslashit((string) strtok($_SERVER['REQUEST_URI'] ?? '/', '?')); $is_home_url = ($req === trailingslashit((string) wp_parse_url(home_url('/'), PHP_URL_PATH)));
-  $tag = ($is_home_url && !$own_h1) ? 'h1' : 'p';
+  $tag = ($is_home_url && !$own_h1 && !is_search() && !is_404()) ? 'h1' : 'p';
   $nav[] = ['Search', home_url('/?s=')];
   $h = '<header class="ih-head"><' . $tag . ' class="ih-title" style="margin:0"><a href="' . a(home_url('/')) . '" style="color:inherit">' . e($s['name']) . '</a></' . $tag . '><nav aria-label="' . a($s['name']) . '">';
   foreach ($nav as $n) { $h .= '<a href="' . a($n[1]) . '">' . e($n[0]) . '</a>'; }
@@ -254,6 +254,34 @@ function view_genre($term) {
   return $h . '</ul></main>';
 }
 
+function view_books() {
+  $h = '<main class="ih-main"><h1 class="ih-h1">Books</h1><div class="ih-grid">';
+  foreach (get_posts(['post_type' => 'ih_book', 'numberposts' => -1, 'post_status' => 'publish']) as $b) { $h .= '<div class="ih-gi"><a href="' . a(get_permalink($b)) . '" aria-label="' . a(get_the_title($b)) . '">' . cover($b, get_the_title($b) . ' cover') . '</a><h3><a href="' . a(get_permalink($b)) . '">' . e(get_the_title($b)) . '</a></h3></div>'; }
+  return $h . '</div>' . signup() . '</main>';
+}
+function view_book_page($b) {
+  return '<main class="ih-main"><div class="ih-hero">' . cover($b, get_the_title($b) . ' cover') . '<div class="ih-hero-t"><h1>' . e(get_the_title($b)) . '</h1>' . ($b->post_excerpt ? '<p class="ih-note">' . e($b->post_excerpt) . '</p>' : '') . (m($b->ID, 'ih_buy_url') ? '<div class="ih-btns">' . btn(m($b->ID, 'ih_buy_url'), 'Buy this book') . '</div>' : '') . '</div></div></main>';
+}
+function view_episodes() {
+  $h = '<main class="ih-main"><h1 class="ih-h1">Episodes</h1><ul class="ih-list">';
+  foreach (get_posts(['post_type' => 'ih_episode', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']) as $p) {
+    $g = get_post((int) m($p->ID, 'ih_guest_id'));
+    $h .= '<li><a href="' . a(get_permalink($p)) . '"><span class="ih-pt">' . e(get_the_title($p)) . '</span><span class="ih-pa">' . e(trim(($g ? get_the_title($g) . ' · ' : '') . get_the_date('', $p), ' ·')) . '</span></a></li>';
+  }
+  return $h . '</ul>' . signup() . '</main>';
+}
+function view_guests() {
+  $h = '<main class="ih-main"><h1 class="ih-h1">Guests</h1><ul class="ih-list ih-cols">';
+  foreach (get_posts(['post_type' => 'ih_guest', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'title', 'order' => 'ASC']) as $g) { $h .= '<li><a href="' . a(get_permalink($g)) . '"><span class="ih-pt">' . e(get_the_title($g)) . '</span></a></li>'; }
+  return $h . '</ul></main>';
+}
+function view_guest($g) {
+  $img = get_the_post_thumbnail_url($g, 'medium') ?: (m($g->ID, 'ih_headshot_id') ? wp_get_attachment_image_url((int) m($g->ID, 'ih_headshot_id'), 'medium') : '');
+  $h = '<main class="ih-main ih-contrib"><div class="ih-contrib-h">' . ($img ? '<img class="ih-headshot" src="' . a($img) . '" alt="Portrait of ' . a(get_the_title($g)) . '" width="160" height="160">' : '') . '<div><h1>' . e(get_the_title($g)) . '</h1>' . (m($g->ID, 'ih_bio') ? '<p class="ih-bio">' . e(m($g->ID, 'ih_bio')) . '</p>' : '') . '</div></div><section><h2>Episodes</h2><ul class="ih-list">';
+  foreach (get_posts(['post_type' => 'ih_episode', 'numberposts' => -1, 'post_status' => 'publish', 'meta_key' => 'ih_guest_id', 'meta_value' => $g->ID]) as $p) { $h .= '<li><a href="' . a(get_permalink($p)) . '"><span class="ih-pt">' . e(get_the_title($p)) . '</span><span class="ih-pa">' . e(get_the_date('', $p)) . '</span></a></li>'; }
+  return $h . '</ul></section></main>';
+}
+
 function view_archive() {
   $q = get_posts(['post_type' => 'ih_issue', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']);
   $h = '<main class="ih-main"><h1 class="ih-h1">Archive</h1><div class="ih-grid">';
@@ -411,6 +439,11 @@ function render_page() {
   if (is_singular('ih_contributor')) { return view_contributor(get_queried_object()); }
   if (is_tax('ih_genre')) { return view_genre(get_queried_object()); }
   if (is_post_type_archive('ih_contributor')) { return view_contributors(); }
+  if (is_post_type_archive('ih_book')) { return view_books(); }
+  if (is_post_type_archive('ih_episode')) { return view_episodes(); }
+  if (is_post_type_archive('ih_guest')) { return view_guests(); }
+  if (is_singular('ih_guest')) { return view_guest(get_queried_object()); }
+  if (is_singular('ih_book')) { return view_book_page(get_queried_object()); }
   if (is_post_type_archive('ih_issue')) { return view_archive(); }
   if (is_singular('ih_episode')) { return view_episode(get_queried_object()); }
   if (is_singular()) { return view_generic(get_queried_object()); }
