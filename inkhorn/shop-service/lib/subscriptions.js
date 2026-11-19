@@ -66,6 +66,20 @@ function grantComp({ email, name, publication, kind = 'print', months = 12, ref,
   });
 }
 
+// ---- Print mailing addresses (U.S. only) ------------------------------------------------------------------------------------------
+const STATES = /^(A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|P[AR]|RI|S[CD]|T[NX]|UT|V[AIT]|W[AIVY])$/;
+function cleanAddress(a) {
+  const t = (x) => String(x || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  const out = { name: t(a.name), line1: t(a.line1 || a.addr1), line2: t(a.line2 || a.addr2), city: t(a.city), state: t(a.state).toUpperCase(), zip: t(a.zip || a.postal_code), country: 'US' };
+  if (!out.name || !out.line1 || !out.city || !STATES.test(out.state) || !/^\d{5}(-\d{4})?$/.test(out.zip)) throw new Error('A U.S. address needs a name, street, city, 2-letter state and 5-digit ZIP.');
+  return out;
+}
+function saveAddress(email, a, source) {
+  const e = upsertMember(email);
+  db.prepare('INSERT INTO addresses (email, json, source, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(email) DO UPDATE SET json = excluded.json, source = excluded.source, updated_at = excluded.updated_at').run(e, JSON.stringify(cleanAddress(a)), source, iso());
+}
+const getAddress = (email) => { const r = db.prepare('SELECT json, source, updated_at FROM addresses WHERE email = ?').get(norm(email)); return r ? { ...JSON.parse(r.json), source: r.source, updated_at: r.updated_at } : null; };
+
 function status(email) {
   email = norm(email);
   const now = iso();
@@ -131,6 +145,14 @@ function router(stripe) {
     } catch (err) { console.error('subscription portal:', err.message); res.status(500).json({ error: 'Portal failed' }); }
   });
 
+  r.get('/address', auth, (req, res) => res.json({ address: getAddress(req.query.email) }));
+  r.put('/address', auth, (req, res) => { try { saveAddress(req.body.email, req.body.address || {}, 'account'); res.json({ ok: true }); } catch (e) { res.status(400).json({ error: e.message }); } });
+  // Everyone with a live Print subscription for a publication, with the address on file (the print mailing list)
+  r.get('/print-list', auth, (req, res) => {
+    const pub = req.query.publication === 'whiterabbit' ? 'whiterabbit' : 'review';
+    const rows = db.prepare("SELECT DISTINCT s.email, m.name FROM subscriptions s JOIN members m ON m.email = s.email WHERE s.publication = ? AND s.kind = 'print' AND s.status IN ('active','past_due') AND (s.period_end IS NULL OR s.period_end > ?)").all(pub, iso());
+    res.json(rows.map((r) => ({ email: r.email, name: r.name, address: getAddress(r.email) })));
+  });
   r.get('/status', auth, (req, res) => res.json(status(req.query.email)));
   r.post('/grant', auth, (req, res) => { try { res.json(grantComp(req.body)); } catch (e) { res.status(400).json({ error: e.message }); } });
   r.post('/import', auth, (req, res) => { // body: { members: [{ email, name, publication, kind, source, until, ref, note, stripe_subscription, stripe_customer }] }
@@ -153,7 +175,10 @@ async function handleEvent(stripe, event) {
   if (event.type === 'checkout.session.completed' && event.data.object.mode === 'subscription') {
     const s = event.data.object;
     const sub = await stripe.subscriptions.retrieve(s.subscription, { expand: ['items.data.price'] });
-    recordSubscription(sub, (s.customer_details && s.customer_details.email) || s.customer_email);
+    const em = (s.customer_details && s.customer_details.email) || s.customer_email;
+    recordSubscription(sub, em);
+    const ship = s.shipping_details || (s.collected_information && s.collected_information.shipping_details);
+    if (ship && ship.address && em) { try { saveAddress(em, { name: ship.name, line1: ship.address.line1, line2: ship.address.line2, city: ship.address.city, state: ship.address.state, zip: ship.address.postal_code }, 'checkout'); } catch (e) { console.error('address from checkout not saved:', e.message); } }
     return true;
   }
   if (/^customer\.subscription\.(created|updated|deleted)$/.test(event.type)) {
@@ -165,4 +190,4 @@ async function handleEvent(stripe, event) {
   return false;
 }
 
-module.exports = { router, handleEvent, grantComp, status, recordSubscription, upsertMember };
+module.exports = { saveAddress, getAddress, router, handleEvent, grantComp, status, recordSubscription, upsertMember };

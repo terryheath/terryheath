@@ -94,6 +94,14 @@ db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_stripe ON subscriptions (stripe_subscription, publication) WHERE stripe_subscription IS NOT NULL;
   CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_comp ON subscriptions (ref, publication) WHERE source = 'comp' AND ref IS NOT NULL;
   CREATE INDEX IF NOT EXISTS subscriptions_email ON subscriptions (email);
+
+  -- U.S. mailing address of a Print subscriber (replaces the address service: from Stripe Checkout, or typed on the account page)
+  CREATE TABLE IF NOT EXISTS addresses (
+    email      TEXT PRIMARY KEY,
+    json       TEXT NOT NULL,
+    source     TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
 `);
 
 function tx(fn) {

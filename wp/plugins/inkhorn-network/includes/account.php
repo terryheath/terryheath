@@ -113,6 +113,10 @@ add_action('template_redirect', function () {
     if ($r && !empty($r['url'])) { wp_redirect($r['url']); exit; }
     wp_safe_redirect(add_query_arg('msg', 'noportal', home_url('/account/'))); exit;
   }
+  if ($do === 'address') {
+    $r = shop('PUT', '/subscription/address', ['email' => $email, 'address' => ['name' => sanitize_text_field($_POST['a_name'] ?? ''), 'line1' => sanitize_text_field($_POST['a_line1'] ?? ''), 'line2' => sanitize_text_field($_POST['a_line2'] ?? ''), 'city' => sanitize_text_field($_POST['a_city'] ?? ''), 'state' => sanitize_text_field($_POST['a_state'] ?? ''), 'zip' => sanitize_text_field($_POST['a_zip'] ?? '')]]);
+    wp_safe_redirect(add_query_arg('msg', $r ? 'address' : 'badaddress', home_url('/account/'))); exit;
+  }
   if ($do === 'profile' && ($c = my_contributor($email))) {
     // changes wait for approval in the admin hub; nothing goes live until then
     $pending = ['bio' => sanitize_textarea_field($_POST['bio'] ?? ''), 'url' => esc_url_raw($_POST['url'] ?? ''), 'at' => time()];
@@ -144,6 +148,8 @@ function view_account() {
   $msg = $_GET['msg'] ?? '';
   $h = '<main class="ih-main ih-acct"><p class="ih-back"><a href="' . a(home_url('/signin/out/')) . '">Sign out</a></p><h1 class="ih-h1" style="text-align:left">Your account</h1><p class="ih-sub" style="text-align:left">' . e($email) . '</p>';
   if ($msg === 'pending') { $h .= '<p class="ih-note" role="status">Thank you. Your changes are waiting for approval; nothing is public until then.</p>'; }
+  if ($msg === 'address') { $h .= '<p class="ih-note" role="status">Your mailing address is saved.</p>'; }
+  if ($msg === 'badaddress') { $h .= '<p class="ih-note" role="alert">That address was not saved. A U.S. address needs a name, street, city, 2-letter state and 5-digit ZIP.</p>'; }
   if ($msg === 'noportal') { $h .= '<p class="ih-note" role="status">There is no paid subscription to manage for this address.</p>'; }
 
   // Subscriptions (paid Ebook and Print plans, and the Print subscription taken in place of payment)
@@ -158,6 +164,13 @@ function view_account() {
     }
     $h .= '</ul><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="portal"><p><button class="ih-btn" type="submit">Manage billing</button></p></form>';
   } else { $h .= '<p class="ih-sub" style="text-align:left">You have no subscription yet.</p><p>' . btn(home_url('/shop/subscriptions/'), 'See subscriptions') . '</p>'; }
+  if ($st && (!empty($st['entitlements']['review_print']) || !empty($st['entitlements']['whiterabbit_print']))) {
+    $ad = shop('GET', '/subscription/address?email=' . rawurlencode($email))['address'] ?? [];
+    $f = function ($n, $l, $v, $req = true) { return '<p><label for="ih-' . $n . '">' . e($l) . '</label><br><input id="ih-' . $n . '" name="a_' . $n . '" value="' . a($v) . '"' . ($req ? ' required' : '') . ' style="width:100%;min-height:44px;padding:0 12px;font:inherit"></p>'; };
+    $h .= '<h3>Where we mail your Print copies</h3><p class="ih-sub" style="text-align:left">U.S. addresses only.</p><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="address">'
+      . $f('name', 'Name', $ad['name'] ?? '') . $f('line1', 'Street address', $ad['line1'] ?? '') . $f('line2', 'Apartment, suite (optional)', $ad['line2'] ?? '', false) . $f('city', 'City', $ad['city'] ?? '')
+      . $f('state', 'State (2 letters)', $ad['state'] ?? '') . $f('zip', 'ZIP code', $ad['zip'] ?? '') . '<p><button class="ih-btn" type="submit">Save address</button></p></form>';
+  }
   $h .= '</section>';
 
   // Contributor sections
