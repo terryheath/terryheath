@@ -339,6 +339,17 @@ function view_generic($p) {
   return '<main class="ih-main">' . back_link() . '<article class="ih-piece"><h1>' . e(get_the_title($p)) . '</h1><div class="ih-body">' . apply_filters('the_content', $p->post_content) . $extra . '</div></article></main>';
 }
 
+/** A publication with no issue yet (White Rabbit before No. 1, Muse): says what it is and when, and offers its newsletter. */
+function view_publication_soon() {
+  $s = site(); $k = site_key();
+  $line = ['whiterabbit' => 'Published only on Friday the 13th. Issue No. 1 comes out on Friday, August 13, 2027.', 'muse' => 'Post a poem or short prose, and readers decide what gets published each season. Muse is an app at gomuse.io.'][$k] ?? '';
+  $h = '<main class="ih-main"><section class="ih-hero-t" style="text-align:center;max-width:34rem;margin:0 auto"><p class="ih-kicker">' . e($s['name']) . '</p><h1 class="ih-h1" style="margin-top:8px">' . ($k === 'whiterabbit' ? 'Issue No. 1' : e($s['name'])) . '</h1><p class="ih-note" style="margin:0 auto">' . e($line) . '</p>'
+     . '<p class="ih-sub">Details coming soon.</p><div class="ih-btns" style="justify-content:center">';
+  if ($k === 'muse') { $h .= btn('https://gomuse.io', 'Open Muse'); }
+  if ($k === 'whiterabbit') { $h .= btn(hub_link('events/'), 'About Weird Friday'); }
+  return $h . '</div></section>' . signup() . '</main>';
+}
+
 function view_404() {
   $s = site();
   return '<main class="ih-main"><h1 class="ih-h1">That page isn’t here.</h1><p class="ih-note">It may have moved. Try the ' . ($s['kind'] === 'publication' ? 'current issue' : 'home page') . ', or search.</p>'
@@ -378,7 +389,7 @@ function render_page() {
   if (is_404()) { return view_404(); }
   if (is_search()) { return view_search(); }
   if (is_front_page() || is_home()) {
-    if ($k === 'publication') { $i = current_issue(); return $i ? view_issue($i) : view_404(); }
+    if ($k === 'publication') { $i = current_issue(); return $i ? view_issue($i) : view_publication_soon(); }
     if ($k === 'hub') { return view_hub(); }
     if ($k === 'author') { return view_author_home(); }
     if ($k === 'podcast') { return view_podcast_home(); }
