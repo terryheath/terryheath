@@ -245,6 +245,13 @@ function view_contributors() {
   return $h . '</ul></main>';
 }
 
+function view_genre($term) {
+  $q = get_posts(['post_type' => 'ih_piece', 'numberposts' => -1, 'post_status' => 'publish', 'tax_query' => [['taxonomy' => 'ih_genre', 'terms' => $term->term_id]], 'orderby' => 'date', 'order' => 'DESC']);
+  $h = '<main class="ih-main"><h1 class="ih-h1">' . e($term->name) . '</h1><ul class="ih-list ih-cols">';
+  foreach ($q as $p) { $h .= '<li><a href="' . a(get_permalink($p)) . '"><span class="ih-pt">' . e(get_the_title($p)) . '</span><span class="ih-pa">' . e(m($p->ID, 'ih_author_name')) . '</span></a></li>'; }
+  return $h . '</ul></main>';
+}
+
 function view_archive() {
   $q = get_posts(['post_type' => 'ih_issue', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']);
   $h = '<main class="ih-main"><h1 class="ih-h1">Archive</h1><div class="ih-grid">';
@@ -400,6 +407,7 @@ function render_page() {
   if (is_singular('ih_issue')) { return view_issue(get_queried_object()); }
   if (is_singular('ih_piece')) { return view_piece(get_queried_object()); }
   if (is_singular('ih_contributor')) { return view_contributor(get_queried_object()); }
+  if (is_tax('ih_genre')) { return view_genre(get_queried_object()); }
   if (is_post_type_archive('ih_contributor')) { return view_contributors(); }
   if (is_post_type_archive('ih_issue')) { return view_archive(); }
   if (is_singular('ih_episode')) { return view_episode(get_queried_object()); }
