@@ -162,7 +162,7 @@ async function handle(req, res, ip) {
   const [path, ...qs] = req.url.split('?');
   const query = new URLSearchParams(qs.join('?'));
   if (path === '/health') return send(res, 200, 'ok');
-  if (path.startsWith('/podcast/book') || path.startsWith('/podcast/webhook/') || path === '/podcast/headshot' || path === '/podcast/api/headshot') { if (await PR.publicRoute(req, res, path, query)) return; } // public: the booking gate, the Cal.com webhook and the guest headshot upload
+  if (path.startsWith('/podcast/book') || path.startsWith('/podcast/webhook/') || path === '/podcast/headshot' || path === '/podcast/api/headshot' || path === '/podcast/suggest') { if (await PR.publicRoute(req, res, path, query)) return; } // public: the booking gate, the Cal.com webhook, the guest headshot upload and the "who else should I talk to?" form
   const auth = await loadAuth();
 
   if (path === '/setup') {
