@@ -42,7 +42,15 @@
       "to": "/shop/"
     },
     {
-      "from": "^/(print-edition|cart|order-complete|address)/?$",
+      "from": "^/(?:shop/)?print-edition/?$",
+      "to": "/shop/subscriptions/"
+    },
+    {
+      "from": "^/(?:shop/)?address/?$",
+      "to": "/account/"
+    },
+    {
+      "from": "^/(cart|order-complete)/?$",
       "to": "/shop/$1/"
     },
     {
