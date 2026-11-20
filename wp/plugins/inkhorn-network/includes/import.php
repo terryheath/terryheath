@@ -36,6 +36,11 @@ function import_item(\WP_REST_Request $r) {
   require_once ABSPATH . 'wp-admin/includes/image.php';
   switch_to_blog($bid);
   try {
+    if (!empty($d['delete_test_id'])) { // cleanup of audit fixtures only: a post whose title starts with "Test " and is not published
+      $tp = get_post((int) $d['delete_test_id']);
+      if ($tp && strpos($tp->post_title, 'Test ') === 0 && $tp->post_status !== 'publish') { wp_delete_post($tp->ID, true); return ['deleted' => $tp->ID]; }
+      return new \WP_Error('refused', 'not a test fixture', ['status' => 400]);
+    }
     $type = $d['type'] ?? 'post'; $slug = sanitize_title($d['slug'] ?? '');
     $found = get_posts(['name' => $slug, 'post_type' => $type, 'post_status' => 'any', 'numberposts' => 1]);
     $arr = [
