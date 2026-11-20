@@ -41,6 +41,16 @@ function import_item(\WP_REST_Request $r) {
       if ($tp && strpos($tp->post_title, 'Test ') === 0 && $tp->post_status !== 'publish') { wp_delete_post($tp->ID, true); return ['deleted' => $tp->ID]; }
       return new \WP_Error('refused', 'not a test fixture', ['status' => 400]);
     }
+    if (($d['action'] ?? '') === 'dedupe_books') { // keeps one product per title (a published one if there is one), removes the rest
+      $by = [];
+      foreach (get_posts(['post_type' => 'ih_book', 'numberposts' => -1, 'post_status' => ['publish', 'future', 'draft', 'pending', 'private']]) as $b) { $by[$b->post_title][] = $b; }
+      $gone = [];
+      foreach ($by as $title => $list) {
+        usort($list, function ($x, $y) { return [$y->post_status === 'publish', $x->ID] <=> [$x->post_status === 'publish', $y->ID]; });
+        foreach (array_slice($list, 1) as $dup) { wp_delete_post($dup->ID, true); $gone[] = $dup->post_name; }
+      }
+      return ['removed' => $gone];
+    }
     $type = $d['type'] ?? 'post'; $slug = sanitize_title($d['slug'] ?? '');
     if ($slug === '') { return new \WP_Error('no_slug', 'slug is required (an empty slug would match any post)', ['status' => 400]); }
     $found = get_posts(['name' => $slug, 'post_type' => $type, 'post_status' => 'any', 'numberposts' => 1]);
@@ -49,6 +59,7 @@ function import_item(\WP_REST_Request $r) {
       'post_status' => $d['status'] ?? 'publish', 'post_excerpt' => $d['excerpt'] ?? '', 'menu_order' => (int) ($d['menu_order'] ?? 0),
     ];
     if (!empty($d['date'])) { $arr['post_date_gmt'] = gmdate('Y-m-d H:i:s', strtotime($d['date'])); $arr['post_date'] = get_date_from_gmt($arr['post_date_gmt']); }
+    if ($found && !empty($d['meta_only'])) { foreach (($d['meta'] ?? []) as $k => $v) { update_post_meta($found[0]->ID, $k, $v); } return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID)]; }
     if ($found && !empty($d['only_content'])) { kses_remove_filters(); wp_update_post(['ID' => $found[0]->ID, 'post_content' => $d['content'] ?? '']); kses_init_filters(); return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID)]; }
     if ($found && !empty($d['skip_if_exists'])) { return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID), 'existed' => true]; }
     if ($found) { $arr['ID'] = $found[0]->ID; }
