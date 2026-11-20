@@ -83,7 +83,7 @@ add_action('transition_post_status', function ($new, $old, $post) { if ($post->p
 
 /* ---------- search ---------- */
 
-function search_scope_keys() { return in_array(site()['kind'], ['author', 'podcast'], true) ? ['terryheath', 'lifeonwords'] : ['hub', 'review', 'whiterabbit', 'muse']; }
+function search_scope_keys() { return ['hub', 'review', 'whiterabbit', 'muse', 'terryheath', 'lifeonwords']; } // one search across the whole family
 function result_type($p) {
   switch ($p->post_type) {
     case 'ih_piece': $g = piece_genre($p); $map = ['poetry' => 'Poem', 'fiction' => 'Story', 'nonfiction' => 'Essay', 'art' => 'Art', 'micro' => 'Micro']; return $g ? ($map[$g->slug] ?? $g->name) : 'Piece';
@@ -104,10 +104,10 @@ function one_line($p) {
   if ($src === '') { $src = $p->post_excerpt; }
   if ($src === '') {
     $c = (string) $p->post_content;
-    if (preg_match_all('#<p[^>]*>(.*?)</p>#is', $c, $mm)) { foreach ($mm[1] as $para) { $t = trim(wp_strip_all_tags($para)); if (mb_strlen($t) > 30 && !preg_match('/^[▶►]/u', $t)) { $src = $t; break; } } }
-    if ($src === '') { $src = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags($c))); }
+    if (preg_match_all('#<p[^>]*>(.*?)</p>#is', $c, $mm)) { foreach ($mm[1] as $para) { $t = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags(preg_replace('#<br\s*/?>#i', ' ', $para)))); if (mb_strlen($t) > 30 && !preg_match('/^[▶►]/u', $t)) { $src = $t; break; } } }
+    if ($src === '') { $src = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags(preg_replace('#<br\s*/?>#i', ' ', $c)))); }
   }
-  $src = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags($src)));
+  $src = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags(preg_replace('#<br\s*/?>|</p>#i', ' ', $src))));
   if (mb_strlen($src) <= 140) { return $src; }
   $cut = mb_substr($src, 0, 140); $sp = mb_strrpos($cut, ' ');
   return rtrim(mb_substr($cut, 0, $sp ?: 140), " ,.;:–-") . '…';
