@@ -27,3 +27,4 @@ require_once __DIR__ . '/includes/store.php';
 require_once __DIR__ . '/includes/tools.php';
 require_once __DIR__ . '/includes/campaigns.php';
 require_once __DIR__ . '/includes/seo.php';
+require_once __DIR__ . '/includes/services.php';

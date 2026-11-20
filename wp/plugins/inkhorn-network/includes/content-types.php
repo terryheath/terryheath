@@ -26,7 +26,7 @@ add_action('init', function () {
     ]);
   }
   {
-    register_post_type('ih_book', $common + ['show_ui' => $ui(['author']),'labels' => ['name' => 'Books', 'singular_name' => 'Book'], 'rewrite' => ['slug' => 'books', 'with_front' => false], 'has_archive' => 'books']);
+    register_post_type('ih_book', $common + ['show_ui' => $ui(['hub', 'author']),'labels' => ['name' => 'Books', 'singular_name' => 'Book'], 'rewrite' => ['slug' => 'books', 'with_front' => false], 'has_archive' => 'books']);
   }
   {
     register_post_type('ih_episode', $common + ['show_ui' => $ui(['podcast']),'labels' => ['name' => 'Episodes', 'singular_name' => 'Episode'], 'rewrite' => ['slug' => 'episodes', 'with_front' => false], 'has_archive' => 'episodes']);

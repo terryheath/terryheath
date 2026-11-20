@@ -83,11 +83,14 @@ add_action('network_admin_menu', function () {
   });
 });
 
-function text_page() {
+function text_page($only = null) {
   if (!current_user_can('manage_options')) { return; }
-  $reg = text_registry(); $o = get_option(TEXT_OPTION, []); if (!is_array($o)) { $o = []; }
+  $reg = text_registry();
+  if ($only) { $reg = array_filter($reg, function ($k) use ($only) { foreach ($only as $p) { if (strpos($k, $p) === 0) { return true; } } return false; }, ARRAY_FILTER_USE_KEY); }
+  $all_reg = text_registry(); $o = get_option(TEXT_OPTION, []); if (!is_array($o)) { $o = []; }
   if (isset($_POST['ih_text_save']) && check_admin_referer('ih_text')) {
     $new = [];
+    foreach ($o as $k => $v) { if (!isset($reg[$k])) { $new[$k] = $v; } } // keep what is not on this page
     foreach ((array) ($_POST['ih_text'] ?? []) as $k => $v) {
       $k = sanitize_text_field($k); $v = trim(wp_unslash((string) $v));
       if (isset($reg[$k]) && $v !== '' && $v !== $reg[$k][0]) { $new[$k] = wp_kses_post($v); }
@@ -99,7 +102,7 @@ function text_page() {
   $groups = text_groups(); $by = [];
   foreach ($reg as $k => $v) { $g = strtok($k, '.'); $by[$groups[$g] ?? ucfirst($g)][$k] = $v; }
   ksort($by);
-  echo '<div class="wrap"><h1>Site text</h1><p>Every sentence, label, button and message this site prints. Change a box and save; leave a box as it is to keep the original wording. Clear a box to go back to the original. <code>{name}</code> marks a value the site fills in (a name, an address): keep it where it should appear. Links and <code>&lt;em&gt;</code> are allowed where a box already has them.</p>'
+  echo '<div class="wrap"><h1>' . ($only ? 'Shop text' : 'Site text') . '</h1>' . ($only ? '' : '') . '<p>Every sentence, label, button and message this site prints. Change a box and save; leave a box as it is to keep the original wording. Clear a box to go back to the original. <code>{name}</code> marks a value the site fills in (a name, an address): keep it where it should appear. Links and <code>&lt;em&gt;</code> are allowed where a box already has them.</p>'
      . '<p><b>Page text</b> (About, Donate, Events, Submit, Help articles on pages you wrote in the editor) lives in <a href="' . esc_url(admin_url('edit.php?post_type=page')) . '">Pages</a>; navigation, header and footer live in the <a href="' . esc_url(admin_url('site-editor.php')) . '">Site Editor</a>.</p>'
      . '<form method="post">'; wp_nonce_field('ih_text');
   echo '<p><input type="search" id="ih-text-filter" placeholder="Find a sentence…" style="width:min(420px,100%)" oninput="var q=this.value.toLowerCase();document.querySelectorAll(\'.ih-trow\').forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)<0&&(r.querySelector(\'textarea\').value.toLowerCase().indexOf(q)<0)?\'none\':\'\'})"></p>';
@@ -113,4 +116,27 @@ function text_page() {
     echo '</table></details>';
   }
   echo '<p><button class="button button-primary" name="ih_text_save" value="1">Save</button></p></form></div>';
+}
+
+
+/* ---------- Shop: what the shop shows, and where prices live ---------- */
+add_action('admin_menu', function () {
+  if (site_key() !== 'hub') { return; }
+  add_menu_page('Shop', 'Shop', 'manage_options', 'ih-shop', __NAMESPACE__ . '\\shop_admin_page', 'dashicons-cart', 26);
+});
+function shop_admin_page() {
+  if (!current_user_can('manage_options')) { return; }
+  $prices = shop_prices();
+  echo '<div class="wrap"><h1>Shop</h1><div class="notice notice-info inline"><p><b>Prices are set in Stripe, not here.</b> The shop charges what Stripe holds, and the prices shown on the site are read from it (cached ten minutes). To change a price, '
+     . 'open <a href="https://dashboard.stripe.com/products" target="_blank" rel="noopener">Stripe &rarr; Product catalog</a> and add a new price to the product (Stripe prices are not edited in place); the shop picks the new default. '
+     . 'Shipping ($4 for the first print copy, $1 for each additional) is set in the shop service code (<code>inkhorn/shop-service/index.js</code>) and needs a code change; the wording that describes it is below.</p></div>';
+  echo '<h2>Products</h2><p>Name, description and cover are edited on each product.</p><table class="widefat striped" style="max-width:900px"><thead><tr><th>Product</th><th>SKU</th><th>Print price (from Stripe)</th><th></th></tr></thead><tbody>';
+  foreach (get_posts(['post_type' => 'ih_book', 'numberposts' => -1, 'post_status' => ['publish', 'draft', 'future']]) as $b) {
+    $sku = get_post_meta($b->ID, 'ih_sku', true);
+    echo '<tr><td>' . esc_html(get_the_title($b)) . '</td><td>' . esc_html($sku) . '</td><td>' . (isset($prices[$sku]) ? '$' . esc_html(number_format($prices[$sku] / 100, 2)) : '<em>not in the shop service</em>') . '</td><td><a href="' . esc_url(get_edit_post_link($b->ID)) . '">Edit</a></td></tr>';
+  }
+  echo '</tbody></table><p><a class="button" href="' . esc_url(admin_url('post-new.php?post_type=ih_book')) . '">Add a product page</a></p>';
+  echo '<h2>Subscriptions and shop wording</h2><p>The names, descriptions and display prices of the subscriptions, and the shop, cart and order-page text. The amount Stripe charges comes from Stripe (above); if you change a price there, change the matching text here so the page agrees.</p>';
+  text_page(['shop.', 'cart.', 'js.', 'strip.', 'books.', 'book.']);
+  echo '</div>';
 }
