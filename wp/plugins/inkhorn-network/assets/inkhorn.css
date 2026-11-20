@@ -119,3 +119,10 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ih-accent);width:18px;
 .ih-confirm{max-width:520px;margin:32px auto 0;padding:28px;border:1px solid var(--ih-rule);text-align:center}.ih-confirm h2{margin:0 0 8px;font-size:26px;font-weight:400}
 .ih-host{margin:-24px 0 24px;font:15px 'Karla',sans-serif;color:var(--ih-mute)}.ih-host a{color:var(--ih-accent);text-decoration:underline;text-underline-offset:3px}
 .ih-related{max-width:34rem;margin:72px auto 0}.ih-related h2{font-size:26px;font-weight:400}
+
+/* ---- audit round 1: 44px targets everywhere, links in running text are underlined, summaries are tappable ---- */
+.ih-bar a,.ih-head nav a,.ih-foot a,.ih-welcome a{display:inline-flex;align-items:center;min-height:44px}
+.ih-bar a{padding:0 4px}
+.ih-by a,.ih-host a{display:inline-flex;align-items:center;min-height:44px}
+.ih-note a,.ih-body p a,.ih-body li a,.ih-faq p a,.ih-sub a,.ih-confirm a,.ih-foot-in>span a,.ih-cart-empty a,.ih-start p a,.ih-help p a,.ih-contact+p a{text-decoration:underline;text-underline-offset:3px}
+summary,.ih-body summary{min-height:44px;display:flex;align-items:center;cursor:pointer}

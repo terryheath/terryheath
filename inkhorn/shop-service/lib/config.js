@@ -6,7 +6,7 @@ const env = process.env;
 module.exports = {
   port: env.PORT || 3000,
   siteUrl: (env.SITE_URL || 'https://inkhorn.press').replace(/\/$/, ''),
-  corsOrigin: env.CORS_ORIGIN || 'https://inkhorn.press',
+  corsOrigin: (env.CORS_ORIGIN || 'https://inkhorn.press').split(',').map((o) => o.trim()).filter(Boolean), // one address, or several separated by commas
   // Public base URL of the download links (custom domain in production)
   downloadBaseUrl: (env.DOWNLOAD_BASE_URL || 'https://download.inkhornreview.com').replace(/\/$/, ''),
 

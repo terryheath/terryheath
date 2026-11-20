@@ -319,7 +319,7 @@ function view_archive() {
   $q = get_posts(['post_type' => 'ih_issue', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']);
   $h = '<main class="ih-main"><h1 class="ih-h1">Archive</h1><div class="ih-grid">';
   foreach ($q as $i) {
-    $h .= '<div class="ih-gi"><a href="' . a(get_permalink($i)) . '">' . (get_the_post_thumbnail_url($i, 'medium') ? cover($i, 'Cover of ' . get_the_title($i)) : '') . '</a><h3><a href="' . a(get_permalink($i)) . '">' . e(m($i->ID, 'ih_label') ?: get_the_title($i)) . '</a></h3></div>';
+    $h .= '<div class="ih-gi"><a href="' . a(get_permalink($i)) . '" aria-label="' . a(m($i->ID, 'ih_label') ?: get_the_title($i)) . '">' . (get_the_post_thumbnail_url($i, 'medium') ? cover($i, 'Cover of ' . get_the_title($i)) : '<div class="ih-cover ih-cover-e" aria-hidden="true"></div>') . '</a><h3><a href="' . a(get_permalink($i)) . '">' . e(m($i->ID, 'ih_label') ?: get_the_title($i)) . '</a></h3></div>';
   }
   return $h . '</div></main>';
 }
