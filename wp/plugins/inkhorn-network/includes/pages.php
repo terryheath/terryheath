@@ -159,11 +159,21 @@ function view_archive() {
   return $h . '</div></main>';
 }
 
-/** An essay's lead: its excerpt field, else its first complete sentence (never a cut-off fragment). */
+/** An essay's lead: its excerpt field, else its first complete sentence (never a cut-off fragment; a quotation is carried through to its closing mark). */
 function lead_line($p) {
   if (trim($p->post_excerpt) !== '') { return trim(preg_replace('/\s+/', ' ', wp_strip_all_tags($p->post_excerpt))); }
   $t = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags(preg_replace('#<br\s*/?>|</p>#i', ' ', (string) $p->post_content))));
-  if (preg_match('/^(.{20,}?[.!?]["”’)]*)(?=\s+[A-Z“"‘(]|$)/us', $t, $mm)) { return $mm[1]; }
+  $t = html_entity_decode($t, ENT_QUOTES, 'UTF-8');
+  $parts = preg_split('/(?<=[.!?]|[.!?]["”’)])\s+(?=[A-Z“"‘(])/u', $t);
+  $out = ''; $n = 0;
+  foreach ($parts as $sent) {
+    $out = trim($out . ' ' . $sent); $n++;
+    $open = substr_count($out, '“') + substr_count($out, '‘') - substr_count($out, '”') - substr_count($out, '’') * 0; // curly doubles
+    $dq = substr_count($out, '"');
+    $balanced = (substr_count($out, '“') <= substr_count($out, '”')) && ($dq % 2 === 0);
+    if (mb_strlen($out) >= 20 && $balanced && preg_match('/[.!?]["”’)]*$/u', $out)) { return $out; }
+    if ($n >= 6) { break; }
+  }
   return '';
 }
 /** A hyphen inside a word does not break across lines in essay titles ("Publisher‑Writer"). */
