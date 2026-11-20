@@ -25,7 +25,7 @@ const template = (name, accent, tint, nonprofit) => `<!doctype html><html lang="
 {{ template "content" . }}
 <hr style="border:0;border-top:1px solid #ECE8E0;margin:48px 0 20px">
 <p style="margin:0;font-family:Karla,Arial,sans-serif;font-size:13px;color:#67645D">${FOOT[name] || 'Inkhorn Press is a 501(c)(3) nonprofit press.'}<br>
-<a href="{{ UnsubscribeURL }}" style="color:#67645D">Unsubscribe</a> · <a href="https://inkhorn.press/newsletter/?id={{ .Subscriber.UUID }}" style="color:#67645D">Newsletter preferences</a></p>
+<a href="{{ UnsubscribeURL }}" style="color:#67645D">Unsubscribe</a> · <a href="https://inkhorn.press/newsletter/?id={{ .Subscriber.UUID }}" style="color:#67645D">Newsletter preferences</a> · <a href="https://inkhorn.press/help/" style="color:#67645D">Help</a> · <a href="{{ MessageURL }}" style="color:#67645D">View in browser</a></p>
 </div>{{ TrackView }}</body></html>`;
 
 let cookie = '';

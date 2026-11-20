@@ -66,7 +66,7 @@ add_action('rest_api_init', function () {
         $ret = esc_url_raw((string) $r->get_param('return'));
         set_transient(token_key($t), $email . '|' . ($ret && allowed_return($ret) ? $ret : ''), 15 * MINUTE_IN_SECONDS);
         $url = add_query_arg('t', $t, home_url('/signin/verify/'));
-        wp_mail($email, 'Your Inkhorn Press sign-in link', "Hello,\n\nUse this link to sign in. It works once and expires in 15 minutes:\n\n$url\n\nIf you did not ask for it, you can ignore this email.\n\nInkhorn Press");
+        wp_mail($email, 'Your Inkhorn Press sign-in link', "Hello,\n\nUse this link to sign in. It works once and expires in 15 minutes:\n\n$url\n\nIf you did not ask for it, you can ignore this email.\n\nQuestions? Write to hello@inkhorn.press or see " . home_url('/help/') . "\n\nInkhorn Press");
       }
       return ['ok' => true, 'message' => 'If that address has an account, a sign-in link is on its way.'];
     },
@@ -272,7 +272,7 @@ function view_newsletter() {
       . '<form method="post" action="' . a(home_url('/newsletter/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '"><div class="ih-btns" style="justify-content:center"><button class="ih-btn" type="submit" name="do" value="none-confirmed">Yes, unsubscribe me from all</button>'
       . '<a class="ih-btn ih-btn-quiet" href="' . a(add_query_arg('id', $uuid, home_url('/newsletter/'))) . '">Keep my subscriptions</a></div></form></div></main>';
   }
-  if (!$sub) { return $h . '<p class="ih-note" style="margin:0 auto;text-align:center">Not on a list yet? Choose the ones you want.</p>' . signup('Your lists') . '</main>'; }
+  if (!$sub) { return $h . '<p class="ih-note" style="margin:0 auto 12px;text-align:center">To change the lists you are on, use the “Newsletter preferences” link at the bottom of any email we sent you.</p><p class="ih-note" style="margin:0 auto;text-align:center">Not on a list yet? Choose the ones you want.</p>' . signup('Your lists') . '</main>'; }
   $on = []; foreach (($sub['lists'] ?? []) as $l) { if (($l['subscription_status'] ?? '') !== 'unsubscribed') { foreach (($l['tags'] ?? []) as $t) { $on[$t] = true; } } }
   $groups = ['Inkhorn Press' => ['inkhorn-review', 'white-rabbit', 'muse', 'events'], 'Terry Heath' => ['writing', 'digest', 'new-books'], 'Life on Words' => ['life-on-words']];
   $h .= '<p class="ih-sub" style="text-align:center">' . e($sub['email']) . '</p><form class="ih-form" method="post" action="' . a(home_url('/newsletter/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '">';

@@ -100,7 +100,7 @@ function nl_start($email, array $lists, $from = '') {
   $url = add_query_arg('t', $t, hub_url('newsletter/confirm/'));
   $names = implode(', ', array_map(function ($l) { return LIST_LABELS[$l] ?? $l; }, $lists));
   $mail = site()['kind'] === 'author' || site()['kind'] === 'podcast' ? 'Terry Heath' : 'Inkhorn Press';
-  return wp_mail($email, 'Confirm your sign-up', "Hello,\n\nYou asked to get news and updates by email: $names.\n\nConfirm it with this link (it works for two days):\n\n$url\n\nIf you did not ask for this, ignore this email and nothing will happen.\n\n$mail");
+  return wp_mail($email, 'Confirm your sign-up', "Hello,\n\nYou asked to get news and updates by email: $names.\n\nConfirm it with this link (it works for two days):\n\n$url\n\nIf you did not ask for this, ignore this email and nothing will happen.\n\nQuestions? Write to " . support_email() . " or see " . home_url('/help/') . "\n\n$mail");
 }
 
 add_action('template_redirect', function () {
