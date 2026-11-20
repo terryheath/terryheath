@@ -42,6 +42,7 @@ function import_item(\WP_REST_Request $r) {
       return new \WP_Error('refused', 'not a test fixture', ['status' => 400]);
     }
     $type = $d['type'] ?? 'post'; $slug = sanitize_title($d['slug'] ?? '');
+    if ($slug === '') { return new \WP_Error('no_slug', 'slug is required (an empty slug would match any post)', ['status' => 400]); }
     $found = get_posts(['name' => $slug, 'post_type' => $type, 'post_status' => 'any', 'numberposts' => 1]);
     $arr = [
       'post_type' => $type, 'post_name' => $slug, 'post_title' => $d['title'] ?? '', 'post_content' => $d['content'] ?? '',
