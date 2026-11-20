@@ -195,9 +195,8 @@ const LOW_APPLE = 'https://podcasts.apple.com/us/podcast/life-on-words/id6796221
 const LOW_SPOTIFY = 'https://open.spotify.com/show/033Yk3F8x8QWBLK496Wbqd';
 function feed_url_low() { return pub_url('terryheath', 'podcast/rss/'); }
 
-function view_podcast_home() {
-  $eps = episodes_latest(7); $latest = $eps ? $eps[0] : null;
-  $h = '<main class="ih-main ih-low">';
+function section_low_latest() {
+  $eps = episodes_latest(1); $latest = $eps ? $eps[0] : null; $h = '';
   if ($latest) {
     $g = guest_of($latest); $img = guest_headshot($g, 'large');
     $meta = t('low.latest', 'Latest episode') . (m($latest->ID, 'ih_number') ? ' · ' . t('low.episode', 'Episode') . ' ' . m($latest->ID, 'ih_number') : '') . (episode_len($latest) ? ' · ' . episode_len($latest) : '');
@@ -206,13 +205,20 @@ function view_podcast_home() {
       . '<div class="ih-btns">' . (episode_audio($latest) ? '<button type="button" class="ih-btn ih-play" data-ih-audio="' . a(episode_audio($latest)) . '">&#9654;&#xFE0E;&nbsp; ' . tx('low.play', 'Play episode') . '</button>' : '') . '<a class="ih-btn" href="' . a(get_permalink($latest)) . '#transcript">' . tx('low.transcript', 'Transcript') . '</a></div>'
       . '<p class="ih-listen">' . tx('low.listen_on', 'Listen on') . ' <a href="' . a(LOW_APPLE) . '">' . tx('low.apple', 'Apple Podcasts') . '</a> · <a href="' . a(LOW_SPOTIFY) . '">' . tx('low.spotify', 'Spotify') . '</a> · <a href="' . a(feed_url_low()) . '">' . tx('low.rss', 'RSS') . '</a></p></div></section>';
   }
-  $h .= '<section aria-label="' . ta('low.recent', 'Recent episodes') . '" class="ih-low-recent"><div class="ih-low-rh"><h2 class="ih-h2">' . tx('low.recent', 'Recent episodes') . '</h2><a class="ih-link" href="' . a(home_url('/episodes/')) . '">' . tx('low.all', 'All episodes') . ' &rarr;</a></div><ul class="ih-ep-list">';
+  return $h;
+}
+function section_low_recent() {
+  $eps = episodes_latest(7);
+  $h = '<section aria-label="' . ta('low.recent', 'Recent episodes') . '" class="ih-low-recent"><div class="ih-low-rh"><h2 class="ih-h2">' . tx('low.recent', 'Recent episodes') . '</h2><a class="ih-link" href="' . a(home_url('/episodes/')) . '">' . tx('low.all', 'All episodes') . ' &rarr;</a></div><ul class="ih-ep-list">';
   foreach (array_slice($eps, 1, 6) as $p) {
     $g = guest_of($p); $im = guest_headshot($g, 'thumbnail');
     $h .= '<li><a class="ih-ep-row" href="' . a(get_permalink($p)) . '">' . ($im ? '<img class="ih-headshot" src="' . a($im) . '" alt="" width="64" height="64">' : '<span class="ih-headshot ih-headshot-e" aria-hidden="true"></span>')
       . '<span><span class="ih-ep-g">' . e($g ? get_the_title($g) : get_the_title($p)) . '</span><span class="ih-ep-t">' . e(episode_title_part($p)) . '</span></span><span class="ih-pa">' . e(m($p->ID, 'ih_number') ? t('low.episode', 'Episode') . ' ' . m($p->ID, 'ih_number') : get_the_date('M j, Y', $p)) . '</span></a></li>';
   }
-  $h .= '</ul></section>';
+  return $h . '</ul></section>';
+}
+function view_podcast_home() {
+  $h = '<main class="ih-main ih-low">' . section_low_latest() . section_low_recent();
   $h .= '<section aria-label="' . ta('low.about_aria', 'About the show') . '" class="ih-low-about"><h2 class="ih-h2">' . tx('low.about', 'About the show') . '</h2><div>' . '<p class="ih-note" style="margin:0">' . tx('low.about_text', 'Terry Heath talks at length with novelists, poets, playwrights, songwriters and publishers. The guests are the experts. Terry is the guide.') . '</p>'
      . '<p class="ih-sub"><a class="ih-link" href="' . a(pub_url('terryheath', 'podcast/guests/')) . '">' . tx('low.suggest', 'Suggest a guest') . ' &rarr;</a></p></div></section>';
   return $h . signup() . '</main>';
@@ -220,10 +226,11 @@ function view_podcast_home() {
 
 /* ---------- terryheath.com home, as in the mockup ---------- */
 
-function view_author_home() {
+function section_author_banner() { return '<div class="ih-th-banner"><img src="' . a(img_url('th-Your-paragraph-text--12--4.png')) . '" alt="' . ta('author.banner_alt', 'Woodcut-style illustration: a white rabbit with a monocle and a teapot sits at the edge of rolling fields and pines under a striped sky') . '" width="2000" height="1125" style="aspect-ratio:1200/520;object-fit:cover;object-position:center 60%"></div>'; }
+function section_author_top() {
   $posts = get_posts(['post_type' => 'post', 'numberposts' => 13, 'post_status' => 'publish']);
   $posts = array_values(array_filter($posts, function ($p) { return $p->post_name !== 'hello-world'; }));
-  $h = '<div class="ih-th-banner"><img src="' . a(img_url('th-Your-paragraph-text--12--4.png')) . '" alt="' . ta('author.banner_alt', 'Woodcut-style illustration: a white rabbit with a monocle and a teapot sits at the edge of rolling fields and pines under a striped sky') . '" width="2000" height="1125" style="aspect-ratio:1200/520;object-fit:cover;object-position:center 60%"></div><main class="ih-main ih-th">';
+  $h = '';
   if ($posts) {
     $l = $posts[0]; $rest = array_slice($posts, 1, 5);
     $h .= '<section class="ih-th-top" aria-label="' . ta('author.latest_aria', 'Latest essay') . '"><div class="ih-th-latest"><p class="ih-label">' . tx('author.latest', 'Latest essay') . ' · ' . e(get_the_date('F j, Y', $l)) . '</p><h1 class="ih-th-h1"><a href="' . a(get_permalink($l)) . '" style="color:var(--ih-ink)">' . e(get_the_title($l)) . '</a></h1>';
@@ -236,6 +243,10 @@ function view_author_home() {
     }
     $h .= '</section>';
   }
+  return $h;
+}
+function section_author_low() {
+  $h = '';
   $bid = site_blog_id('lifeonwords');
   if ($bid) {
     switch_to_blog($bid);
@@ -251,14 +262,20 @@ function view_author_home() {
       $h .= '</div></section>';
     }
   }
+  return $h;
+}
+function section_author_books() {
+  $h = '';
   $books = get_posts(['post_type' => 'ih_book', 'numberposts' => 6, 'post_status' => 'publish']);
   if ($books) {
     $h .= '<section aria-label="' . ta('author.books', 'Books') . '" class="ih-th-books"><h2 class="ih-h2">' . tx('author.books', 'Books') . '</h2><div class="ih-grid">';
     foreach ($books as $b) { $h .= '<div class="ih-gi"><a href="' . a(get_permalink($b)) . '">' . cover($b, t('strip.cover', 'Cover of {title}', ['title' => get_the_title($b)])) . '</a><h3><a href="' . a(get_permalink($b)) . '">' . e(get_the_title($b)) . '</a></h3></div>'; }
     $h .= '</div></section>';
   }
-  return $h . signup() . '</main>';
+  return $h;
 }
+
+function view_author_home() { return section_author_banner() . '<main class="ih-main ih-th">' . section_author_top() . section_author_low() . section_author_books() . signup() . '</main>'; }
 
 /* ---------- guests ---------- */
 

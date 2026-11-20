@@ -5,7 +5,48 @@ add_action('init', function () {
   register_block_type('inkhorn/top', ['render_callback' => function () { return press_bar() . site_header(); }]);
   register_block_type('inkhorn/page', ['render_callback' => function () { return render_page(); }]);
   register_block_type('inkhorn/bottom', ['render_callback' => function () { return site_footer(); }]);
+  // Dynamic blocks: the parts of a page whose content comes from the site's data. Place, move or remove them in the Site Editor; their wording is under Settings > Site text.
+  $dyn = [
+    'welcome' => ['Welcome band', function () { return welcome_band(); }],
+    'account-link' => ['Sign in / Account link', function () { return account_link(); }],
+    'signup' => ['Email sign-up form', function () { return signup(); }],
+    'pubs' => ['Publications row (press home)', function () { return section_pubs(); }],
+    'shop-strip' => ['From the shop strip', function () { return shop_strip(); }],
+    'folio' => ['Issue: cover, title, buttons and contents', function () { $i = is_singular('ih_issue') ? get_queried_object() : current_issue(); return $i ? section_folio($i) : section_soon(); }],
+    'author-banner' => ['Banner image (terryheath.com)', function () { return section_author_banner(); }],
+    'author-top' => ['Latest essay and more writing', function () { return section_author_top(); }],
+    'author-low' => ['From Life on Words', function () { return section_author_low(); }],
+    'author-books' => ['Books (terryheath.com)', function () { return section_author_books(); }],
+    'low-latest' => ['Latest episode (Life on Words)', function () { return section_low_latest(); }],
+    'low-recent' => ['Recent episodes (Life on Words)', function () { return section_low_recent(); }],
+    'patreon' => ['Patreon supporters list', function () { return section_patreon(); }],
+  ];
+  foreach ($dyn as $name => $d) {
+    register_block_type('inkhorn/' . $name, ['title' => $d[0], 'category' => 'widgets', 'icon' => 'layout', 'supports' => ['autoRegister' => true, 'html' => false], 'render_callback' => $d[1]]);
+  }
+  register_block_type('inkhorn/site-part', ['title' => 'This site\'s header, footer or home', 'category' => 'theme', 'attributes' => ['area' => ['type' => 'string', 'default' => 'header']], 'supports' => ['autoRegister' => true, 'html' => false],
+    'render_callback' => function ($atts) { return render_site_part($atts['area'] ?? 'header'); }]);
 });
+
+/** Each site has its own header, footer and home layout: template parts named header-<site>, footer-<site>, home-<site> (Site Editor > Patterns > Template parts). */
+function render_site_part($area) {
+  $k = site_key();
+  if ($area === 'home' && site()['kind'] === 'publication') { $k = 'publication'; }
+  $slug = ($area === 'header' || $area === 'footer' || $area === 'home') ? $area . '-' . $k : $area;
+  return render_block(['blockName' => 'core/template-part', 'attrs' => ['slug' => $slug, 'theme' => 'inkhorn', 'tagName' => 'div'], 'innerBlocks' => [], 'innerHTML' => '', 'innerContent' => []]);
+}
+/** Links and image paths in template parts use tokens so they stay right when a domain changes: {hub} {review} {whiterabbit} {terryheath} {lifeonwords} {home} {img}; the page you are on is marked in the menus. */
+add_filter('render_block_core/template-part', function ($html) {
+  $tok = ['{hub}' => untrailingslashit(hub_url()), '{review}' => untrailingslashit(pub_url('review')), '{whiterabbit}' => untrailingslashit(pub_url('whiterabbit')), '{terryheath}' => untrailingslashit(pub_url('terryheath')),
+    '{lifeonwords}' => untrailingslashit(pub_url('lifeonwords')), '{home}' => untrailingslashit(home_url()), '{img}' => INKHORN_URL . '/assets/img'];
+  $html = str_replace(array_keys($tok), array_values($tok), $html);
+  $req = untrailingslashit((string) strtok($_SERVER['REQUEST_URI'] ?? '/', '?'));
+  return preg_replace_callback('#<a class="wp-block-navigation-item__content"\s+href="([^"]+)"#', function ($m) use ($req) {
+    $u = wp_parse_url(html_entity_decode($m[1])); $same = empty($u['host']) || strcasecmp($u['host'], (string) wp_parse_url(home_url(), PHP_URL_HOST)) === 0;
+    $cur = $same && untrailingslashit($u['path'] ?? '/') === $req && empty($u['fragment']) && !isset($u['query']);
+    return $m[0] . ($cur ? ' aria-current="page"' : '');
+  }, $html);
+}, 10, 1);
 
 /** Fonts, one stylesheet, the site's accent as CSS variables. */
 add_action('wp_enqueue_scripts', function () {

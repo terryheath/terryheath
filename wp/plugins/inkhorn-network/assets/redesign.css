@@ -175,3 +175,36 @@ body .ih-add-to-cart-btn:hover,body .ih-cart-checkout-btn:hover,body .ih-address
 /* fixes from review: LOW logo stays 150px, welcome band is quiet */
 .ih-mast-low{height:150px!important;width:auto;max-width:100%}
 .ih-welcome{background:transparent!important;border-bottom:1px solid var(--ih-accent)}
+
+/* ---- Block-built header, footer and home sections (editable in the Site Editor) ---- */
+.wp-block-template-part{margin:0}
+.ih-head nav,.ih-head .wp-block-navigation{margin-top:0}
+.ih-head .wp-block-image,.ih-mast-fig{margin:0}
+.ih-mast-fig img{display:block;height:auto;max-width:100%;margin:0 auto}
+.ih-mast-stack .ih-mast-fig img{height:auto}
+.ih-mast-home.ih-mast-fig img{height:112px;width:auto}
+.ih-mast-lowfig img{height:150px!important;width:auto;mix-blend-mode:multiply}
+.ih-head p.ih-mast-home{margin:0}.ih-mast-home a{color:inherit;text-decoration:none}
+.ih-head .ih-mast-rabbit{font:400 76px/1 'IM Fell English',Georgia,serif}
+.ih-head .ih-mast-rabbit a{color:var(--ih-ink)}
+.ih-head p.ih-mast-sc{margin:10px 0 0}
+.wp-block-site-title.ih-mast-name{margin:0;font:400 52px/1 'EB Garamond',Georgia,serif;color:var(--ih-ink)}.wp-block-site-title.ih-mast-name a{color:inherit;text-decoration:none}
+.ih-nav .wp-block-navigation{font:inherit}
+.ih-nav .wp-block-navigation__container{gap:0 28px;justify-content:center;flex-wrap:wrap;padding:0}
+.ih-nav .wp-block-navigation-item__content{color:var(--ih-mute);display:inline-flex;align-items:center;min-height:44px;min-width:44px;justify-content:center;text-decoration:none;padding:0}
+.ih-nav .wp-block-navigation-item__content:hover{color:var(--ih-ink);text-decoration:underline;text-underline-offset:6px}
+.ih-nav .wp-block-navigation-item__content[aria-current="page"]{color:var(--ih-ink);text-decoration:underline;text-decoration-color:var(--ih-accent);text-decoration-thickness:2px;text-underline-offset:6px}
+.ih-nav-right{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0 28px}
+.ih-nav-div.wp-block-group{width:1px;height:18px;background:var(--ih-rule)}
+@media(max-width:640px){.ih-nav-div.wp-block-group{display:none}.wp-block-site-title.ih-mast-name{font-size:40px}.ih-head .ih-mast-rabbit{font-size:56px}.ih-mast-home.ih-mast-fig img{height:84px}.ih-nav .wp-block-navigation__container{gap:0 14px}}
+.ih-foot-line{margin:0}.ih-foot-line a{color:var(--ih-mute);text-decoration:underline;text-underline-offset:3px}
+.ih-foot-nav .wp-block-navigation__container{gap:0 24px;flex-wrap:wrap;padding:0}
+.ih-foot-nav .wp-block-navigation-item__content{color:var(--ih-mute);display:inline-flex;align-items:center;min-height:44px;min-width:44px;justify-content:center;text-decoration:none;padding:0}
+.ih-foot-nav .wp-block-navigation-item__content:hover{color:var(--ih-ink);text-decoration:underline;text-underline-offset:6px}
+.ih-foot-nav .wp-block-navigation-item__content[aria-current="page"]{color:var(--ih-ink);text-decoration:underline;text-decoration-color:var(--ih-accent);text-decoration-thickness:2px;text-underline-offset:6px}
+.ih-foot-in .wp-block-navigation{font:inherit}
+.ih-btn-block .wp-block-button__link{display:inline-flex;align-items:center;min-height:46px;padding:0 24px;border:1.5px solid var(--ih-accent);color:var(--ih-accent);background:transparent;font:500 15px 'Karla',system-ui,sans-serif;letter-spacing:.02em;border-radius:0;text-decoration:none}
+.ih-btn-block .wp-block-button__link:hover{background:var(--ih-tint);color:var(--ih-accent)}
+.ih-support .wp-block-buttons{margin-top:20px}
+.ih-support p.ih-label,.ih-support p.ih-support-t{margin-bottom:0}
+.wp-block-post-title{font-weight:400}
