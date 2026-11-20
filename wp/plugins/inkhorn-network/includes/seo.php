@@ -70,3 +70,9 @@ add_filter('the_seo_framework_sitemap_exclude_ids', function ($ids) {
   foreach (get_posts(['post_type' => 'ih_contributor', 'numberposts' => -1, 'post_status' => 'publish', 'fields' => 'all']) as $c) { if (!in_array($c->post_name, $work, true)) { $ids[] = $c->ID; } }
   return $ids;
 });
+
+/** The sitemap of a site that lives in a folder (inkhorn.press/review/) is served at that folder's /sitemap.xml. */
+add_filter('the_seo_framework_sitemap_base_path', function ($path) {
+  $p = rtrim((string) wp_parse_url(home_url(), PHP_URL_PATH), '/');
+  return $p !== '' ? $p : $path;
+});
