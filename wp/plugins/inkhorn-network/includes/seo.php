@@ -90,7 +90,7 @@ add_action('init', function () {
     if ($p->post_type === 'ih_book' && site_key() !== 'hub') { $loc = get_permalink($p); } else { $loc = $p->post_type === 'ih_book' ? home_url('/shop/' . $p->post_name . '/') : get_permalink($p); }
     $urls[] = ['loc' => $loc, 'mod' => get_post_modified_time('c', true, $p)];
   }
-  foreach (['issues/' => 'ih_issue', 'episodes/' => 'ih_episode', 'guests/' => 'ih_guest'] as $path => $pt) { if (post_type_exists($pt) && wp_count_posts($pt)->publish) { $urls[] = ['loc' => home_url('/' . $path), 'mod' => '']; } }
+  foreach ([(site_key() === 'review' ? 'review/issues/' : 'issues/') => 'ih_issue', 'episodes/' => 'ih_episode', 'guests/' => 'ih_guest'] as $path => $pt) { if (post_type_exists($pt) && wp_count_posts($pt)->publish) { $urls[] = ['loc' => home_url('/' . $path), 'mod' => '']; } }
   status_header(200); header('Content-Type: application/xml; charset=UTF-8'); header('X-Robots-Tag: noindex');
   echo '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
   foreach ($urls as $u) { echo '<url><loc>' . esc_url($u['loc']) . '</loc>' . ($u['mod'] ? '<lastmod>' . esc_html($u['mod']) . '</lastmod>' : '') . '</url>'; }

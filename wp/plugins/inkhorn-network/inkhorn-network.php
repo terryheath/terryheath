@@ -14,6 +14,7 @@ define('INKHORN_URL', plugins_url('', __FILE__));
 require_once __DIR__ . '/includes/sites.php';
 require_once __DIR__ . '/includes/text.php';
 require_once __DIR__ . '/includes/content-types.php';
+require_once __DIR__ . '/includes/review-urls.php';
 require_once __DIR__ . '/includes/views.php';
 require_once __DIR__ . '/includes/blocks.php';
 require_once __DIR__ . '/includes/subscribe.php';

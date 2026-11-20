@@ -2,7 +2,7 @@
 namespace Inkhorn;
 
 add_action('init', function () {
-  $kind = site()['kind'];
+  $kind = site()['kind']; $review_urls = site_key() === 'review';
   $common = ['public' => true, 'show_in_rest' => true, 'supports' => ['title', 'editor', 'thumbnail', 'excerpt', 'custom-fields', 'page-attributes']];
 
   // every type is registered on every site (the importer writes across the network); only the right sites show them in the admin menu
@@ -10,13 +10,13 @@ add_action('init', function () {
   {
     register_post_type('ih_issue', $common + [
       'labels' => ['name' => 'Issues', 'singular_name' => 'Issue'], 'show_ui' => $ui(['hub', 'publication']),
-      'rewrite' => ['slug' => 'issues', 'with_front' => false], 'has_archive' => 'issues',
+      'rewrite' => $review_urls ? false : ['slug' => 'issues', 'with_front' => false], 'has_archive' => $review_urls ? false : 'issues', // Inkhorn Review keeps its Ghost addresses (see review-urls.php)
     ]);
     register_post_type('ih_piece', $common + [
       'labels' => ['name' => 'Pieces', 'singular_name' => 'Piece'], 'show_ui' => $ui(['hub', 'publication']),
-      'rewrite' => ['slug' => 'work', 'with_front' => false],
+      'rewrite' => $review_urls ? false : ['slug' => 'work', 'with_front' => false],
     ]);
-    register_taxonomy('ih_genre', 'ih_piece', ['label' => 'Genre', 'public' => true, 'hierarchical' => false, 'show_in_rest' => true, 'rewrite' => ['slug' => 'genre', 'with_front' => false]]);
+    register_taxonomy('ih_genre', 'ih_piece', ['label' => 'Genre', 'public' => true, 'hierarchical' => false, 'show_in_rest' => true, 'rewrite' => $review_urls ? false : ['slug' => 'genre', 'with_front' => false]]);
     // poems keep their exact line and stanza breaks: views print piece content as stored (no wpautop)
   }
   {

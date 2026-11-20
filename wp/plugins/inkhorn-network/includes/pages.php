@@ -17,7 +17,7 @@ function site_name_of($key) { $s = sites(); return $s[$key]['name'] ?? $key; }
 function view_title($t = '') {
   $site = site()['name']; $v = get_query_var('ih_view');
   $names = ['shop' => t('title.shop', 'Shop'), 'cart' => t('title.cart', 'Cart'), 'order-complete' => t('title.order_complete', 'Order complete'), 'subscriptions' => t('title.subscriptions', 'Subscriptions'), 'newsletter' => t('title.newsletter', 'Newsletter'), 'nl-confirmed' => t('title.newsletter', 'Newsletter'),
-    'nl-expired' => t('title.newsletter', 'Newsletter'), 'signin' => t('title.signin', 'Sign in'), 'account' => session_email() ? t('title.account', 'Account') : t('title.signin', 'Sign in'), 'help' => t('title.help', 'Help'), 'start-here' => t('title.start', 'Start here')];
+    'nl-expired' => t('title.newsletter', 'Newsletter'), 'founder-letter' => t('title.letters', 'Founder’s letters'), 'signin' => t('title.signin', 'Sign in'), 'account' => session_email() ? t('title.account', 'Account') : t('title.signin', 'Sign in'), 'help' => t('title.help', 'Help'), 'start-here' => t('title.start', 'Start here')];
   $sep = t('title.sep', ' – ');
   if (isset($names[$v])) { return $names[$v] . $sep . $site; }
   if ($v === 'book') { $b = book_by_slug(get_query_var('ih_book_slug')); return ($b ? get_the_title($b) : t('title.shop', 'Shop')) . $sep . $site; }

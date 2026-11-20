@@ -75,7 +75,7 @@ function site_header() {
       break;
     case 'review':
       $m = '<a class="ih-mast-home" href="' . a($home) . '" aria-label="Inkhorn Review, home"><img class="ih-mast-img" src="' . a(img_url('inkhorn-review-header.png')) . '" alt="Inkhorn Review" width="251" height="112"></a>' . pub_line();
-      $left = [['Current issue', $home], ['Archive', home_url('/issues/')], ['About', home_url('/about/')], ['Submit', !empty($s['submit']) ? $s['submit'] : hub_url('submit/')]];
+      $left = [['Current issue', $home], ['Archive', home_url('/review/issues/')], ['About', home_url('/about/')], ['Submit', !empty($s['submit']) ? $s['submit'] : hub_url('submit/')]];
       $right = [['Shop', hub_url('shop/')], ['Newsletter', hub_url('newsletter/')]];
       break;
     case 'whiterabbit':
@@ -445,6 +445,7 @@ function render_page() {
   $k = site()['kind'];
   $v = get_query_var('ih_view');
   if ($v === 'help') { return view_help(); }
+  if ($v === 'founder-letter') { return view_founder_letters(); }
   if ($v === 'start-here') { return view_start_here(); }
   if ($v === 'nl-confirmed') { return view_nl_confirmed(); }
   if ($v === 'nl-expired') { return view_nl_expired(); }
