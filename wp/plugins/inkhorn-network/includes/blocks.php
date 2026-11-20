@@ -31,6 +31,7 @@ add_action('init', function () {
 /** Each site has its own header, footer and home layout: template parts named header-<site>, footer-<site>, home-<site> (Site Editor > Patterns > Template parts). */
 function render_site_part($area) {
   $k = site_key();
+  if ($area === 'home' && (get_query_var('ih_view') || is_404() || is_search())) { return render_page(); } // /help/, /signin/, /newsletter/ and the like are views, not the home page
   if ($area === 'home' && site()['kind'] === 'publication') { $k = 'publication'; }
   $slug = ($area === 'header' || $area === 'footer' || $area === 'home') ? $area . '-' . $k : $area;
   return render_block(['blockName' => 'core/template-part', 'attrs' => ['slug' => $slug, 'theme' => 'inkhorn', 'tagName' => 'div'], 'innerBlocks' => [], 'innerHTML' => '', 'innerContent' => []]);
