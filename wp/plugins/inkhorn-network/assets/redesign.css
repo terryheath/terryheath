@@ -222,3 +222,5 @@ body .ih-add-to-cart-btn:hover,body .ih-cart-checkout-btn:hover,body .ih-address
 .ih-mast-lowfig img{height:260px!important;width:auto;mix-blend-mode:multiply}
 .ih-mast-stack .ih-mast-bunny img{height:140px;width:auto}
 @media(max-width:640px){.ih-mast-lowfig img{height:170px!important}.ih-mast-stack .ih-mast-bunny img{height:110px}}
+
+.ih-low-latest-noimg{grid-template-columns:1fr!important}

@@ -103,7 +103,7 @@ function import_item(\WP_REST_Request $r) {
     kses_init_filters();
     if (is_wp_error($id)) { return $id; }
     // images inside the content: copy Ghost-hosted ones into this site's media library and point the content at the copies
-    if (!empty($arr['post_content']) && preg_match_all('#<img[^>]+src="([^"]+/content/images/[^"]+)"#i', $arr['post_content'], $mm)) {
+    if (!empty($arr['post_content']) && preg_match_all('#<img[^>]+src="([^"]+(?:/content/images/|covers\.openlibrary\.org/|books\.google\.com/)[^"]*)"#i', $arr['post_content'], $mm)) {
       $new = $arr['post_content'];
       foreach (array_unique($mm[1]) as $src) {
         $url = $src;

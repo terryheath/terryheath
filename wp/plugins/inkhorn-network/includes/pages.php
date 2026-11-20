@@ -211,7 +211,7 @@ function section_low_latest() {
   if ($latest) {
     $g = guest_of($latest); $img = guest_headshot($g, 'large');
     $meta = t('low.latest', 'Latest episode') . (m($latest->ID, 'ih_number') ? ' · ' . t('low.episode', 'Episode') . ' ' . m($latest->ID, 'ih_number') : '') . (episode_len($latest) ? ' · ' . episode_len($latest) : '');
-    $h .= '<section class="ih-low-latest" aria-label="' . ta('low.latest_aria', 'Latest episode') . '">' . ($img ? '<img class="ih-headshot ih-headshot-l" src="' . a($img) . '" alt="' . ta('low.headshot', 'Headshot of {name}', ['name' => $g ? get_the_title($g) : '']) . '" width="360" height="360">' : '<div class="ih-headshot ih-headshot-l ih-headshot-e" role="img" aria-label="' . a($g ? get_the_title($g) : '') . '"></div>')
+    $h .= '<section class="ih-low-latest' . ($img ? '' : ' ih-low-latest-noimg') . '" aria-label="' . ta('low.latest_aria', 'Latest episode') . '">' . ($img ? '<img class="ih-headshot ih-headshot-l" src="' . a($img) . '" alt="' . ta('low.headshot', 'Headshot of {name}', ['name' => $g ? get_the_title($g) : '']) . '" width="360" height="360">' : '') // no headshot yet: no empty circle
       . '<div><p class="ih-label">' . e($meta) . '</p><h1 class="ih-h1-xl ih-low-h1">' . e($g ? get_the_title($g) : get_the_title($latest)) . '</h1><p class="ih-folio-line">' . e(episode_title_part($latest)) . '</p>'
       . '<div class="ih-btns">' . (episode_audio($latest) ? '<button type="button" class="ih-btn ih-play" data-ih-audio="' . a(episode_audio($latest)) . '"><span aria-hidden="true">&#9654;&#xFE0E;</span>&nbsp; ' . tx('low.play', 'Play episode') . '</button>' : '') . '<a class="ih-btn" href="' . a(get_permalink($latest)) . '#transcript">' . tx('low.transcript', 'Transcript') . '</a></div>'
       . '<p class="ih-listen">' . tx('low.listen_on', 'Listen on') . '</p>' . listen_pills() . '</div></section>';
@@ -223,7 +223,7 @@ function section_low_recent() {
   $h = '<section aria-label="' . ta('low.recent', 'Recent episodes') . '" class="ih-low-recent"><div class="ih-low-rh"><h2 class="ih-h2">' . tx('low.recent', 'Recent episodes') . '</h2><a class="ih-link" href="' . a(home_url('/episodes/')) . '">' . tx('low.all', 'All episodes') . ' &rarr;</a></div><ul class="ih-ep-list">';
   foreach (array_slice($eps, 1, 6) as $p) {
     $g = guest_of($p); $im = guest_headshot($g, 'thumbnail');
-    $h .= '<li><a class="ih-ep-row" href="' . a(get_permalink($p)) . '">' . ($im ? '<img class="ih-headshot" src="' . a($im) . '" alt="" width="64" height="64">' : '<span class="ih-headshot ih-headshot-e" aria-hidden="true"></span>')
+    $h .= '<li><a class="ih-ep-row" href="' . a(get_permalink($p)) . '">' . ($im ? '<img class="ih-headshot" src="' . a($im) . '" alt="" width="64" height="64">' : '')
       . '<span><span class="ih-ep-g">' . e($g ? get_the_title($g) : get_the_title($p)) . '</span><span class="ih-ep-t">' . e(episode_title_part($p)) . '</span></span><span class="ih-pa">' . e(m($p->ID, 'ih_number') ? t('low.episode', 'Episode') . ' ' . m($p->ID, 'ih_number') : get_the_date('M j, Y', $p)) . '</span></a></li>';
   }
   return $h . '</ul></section>';
