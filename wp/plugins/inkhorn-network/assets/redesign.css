@@ -36,7 +36,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .ih-h2,.ih-contents h2{margin:0;font-size:44px;font-weight:400;line-height:1.1;text-align:left}
 .ih-gi h3,.ih-pub h3{font-size:32px;font-weight:400;line-height:1.15}
 .ih-note{font-size:24px;line-height:1.45;color:var(--ih-mute)}
-body.ih-rabbit .ih-h1,body.ih-rabbit .ih-h1-l,body.ih-rabbit .ih-h1-xl,body.ih-rabbit .ih-h2,body.ih-rabbit .ih-toc-t,body.ih-rabbit .ih-pub h3.ih-fell{font-family:'IM Fell English',Georgia,serif}
+body.ih-whiterabbit .ih-h1,body.ih-whiterabbit .ih-h1-l,body.ih-whiterabbit .ih-h1-xl,body.ih-whiterabbit .ih-h2,body.ih-whiterabbit .ih-toc-t,body.ih-whiterabbit .ih-pub h3.ih-fell{font-family:'IM Fell English',Georgia,serif}
 .ih-btns{margin-top:30px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
 .ih-btn{display:inline-flex;align-items:center;min-height:46px;padding:0 24px;border:1.5px solid var(--ih-accent);color:var(--ih-accent);background:transparent;font:500 15px 'Karla',system-ui,sans-serif;letter-spacing:.02em;border-radius:0;text-decoration:none}
 .ih-btn:hover{background:var(--ih-tint);color:var(--ih-accent);text-decoration:none}
