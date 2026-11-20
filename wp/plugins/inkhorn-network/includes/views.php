@@ -27,14 +27,35 @@ function btn($href, $label, $extra = '') {
 
 /* ---------- chrome ---------- */
 
+/** A nav link; the page you are on is marked aria-current and underlined by the stylesheet. */
+function nav_a($href, $label, $class = '') {
+  $u = wp_parse_url($href); $req = (string) strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+  $same_host = empty($u['host']) || strcasecmp($u['host'], (string) ($_SERVER['HTTP_HOST'] ?? '')) === 0 || strcasecmp($u['host'], (string) wp_parse_url(home_url(), PHP_URL_HOST)) === 0;
+  $cur = $same_host && untrailingslashit($u['path'] ?? '/') === untrailingslashit($req) && empty($u['fragment']);
+  return '<a' . ($class ? ' class="' . a($class) . '"' : '') . ' href="' . a($href) . '"' . ($cur ? ' aria-current="page"' : '') . '>' . e($label) . '</a>';
+}
+/** "Sign in", or "Account" when this browser has a session. Signing in from another domain of the network comes back here (see signin/adopt). */
+function account_link() {
+  if (session_email()) { return nav_a(hub_url('account/'), 'Account'); }
+  $u = hub_url('signin/'); if (site_key() !== 'hub') { $u = add_query_arg('return', rawurlencode(home_url('/')), $u); }
+  return nav_a($u, 'Sign in');
+}
+function welcome_band() {
+  if (!site()['bar'] || is_page('start-here') || get_query_var('ih_view') === 'start-here') { return ''; }
+  return '<div class="ih-welcome" hidden data-ih-welcome><p><a href="' . a(hub_url('start-here/')) . '">New to poetry? Start here</a></p><button type="button" class="ih-welcome-x" aria-label="Dismiss this message">&times;</button></div>';
+}
 function press_bar() {
-  if (!site()['bar']) { return ''; }
-  $h = '<nav class="ih-bar" aria-label="Inkhorn Press"><div class="ih-bar-in"><div class="ih-bar-l">'
-    . '<a class="ih-bar-name" href="' . a(hub_url()) . '">INKHORN PRESS</a>'
-    . '<a href="' . a(pub_url('review')) . '">Review</a><a href="' . a(pub_url('whiterabbit')) . '">White Rabbit</a><a href="' . a(pub_url('muse')) . '">Muse</a></div>'
-    . '<div class="ih-bar-r"><a href="' . a(hub_link('shop/')) . '">Shop</a><a href="' . a(hub_link('contributors/')) . '">Contributors</a>'
-    . '<a href="' . a(hub_link('newsletter/')) . '">Newsletter</a><a href="' . a(hub_link('donate/')) . '">Donate</a></div></div></nav>';
-  return $h;
+  if (site()['bar']) {
+    return welcome_band() . '<nav class="ih-bar" aria-label="Inkhorn Press"><div class="ih-bar-in"><div class="ih-bar-l">'
+      . '<a class="ih-bar-name" href="' . a(hub_url()) . '">INKHORN PRESS</a>'
+      . nav_a(pub_url('review'), 'Review') . nav_a(pub_url('whiterabbit'), 'White Rabbit') . nav_a(pub_url('muse'), 'Muse') . '</div>'
+      . '<div class="ih-bar-r">' . nav_a(hub_link('shop/'), 'Shop') . nav_a(hub_link('contributors/'), 'Contributors')
+      . nav_a(hub_link('newsletter/'), 'Newsletter') . nav_a(hub_link('donate/'), 'Donate') . account_link() . '</div></div></nav>';
+  }
+  // terryheath.com and lifeonwords.com share one top bar
+  return '<nav class="ih-bar ih-bar-th" aria-label="Terry Heath"><div class="ih-bar-in"><div class="ih-bar-l">'
+    . '<a class="ih-bar-name" href="' . a(pub_url('terryheath')) . '">Terry Heath</a>' . nav_a(pub_url('terryheath'), 'Writing') . nav_a(pub_url('lifeonwords'), 'Life on Words') . nav_a(pub_url('terryheath', '/books/'), 'Books') . '</div>'
+    . '<div class="ih-bar-r">' . nav_a(home_url('/#newsletter'), 'Newsletter') . account_link() . '</div></div></nav>';
 }
 
 function back_link() {
@@ -57,10 +78,10 @@ function site_header() {
       $nav = [['About', home_url('/about/')], ['Publications', home_url('/#publications')], ['Shop', home_url('/shop/')], ['Contributors', home_url('/contributors/')], ['Donate', home_url('/donate/')]];
       break;
     case 'author':
-      $nav = [['Writing', home_url('/')], ['Books', home_url('/books/')], ['Podcast', 'https://lifeonwords.com/'], ['About', home_url('/about/')]];
+      $nav = [['About', home_url('/about/')]];
       break;
     case 'podcast':
-      $nav = [['Episodes', home_url('/episodes/')], ['Guests', home_url('/guests/')], ['About', home_url('/about/')], ['Newsletter', home_url('/#newsletter')]];
+      $nav = [['Episodes', home_url('/episodes/')], ['Guests', home_url('/guests/')], ['About', home_url('/about/')]];
       break;
   }
   // the site name is the page's h1 on a home page that has no h1 of its own (hub, terryheath.com, lifeonwords.com)
@@ -69,17 +90,17 @@ function site_header() {
   $tag = ($is_home_url && !$own_h1 && !is_search() && !is_404()) ? 'h1' : 'p';
   $nav[] = ['Search', home_url('/?s=')];
   $h = '<header class="ih-head"><' . $tag . ' class="ih-title" style="margin:0"><a href="' . a(home_url('/')) . '" style="color:inherit">' . e($s['name']) . '</a></' . $tag . '><nav aria-label="' . a($s['name']) . '">';
-  foreach ($nav as $n) { $h .= '<a href="' . a($n[1]) . '">' . e($n[0]) . '</a>'; }
+  foreach ($nav as $n) { $h .= nav_a($n[1], $n[0]); }
   return $h . '</nav></header>';
 }
 
 function site_footer() {
   $s = site();
   if ($s['bar']) { $line = 'Inkhorn Press is a 501(c)(3) nonprofit press.'; }
-  elseif ($s['kind'] === 'podcast') { $line = 'Life on Words, hosted by <a href="https://terryheath.com/">Terry Heath</a>, is produced by Follow the Rabbit LLC.'; }
-  else { $line = 'terryheath.com is published by Follow the Rabbit LLC.'; }
-  return '<footer class="ih-foot"><div class="ih-foot-in"><span>' . $line . '</span><div><a href="' . a(hub_link('privacy/')) . '">Privacy</a>'
-    . '<a href="' . a(hub_link('terms/')) . '">Terms</a><a href="' . a(hub_link('newsletter/')) . '">Newsletter preferences</a></div></div></footer>';
+  elseif ($s['kind'] === 'podcast') { $line = 'Life on Words, hosted by <a href="' . a(pub_url('terryheath')) . '">Terry Heath</a>, is produced by Follow the Rabbit LLC. <a href="' . a(pub_url('terryheath')) . '">terryheath.com</a>'; }
+  else { $line = 'terryheath.com is published by Follow the Rabbit LLC. <a href="' . a(pub_url('lifeonwords')) . '">Life on Words</a>'; }
+  return '<footer class="ih-foot"><div class="ih-foot-in"><span>' . $line . '</span><nav aria-label="Footer"><div>' . nav_a(home_url('/help/'), 'Help') . nav_a(hub_link('privacy/'), 'Privacy')
+    . nav_a(hub_link('terms/'), 'Terms') . nav_a(hub_link('newsletter/'), 'Newsletter preferences') . '</div></nav></div></footer>';
 }
 
 /* ---------- signup ---------- */
@@ -89,7 +110,9 @@ function signup($title = '', $all_lists = true) {
   $family = ($s['kind'] === 'author') ? ['writing', 'digest', 'new-books'] : (($s['kind'] === 'podcast') ? ['life-on-words'] : ['inkhorn-review', 'white-rabbit', 'muse', 'events']);
   $title = 'Get News & Updates by Email'; // one heading on every site
   $h = '<section class="ih-signup" id="newsletter" aria-label="Newsletter"><p class="ih-lead">' . e($title) . '</p>'
-     . '<p class="ih-sub">Choose the lists you want; change them any time.</p>'
+     . ((($_GET['signed-up'] ?? '') === '1') ? '<p class="ih-note" role="status">Almost done. We emailed you a link; open it to confirm your sign-up.</p>' : '')
+     . ((($_GET['signed-up'] ?? '') === '0') ? '<p class="ih-note" role="alert">That did not work. Check the address and the lists you chose, then try again.</p>' : '')
+     . '<p class="ih-sub">Choose the lists you want; change them any time. We email a link to confirm.</p>'
      . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-signup')) . '" data-ih-signup>';
   if (count($family) > 1) {
     $h .= '<fieldset><legend>Lists</legend>';
@@ -158,9 +181,18 @@ function view_issue($issue) {
   $note = m($issue->ID, 'ih_note');
   if ($note) { $h .= '<p class="ih-note">' . e($note) . '</p>'; }
   $h .= '<p class="ih-meta">' . count($pieces) . ' pieces' . ($kinds ? ' · ' . e($kinds) : '') . '</p><div class="ih-btns">';
-  if ($shop) { $h .= btn($shop, 'Buy the print issue'); }
+  if ($shop) { $h .= btn($shop, 'Buy the print issue') . '<a class="ih-btn ih-btn-quiet" href="' . a(hub_link('shop/subscriptions/')) . '">Subscriptions</a>'; }
   if ($first) { $h .= btn($first, 'Start reading'); }
-  $h .= '</div></div></section><section class="ih-contents" aria-label="In this issue"><h2>In this issue</h2><div class="ih-groups">';
+  $in_order = (($_GET['view'] ?? '') === 'order');
+  $base = get_permalink($issue);
+  $h .= '</div></div></section><section class="ih-contents" aria-label="In this issue"><h2>In this issue</h2>'
+     . '<nav class="ih-tabs" aria-label="How to browse this issue"><a href="' . a($base) . '"' . (!$in_order ? ' aria-current="page"' : '') . '>By genre</a><a href="' . a(add_query_arg('view', 'order', $base)) . '"' . ($in_order ? ' aria-current="page"' : '') . '>Read in order</a></nav>';
+  if ($in_order) {
+    $h .= '<ol class="ih-order">';
+    foreach ($pieces as $p) { $pg = piece_genre($p); $h .= '<li><a href="' . a(get_permalink($p)) . '"><span class="ih-pt">' . e(get_the_title($p)) . '</span><span class="ih-pa">' . e(m($p->ID, 'ih_author_name') . ($pg ? ' · ' . $pg->name : '')) . '</span></a></li>'; }
+    return $h . '</ol></section>' . signup() . '</main>';
+  }
+  $h .= '<div class="ih-groups">';
   foreach (array_merge(genre_order(), ['other']) as $g) {
     if (empty($groups[$g])) { continue; }
     $term = get_term_by('slug', $g, 'ih_genre');
@@ -193,11 +225,12 @@ function view_piece($p) {
     $prev = ($i !== null && $i > 0) ? $list[$i - 1] : null;
     $next = ($i !== null && $i < count($list) - 1) ? $list[$i + 1] : null;
     $shop = shop_link(m($issue->ID, 'ih_shop_url'));
-    $h .= '<nav class="ih-pn" aria-label="More from this issue"><div>';
+    $h .= '<nav class="ih-pn" aria-label="Previous and next in this issue"><div>';
     if ($prev) { $h .= '<a href="' . a(get_permalink($prev)) . '"><span>PREVIOUS</span><b>' . e(get_the_title($prev)) . '</b><i>' . e(m($prev->ID, 'ih_author_name')) . '</i></a>'; }
-    $h .= '</div><div class="ih-pn-c">' . ($shop ? btn($shop, 'Buy the print issue') : '') . '</div><div class="ih-pn-r">';
+    $h .= '</div><div class="ih-pn-r">';
     if ($next) { $h .= '<a href="' . a(get_permalink($next)) . '"><span>NEXT</span><b>' . e(get_the_title($next)) . '</b><i>' . e(m($next->ID, 'ih_author_name')) . '</i></a>'; }
     $h .= '</div></nav>';
+    if ($shop) { $h .= '<div class="ih-buyrow">' . btn($shop, 'Buy the print issue') . '<a class="ih-btn ih-btn-quiet" href="' . a(hub_link('shop/subscriptions/')) . '">Subscriptions</a></div>'; }
   }
   return $h . signup() . '</main>';
 }
@@ -421,6 +454,10 @@ function view_search() {
 function render_page() {
   $k = site()['kind'];
   $v = get_query_var('ih_view');
+  if ($v === 'help') { return view_help(); }
+  if ($v === 'start-here') { return view_start_here(); }
+  if ($v === 'nl-confirmed') { return view_nl_confirmed(); }
+  if ($v === 'nl-expired') { return view_nl_expired(); }
   if ($v === 'signin') { return view_signin(); }
   if ($v === 'account') { return view_account(); }
   if ($v === 'newsletter') { return view_newsletter(); }

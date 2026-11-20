@@ -18,13 +18,13 @@ add_action('rest_api_init', function () {
       };
       if (!is_email($email)) { return $fail('Please enter a valid email address.'); }
       if (!$lists) { return $fail('Choose at least one list.'); }
-      $url = getenv('LISTMONK_URL');
-      $uuids = lists_uuids($lists);
-      if (!$url || !$uuids) { return $fail('Signup is not switched on yet.', 503); }
-      // listmonk's public subscription endpoint creates the subscriber and sends the opt-in email
-      $pub = wp_remote_post(rtrim($url, '/') . '/subscription/form', ['timeout' => 15, 'body' => ['email' => $email, 'name' => '', 'l' => $uuids, 'nonce' => '']]);
-      if (is_wp_error($pub)) { return $fail('Something went wrong. Please try again.', 502); }
-      if ($wants_json) { return new \WP_REST_Response(['ok' => true, 'message' => 'Thank you. Check your email to confirm.']); }
+      if (!getenv('LISTMONK_URL')) { return $fail('Signup is not switched on yet.', 503); }
+      $ip = md5((string) ($_SERVER['REMOTE_ADDR'] ?? '')); $kk = 'ih_su_' . $ip; $n = (int) get_transient($kk);
+      if ($n >= 8) { return $fail('Too many sign-ups from this connection. Please try again in an hour.', 429); }
+      set_transient($kk, $n + 1, HOUR_IN_SECONDS);
+      // double opt-in: nothing is subscribed until the person opens the link we email
+      if (!nl_start($email, $lists, sanitize_key((string) $req->get_param('from')))) { return $fail('We could not send the confirmation email. Please try again.', 502); }
+      if ($wants_json) { return new \WP_REST_Response(['ok' => true, 'message' => 'Almost done. We emailed you a link; open it to confirm your sign-up.']); }
       wp_safe_redirect(add_query_arg('signed-up', '1', wp_get_referer() ?: home_url('/'))); exit;
     },
   ]);

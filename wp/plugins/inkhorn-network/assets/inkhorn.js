@@ -11,3 +11,10 @@
       .then(function(){btn.disabled=false;});
   });
 })();
+(function(){
+  // welcome band: shown on a first visit, gone for good once dismissed (stored in this browser only)
+  var b=document.querySelector('[data-ih-welcome]'); if(!b) return;
+  var gone=false; try{gone=localStorage.getItem('ih_welcome')==='1';}catch(e){}
+  if(!gone) b.hidden=false;
+  var x=b.querySelector('.ih-welcome-x'); if(x) x.addEventListener('click',function(){b.hidden=true; try{localStorage.setItem('ih_welcome','1');}catch(e){}});
+})();
