@@ -95,7 +95,13 @@ function import_item(\WP_REST_Request $r) {
     ];
     if (!empty($d['date'])) { $arr['post_date_gmt'] = gmdate('Y-m-d H:i:s', strtotime($d['date'])); $arr['post_date'] = get_date_from_gmt($arr['post_date_gmt']); }
     if ($found && !empty($d['meta_only'])) { foreach (($d['meta'] ?? []) as $k => $v) { update_post_meta($found[0]->ID, $k, $v); } return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID)]; }
-    if ($found && !empty($d['only_content'])) { kses_remove_filters(); wp_update_post(['ID' => $found[0]->ID, 'post_content' => $d['content'] ?? '']); kses_init_filters(); return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID)]; }
+    if ($found && !empty($d['only_content'])) {
+      $body = (string) ($d['content'] ?? '');
+      if (preg_match_all('#<img[^>]+src="([^"]+(?:/content/images/|covers\.openlibrary\.org/|books\.google\.com/)[^"]*)"#i', $body, $mm)) { // copy remote images into this site's media library
+        foreach (array_unique($mm[1]) as $src) { $att = media_sideload_image($src, $found[0]->ID, null, 'src'); if (!is_wp_error($att)) { $body = str_replace($src, $att, $body); } }
+      }
+      kses_remove_filters(); wp_update_post(['ID' => $found[0]->ID, 'post_content' => $body]); kses_init_filters(); return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID)];
+    }
     if ($found && !empty($d['skip_if_exists'])) { return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID), 'existed' => true]; }
     if ($found) { $arr['ID'] = $found[0]->ID; }
     kses_remove_filters();
