@@ -16,7 +16,7 @@ function book_by_slug($slug) {
 function view_shop_page($v) {
   if ($v === 'shop') {
     $h = '<main class="ih-main"><div class="ih-print-page"><h1 class="ih-h1">Shop</h1><p class="ih-note" style="margin:0 auto 40px;text-align:center">Print and ebook editions of <em>Inkhorn Review</em>. Print copies ship to U.S. addresses only ($4 for the first book, $1 for each additional); ebooks are emailed and ship anywhere. Sold by Inkhorn Press, a nonprofit; checkout is by Stripe. Want every issue? See <a href="' . a(home_url('/shop/subscriptions/')) . '">subscriptions</a>.</p><div class="ih-print-grid">';
-    foreach (get_posts(['post_type' => 'ih_book', 'numberposts' => 50, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']) as $b) {
+    foreach (shop_books(50) as $b) {
       $img = get_the_post_thumbnail_url($b, 'medium');
       $h .= '<a class="ih-print-card" href="' . a(home_url('/shop/' . $b->post_name . '/')) . '" data-sku="' . a(m($b->ID, 'ih_sku')) . '">' . ($img ? '<div class="ih-print-card-cover"><img src="' . a($img) . '" alt="' . a(get_the_title($b)) . ' cover" loading="lazy" width="480" height="690"></div>' : '')
          . '<div class="ih-print-card-title">' . e(get_the_title($b)) . '</div><div class="ih-print-card-prices"></div></a>';

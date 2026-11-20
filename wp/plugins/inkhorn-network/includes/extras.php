@@ -46,7 +46,7 @@ function view_help() {
      . '<p><label for="ih-ce">Your email</label><input id="ih-ce" type="email" name="email" required autocomplete="email"></p>'
      . '<p><label for="ih-ct">What is this about?</label><select id="ih-ct" name="topic"><option>An order</option><option>Shipping</option><option>A subscription</option><option>My contributor agreement or payment</option><option>Something else</option></select></p>'
      . '<p><label for="ih-cm">Message</label><textarea id="ih-cm" name="message" rows="6" required></textarea></p>'
-     . '<p class="ih-sr" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></p>'
+     . '<div hidden aria-hidden="true" style="display:none"><input name="website" tabindex="-1" autocomplete="off" value=""></div>'
      . '<p><button class="ih-btn" type="submit">Send</button></p><p class="ih-msg" role="status" aria-live="polite"></p></form>'
      . '<p class="ih-sub" style="text-align:left">Or write to <a href="mailto:' . a(support_email()) . '">' . e(support_email()) . '</a>.</p></section></main>';
   return $h;
@@ -77,7 +77,6 @@ function view_start_here() {
      . '<section aria-label="The forms we read"><h2>The forms the Review focuses on</h2>'
      . '<h3>Poetry</h3>' . ph('What a reader can expect from a poem in the Review, in a few lines.')
      . '<h3>Short prose</h3>' . ph('What short prose means here, and how long a piece runs.')
-     . '<h3>Micro</h3>' . ph('What a micro piece is and how to read one.')
      . '<h3>Art</h3>' . ph('How art appears in the issue.') . '</section>'
      . '<section aria-label="A few poems to begin with"><h2>A few poems to begin with</h2><ol class="ih-order">';
   for ($i = 1; $i <= 3; $i++) { $h .= '<li>' . ph('Poem ' . $i . ': title, poet, and a link to the poem. One sentence on why to start here.') . '</li>'; }
@@ -156,27 +155,6 @@ function view_nl_expired() {
 /* ---------- terryheath.com and lifeonwords.com: host line, related essays and episodes ---------- */
 
 function site_blog_id($key) { $s = get_sites(['path' => $key === 'hub' ? '/' : '/' . $key . '/', 'number' => 1]); return $s ? (int) $s[0]->blog_id : 0; }
-function words($s) {
-  static $stop = ['the','and','for','that','this','with','from','what','have','your','about','into','their','there','they','were','been','who','how','why','not','but','are','was','you','his','her','its','one','all','can','out','our','has','had','than','then','when','which','will','would','more','some','just'];
-  preg_match_all('/[a-z]{4,}/', strtolower(wp_strip_all_tags((string) $s)), $m);
-  return array_values(array_diff(array_unique($m[0]), $stop));
-}
-/** The items of $types on site $key that read most like $post (shared words in title, excerpt and opening), newest first on ties. */
-function related_from($post, $key, array $types, $n = 3) {
-  $bid = site_blog_id($key); if (!$bid) { return []; }
-  $mine = words($post->post_title . ' ' . $post->post_excerpt . ' ' . mb_substr(wp_strip_all_tags($post->post_content), 0, 1500));
-  $out = []; $here = get_current_blog_id();
-  switch_to_blog($bid);
-  foreach (get_posts(['post_type' => $types, 'numberposts' => 60, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']) as $q) {
-    if ($bid === $here && $q->ID === $post->ID) { continue; }
-    $score = count(array_intersect($mine, words($q->post_title . ' ' . $q->post_excerpt . ' ' . mb_substr(wp_strip_all_tags($q->post_content), 0, 1500))));
-    $guest = $q->post_type === 'ih_episode' ? get_post((int) get_post_meta($q->ID, 'ih_guest_id', true)) : null;
-    $out[] = ['score' => $score, 'title' => get_the_title($q), 'url' => get_permalink($q), 'meta' => $q->post_type === 'ih_episode' ? ($guest ? get_the_title($guest) : 'Episode') : get_the_date('', $q)];
-  }
-  restore_current_blog();
-  usort($out, function ($x, $y) { return $y['score'] <=> $x['score']; });
-  return array_slice($out, 0, $n);
-}
 function related_block($heading, array $items) {
   if (!$items) { return ''; }
   $h = '<section class="ih-related" aria-label="' . a($heading) . '"><h2>' . e($heading) . '</h2><ul class="ih-list">';

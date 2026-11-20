@@ -132,3 +132,21 @@ summary,.ih-body summary{min-height:44px;display:flex;align-items:center;cursor:
 input[type=file]{min-height:44px;padding:10px 0;font:15px 'Karla',sans-serif}
 .ih-acct input,.ih-acct textarea{min-height:44px;font:16px 'Karla',sans-serif;border:1px solid #DCD7CC;background:#fff;padding:8px 12px}
 .ih-acct label,.ih-acct .ih-sub{font:14px 'Karla',sans-serif}
+
+/* ---- round 2: search results, archive, Life on Words and terryheath.com homes ---- */
+.ih-results{list-style:none;margin:32px auto 0;padding:0;max-width:760px}
+.ih-results li{border-bottom:1px solid var(--ih-rule)}.ih-results a{display:block;padding:14px 0;min-height:44px}
+.ih-pl{display:block;margin-top:4px;font-size:17px;line-height:1.4;color:var(--ih-mute)}
+.ih-low{max-width:1120px}.ih-low-latest{display:flex;flex-wrap:wrap;gap:56px;align-items:center;justify-content:center}
+.ih-headshot-l{width:220px;height:220px;flex:0 0 220px}.ih-headshot-e{display:block;background:var(--ih-tint);border-radius:50%}
+.ih-low-latest>div{flex:1 1 420px;max-width:560px}.ih-low-h1{margin:10px 0 0;font-size:52px;font-weight:400;line-height:1.08}.ih-low-t{margin:8px 0 0;font-size:22px;font-style:italic;color:var(--ih-mute)}
+.ih-listen{margin:20px 0 0;font:14px 'Karla',sans-serif;color:var(--ih-mute)}.ih-listen a,.ih-link{color:var(--ih-accent);font:14px 'Karla',sans-serif;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;min-height:44px}
+.ih-play{gap:10px}.ih-low-recent,.ih-low-about,.ih-th-low{margin-top:120px}
+.ih-low-rh{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:baseline;justify-content:space-between}
+.ih-row-link{display:flex;flex-wrap:wrap;gap:4px 24px;align-items:baseline;justify-content:space-between;padding:16px 0;border-top:1px solid var(--ih-rule);min-height:44px}
+.ih-it{font-size:19px;font-style:italic;color:var(--ih-mute)}.ih-low-about{max-width:660px;margin-left:auto;margin-right:auto;text-align:center}
+.ih-th-latest{max-width:720px;margin:0 auto;text-align:center}.ih-th-h1{margin:12px 0 0;font-size:52px;font-weight:400;line-height:1.1}
+.ih-th-more{max-width:720px;margin:72px auto 0}
+.ih-th-eps{margin-top:48px}.ih-ep-card{display:block;text-align:center}.ih-ep-card .ih-headshot{width:120px;height:120px;margin:0 auto;display:block}.ih-ep-card .ih-pt{margin-top:20px}.ih-ep-card .ih-it{display:block;margin-top:4px}.ih-listen-l{display:block;margin-top:10px;font:14px 'Karla',sans-serif;color:var(--ih-accent)}
+.ih-archive .ih-gi h3{font-size:22px}
+@media(max-width:640px){.ih-low-h1,.ih-th-h1{font-size:38px}}

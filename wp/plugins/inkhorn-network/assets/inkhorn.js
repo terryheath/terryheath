@@ -18,3 +18,11 @@
   if(!gone) b.hidden=false;
   var x=b.querySelector('.ih-welcome-x'); if(x) x.addEventListener('click',function(){b.hidden=true; try{localStorage.setItem('ih_welcome','1');}catch(e){}});
 })();
+(function(){
+  // "Play episode": the player appears in place of the button and starts
+  document.addEventListener('click',function(ev){
+    var b=ev.target.closest&&ev.target.closest('[data-ih-audio]'); if(!b) return;
+    var a=document.createElement('audio'); a.controls=true; a.autoplay=true; a.src=b.getAttribute('data-ih-audio'); a.style.maxWidth='100%';
+    b.parentNode.insertBefore(a,b); b.hidden=true;
+  });
+})();
