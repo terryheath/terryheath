@@ -25,7 +25,7 @@ add_action('rest_api_init', function () {
       // double opt-in: nothing is subscribed until the person opens the link we email
       if (!nl_start($email, $lists, sanitize_key((string) $req->get_param('from')))) { return $fail('We could not send the confirmation email. Please try again.', 502); }
       if ($wants_json) { return new \WP_REST_Response(['ok' => true, 'message' => 'Check your email. We sent a link to ' . $email . '.']); }
-      setcookie('ih_sent_to', rawurlencode($email), ['expires' => time() + 600, 'path' => '/', 'secure' => is_ssl(), 'httponly' => true, 'samesite' => 'Lax']); wp_safe_redirect(add_query_arg('signed-up', '1', wp_get_referer() ?: home_url('/'))); exit;
+      setcookie('ih_sent_to', $email, ['expires' => time() + 600, 'path' => '/', 'secure' => is_ssl(), 'httponly' => true, 'samesite' => 'Lax']); wp_safe_redirect(add_query_arg('signed-up', '1', wp_get_referer() ?: home_url('/'))); exit;
     },
   ]);
 });
