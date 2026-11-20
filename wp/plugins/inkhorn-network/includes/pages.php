@@ -164,7 +164,7 @@ function lead_line($p) {
   if (trim($p->post_excerpt) !== '') { return trim(preg_replace('/\s+/', ' ', wp_strip_all_tags($p->post_excerpt))); }
   $t = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags(preg_replace('#<br\s*/?>|</p>#i', ' ', (string) $p->post_content))));
   $t = html_entity_decode($t, ENT_QUOTES, 'UTF-8');
-  $parts = preg_split('/(?<=[.!?]|[.!?]["”’)])\s+(?=[A-Z“"‘(])/u', $t);
+  $parts = preg_split('/(?<=[.!?]["”’)])(?=[A-Z“‘(])|(?<=[.!?])\s+(?=[A-Z“"‘(])|(?<=[.!?]["”’)])\s+(?=[A-Z“"‘(])/u', $t);
   $out = ''; $n = 0;
   foreach ($parts as $sent) {
     $out = trim($out . ' ' . $sent); $n++;
