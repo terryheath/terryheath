@@ -37,6 +37,7 @@ The sites are being rebuilt on WordPress Multisite + listmonk (plus Umami, a Mus
 - **Domain switch done 2026-11-16.** The Inkhorn Ghost pod (`accelerated-basilisk`) now has custom domain `inkhorn.press` (DNS: `inkhorn.press` CNAME to `accelerated-basilisk.pikapod.net`, DNS only). Ghost's site URL is `https://inkhorn.press`; Ghost re-registered its Stripe webhook as `https://inkhorn.press/members/webhooks/stripe/`. Members have to sign in again (cookies are per domain). Keychain `ghost-url-inkhorn` is the pod host and still works for the Admin API.
 - **Old domain**: Worker `inkhornreview-redirect` (`inkhorn/inkhornreview-redirect/`) 301s inkhornreview.com and www to the same path and query on inkhorn.press (308 for non-GET); Ghost's own redirects then map old paths. The apex is a proxied placeholder A record (192.0.2.1). Worker `inkhorn-press-redirect` now only sends www.inkhorn.press to the bare domain. The subdomains (`download.`, `address.`, `agreements.`, `admin.`, `muse.`, `sign.` of inkhornreview.com) stay where they are, so inkhornreview.com must stay in Cloudflare (it also holds Google mail MX and SES DKIM).
 - **Forwards**: Worker `domain-forwards` (`inkhorn/domain-forwards/`) sends bookfolk.org and www to `https://inkhorn.press/bookfolk/` and weirdfriday.com and www to `/weird-friday/` (301, whole site; weirdfriday.com has placeholder A records). The Cloudflare API token (Keychain `cloudflare-ftr-cleanup`) can edit Workers, DNS and routes but not Rules, so use Workers for redirects.
+- **weirdfriday.org is Terry's (restored 2026-11-20).** The Nov 16 cleanup that called it someone else's was wrong. It is registered at Cloudflare (2026-11-13) in the second account `c153c3d5a893fb0e1361e594880f6c96` (login `hello@terryheath.com`; the browser login `terryheath@yahoo.com` owns account `62c3c49152820690bee8bc174a6c9428` and cannot see it). It forwards to `https://weirdfriday.com` with the path kept (301): Worker `domain-forwards` has the rule (`inkhorn/domain-forwards/src/index.js`); **to deploy it, add a Worker with route `weirdfriday.org/*` and `www.weirdfriday.org/*` in account c153 (needs a token from that login).** weirdfriday.com stays the festival's only site.
 - **Services**: Railway `inkhorn-shop-service` `SITE_URL` and `CORS_ORIGIN` are `https://inkhorn.press`; code defaults, `digest.js`, `build-editions.cjs`, `admin-hub.cjs` and the address-service CORS (allows both domains) were updated. Muse code (separate repo) still links to inkhornreview.com; those links redirect, change them when Muse is next released.
 - **Search Console**: `inkhorn.press` was added as a Domain property (auto-verified by the existing DNS record) and `https://inkhorn.press/sitemap.xml` submitted. hello@terryheath.com has no property for inkhornreview.com, so a change-of-address is not possible from this account; the 301s do the work.
 - **Mail fixed 2026-11-17:** Ghost transactional mail on the Inkhorn pod had failed with `535 Authentication failed` (stale `mail__options__auth__pass`). Terry pasted a new Mailgun SMTP password (user `hello@mail.inkhorn.press`) into the pod's Env Vars; the signup email now arrives from hello@inkhorn.press. Ghost's own Mailgun setting (API key, domain `mail.inkhorn.press`) never needed it. To rotate again: Mailgun > Domain settings > SMTP Credentials > Reset Password (copy from the toast, never read it), paste into the pod env var, Apply.
@@ -230,6 +231,29 @@ Trigger manually via Railway (podcast-import service → Run now), or run `river
 | **Google Workspace / Cloud** | Mail for inkhornreview.com (`hello@inkhornreview.com` delivers to `hello@terryheath.com`) and the other active domains. Google Cloud is retired (`whiterabbit-prod` and `wrbc-mcp` deleted 2026-10-11, recoverable for 30 days; the Apps Script `sys-*` projects cannot be deleted from the CLI) | | `gcloud` login `hello@terryheath.com` |
 
 **Never use:** the GitHub account `bookwishapp` (gh is logged out of it; never authenticate as it, never attach anything to it; its repos are archived as private `bookwish-*` repos under `terryheath`); Keychain `stripe-inkhorn` and the White Rabbit Stripe account `acct_1RgB0aGHehj1IHBj` (exported, closing); any Stripe sandbox not created inside `acct_1TF3BsCItY7iMaUP` or `acct_1UcWWSDDXcUbAhbo`.
+
+## Domain inventory (2026-11-20)
+
+Two Cloudflare accounts. **A** = `62c3c49152820690bee8bc174a6c9428` "Follow the Rabbit LLC" (login `terryheath@yahoo.com`; API token in Keychain `cloudflare-ftr-cleanup`). **B** = `c153c3d5a893fb0e1361e594880f6c96` (login `hello@terryheath.com`; the token above cannot reach it; list below is what Terry stated, not read from the API; list every domain in B once a token from that login exists).
+
+| Domain | Account | Role | Registrar auto-renew / expires |
+|---|---|---|---|
+| inkhorn.press | A (zone) | Press hub only (not registered at Cloudflare) | n/a |
+| inkhornreview.com | A | Inkhorn Review (mapped domain at cutover; Ghost redirect Worker until then); mail MX, SES DKIM, subdomains `download.` `address.` `agreements.` `admin.` `sign.` | on, 2027-08-29 |
+| terryheath.com | A (zone) | terryheath.com (registered elsewhere; nameservers `lennox`/`suzanne.ns.cloudflare.com`) | n/a |
+| lifeonwords.com | A | Life on Words | on, 2027-07-22 |
+| gomuse.io | A | Muse (Follow the Rabbit LLC) | on, 2027-10-23 |
+| weirdfriday.com | A | Weird Friday festival (only site) | on, 2027-11-13 |
+| bookfolk.org | A | BookFolk festival; forwards to `inkhorn.press/bookfolk/` | on, 2028-06-19 |
+| goranhodzic.com | A | Goran Hodžić | on, 2027-07-26 |
+| inkhornwriters.org | A | redirects to inkhorn.press | on, 2027-08-03 |
+| shelves.page | A | shelves.page | on, 2027-11-20 |
+| whiterabbit.cafe | A (zone) | old White Rabbit café; api/admin subdomains need new homes before it lapses (~Aug 2027) | n/a |
+| artsfolk.com, vendcat.com | A | remnants, auto-renew off | off, 2027-08-02 / 2027-08-17 |
+| bookwish.io, whiterabbitbookco.com (and zones bookwish.net, dampconcrete.com) | A | remnants held for AWS cleanup | off, 2027-06-26 / 2027-05-15 |
+| whiterabbitgo.com, whiterabbitpresents.com, whiterabbitartistry.com, kitsapreads.org, lumarahouse.org, lumenhousearts.org, washingtonreads.org | A | remnants, lapse at expiry | off, 2027-05-18 to 2027-07-10 |
+| **whiterabbitreview.com** | B | White Rabbit (mapped domain; DNS, Railway domain, SES identity at cutover prep) | in B |
+| **weirdfriday.org** | B | forwards to weirdfriday.com, path kept | in B |
 
 **Cleanup status (2026-10-11):** AWS remnants, GitHub mirrors (`bookwish-*`, `dampconcrete-*`, private and archived under `terryheath`), the Terry-Heath org, Supabase, SendGrid API objects, Ghost extras, Firebase/Sanity/gcloud bookwish.io logins, `.env.local` and local config are done. Cloudflare: auto-renew is off for every remnant domain registered there; 7 remnant zones were deleted and the zones of Cloudflare-registered domains (`artsfolk.com`, `bookfolk.org`, `kitsapreads.org`, `lumarahouse.org`, `lumenhousearts.org`, `vendcat.com`, `washingtonreads.org`, `whiterabbitartistry.com`, `whiterabbitgo.com`, `whiterabbitpresents.com`) cannot be deleted and simply lapse at expiry. Held until the AWS root email reads `hello@terryheath.com`, then deleted: Cloudflare zones `bookwish.io`, `bookwish.net`, `dampconcrete.com`, `whiterabbitbookco.com` (its Google-hosted mail keeps `terry@whiterabbitbookco.com` working until then). Apps Script `sys-*` Google projects are left alone on purpose.
 
