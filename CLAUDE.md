@@ -23,6 +23,10 @@ Inkhorn Review's stack:
 - **This repo** — `inkhorn/routes.yaml`, `inkhorn/contributors.json`, `inkhorn/build-shelves.js`, `inkhorn/shelves.json`, `inkhorn/ghost-footer-injection.html`, `inkhorn/set-og-images.js`, `inkhorn/patreon-sync.js`, and issue scripts. Nothing else.
 - **Scheduler** — Railway project "Shared Cron" (renamed from "Inkhorn Cron" on 2026-11-14; same project id) runs the cron services against this repo. There are no GitHub Actions workflows (the last two were deleted 2026-11-14).
 
+## Migration in progress (2026-11-20): read MIGRATION-LOG.md first
+
+The sites are being rebuilt on WordPress Multisite + listmonk (plus Umami, a Muse web build at inkhorn.press/muse, and DocuSeal on Railway) at temporary Railway addresses. **Nothing live has changed yet:** everything below still describes the live Ghost sites until Terry gives the cutover go-ahead. `MIGRATION-LOG.md` has the current state, the cutover steps (including the DocuSeal re-sync: dump, attachments, sequences, certificate, ownership) and the list of what shutting down PikaPods, Ghost and Mailgun would delete.
+
 ## Inkhorn Press site (live at inkhorn.press since 2026-11-16)
 
 - **One site, theme 1.4.0** (`inkhorn/theme`): shared header (Read menu, Submit, Shop, Events, Support, About, Sign in, Subscribe), publications sub-bar on posts, footer (About, Support, Privacy, Terms, hello@inkhorn.press). Home status strip dates are computed in `assets/js/main.js` (`ipStatus`): free reading periods are every Feb, May, Aug and Nov; Review releases Mar/Jun/Sep/Dec 1; next Friday the 13th (not before 2027-08-13). Newsletter form posts to Ghost's member API; newsletter slugs `inkhorn-review-digest` (the existing weekly), `white-rabbit`, `events`.
