@@ -151,3 +151,4 @@ input[type=file]{min-height:44px;padding:10px 0;font:15px 'Karla',sans-serif}
 .ih-archive .ih-gi h3{font-size:22px}
 @media(max-width:640px){.ih-low-h1,.ih-th-h1{font-size:38px}}
 .ih-listen a{min-width:44px;justify-content:center}
+.ih-archive{grid-template-columns:repeat(auto-fill,minmax(200px,220px));justify-content:center}
