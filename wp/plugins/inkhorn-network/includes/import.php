@@ -51,6 +51,34 @@ function import_item(\WP_REST_Request $r) {
       }
       return ['removed' => $gone];
     }
+    if (($d['action'] ?? '') === 'trash_post') { // moves a post to the trash (recoverable); never deletes for good
+      $tp = get_posts(['name' => sanitize_title($d['slug'] ?? ''), 'post_type' => $d['type'] ?? 'post', 'post_status' => 'any', 'numberposts' => 1]);
+      if (!$tp || empty($d['slug'])) { return new \WP_Error('none', 'not found', ['status' => 404]); }
+      wp_trash_post($tp[0]->ID); return ['trashed' => $tp[0]->ID];
+    }
+    if (($d['action'] ?? '') === 'rewrite_books') { // "Books mentioned" on every episode: titles and authors as given in the map; bare ISBN lines dropped; a set listed once
+      $map = (array) ($d['map'] ?? []); $changed = [];
+      foreach (get_posts(['post_type' => 'ih_episode', 'numberposts' => -1, 'post_status' => 'any']) as $ep) {
+        $c = $ep->post_content; $i = strpos($c, '<h3>Books mentioned</h3>'); if ($i === false) { continue; }
+        $head = substr($c, 0, $i); $blk = substr($c, $i);
+        preg_match_all('#<div style="width:110px">(.*?)</div>#s', $blk, $mm); $seen = []; $new = '';
+        foreach ($mm[1] as $ent) {
+          preg_match('#<a [^>]*style="font-size[^>]*>(.*?)</a>#s', $ent, $t); $title = html_entity_decode(wp_strip_all_tags($t[1] ?? ''), ENT_QUOTES, 'UTF-8');
+          if (preg_match('/^\d{10,13}$/', trim($title))) { continue; } // a bare ISBN line
+          preg_match('#<span[^>]*>(.*?)</span>#s', $ent, $a); $author = html_entity_decode(wp_strip_all_tags($a[1] ?? ''), ENT_QUOTES, 'UTF-8');
+          $key = strtolower(trim($title)); $nt = $map[$key]['title'] ?? $title;
+          if (isset($seen[$key])) { continue; } $seen[$key] = true;
+          if (isset($map[$key]['author'])) { $author = $map[$key]['author']; }
+          elseif (preg_match('/^([^,]+), ([^,]+)$/', $author, $am) && strpos($am[1], ' ') === false) { $author = $am[2] . ' ' . $am[1]; } // "Joshi, S. T." -> "S. T. Joshi"
+          $ent2 = str_replace(esc_html($title), esc_html($nt), $ent); $ent2 = str_replace(esc_attr($title), esc_attr($nt), $ent2);
+          if ($a) { $ent2 = preg_replace('#(<span[^>]*>)(.*?)(</span>)#s', '$1' . str_replace('$', '\\$', esc_html($author)) . '$3', $ent2, 1); }
+          $new .= '<div style="width:110px">' . $ent2 . '</div>' . "\n";
+        }
+        $out = $head . '<h3>Books mentioned</h3>' . "\n" . '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">' . "\n" . $new . '</div>' . "\n";
+        if ($out !== $c) { kses_remove_filters(); wp_update_post(['ID' => $ep->ID, 'post_content' => $out]); kses_init_filters(); $changed[] = $ep->post_name; }
+      }
+      return ['changed' => $changed];
+    }
     $type = $d['type'] ?? 'post'; $slug = sanitize_title($d['slug'] ?? '');
     if ($slug === '') { return new \WP_Error('no_slug', 'slug is required (an empty slug would match any post)', ['status' => 400]); }
     $found = get_posts(['name' => $slug, 'post_type' => $type, 'post_status' => 'any', 'numberposts' => 1]);

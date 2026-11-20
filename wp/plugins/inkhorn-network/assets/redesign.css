@@ -210,3 +210,12 @@ body .ih-add-to-cart-btn:hover,body .ih-cart-checkout-btn:hover,body .ih-address
 .wp-block-post-title{font-weight:400}
 
 .ih-mast-home.ih-mast-fig{display:block;line-height:0}.ih-mast-home.ih-mast-fig img{display:block}
+.ih-lc{text-transform:lowercase}
+
+.ih-pills{list-style:none;display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 0;padding:0}
+.ih-pills li{margin:0}
+.ih-pill{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:6px 16px 6px 8px;border:1.5px solid var(--ih-rule);border-radius:999px;color:var(--ih-ink);font:500 14px 'Karla',system-ui,sans-serif;text-decoration:none}
+.ih-pill:hover{border-color:var(--ih-accent);color:var(--ih-ink);text-decoration:none}
+.ih-pill-i{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.ih-pill-i svg{width:16px;height:16px;fill:#fff}
+.ih-low-latest .ih-listen,.ih-piece .ih-listen{margin:18px 0 0}

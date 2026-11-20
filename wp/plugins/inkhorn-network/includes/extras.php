@@ -141,7 +141,7 @@ add_action('rest_api_init', function () {
 
 function view_nl_confirmed() {
   return '<main class="ih-main"><h1 class="ih-h1">' . tx('nl.confirmed_h', 'You’re signed up') . '</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center" role="status">' . tx('nl.confirmed', 'Thanks. Watch for our next email.') . '</p>'
-    . '<div class="ih-btns" style="justify-content:center">' . btn(hub_url('newsletter/'), t('nl.choose', 'Choose your lists')) . btn(home_url('/'), t('nl.back', 'Back to the site')) . '</div></main>';
+    . '<div class="ih-btns" style="justify-content:center">' . btn(hub_url('newsletter/'), t('nl.choose', 'Change your lists')) . btn(home_url('/'), t('nl.back', 'Back to the site')) . '</div></main>';
 }
 function view_nl_expired() {
   $t = sanitize_text_field($_GET['t'] ?? ''); $rec = $t ? get_transient(nl_long_key($t)) : null;

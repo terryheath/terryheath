@@ -45,8 +45,7 @@
   }
 
   function formatCents(cents) {
-    var dollars = (cents / 100).toFixed(2);
-    return '$' + dollars;
+    return '$' + (cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2)); // $14, not $14.00
   }
 
   // Module-level products cache (per page load)
@@ -200,7 +199,7 @@
       // Quantity (print only)
       if (selected === 'print') {
         html += '<div class="ih-book-qty-row">';
-        html += '<label class="ih-book-qty-label" for="ih-book-qty">' + e(T('js.qty', 'Qty')) + '</label>';
+        html += '<label class="ih-book-qty-label" for="ih-book-qty">' + e(T('js.qty', 'Quantity')) + '</label>';
         html += '<div class="ih-book-qty">';
         html += '<button class="ih-qty-btn" id="ih-qty-dec" aria-label="' + e(T('js.decrease', 'Decrease')) + '">−</button>';
         html += '<input class="ih-qty-input" type="number" id="ih-book-qty" min="1" value="1">';
@@ -212,13 +211,13 @@
       // Add to cart button — use per-format preorder flag
       var selectedFmt = prod.formats.filter(function(f) { return f.format === selected; })[0];
       var fmtIsPreorder = selectedFmt ? !!selectedFmt.preorder : false;
-      var btnLabel = fmtIsPreorder ? T('js.preorder', 'Preorder') : T('js.add', 'Add to Cart');
+      var btnLabel = fmtIsPreorder ? T('js.preorder', 'Preorder') : T('js.add', 'Add to cart');
       html += '<button class="ih-add-to-cart-btn' + (selected === 'print' ? ' ih-sub-btn-print' : ' ih-btn-ebook') + '" id="ih-add-to-cart">';
       html += e(btnLabel) + '</button>';
 
       // Format note
       if (selected === 'print') {
-        html += '<p class="ih-book-print-note">' + e(T('js.print_note', 'Ships to U.S. addresses. $4 for the first book, $1 for each additional.')) + '</p>';
+        html += '<p class="ih-book-print-note">' + e(T('js.print_note', 'We ship print within the U.S.: $4 for the first book, $1 for each after.')) + '</p>';
       } else if (selected === 'ebook') {
         if (fmtIsPreorder) {
           html += '<p class="ih-book-ebook-note">' + e(T('js.ebook_pre', 'Preorder. Emailed to you on release day. Available in any country.')) + '</p>';

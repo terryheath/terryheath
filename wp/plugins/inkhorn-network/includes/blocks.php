@@ -9,7 +9,7 @@ add_action('init', function () {
   $dyn = [
     'welcome' => ['Welcome band', function () { return welcome_band(); }],
     'account-link' => ['Sign in / Account link', function () { return account_link(); }],
-    'signup' => ['Email sign-up form', function () { return signup(); }],
+    'signup' => ['Email sign-up form', function ($atts = []) { return signup('', true, !empty($atts['checked']) ? (array) $atts['checked'] : null); }],
     'pubs' => ['Publications row (press home)', function () { return section_pubs(); }],
     'shop-strip' => ['From the shop strip', function () { return shop_strip(); }],
     'folio' => ['Issue: cover, title, buttons and contents', function () { $i = is_singular('ih_issue') ? get_queried_object() : current_issue(); return $i ? section_folio($i) : section_soon(); }],
@@ -22,7 +22,7 @@ add_action('init', function () {
     'patreon' => ['Patreon supporters list', function () { return section_patreon(); }],
   ];
   foreach ($dyn as $name => $d) {
-    register_block_type('inkhorn/' . $name, ['title' => $d[0], 'category' => 'widgets', 'icon' => 'layout', 'supports' => ['autoRegister' => true, 'html' => false], 'render_callback' => $d[1]]);
+    register_block_type('inkhorn/' . $name, ['title' => $d[0], 'attributes' => ['checked' => ['type' => 'array', 'default' => []]], 'category' => 'widgets', 'icon' => 'layout', 'supports' => ['autoRegister' => true, 'html' => false], 'render_callback' => $d[1]]);
   }
   register_block_type('inkhorn/site-part', ['title' => 'This site\'s header, footer or home', 'category' => 'theme', 'attributes' => ['area' => ['type' => 'string', 'default' => 'header']], 'supports' => ['autoRegister' => true, 'html' => false],
     'render_callback' => function ($atts) { return render_site_part($atts['area'] ?? 'header'); }]);

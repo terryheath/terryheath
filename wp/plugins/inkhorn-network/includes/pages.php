@@ -65,6 +65,7 @@ add_action('template_redirect', function () { // old /books/<slug>/ and /home/ o
   $p = trim((string) wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
   if (preg_match('#^books/([^/]+)$#', $p, $m)) { wp_safe_redirect(home_url('/shop/' . $m[1] . '/'), 301); exit; }
   if ($p === 'books') { wp_safe_redirect(home_url('/shop/'), 301); exit; }
+  if ($p === 'contributors/terry-heath') { wp_safe_redirect(home_url('/about/#the-editor'), 301); exit; } // Terry is the editor, not a contributor
   if ($p === 'home') { wp_safe_redirect(home_url('/'), 301); exit; }
 }, 1);
 
@@ -93,7 +94,7 @@ add_action('transition_post_status', function ($new, $old, $post) { if ($post->p
 function search_scope_keys() { return ['hub', 'review', 'whiterabbit', 'terryheath', 'lifeonwords']; } // one search across the whole family
 function result_type($p) {
   switch ($p->post_type) {
-    case 'ih_piece': $g = piece_genre($p); $map = ['poetry' => t('search.type_poem', 'Poem'), 'fiction' => t('search.type_story', 'Story'), 'nonfiction' => t('search.type_essay', 'Essay'), 'art' => t('search.type_art', 'Art'), 'micro' => t('search.type_micro', 'Micro')]; return $g ? ($map[$g->slug] ?? $g->name) : t('search.type_piece', 'Piece');
+    case 'ih_piece': if (is_letter($p)) { return t('search.type_letter', 'Founder’s letter'); } $g = piece_genre($p); return $g ? $g->name : t('search.type_piece', 'Piece'); // the genre as issue pages name it
     case 'ih_issue': return t('search.type_issue', 'Issue');
     case 'ih_contributor': return t('search.type_contributor', 'Contributor');
     case 'ih_episode': return t('search.type_episode', 'Episode');
@@ -114,8 +115,12 @@ function one_line($p) {
     if (preg_match_all('#<p[^>]*>(.*?)</p>#is', $c, $mm)) { foreach ($mm[1] as $para) { $t = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags(preg_replace('#<br\s*/?>#i', ' ', $para)))); if (mb_strlen($t) > 30 && !preg_match('/^[▶►]/u', $t)) { $src = $t; break; } } }
     if ($src === '') { $src = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags(preg_replace('#<br\s*/?>#i', ' ', $c)))); }
   }
-  $src = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags(preg_replace('#<br\s*/?>|</p>#i', ' ', $src))));
-  if (mb_strlen($src) <= 140) { return $src; }
+  $src = html_entity_decode(wp_strip_all_tags(preg_replace('#<br\s*/?>|</p>#i', ' ', $src)), ENT_QUOTES, 'UTF-8');
+  $src = trim(preg_replace('/[\s\x{00A0}\x{2000}-\x{200B}]+/u', ' ', $src)); // runs of spaces become one
+  if (mb_strlen($src) <= 160) { return $src; }
+  $head = mb_substr($src, 0, 220); $best = 0;
+  if (preg_match_all('/[.!?]["”’)]*(?=\s|$)/u', $head, $mm, PREG_OFFSET_CAPTURE)) { foreach ($mm[0] as $hit) { $end = mb_strlen(substr($head, 0, $hit[1])) + mb_strlen($hit[0]); if ($end >= 40) { $best = $end; } } }
+  if ($best) { return trim(mb_substr($head, 0, $best)); } // cut at a sentence end
   $cut = mb_substr($src, 0, 140); $sp = mb_strrpos($cut, ' ');
   return rtrim(mb_substr($cut, 0, $sp ?: 140), " ,.;:–-") . '…';
 }
@@ -141,7 +146,7 @@ function search_results($q) {
 
 function view_search() {
   $q = trim((string) get_search_query());
-  $h = '<main class="ih-main"><h1 class="ih-h1">' . tx('search.heading', 'Search') . '</h1><form role="search" class="ih-form" method="get" action="' . a(home_url('/')) . '"><div class="ih-row"><label class="ih-sr" for="ih-s">' . tx('search.label', 'Search') . '</label>'
+  $h = '<main class="ih-main"><h1 class="ih-h1">' . ($q !== '' ? tx('search.heading_q', 'Results for “{q}”', ['q' => $q]) : tx('search.heading', 'Search')) . '</h1><form role="search" class="ih-form" method="get" action="' . a(home_url('/')) . '"><div class="ih-row"><label class="ih-sr" for="ih-s">' . tx('search.label', 'Search') . '</label>'
      . '<input id="ih-s" type="search" name="s" value="' . a($q) . '"><button class="ih-btn" type="submit">' . tx('search.button', 'Search') . '</button></div></form>';
   if ($q === '') { return $h . '</main>'; }
   $res = search_results($q);
@@ -149,7 +154,7 @@ function view_search() {
   foreach ($res as $r) {
     $h .= '<li><a href="' . a($r['url']) . '"><span class="ih-pt">' . e($r['title']) . '</span><span class="ih-pa">' . e($r['type'] . ' · ' . $r['pub']) . '</span>' . ($r['line'] !== '' ? '<span class="ih-pl">' . e($r['line']) . '</span>' : '') . '</a></li>';
   }
-  if (!$res) { $h .= '<li class="ih-sub">' . tx('search.none', 'Nothing found.') . '</li>'; }
+  if (!$res) { $h .= '<li class="ih-sub">' . tx('search.none', 'No results for “{q}”. Try another word.', ['q' => $q]) . '</li>'; }
   return $h . '</ul></main>';
 }
 
@@ -161,7 +166,7 @@ function view_archive() {
   foreach ($q as $i) {
     $rel = m($i->ID, 'ih_release'); if ($rel && strtotime($rel) > time()) { continue; } // not out yet
     $label = m($i->ID, 'ih_label') ?: get_the_title($i);
-    $h .= '<div class="ih-gi"><a href="' . a(get_permalink($i)) . '" aria-label="' . a($label) . '">' . (get_the_post_thumbnail_url($i, 'medium') ? cover($i, t('issue.cover_alt', 'Cover of {label}', ['label' => $label])) : '<div class="ih-cover ih-cover-e" aria-hidden="true"></div>') . '</a><h3><a href="' . a(get_permalink($i)) . '">' . e($label) . '</a></h3></div>';
+    $h .= '<div class="ih-gi"><a href="' . a(get_permalink($i)) . '" aria-label="' . a($label) . '">' . (get_the_post_thumbnail_url($i, 'medium') ? cover($i, t('issue.cover_alt', 'Cover of {pub}, {label}', ['pub' => site()['name'], 'label' => $label])) : '<div class="ih-cover ih-cover-e" aria-hidden="true"></div>') . '</a><h3><a href="' . a(get_permalink($i)) . '">' . e($label) . '</a></h3></div>';
   }
   return $h . '</div></main>';
 }
@@ -192,7 +197,7 @@ add_filter('the_title', function ($t, $id = 0) {
 /* ---------- Life on Words home, as in the mockup ---------- */
 
 function episodes_latest($n) { return get_posts(['post_type' => 'ih_episode', 'numberposts' => $n, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']); }
-function guest_of($p) { return get_post((int) m($p->ID, 'ih_guest_id')); }
+function guest_of($p) { return post_or_null(m($p->ID, 'ih_guest_id')); }
 function guest_headshot($g, $size = 'medium') { return $g ? (get_the_post_thumbnail_url($g, $size) ?: (m($g->ID, 'ih_headshot_id') ? wp_get_attachment_image_url((int) m($g->ID, 'ih_headshot_id'), $size) : '')) : ''; }
 function episode_title_part($p) { $t = get_the_title($p); $pos = strpos($t, ': '); return $pos !== false ? substr($t, $pos + 2) : $t; }
 function episode_audio($p) { $u = m($p->ID, 'ih_audio_url'); if ($u) { return $u; } return preg_match('#<audio[^>]+src="([^"]+)"#i', (string) $p->post_content, $mm) ? html_entity_decode($mm[1]) : ''; }
@@ -208,8 +213,8 @@ function section_low_latest() {
     $meta = t('low.latest', 'Latest episode') . (m($latest->ID, 'ih_number') ? ' · ' . t('low.episode', 'Episode') . ' ' . m($latest->ID, 'ih_number') : '') . (episode_len($latest) ? ' · ' . episode_len($latest) : '');
     $h .= '<section class="ih-low-latest" aria-label="' . ta('low.latest_aria', 'Latest episode') . '">' . ($img ? '<img class="ih-headshot ih-headshot-l" src="' . a($img) . '" alt="' . ta('low.headshot', 'Headshot of {name}', ['name' => $g ? get_the_title($g) : '']) . '" width="360" height="360">' : '<div class="ih-headshot ih-headshot-l ih-headshot-e" role="img" aria-label="' . a($g ? get_the_title($g) : '') . '"></div>')
       . '<div><p class="ih-label">' . e($meta) . '</p><h1 class="ih-h1-xl ih-low-h1">' . e($g ? get_the_title($g) : get_the_title($latest)) . '</h1><p class="ih-folio-line">' . e(episode_title_part($latest)) . '</p>'
-      . '<div class="ih-btns">' . (episode_audio($latest) ? '<button type="button" class="ih-btn ih-play" data-ih-audio="' . a(episode_audio($latest)) . '">&#9654;&#xFE0E;&nbsp; ' . tx('low.play', 'Play episode') . '</button>' : '') . '<a class="ih-btn" href="' . a(get_permalink($latest)) . '#transcript">' . tx('low.transcript', 'Transcript') . '</a></div>'
-      . '<p class="ih-listen">' . tx('low.listen_on', 'Listen on') . ' <a href="' . a(LOW_APPLE) . '">' . tx('low.apple', 'Apple Podcasts') . '</a> · <a href="' . a(LOW_SPOTIFY) . '">' . tx('low.spotify', 'Spotify') . '</a> · <a href="' . a(feed_url_low()) . '">' . tx('low.rss', 'RSS') . '</a></p></div></section>';
+      . '<div class="ih-btns">' . (episode_audio($latest) ? '<button type="button" class="ih-btn ih-play" data-ih-audio="' . a(episode_audio($latest)) . '"><span aria-hidden="true">&#9654;&#xFE0E;</span>&nbsp; ' . tx('low.play', 'Play episode') . '</button>' : '') . '<a class="ih-btn" href="' . a(get_permalink($latest)) . '#transcript">' . tx('low.transcript', 'Transcript') . '</a></div>'
+      . '<p class="ih-listen">' . tx('low.listen_on', 'Listen on') . '</p>' . listen_pills() . '</div></section>';
   }
   return $h;
 }
@@ -263,7 +268,7 @@ function section_author_low() {
     if ($cards) {
       $h .= '<section class="ih-th-low" aria-label="' . ta('author.low_aria', 'Life on Words') . '"><div class="ih-low-rh"><h2 class="ih-h2">' . tx('author.low', 'From Life on Words') . '</h2><a class="ih-link" href="' . a($low) . '">' . tx('author.low_all', 'All episodes at lifeonwords.com') . ' &rarr;</a></div><div class="ih-grid ih-th-eps">';
       foreach ($cards as $c) {
-        $h .= '<a class="ih-ep-card" href="' . a($c['url']) . '"><span class="ih-label" style="display:block">' . tx('author.low_card', 'Life on Words') . '</span><span class="ih-pt" style="display:block;margin-top:10px;font-size:26px">' . e($c['guest']) . '</span><span class="ih-it" style="display:block;margin-top:6px">' . e($c['title']) . '</span><span class="ih-listen-l">' . tx('author.listen', 'Listen') . ' &rarr;</span></a>';
+        $h .= '<a class="ih-ep-card" href="' . a($c['url']) . '"><span class="ih-pt" style="display:block;font-size:26px">' . e($c['guest']) . '</span><span class="ih-it" style="display:block;margin-top:6px">' . e($c['title']) . '</span><span class="ih-listen-l">' . tx('author.listen', 'Listen') . ' &rarr;</span></a>';
       }
       $h .= '</div></section>';
     }
