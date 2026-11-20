@@ -124,6 +124,25 @@ const LINKS = [
   ]],
 ];
 
+// Temporary addresses (Railway) while the sites are reviewed; each goes away or is replaced at cutover. Updated 2026-11-20.
+const WPT = 'https://wordpress-production-754b3e08.up.railway.app';
+const TEMP_SITES = [
+  ['Press hub front page', WPT + '/', 'inkhorn.press at cutover'],
+  ['Inkhorn Review', WPT + '/review/', 'inkhornreview.com at cutover'],
+  ['White Rabbit', WPT + '/whiterabbit/', 'whiterabbitreview.com at cutover'],
+  ['terryheath.com', WPT + '/terryheath/', 'terryheath.com at cutover'],
+  ['Life on Words', WPT + '/lifeonwords/', 'lifeonwords.com at cutover'],
+  ['WordPress dashboard (press hub)', WPT + '/wp-admin/', 'Sign in as terry. Each site also has /<site>/wp-admin/.'],
+  ['WordPress network admin', WPT + '/wp-admin/network/', 'Plugins, themes, sites, Services menu, How to change things.'],
+  ['listmonk', 'https://listmonk-production-b3fcccbe.up.railway.app/admin', 'Lists, subscribers, campaigns, email templates.'],
+  ['DocuSeal (Railway copy)', 'https://docuseal-production-43dca1b9.up.railway.app/', 'The copy on Railway. The live one stays at sign.terryheath.com (PikaPods) until cutover.'],
+  ['Umami', 'https://umami-production-237a03f7.up.railway.app/', 'Analytics for every site.'],
+  ['Shop service', 'https://inkhorn-shop-service-production.up.railway.app/admin', 'Checkout, ebook downloads, subscriptions. /admin needs the shop admin password.'],
+  ['Address service', 'https://address-service-production.up.railway.app/', 'Print-subscription mailing addresses.'],
+  ['og-webhook', 'https://og-webhook-production.up.railway.app/', 'Share-image webhook for Ghost (retired at cutover).'],
+];
+const TEMP = `<h2>Temporary sites</h2><p class="why">Every address the new setup answers on before cutover.</p><ul>${TEMP_SITES.map(([n, u, w]) => `<li><a href="${esc(u)}">${esc(n)}</a><br><span class="why">${esc(u)} · ${esc(w)}</span></li>`).join('')}</ul>`;
+
 async function homeHtml() {
   let status = '<p class="warn">Status unavailable right now.</p>';
   try {
@@ -154,7 +173,7 @@ async function homeHtml() {
   } catch (e) { console.error('hub status failed', e.message); }
   const links = LINKS.map(([group, items]) => `<h2>${esc(group)}</h2><ul>${items.map(([name, url, why]) => `<li><a href="${esc(url)}">${esc(name)}</a><br><span class="why">${esc(why)}</span></li>`).join('')}</ul>`).join('');
   const subs = `<h2>Subdomains</h2><p class="why">Every *.terryheath.com and *.inkhornreview.com name in use. New admin tools go under admin.terryheath.com/&lt;path&gt;, not a new subdomain.</p>${UI.table(`<tr><th>Name</th><th>What it does</th><th>Runs on</th></tr>${SUBDOMAINS.map(([n, w, r]) => `<tr><td data-label="Name">${esc(n)}</td><td data-label="What it does">${esc(w)}</td><td data-label="Runs on">${esc(r)}</td></tr>`).join('')}`)}`;
-  return shell('Home', `<h1>Admin</h1>${status}${links}${subs}`, 'home');
+  return shell('Home', `<h1>Admin</h1>${TEMP}${status}${links}${subs}`, 'home');
 }
 
 // ---- routing ----------------------------------------------------------------------------------------------------------------
