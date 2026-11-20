@@ -91,6 +91,12 @@ HT
   done
   # ---- boot tasks: idempotent PHP files run with WP-CLI on every start (see wp/boot)
   for f in /usr/local/share/inkhorn-boot/*.php; do [ -f "$f" ] && wp eval-file "$f" --allow-root 2>&1 | sed 's/^/[inkhorn] boot: /'; done
+  # ---- one-off check that dashboard installs persist (IH_PLUGIN_TEST=install, then redeploy, then =check)
+  wp eval 'require_once ABSPATH."wp-admin/includes/file.php"; echo "filesystem method: ".get_filesystem_method(WP_PLUGIN_DIR)." | plugins dir writable: ".(wp_is_writable(WP_PLUGIN_DIR)?"yes":"no")."\n";' --allow-root 2>&1 | sed 's/^/[inkhorn] fs: /'
+  case "${IH_PLUGIN_TEST:-}" in
+    install) wp plugin install classic-widgets --activate-network --allow-root 2>&1 | sed 's/^/[inkhorn] plugintest: /' ;;
+    check) if wp plugin is-installed classic-widgets --allow-root; then echo "[inkhorn] plugintest: classic-widgets SURVIVED the redeploy"; wp plugin is-active classic-widgets --network --allow-root && echo "[inkhorn] plugintest: still network-active"; wp plugin deactivate classic-widgets --network --allow-root 2>&1 | sed 's/^/[inkhorn] plugintest: /'; wp plugin delete classic-widgets --allow-root 2>&1 | sed 's/^/[inkhorn] plugintest: /'; else echo "[inkhorn] plugintest: classic-widgets is GONE"; fi ;;
+  esac
   chown -R www-data:www-data "$P"
 ) &
 exec docker-entrypoint.sh "$@"
