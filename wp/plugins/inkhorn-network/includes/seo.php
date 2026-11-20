@@ -71,8 +71,38 @@ add_filter('the_seo_framework_sitemap_exclude_ids', function ($ids) {
   return $ids;
 });
 
-/** The sitemap of a site that lives in a folder (inkhorn.press/review/) is served at that folder's /sitemap.xml. */
-add_filter('the_seo_framework_sitemap_base_path', function ($path) {
-  $p = rtrim((string) wp_parse_url(home_url(), PHP_URL_PATH), '/');
-  return $p !== '' ? $p : $path;
-});
+/**
+ * Sitemaps. The press home's sitemap (inkhorn.press/sitemap.xml) is The SEO Framework's. The plugin does not answer for the sites that live in a folder
+ * (inkhorn.press/review/sitemap.xml), so each of those serves its own: every published issue, piece, episode, guest, book, essay and page, and nothing
+ * else (sign-in, account, cart and newsletter-state pages are not posts, so they never appear).
+ */
+add_action('init', function () {
+  if (site_key() === 'hub') { return; }
+  $base = rtrim((string) wp_parse_url(home_url(), PHP_URL_PATH), '/');
+  $req = (string) strtok($_SERVER['REQUEST_URI'] ?? '', '?');
+  if ($req !== $base . '/sitemap.xml') { return; }
+  $types = ['page', 'post', 'ih_issue', 'ih_piece', 'ih_episode', 'ih_guest', 'ih_book'];
+  $urls = [['loc' => home_url('/'), 'mod' => '']];
+  foreach (get_posts(['post_type' => $types, 'post_status' => 'publish', 'numberposts' => -1, 'orderby' => 'date', 'order' => 'DESC', 'suppress_filters' => true]) as $p) {
+    if ($p->post_type === 'post' && $p->post_name === 'hello-world') { continue; }
+    if ($p->post_type === 'page' && in_array($p->post_name, ['cover', 'sample-page', 'start-here-placeholder'], true)) { continue; }
+    if ($p->post_type === 'page' && get_option('page_on_front') == $p->ID) { continue; }
+    if ($p->post_type === 'ih_book' && site_key() !== 'hub') { $loc = get_permalink($p); } else { $loc = $p->post_type === 'ih_book' ? home_url('/shop/' . $p->post_name . '/') : get_permalink($p); }
+    $urls[] = ['loc' => $loc, 'mod' => get_post_modified_time('c', true, $p)];
+  }
+  foreach (['issues/' => 'ih_issue', 'episodes/' => 'ih_episode', 'guests/' => 'ih_guest'] as $path => $pt) { if (post_type_exists($pt) && wp_count_posts($pt)->publish) { $urls[] = ['loc' => home_url('/' . $path), 'mod' => '']; } }
+  status_header(200); header('Content-Type: application/xml; charset=UTF-8'); header('X-Robots-Tag: noindex');
+  echo '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+  foreach ($urls as $u) { echo '<url><loc>' . esc_url($u['loc']) . '</loc>' . ($u['mod'] ? '<lastmod>' . esc_html($u['mod']) . '</lastmod>' : '') . '</url>'; }
+  echo '</urlset>'; exit;
+}, 0);
+/** robots.txt (served once, at the root) names every site's sitemap. */
+add_filter('robots_txt', function ($out) {
+  if (!is_main_site()) { return $out; }
+  foreach (get_sites(['number' => 50]) as $st) {
+    $path = trim($st->path, '/'); if ($path === '' || $path === 'muse') { continue; }
+    $line = 'Sitemap: ' . get_site_url($st->blog_id, '/sitemap.xml');
+    if (strpos($out, $line) === false) { $out .= "\n" . $line; }
+  }
+  return $out;
+}, 20);
