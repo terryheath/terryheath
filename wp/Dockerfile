@@ -1,4 +1,4 @@
-FROM wordpress:6-php8.3-apache
+FROM wordpress:php8.3-apache
 RUN apt-get update && apt-get install -y --no-install-recommends less default-mysql-client unzip curl \
  && rm -rf /var/lib/apt/lists/* \
  && curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /usr/local/bin/wp \
