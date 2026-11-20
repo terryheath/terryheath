@@ -128,3 +128,4 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ih-accent);width:18px;
 summary,.ih-body summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 .ih-shop-h a,.ih-all a,.ih-back a{display:inline-flex;align-items:center;min-height:44px}
 .ih-body li>a{display:inline-flex;align-items:center;min-height:44px}
+.ih-body a[href*="bookshop.org"]{display:inline-flex;align-items:center;min-height:44px}
