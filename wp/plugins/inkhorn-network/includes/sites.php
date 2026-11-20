@@ -41,6 +41,8 @@ function hub_url($path = '') {
 }
 /** Address of a sibling publication. */
 function pub_url($key, $path = '') {
+  // until inkhorn.press/muse is routed to the Muse app, review builds point the Muse links at the app's own address (env MUSE_APP_URL)
+  if ($key === 'muse' && getenv('MUSE_APP_URL')) { return rtrim(getenv('MUSE_APP_URL'), '/') . '/' . ltrim($path, '/'); }
   $s = get_sites(['path' => $key === 'hub' ? '/' : '/' . $key . '/', 'number' => 1]);
   if (!$s) { return hub_url($key); }
   return get_site_url($s[0]->blog_id, '/' . ltrim($path, '/'));
