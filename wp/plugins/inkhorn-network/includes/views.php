@@ -175,7 +175,7 @@ function issue_line_from_shop($issue) {
   $slug = basename($path); $line = '';
   switch_to_blog(get_main_site_id());
   $b = get_posts(['post_type' => 'ih_book', 'name' => $slug, 'numberposts' => 1, 'post_status' => ['publish', 'future']]);
-  if ($b) { $line = (string) $b[0]->post_excerpt; }
+  if ($b) { $line = trim((string) $b[0]->post_excerpt); if (preg_match('/^(.+?[.!?]["”’)]*)(?=\s|$)/us', $line, $mm)) { $line = $mm[1]; } } // the first sentence only: the meta line already gives the piece count
   restore_current_blog();
   return $line;
 }
