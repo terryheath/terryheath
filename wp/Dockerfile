@@ -7,6 +7,7 @@ RUN a2dismod -f mpm_event mpm_worker >/dev/null 2>&1 || true; a2enmod mpm_prefor
 COPY mu-plugins/ /usr/src/wordpress/wp-content/mu-plugins/
 COPY themes/ /usr/src/wordpress/wp-content/themes/
 COPY plugins/ /usr/src/wordpress/wp-content/plugins/
+COPY boot/ /usr/local/share/inkhorn-boot/
 COPY railway-entrypoint.sh /usr/local/bin/railway-entrypoint.sh
 RUN chmod +x /usr/local/bin/railway-entrypoint.sh
 ENTRYPOINT ["railway-entrypoint.sh"]

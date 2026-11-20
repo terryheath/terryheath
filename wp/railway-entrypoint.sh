@@ -13,7 +13,8 @@ ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mp
 export WORDPRESS_CONFIG_EXTRA="
 if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') { \$_SERVER['HTTPS'] = 'on'; }
 define('WP_ALLOW_MULTISITE', true);
-define('DISALLOW_FILE_EDIT', true);
+define('FS_METHOD', 'direct');
+define('WP_AUTO_UPDATE_CORE', 'minor');
 define('WP_DEFAULT_THEME', 'inkhorn');
 if (file_exists('/var/www/html/wp-content/uploads/.multisite')) {
   define('MULTISITE', true);
@@ -74,5 +75,22 @@ HT
       wp rewrite flush --hard --url="$url" --allow-root || true
     done
   fi
+  # ---- plugins, themes and languages live on the volume, so anything installed or updated from the dashboard survives a redeploy.
+  # Our own code (the inkhorn-network plugin and the inkhorn theme) is copied from the image on every boot; everything else on the volume is left alone.
+  IMG=/usr/src/wordpress/wp-content; WC=/var/www/html/wp-content; P=$WC/uploads/.persist
+  mkdir -p "$P/plugins" "$P/themes" "$P/languages"
+  for d in plugins themes languages; do
+    if [ ! -f "$P/$d/.seeded" ]; then [ -d "$IMG/$d" ] && cp -a "$IMG/$d/." "$P/$d/"; touch "$P/$d/.seeded"; fi
+  done
+  rm -rf "$P/plugins/inkhorn-network" "$P/themes/inkhorn"
+  cp -a "$IMG/plugins/inkhorn-network" "$P/plugins/inkhorn-network"; cp -a "$IMG/themes/inkhorn" "$P/themes/inkhorn"
+  printf "Require all denied\n" > "$P/.htaccess"   # the volume folder is not a public address; the same files are served at /wp-content/plugins and /wp-content/themes
+  chown -R www-data:www-data "$P"
+  for d in plugins themes languages; do
+    if [ ! -L "$WC/$d" ]; then rm -rf "$WC/$d"; ln -s "$P/$d" "$WC/$d"; fi
+  done
+  # ---- boot tasks: idempotent PHP files run with WP-CLI on every start (see wp/boot)
+  for f in /usr/local/share/inkhorn-boot/*.php; do [ -f "$f" ] && wp eval-file "$f" --allow-root 2>&1 | sed 's/^/[inkhorn] boot: /'; done
+  chown -R www-data:www-data "$P"
 ) &
 exec docker-entrypoint.sh "$@"
