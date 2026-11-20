@@ -150,3 +150,4 @@ input[type=file]{min-height:44px;padding:10px 0;font:15px 'Karla',sans-serif}
 .ih-th-eps{margin-top:48px}.ih-ep-card{display:block;text-align:center}.ih-ep-card .ih-headshot{width:120px;height:120px;margin:0 auto;display:block}.ih-ep-card .ih-pt{margin-top:20px}.ih-ep-card .ih-it{display:block;margin-top:4px}.ih-listen-l{display:block;margin-top:10px;font:14px 'Karla',sans-serif;color:var(--ih-accent)}
 .ih-archive .ih-gi h3{font-size:22px}
 @media(max-width:640px){.ih-low-h1,.ih-th-h1{font-size:38px}}
+.ih-listen a{min-width:44px;justify-content:center}
