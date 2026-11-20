@@ -334,17 +334,3 @@ add_action('rest_api_init', function () {
     return ['ok' => true];
   }]);
 });
-
-/* TEMPORARY (2026-11-20): test-session hook for rendering Account states without email. Import-token only, and only for the address test-contributor@test.invalid. Removed right after use. */
-add_action('rest_api_init', function () {
-  register_rest_route('inkhorn/v1', '/test-session', ['methods' => 'POST', 'permission_callback' => function (\WP_REST_Request $r) { $t = getenv('INKHORN_IMPORT_TOKEN'); return $t && hash_equals($t, (string) $r->get_header('x-import-token')); }, 'callback' => function (\WP_REST_Request $r) {
-    $email = 'test-contributor@test.invalid';
-    switch_to_blog(get_main_site_id());
-    $found = get_posts(['post_type' => 'ih_contributor', 'meta_key' => 'ih_email', 'meta_value' => $email, 'numberposts' => -1, 'post_status' => 'any']);
-    if ($r->get_param('action') === 'delete') { foreach ($found as $c) { wp_delete_post($c->ID, true); } restore_current_blog(); return ['deleted' => count($found)]; }
-    if (!$found) { $id = wp_insert_post(['post_type' => 'ih_contributor', 'post_title' => 'Test Contributor', 'post_name' => 'zz-test-contributor', 'post_status' => 'draft']); update_post_meta($id, 'ih_email', $email); update_post_meta($id, 'ih_bio', 'Test bio.'); }
-    restore_current_blog();
-    $exp = time() + 3600;
-    return ['cookie_name' => COOKIE, 'cookie' => sign_email($email, $exp), 'exp' => $exp];
-  }]);
-});
