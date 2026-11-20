@@ -106,3 +106,6 @@ add_filter('robots_txt', function ($out) {
   }
   return $out;
 }, 20);
+
+/** Browser titles read "Page – Site" everywhere (the en dash the site has always used). */
+add_filter('the_seo_framework_title_separator', function () { return '–'; });
