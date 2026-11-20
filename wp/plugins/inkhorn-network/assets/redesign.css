@@ -156,8 +156,8 @@ body.ih-whiterabbit .ih-h1,body.ih-whiterabbit .ih-h1-l,body.ih-whiterabbit .ih-
 input[type=radio]{accent-color:var(--ih-accent)}
 .ih-qty-btn,.ih-cart-qty-btn{background:var(--ih-tint);border:1px solid var(--ih-rule);color:var(--ih-ink)}.ih-qty-btn:hover,.ih-cart-qty-btn:hover{background:var(--ih-rule)}
 .ih-qty-input{background:#fff;border:1px solid var(--ih-rule);font-family:'Karla',sans-serif}
-.ih-add-to-cart-btn,.ih-cart-checkout-btn,.ih-address-submit,.ih-order-continue{background:transparent!important;border:1.5px solid var(--ih-accent)!important;color:var(--ih-accent)!important;font:500 15px 'Karla',system-ui,sans-serif!important;letter-spacing:.02em;border-radius:0!important;min-height:46px;padding:0 24px!important;display:inline-flex;align-items:center}
-.ih-add-to-cart-btn:hover,.ih-cart-checkout-btn:hover,.ih-address-submit:hover,.ih-order-continue:hover{background:var(--ih-tint)!important}
+body .ih-add-to-cart-btn,body .ih-cart-checkout-btn,body .ih-address-submit,body .ih-order-continue{background:transparent!important;border:1.5px solid var(--ih-accent)!important;color:var(--ih-accent)!important;font:500 15px 'Karla',system-ui,sans-serif!important;letter-spacing:.02em;border-radius:0!important;min-height:46px;padding:0 24px!important;display:inline-flex;align-items:center}
+body .ih-add-to-cart-btn:hover,body .ih-cart-checkout-btn:hover,body .ih-address-submit:hover,body .ih-order-continue:hover{background:var(--ih-tint)!important}
 .ih-cart-link,.ih-add-confirm-link,.ih-book-piece-item a:hover,.ih-cart-remove:hover{color:var(--ih-accent)}
 .ih-cart-item,.ih-order-item,.ih-book-piece-item{border-color:var(--ih-rule)}
 .ih-cart-subtotal,.ih-order-total{font-family:'Karla',sans-serif}
@@ -170,4 +170,4 @@ input[type=radio]{accent-color:var(--ih-accent)}
 .ih-piece .ih-body a,.ih-body p a{color:var(--ih-accent)}
 .ih-hubrow{display:block}
 .ih-pub-t h3 a{display:inline-flex;align-items:center;min-height:44px}
-.ih-add-to-cart-btn:disabled,.ih-add-to-cart-btn[disabled]{opacity:1!important;color:var(--ih-mute)!important;border-color:var(--ih-mute)!important;cursor:not-allowed}
+.ih-add-to-cart-btn:disabled,body .ih-add-to-cart-btn[disabled]{opacity:1!important;color:var(--ih-mute)!important;border-color:var(--ih-mute)!important;cursor:not-allowed}
