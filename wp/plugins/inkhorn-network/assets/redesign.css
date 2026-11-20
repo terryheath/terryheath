@@ -141,3 +141,4 @@ body.ih-whiterabbit .ih-h1,body.ih-whiterabbit .ih-h1-l,body.ih-whiterabbit .ih-
 .ih-low-about .ih-note{font-size:21px;line-height:1.6}
 .ih-low-rh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px 32px}
 .ih-head,.ih-main,.ih-foot-in,.ih-th-banner{box-sizing:content-box}
+.ih-pub-cover{aspect-ratio:5/8;display:flex;align-items:flex-end;justify-content:center}.ih-pub-cover .ih-cover{width:100%}
