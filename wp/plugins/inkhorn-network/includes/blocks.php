@@ -29,3 +29,11 @@ add_action('wp_head', function () {
   if ($url) { echo '<meta property="og:url" content="' . esc_url($url) . '">'; }
   if ($img) { echo '<meta property="og:image" content="' . esc_url($img) . '"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="' . esc_url($img) . '">'; }
 });
+
+/** Self-hosted Umami: no cookies, no profile of the reader. Env UMAMI_URL and UMAMI_IDS (JSON: site key => website id). Skipped for signed-in admins. */
+add_action('wp_head', function () {
+  $u = getenv('UMAMI_URL'); $ids = json_decode((string) getenv('UMAMI_IDS'), true);
+  $id = is_array($ids) ? ($ids[site_key()] ?? '') : '';
+  if (!$u || !$id || current_user_can('edit_posts')) { return; }
+  echo '<script defer src="' . esc_url(rtrim($u, '/') . '/ih-stats') . '" data-website-id="' . esc_attr($id) . '" data-do-not-track="true"></script>';
+}, 20);

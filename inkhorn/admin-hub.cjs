@@ -9,6 +9,7 @@ const L = require('./agreements-lib.cjs');
 const P = require('./payouts-lib.cjs');
 const PR = require('./podcast-routes.cjs');
 const UI = require('./hub-ui.cjs');
+const G = require('./growth-report.cjs');
 const PL = require('./podcast-lib.cjs');
 
 const SECRET = () => process.env.ADMIN_SESSION_SECRET || '';
@@ -91,6 +92,8 @@ const LINKS = [
   ['Agreements', [
     ['DocuSeal', 'https://sign.terryheath.com/sign_in', 'Templates, every sent and signed agreement, the API token.'],
     ['Life on Words guests', '/podcast', 'Guest agreements, bookings and reminders for the podcast; add a guest and send the invitation.'],
+    ['Growth report', '/growth', 'Each month against its target: email lists, donations, subscriptions, sales and visits.'],
+    ['Umami analytics', 'https://umami-production-237a03f7.up.railway.app/', 'Visits and pages for every site (self-hosted, no cookies). Sign in as admin; the password is the Railway variable UMAMI_PASSWORD on agreements-accept.'],
     ['Payouts', '/payouts', 'Signed or not, pay and subscription choices, bios to Apply or Ignore, print mailing lists (CSV).'],
     ['Contributor confirm page', 'https://agreements.inkhornreview.com/accept', 'What the Duosuma acceptance letter links to; sends the agreement when a contributor confirms. Public.'],
   ]],
@@ -154,7 +157,7 @@ const send = (res, code, html, extra = {}) => { res.writeHead(code, { 'Content-T
 const redirect = (res, to) => { res.writeHead(303, { Location: to, 'Cache-Control': 'no-store' }); res.end(); };
 const nf = (res, signed = false) => send(res, 404, shell('Not found', '<h1>Not found</h1><p>There is nothing at this address. Use the menu above, or go to <a href="/">the admin home</a>.</p>', signed ? 'x' : ''));
 // Paths that exist behind the sign-in; anything else is a plain 404 even when signed out (so a typo never looks like a session problem).
-const KNOWN = (path) => path === '/' || path === '/payouts' || path === '/payouts.csv' || path === '/payouts/bio' || path === '/payouts/refund' || path === '/profiles' || path === '/profiles/decide' || path === '/podcast' || path.startsWith('/podcast/');
+const KNOWN = (path) => path === '/' || path === '/payouts' || path === '/payouts.csv' || path === '/payouts/bio' || path === '/payouts/refund' || path === '/profiles' || path === '/profiles/decide' || path === '/growth' || path === '/podcast' || path.startsWith('/podcast/');
 const sameSite = (req) => { const o = req.headers.origin; if (o) { try { return new URL(o).host === req.headers.host; } catch { return false; } } return req.headers['sec-fetch-site'] === 'same-origin'; };
 const resets = new Map(); // one-time reset links already used (token -> true), memory only; links also expire after 30 minutes
 
@@ -218,6 +221,7 @@ async function handle(req, res, ip) {
   if (!signedIn(req)) return KNOWN(path) && req.method === 'GET' ? send(res, 401, loginPage('', safeNext(req.url))) : KNOWN(path) ? send(res, 401, loginPage('Your session ended. Sign in and try again.')) : nf(res);
 
   if (path === '/podcast' || path.startsWith('/podcast/')) { if (await PR.adminRoute(req, res, path, query)) return; }
+  if (path === '/growth') return send(res, 200, shell('Growth report', await G.html(), 'x'));
   if (path === '/') return send(res, 200, await homeHtml());
   if (path === '/payouts') return send(res, 200, await P.payoutsHtml({ msg: query.get('msg') || '' }));
   if (path === '/payouts.csv') {
