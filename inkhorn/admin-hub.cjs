@@ -77,6 +77,7 @@ const SUBDOMAINS = [
   ['followtherabbit.terryheath.com', 'The Follow the Rabbit landing page.', 'Cloudflare Pages: followtherabbit'],
   ['send.terryheath.com', 'Amazon SES MAIL FROM domain for guest mail sent from hello@terryheath.com. Not a website.', 'AWS SES'],
   ['mail.inkhorn.press', 'Sending domain for the Inkhorn Ghost (Mailgun account terry@terryheath.com); email.mail is its tracking CNAME.', 'Mailgun'],
+  ['lists.shelves.page', 'listmonk, the shelves.page news & updates list: admin login at /admin and the public unsubscribe pages. (On shelves.page, not terryheath.com or inkhornreview.com.)', 'Railway: listmonk project'],
   ['mail.terryheath.com', 'Sending domain for the terryheath.com Ghost (same Mailgun account); email.mail is its tracking CNAME.', 'Mailgun'],
   ['ses.inkhornreview.com', 'Amazon SES MAIL FROM domain (SPF and bounce handling for DocuSeal and shop mail). Not a website.', 'AWS SES'],
   ['inkhorn.press (was inkhornreview.com)', 'The magazine itself: Ghost, plus /ghost/ for Ghost Admin.', 'PikaPods: Ghost'],
@@ -108,6 +109,11 @@ const LINKS = [
     ['Stripe: Follow the Rabbit LLC', 'https://dashboard.stripe.com/', 'terryheath.com tips and donations only. Switch to the Follow the Rabbit LLC account in the dashboard menu.'],
   ]],
   ['Muse', [['gomuse.io Admin', 'https://gomuse.io/admin', 'Issues, people, email (including the announcement emails), flagged pieces.']]],
+  ['shelves.page', [
+    ['News & updates (listmonk)', 'https://lists.shelves.page/admin', 'The "shelves.page news & updates" mailing list: subscribers, campaigns, unsubscribes. Every shelves.page account is added automatically; news never goes through the sign-in email path.'],
+    ['Railway: shelves-page', 'https://railway.com/project/f66c98e7-2bf8-4ea3-8cb8-37ba32595f51', 'The shelves.page app and its Postgres; deploys, logs, variables.'],
+    ['Railway: listmonk', 'https://railway.com/project/7dcce0f9-dd2f-4257-881f-7f87393d8252', 'listmonk and its own Postgres.'],
+  ]],
   ['Hosting', [
     ['Railway: Shared Cron', 'https://railway.com/project/7865f281-fb8b-46e7-90bd-ffb6babf849d', 'The cron jobs (weekly digest, agreements, patreon sync, ...) and the agreements-accept web service.'],
     ['Railway: agreements', 'https://railway.com/project/7865f281-fb8b-46e7-90bd-ffb6babf849d/service/b69a9017-8d4f-4b4f-8c35-5e0736b306c5', 'The daily agreements cron: logs, variables (SCHEDULE_SIGNED), run history.'],
