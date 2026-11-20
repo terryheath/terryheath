@@ -21,8 +21,8 @@ add_action('template_redirect', function () {
   $self = home_url('/podcast/rss/');
   header('Content-Type: application/rss+xml; charset=UTF-8');
   echo '<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:media="http://search.yahoo.com/mrss/"><channel>';
-  echo '<title>' . $cdata('Life on Words with Terry Heath - Terry Heath') . '</title><description>' . $cdata('Writer, Educator, Editor, Host') . '</description><link>' . esc_url($home) . '</link>';
-  echo '<image><url>' . esc_url($home . 'favicon.png') . '</url><title>' . $cdata('Life on Words with Terry Heath - Terry Heath') . '</title><link>' . esc_url($home) . '</link></image>';
+  echo '<title>' . $cdata(t('feed.title', 'Life on Words with Terry Heath - Terry Heath')) . '</title><description>' . $cdata(t('feed.description', 'Writer, Educator, Editor, Host')) . '</description><link>' . esc_url($home) . '</link>';
+  echo '<image><url>' . esc_url($home . 'favicon.png') . '</url><title>' . $cdata(t('feed.title', 'Life on Words with Terry Heath - Terry Heath')) . '</title><link>' . esc_url($home) . '</link></image>';
   echo '<generator>Inkhorn network</generator><lastBuildDate>' . gmdate('D, d M Y H:i:s') . ' GMT</lastBuildDate><atom:link href="' . esc_url($self) . '" rel="self" type="application/rss+xml"/><ttl>60</ttl>';
   if ($ls) {
     switch_to_blog($ls[0]->blog_id);

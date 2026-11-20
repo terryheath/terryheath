@@ -8,6 +8,12 @@
 
   var SHOP_SERVICE_URL = 'https://inkhorn-shop-service-production.up.railway.app';
   var CART_KEY = 'ih-cart';
+  // wording comes from Settings > Site text (window.IH_T), with these as the fallback
+  function T(key, fallback, vars) {
+    var s = (window.IH_T && window.IH_T[key]) || fallback;
+    for (var n in (vars || {})) s = s.split('{' + n + '}').join(vars[n]);
+    return s;
+  }
 
   // ── HELPERS ──────────────────────────────────────────────────────────────────
   function e(s) {
@@ -33,7 +39,7 @@
     cart = cart || getCart();
     var count = cart.reduce(function (sum, item) { return sum + (item.quantity || 0); }, 0);
     document.querySelectorAll('.ih-cart-link').forEach(function (el) {
-      el.textContent = 'Cart (' + count + ')';
+      el.textContent = T('js.cart_link', 'Cart ({n})', { n: count });
       if (count > 0) el.removeAttribute('hidden'); else el.setAttribute('hidden', '');
     });
   }
@@ -73,7 +79,7 @@
         if (!pricesEl) return;
         if (!prod || !prod.formats || !prod.formats.length) return;
         var parts = prod.formats.map(function (fmt) {
-          var label = fmt.format === 'print' ? 'Print' : 'Ebook';
+          var label = fmt.format === 'print' ? T('js.print', 'Print') : T('js.ebook', 'Ebook');
           return label + ' ' + formatCents(fmt.price_cents);
         });
         pricesEl.textContent = parts.join(' \u00b7 ');
@@ -110,7 +116,7 @@
       var formatsTimeout = setTimeout(function () {
         if (!formatsDone) {
           var el = document.getElementById('ih-book-formats');
-          if (el) el.innerHTML = '<p class="ih-book-not-available">Not yet available</p>';
+          if (el) el.innerHTML = '<p class="ih-book-not-available">' + e(T('js.unavailable', 'Not yet available')) + '</p>';
         }
       }, 6000);
       fetchProducts().then(function (products) {
@@ -119,7 +125,7 @@
         var prod = products[sku];
         if (!prod) {
           document.getElementById('ih-book-formats').innerHTML =
-            '<p class="ih-book-not-available">Not yet available</p>';
+            '<p class="ih-book-not-available">' + e(T('js.unavailable', 'Not yet available')) + '</p>';
           return;
         }
         renderFormatPicker(prod, titleText, isPreorder);
@@ -127,7 +133,7 @@
         formatsDone = true;
         clearTimeout(formatsTimeout);
         document.getElementById('ih-book-formats').innerHTML =
-          '<p class="ih-book-not-available">Not yet available</p>';
+          '<p class="ih-book-not-available">' + e(T('js.unavailable', 'Not yet available')) + '</p>';
       });
     } else {
       document.getElementById('ih-book-formats').innerHTML = '';
@@ -140,9 +146,9 @@
     var html = '';
 
     if (contents) {
-      var genreNames = { poetry: 'Poetry', fiction: 'Fiction', nonfiction: 'Nonfiction' };
+      var genreNames = { poetry: T('js.g_poetry', 'Poetry'), fiction: T('js.g_fiction', 'Fiction'), nonfiction: T('js.g_nonfiction', 'Nonfiction') };
       html += '<div class="ih-book-contents-inner">';
-      html += '<h2 class="ih-book-section-head">In This Issue</h2>';
+      html += '<h2 class="ih-book-section-head">' + e(T('js.in_issue', 'In This Issue')) + '</h2>';
       html += '<div class="ih-contents">';
       for (var genre in contents) {
         var pieces = contents[genre];
@@ -159,9 +165,9 @@
 
     if (isbn) {
       html += '<div class="ih-book-details">';
-      html += '<h2 class="ih-book-section-head">Details</h2>';
+      html += '<h2 class="ih-book-section-head">' + e(T('js.details', 'Details')) + '</h2>';
       html += '<dl class="ih-book-detail-list">';
-      html += '<dt>ISBN</dt><dd>' + e(isbn) + ' (print)</dd>';
+      html += '<dt>' + e(T('js.isbn', 'ISBN')) + '</dt><dd>' + e(isbn) + ' ' + e(T('js.isbn_print', '(print)')) + '</dd>';
       html += '</dl>';
       html += '</div>';
     }
@@ -185,7 +191,7 @@
         var checked = fmt.format === selected ? ' checked' : '';
         html += '<label class="ih-book-format-option' + (fmt.format === selected ? ' selected' : '') + '">';
         html += '<input type="radio" name="ih-format" value="' + e(fmt.format) + '"' + checked + '>';
-        html += '<span class="ih-book-format-name">' + (fmt.format === 'print' ? 'Print' : 'Ebook') + '</span>';
+        html += '<span class="ih-book-format-name">' + (fmt.format === 'print' ? e(T('js.print', 'Print')) : e(T('js.ebook', 'Ebook'))) + '</span>';
         html += '<span class="ih-book-format-price">' + formatCents(fmt.price_cents) + '</span>';
         html += '</label>';
       }
@@ -194,11 +200,11 @@
       // Quantity (print only)
       if (selected === 'print') {
         html += '<div class="ih-book-qty-row">';
-        html += '<label class="ih-book-qty-label" for="ih-book-qty">Qty</label>';
+        html += '<label class="ih-book-qty-label" for="ih-book-qty">' + e(T('js.qty', 'Qty')) + '</label>';
         html += '<div class="ih-book-qty">';
-        html += '<button class="ih-qty-btn" id="ih-qty-dec" aria-label="Decrease">−</button>';
+        html += '<button class="ih-qty-btn" id="ih-qty-dec" aria-label="' + e(T('js.decrease', 'Decrease')) + '">−</button>';
         html += '<input class="ih-qty-input" type="number" id="ih-book-qty" min="1" value="1">';
-        html += '<button class="ih-qty-btn" id="ih-qty-inc" aria-label="Increase">+</button>';
+        html += '<button class="ih-qty-btn" id="ih-qty-inc" aria-label="' + e(T('js.increase', 'Increase')) + '">+</button>';
         html += '</div>';
         html += '</div>';
       }
@@ -206,20 +212,20 @@
       // Add to cart button — use per-format preorder flag
       var selectedFmt = prod.formats.filter(function(f) { return f.format === selected; })[0];
       var fmtIsPreorder = selectedFmt ? !!selectedFmt.preorder : false;
-      var btnLabel = fmtIsPreorder ? 'Preorder' : 'Add to Cart';
+      var btnLabel = fmtIsPreorder ? T('js.preorder', 'Preorder') : T('js.add', 'Add to Cart');
       html += '<button class="ih-add-to-cart-btn' + (selected === 'print' ? ' ih-sub-btn-print' : ' ih-btn-ebook') + '" id="ih-add-to-cart">';
       html += e(btnLabel) + '</button>';
 
       // Format note
       if (selected === 'print') {
-        html += '<p class="ih-book-print-note">Ships to U.S. addresses. $4 for the first book, $1 for each additional.</p>';
+        html += '<p class="ih-book-print-note">' + e(T('js.print_note', 'Ships to U.S. addresses. $4 for the first book, $1 for each additional.')) + '</p>';
       } else if (selected === 'ebook') {
         if (fmtIsPreorder) {
-          html += '<p class="ih-book-ebook-note">Preorder. Emailed to you on release day. Available in any country.</p>';
+          html += '<p class="ih-book-ebook-note">' + e(T('js.ebook_pre', 'Preorder. Emailed to you on release day. Available in any country.')) + '</p>';
         } else {
-          html += '<p class="ih-book-ebook-note">Delivered by email. Available in any country.</p>';
+          html += '<p class="ih-book-ebook-note">' + e(T('js.ebook_note', 'Delivered by email. Available in any country.')) + '</p>';
         }
-        html += '<p class="ih-book-ebook-note">Ebooks can\u2019t be refunded once downloaded.</p>';
+        html += '<p class="ih-book-ebook-note">' + e(T('js.ebook_refund', 'Ebooks can’t be refunded once downloaded.')) + '</p>';
       }
 
       html += '</div>';
@@ -285,7 +291,7 @@
             if (!existing_conf) {
               var conf = document.createElement('div');
               conf.className = 'ih-add-confirm';
-              conf.innerHTML = 'Added. <a href="/shop/cart/" class="ih-add-confirm-link">View cart</a>';
+              conf.innerHTML = e(T('js.added', 'Added.')) + ' <a href="/shop/cart/" class="ih-add-confirm-link">' + e(T('js.view_cart', 'View cart')) + '</a>';
               picker.appendChild(conf);
             }
           }
@@ -307,7 +313,7 @@
     if (!itemsEl || !summaryEl) return;
 
     if (!cart.length) {
-      itemsEl.innerHTML = '<p class="ih-cart-empty">Your cart is empty. <a href="/shop/">Browse the shop</a>.</p>';
+      itemsEl.innerHTML = '<p class="ih-cart-empty">' + e(T('js.empty', 'Your cart is empty.')) + ' <a href="/shop/">' + e(T('js.browse', 'Browse the shop')) + '</a>.</p>';
       summaryEl.innerHTML = '';
       return;
     }
@@ -334,22 +340,22 @@
         html += '<div class="ih-cart-item" data-sku="' + e(item.sku) + '" data-format="' + e(item.format) + '">';
         html += '<div class="ih-cart-item-title">' + e(item.title || item.sku) + '</div>';
         html += '<div class="ih-cart-item-detail">';
-        html += '<span class="ih-cart-item-format">' + e(item.format === 'print' ? 'Print' : 'Ebook') + '</span>';
-        if (item.preorder) html += ' <span class="ih-cart-item-preorder">' + (item.format === 'ebook' ? 'Preorder — emailed on release day' : 'Preorder — ships on release') + '</span>';
+        html += '<span class="ih-cart-item-format">' + e(item.format === 'print' ? T('js.print', 'Print') : T('js.ebook', 'Ebook')) + '</span>';
+        if (item.preorder) html += ' <span class="ih-cart-item-preorder">' + e(item.format === 'ebook' ? T('js.pre_email', 'Preorder — emailed on release day') : T('js.pre_ship', 'Preorder — ships on release')) + '</span>';
         html += '</div>';
 
         if (item.format === 'print') {
           html += '<div class="ih-cart-qty-ctrl">';
-          html += '<button class="ih-cart-qty-btn ih-cart-qty-dec" aria-label="Decrease">−</button>';
+          html += '<button class="ih-cart-qty-btn ih-cart-qty-dec" aria-label="' + e(T('js.decrease', 'Decrease')) + '">−</button>';
           html += '<span class="ih-cart-qty-val">' + item.quantity + '</span>';
-          html += '<button class="ih-cart-qty-btn ih-cart-qty-inc" aria-label="Increase">+</button>';
+          html += '<button class="ih-cart-qty-btn ih-cart-qty-inc" aria-label="' + e(T('js.increase', 'Increase')) + '">+</button>';
           html += '</div>';
         } else {
           html += '<div class="ih-cart-qty-ctrl"><span class="ih-cart-qty-val">1</span></div>';
         }
 
         html += '<div class="ih-cart-line-price">' + formatCents(lineTotal) + '</div>';
-        html += '<button class="ih-cart-remove" aria-label="Remove">Remove</button>';
+        html += '<button class="ih-cart-remove" aria-label="' + e(T('js.remove', 'Remove')) + '">' + e(T('js.remove', 'Remove')) + '</button>';
         html += '</div>';
       }
 
@@ -357,16 +363,16 @@
 
       // Shipping calc
       var shippingCents = hasPrint ? (400 + (printQty - 1) * 100) : 0;
-      var shippingText = hasPrint ? formatCents(shippingCents) : 'Free';
+      var shippingText = hasPrint ? formatCents(shippingCents) : T('js.free', 'Free');
 
       var sumHtml = '';
-      sumHtml += '<div class="ih-cart-subtotal">Subtotal: ' + formatCents(subtotal) + '</div>';
-      sumHtml += '<div class="ih-cart-shipping">Shipping: ' + shippingText + '</div>';
-      sumHtml += '<div class="ih-cart-total"><strong>Total: ' + formatCents(subtotal + (hasPrint ? shippingCents : 0)) + '</strong></div>';
+      sumHtml += '<div class="ih-cart-subtotal">' + e(T('js.subtotal', 'Subtotal:')) + ' ' + formatCents(subtotal) + '</div>';
+      sumHtml += '<div class="ih-cart-shipping">' + e(T('js.shipping', 'Shipping:')) + ' ' + shippingText + '</div>';
+      sumHtml += '<div class="ih-cart-total"><strong>' + e(T('js.total', 'Total:')) + ' ' + formatCents(subtotal + (hasPrint ? shippingCents : 0)) + '</strong></div>';
       if (hasPrint) {
-        sumHtml += '<p class="ih-cart-note">Ships to U.S. addresses only. $4 for the first book, $1 for each additional.</p>';
+        sumHtml += '<p class="ih-cart-note">' + e(T('js.cart_note', 'Ships to U.S. addresses only. $4 for the first book, $1 for each additional.')) + '</p>';
       }
-      sumHtml += '<button class="ih-cart-checkout-btn ih-sub-btn-print" id="ih-checkout-btn">Checkout</button>';
+      sumHtml += '<button class="ih-cart-checkout-btn ih-sub-btn-print" id="ih-checkout-btn">' + e(T('js.checkout', 'Checkout')) + '</button>';
       summaryEl.innerHTML = sumHtml;
 
       // Attach events
@@ -375,7 +381,7 @@
       document.getElementById('ih-checkout-btn').addEventListener('click', function () {
         var btn = this;
         btn.disabled = true;
-        btn.textContent = 'Loading\u2026';
+        btn.textContent = T('js.loading', 'Loading…');
 
         var items = cart.map(function (item) {
           return { sku: item.sku, format: item.format, quantity: item.quantity };
@@ -392,18 +398,18 @@
               window.location.href = data.url;
             } else {
               btn.disabled = false;
-              btn.textContent = 'Checkout';
-              alert('Checkout error: ' + (data.error || 'Please try again.'));
+              btn.textContent = T('js.checkout', 'Checkout');
+              alert(T('js.checkout_error', 'Checkout error: {error}', { error: data.error || T('js.try_again', 'Please try again.') }));
             }
           })
           .catch(function () {
             btn.disabled = false;
-            btn.textContent = 'Checkout';
-            alert('Unable to connect to shop. Please try again.');
+            btn.textContent = T('js.checkout', 'Checkout');
+            alert(T('js.connect_error', 'Unable to connect to shop. Please try again.'));
           });
       });
     }).catch(function () {
-      itemsEl.innerHTML = '<p>Unable to load product prices. Please refresh.</p>';
+      itemsEl.innerHTML = '<p>' + e(T('js.price_error', 'Unable to load product prices. Please refresh.')) + '</p>';
     });
   }
 
@@ -454,13 +460,13 @@
         if (!prod || !prod.formats || !prod.formats.length) return;
         if (heroPriceEl) {
           var parts = prod.formats.map(function (fmt) {
-            return (fmt.format === 'print' ? 'Print' : 'Ebook') + ' ' + formatCents(fmt.price_cents);
+            return (fmt.format === 'print' ? T('js.print', 'Print') : T('js.ebook', 'Ebook')) + ' ' + formatCents(fmt.price_cents);
           });
           heroPriceEl.textContent = parts.join(' \u00b7 ');
           heroPriceEl.style.display = 'block';
         }
         var isPreorder = prod.formats.some(function (fmt) { return fmt.preorder; });
-        heroBuyBtn.textContent = isPreorder ? 'Preorder this issue' : 'Buy this issue';
+        heroBuyBtn.textContent = isPreorder ? T('js.pre_issue', 'Preorder this issue') : T('js.buy_issue', 'Buy this issue');
       }).catch(function () { /* keep "See this issue" */ });
     }
   }
@@ -472,22 +478,22 @@
     var orderEl = document.getElementById('ih-order-complete');
 
     if (!sessionId) {
-      orderEl.innerHTML = '<h1 class="ih-order-complete-heading">No order to show</h1><p class="ih-order-complete-intro">This page shows your receipt right after you pay. If you just paid, check your email for the confirmation; if you did not, <a href="/shop/cart/">your cart</a> or <a href="/shop/">the shop</a> is the place to start. Questions? <a href="mailto:hello@inkhorn.press">hello@inkhorn.press</a>.</p>';
+      orderEl.innerHTML = '<h1 class="ih-order-complete-heading">' + e(T('js.noorder_h', 'No order to show')) + '</h1><p class="ih-order-complete-intro">' + T('js.noorder', 'This page shows your receipt right after you pay. If you just paid, check your email for the confirmation; if you did not, <a href="/shop/cart/">your cart</a> or <a href="/shop/">the shop</a> is the place to start. Questions? <a href="mailto:hello@inkhorn.press">hello@inkhorn.press</a>.') + '</p>';
     } else {
-      orderEl.innerHTML = '<h1 class="ih-order-complete-heading">Order Complete</h1><p>Loading your order&hellip;</p>';
+      orderEl.innerHTML = '<h1 class="ih-order-complete-heading">' + e(T('js.complete', 'Order Complete')) + '</h1><p>' + e(T('js.loading_order', 'Loading your order…')) + '</p>';
 
       fetch(SHOP_SERVICE_URL + '/order?session_id=' + encodeURIComponent(sessionId))
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.error) {
-            orderEl.innerHTML = '<h1 class="ih-order-complete-heading">Order Complete</h1>' +
-              '<p>Thank you for your order! Check your email for confirmation.</p>';
+            orderEl.innerHTML = '<h1 class="ih-order-complete-heading">' + e(T('js.complete', 'Order Complete')) + '</h1>' +
+              '<p>' + e(T('js.thanks_check', 'Thank you for your order! Check your email for confirmation.')) + '</p>';
             saveCart([]);
             return;
           }
 
-          var html = '<h1 class="ih-order-complete-heading">Thank you!</h1>';
-          html += '<p class="ih-order-complete-intro">Your order has been placed. A confirmation has been sent to your email.</p>';
+          var html = '<h1 class="ih-order-complete-heading">' + e(T('js.thanks_h', 'Thank you!')) + '</h1>';
+          html += '<p class="ih-order-complete-intro">' + e(T('js.thanks_p', 'Your order has been placed. A confirmation has been sent to your email.')) + '</p>';
           html += '<div class="ih-order-items">';
 
           for (var i = 0; i < (data.items || []).length; i++) {
@@ -495,15 +501,15 @@
             html += '<div class="ih-order-item">';
             html += '<div class="ih-order-item-name">' + e(item.name) + ' (' + e(item.format) + ')';
             if (item.preorder) {
-              var preorderMsg = item.format === 'ebook' ? 'Preorder' : 'Preorder — ships on release';
+              var preorderMsg = e(item.format === 'ebook' ? T('js.preorder', 'Preorder') : T('js.pre_ship', 'Preorder — ships on release'));
               html += ' <span class="ih-order-preorder">' + preorderMsg + '</span>';
             }
             html += '</div>';
-            if (item.quantity > 1) html += '<div class="ih-order-item-qty">Qty: ' + item.quantity + '</div>';
+            if (item.quantity > 1) html += '<div class="ih-order-item-qty">' + e(T('js.qty_n', 'Qty: {n}', { n: item.quantity })) + '</div>';
             if (item.format === 'ebook') {
               var note = item.delivery === 'on_release' && item.release_label
-                ? 'Your ebook will be emailed to you on ' + item.release_label + '.'
-                : 'Your download link is being emailed to you.';
+                ? T('js.ebook_on', 'Your ebook will be emailed to you on {date}.', { date: item.release_label })
+                : T('js.ebook_now', 'Your download link is being emailed to you.');
               html += '<div class="ih-order-item-qty">' + e(note) + '</div>';
             }
             html += '</div>';
@@ -512,17 +518,17 @@
           html += '</div>';
 
           if (data.total_cents) {
-            html += '<div class="ih-order-total">Total: ' + formatCents(data.total_cents) + '</div>';
+            html += '<div class="ih-order-total">' + e(T('js.total', 'Total:')) + ' ' + formatCents(data.total_cents) + '</div>';
           }
 
-          html += '<p class="ih-order-continue"><a href="/">Continue reading &rarr;</a></p>';
+          html += '<p class="ih-order-continue"><a href="/">' + e(T('js.continue', 'Continue reading')) + ' &rarr;</a></p>';
 
           orderEl.innerHTML = html;
           saveCart([]);
         })
         .catch(function () {
-          orderEl.innerHTML = '<h1 class="ih-order-complete-heading">Order Complete</h1>' +
-            '<p>Thank you for your order! A confirmation email is on its way.</p>';
+          orderEl.innerHTML = '<h1 class="ih-order-complete-heading">' + e(T('js.complete', 'Order Complete')) + '</h1>' +
+            '<p>' + e(T('js.thanks_way', 'Thank you for your order! A confirmation email is on its way.')) + '</p>';
           saveCart([]);
         });
     }

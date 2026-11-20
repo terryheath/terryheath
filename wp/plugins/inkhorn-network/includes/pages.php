@@ -16,20 +16,21 @@ function site_name_of($key) { $s = sites(); return $s[$key]['name'] ?? $key; }
 
 add_filter('pre_get_document_title', function ($t) {
   $site = site()['name']; $v = get_query_var('ih_view');
-  $names = ['shop' => 'Shop', 'cart' => 'Cart', 'order-complete' => 'Order complete', 'subscriptions' => 'Subscriptions', 'newsletter' => 'Newsletter', 'nl-confirmed' => 'Newsletter',
-    'nl-expired' => 'Newsletter', 'signin' => 'Sign in', 'account' => session_email() ? 'Account' : 'Sign in', 'help' => 'Help', 'start-here' => 'Start here'];
-  if (isset($names[$v])) { return $names[$v] . ' – ' . $site; }
-  if ($v === 'book') { $b = book_by_slug(get_query_var('ih_book_slug')); return ($b ? get_the_title($b) : 'Shop') . ' – ' . $site; }
-  if (is_404()) { return 'Page not found – ' . $site; }
-  if (is_search()) { return 'Search – ' . $site; }
+  $names = ['shop' => t('title.shop', 'Shop'), 'cart' => t('title.cart', 'Cart'), 'order-complete' => t('title.order_complete', 'Order complete'), 'subscriptions' => t('title.subscriptions', 'Subscriptions'), 'newsletter' => t('title.newsletter', 'Newsletter'), 'nl-confirmed' => t('title.newsletter', 'Newsletter'),
+    'nl-expired' => t('title.newsletter', 'Newsletter'), 'signin' => t('title.signin', 'Sign in'), 'account' => session_email() ? t('title.account', 'Account') : t('title.signin', 'Sign in'), 'help' => t('title.help', 'Help'), 'start-here' => t('title.start', 'Start here')];
+  $sep = t('title.sep', ' – ');
+  if (isset($names[$v])) { return $names[$v] . $sep . $site; }
+  if ($v === 'book') { $b = book_by_slug(get_query_var('ih_book_slug')); return ($b ? get_the_title($b) : t('title.shop', 'Shop')) . $sep . $site; }
+  if (is_404()) { return t('title.404', 'Page not found') . $sep . $site; }
+  if (is_search()) { return t('title.search', 'Search') . $sep . $site; }
   if (is_front_page() || is_home()) { return $site; }
-  if (is_post_type_archive('ih_contributor')) { return 'Contributors – ' . $site; }
-  if (is_post_type_archive('ih_episode')) { return 'Episodes – ' . $site; }
-  if (is_post_type_archive('ih_guest')) { return 'Guests – ' . $site; }
-  if (is_post_type_archive('ih_issue')) { return 'Archive – ' . $site; }
-  if (is_post_type_archive('ih_book')) { return 'Books – ' . $site; }
-  if (is_tax('ih_genre')) { return single_term_title('', false) . ' – ' . $site; }
-  if (is_singular()) { return get_the_title() . ' – ' . $site; }
+  if (is_post_type_archive('ih_contributor')) { return t('title.contributors', 'Contributors') . $sep . $site; }
+  if (is_post_type_archive('ih_episode')) { return t('title.episodes', 'Episodes') . $sep . $site; }
+  if (is_post_type_archive('ih_guest')) { return t('title.guests', 'Guests') . $sep . $site; }
+  if (is_post_type_archive('ih_issue')) { return t('title.archive', 'Archive') . $sep . $site; }
+  if (is_post_type_archive('ih_book')) { return t('title.books', 'Books') . $sep . $site; }
+  if (is_tax('ih_genre')) { return single_term_title('', false) . $sep . $site; }
+  if (is_singular()) { return get_the_title() . $sep . $site; }
   return $site;
 }, 99);
 
@@ -86,13 +87,13 @@ add_action('transition_post_status', function ($new, $old, $post) { if ($post->p
 function search_scope_keys() { return ['hub', 'review', 'whiterabbit', 'terryheath', 'lifeonwords']; } // one search across the whole family
 function result_type($p) {
   switch ($p->post_type) {
-    case 'ih_piece': $g = piece_genre($p); $map = ['poetry' => 'Poem', 'fiction' => 'Story', 'nonfiction' => 'Essay', 'art' => 'Art', 'micro' => 'Micro']; return $g ? ($map[$g->slug] ?? $g->name) : 'Piece';
-    case 'ih_issue': return 'Issue';
-    case 'ih_contributor': return 'Contributor';
-    case 'ih_episode': return 'Episode';
-    case 'ih_guest': return 'Guest';
-    case 'ih_book': return 'Product';
-    case 'post': return 'Essay';
+    case 'ih_piece': $g = piece_genre($p); $map = ['poetry' => t('search.type_poem', 'Poem'), 'fiction' => t('search.type_story', 'Story'), 'nonfiction' => t('search.type_essay', 'Essay'), 'art' => t('search.type_art', 'Art'), 'micro' => t('search.type_micro', 'Micro')]; return $g ? ($map[$g->slug] ?? $g->name) : t('search.type_piece', 'Piece');
+    case 'ih_issue': return t('search.type_issue', 'Issue');
+    case 'ih_contributor': return t('search.type_contributor', 'Contributor');
+    case 'ih_episode': return t('search.type_episode', 'Episode');
+    case 'ih_guest': return t('search.type_guest', 'Guest');
+    case 'ih_book': return t('search.type_product', 'Product');
+    case 'post': return t('search.type_essay', 'Essay');
   }
   return '';
 }
@@ -134,15 +135,15 @@ function search_results($q) {
 
 function view_search() {
   $q = trim((string) get_search_query());
-  $h = '<main class="ih-main"><h1 class="ih-h1">Search</h1><form role="search" class="ih-form" method="get" action="' . a(home_url('/')) . '"><div class="ih-row"><label class="ih-sr" for="ih-s">Search</label>'
-     . '<input id="ih-s" type="search" name="s" value="' . a($q) . '"><button class="ih-btn" type="submit">Search</button></div></form>';
+  $h = '<main class="ih-main"><h1 class="ih-h1">' . tx('search.heading', 'Search') . '</h1><form role="search" class="ih-form" method="get" action="' . a(home_url('/')) . '"><div class="ih-row"><label class="ih-sr" for="ih-s">' . tx('search.label', 'Search') . '</label>'
+     . '<input id="ih-s" type="search" name="s" value="' . a($q) . '"><button class="ih-btn" type="submit">' . tx('search.button', 'Search') . '</button></div></form>';
   if ($q === '') { return $h . '</main>'; }
   $res = search_results($q);
   $h .= '<ul class="ih-results">';
   foreach ($res as $r) {
     $h .= '<li><a href="' . a($r['url']) . '"><span class="ih-pt">' . e($r['title']) . '</span><span class="ih-pa">' . e($r['type'] . ' · ' . $r['pub']) . '</span>' . ($r['line'] !== '' ? '<span class="ih-pl">' . e($r['line']) . '</span>' : '') . '</a></li>';
   }
-  if (!$res) { $h .= '<li class="ih-sub">Nothing found.</li>'; }
+  if (!$res) { $h .= '<li class="ih-sub">' . tx('search.none', 'Nothing found.') . '</li>'; }
   return $h . '</ul></main>';
 }
 
@@ -150,11 +151,11 @@ function view_search() {
 
 function view_archive() {
   $q = get_posts(['post_type' => 'ih_issue', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']);
-  $h = '<main class="ih-main"><h1 class="ih-h1">Archive</h1><div class="ih-grid ih-archive">';
+  $h = '<main class="ih-main"><h1 class="ih-h1">' . tx('archive.heading', 'Archive') . '</h1><div class="ih-grid ih-archive">';
   foreach ($q as $i) {
     $rel = m($i->ID, 'ih_release'); if ($rel && strtotime($rel) > time()) { continue; } // not out yet
     $label = m($i->ID, 'ih_label') ?: get_the_title($i);
-    $h .= '<div class="ih-gi"><a href="' . a(get_permalink($i)) . '" aria-label="' . a($label) . '">' . (get_the_post_thumbnail_url($i, 'medium') ? cover($i, 'Cover of ' . $label) : '<div class="ih-cover ih-cover-e" aria-hidden="true"></div>') . '</a><h3><a href="' . a(get_permalink($i)) . '">' . e($label) . '</a></h3></div>';
+    $h .= '<div class="ih-gi"><a href="' . a(get_permalink($i)) . '" aria-label="' . a($label) . '">' . (get_the_post_thumbnail_url($i, 'medium') ? cover($i, t('issue.cover_alt', 'Cover of {label}', ['label' => $label])) : '<div class="ih-cover ih-cover-e" aria-hidden="true"></div>') . '</a><h3><a href="' . a(get_permalink($i)) . '">' . e($label) . '</a></h3></div>';
   }
   return $h . '</div></main>';
 }
@@ -199,22 +200,21 @@ function view_podcast_home() {
   $h = '<main class="ih-main ih-low">';
   if ($latest) {
     $g = guest_of($latest); $img = guest_headshot($g, 'large');
-    $meta = 'Latest episode' . (m($latest->ID, 'ih_number') ? ' · Episode ' . m($latest->ID, 'ih_number') : '') . (episode_len($latest) ? ' · ' . episode_len($latest) : '');
-    $h .= '<section class="ih-low-latest" aria-label="Latest episode">' . ($img ? '<img class="ih-headshot ih-headshot-l" src="' . a($img) . '" alt="Headshot of ' . a($g ? get_the_title($g) : '') . '" width="360" height="360">' : '<div class="ih-headshot ih-headshot-l ih-headshot-e" role="img" aria-label="' . a($g ? get_the_title($g) : '') . '"></div>')
+    $meta = t('low.latest', 'Latest episode') . (m($latest->ID, 'ih_number') ? ' · ' . t('low.episode', 'Episode') . ' ' . m($latest->ID, 'ih_number') : '') . (episode_len($latest) ? ' · ' . episode_len($latest) : '');
+    $h .= '<section class="ih-low-latest" aria-label="' . ta('low.latest_aria', 'Latest episode') . '">' . ($img ? '<img class="ih-headshot ih-headshot-l" src="' . a($img) . '" alt="' . ta('low.headshot', 'Headshot of {name}', ['name' => $g ? get_the_title($g) : '']) . '" width="360" height="360">' : '<div class="ih-headshot ih-headshot-l ih-headshot-e" role="img" aria-label="' . a($g ? get_the_title($g) : '') . '"></div>')
       . '<div><p class="ih-label">' . e($meta) . '</p><h1 class="ih-h1-xl ih-low-h1">' . e($g ? get_the_title($g) : get_the_title($latest)) . '</h1><p class="ih-folio-line">' . e(episode_title_part($latest)) . '</p>'
-      . '<div class="ih-btns">' . (episode_audio($latest) ? '<button type="button" class="ih-btn ih-play" data-ih-audio="' . a(episode_audio($latest)) . '">&#9654;&#xFE0E;&nbsp; Play episode</button>' : '') . '<a class="ih-btn" href="' . a(get_permalink($latest)) . '#transcript">Transcript</a></div>'
-      . '<p class="ih-listen">Listen on <a href="' . a(LOW_APPLE) . '">Apple Podcasts</a> · <a href="' . a(LOW_SPOTIFY) . '">Spotify</a> · <a href="' . a(feed_url_low()) . '">RSS</a></p></div></section>';
+      . '<div class="ih-btns">' . (episode_audio($latest) ? '<button type="button" class="ih-btn ih-play" data-ih-audio="' . a(episode_audio($latest)) . '">&#9654;&#xFE0E;&nbsp; ' . tx('low.play', 'Play episode') . '</button>' : '') . '<a class="ih-btn" href="' . a(get_permalink($latest)) . '#transcript">' . tx('low.transcript', 'Transcript') . '</a></div>'
+      . '<p class="ih-listen">' . tx('low.listen_on', 'Listen on') . ' <a href="' . a(LOW_APPLE) . '">' . tx('low.apple', 'Apple Podcasts') . '</a> · <a href="' . a(LOW_SPOTIFY) . '">' . tx('low.spotify', 'Spotify') . '</a> · <a href="' . a(feed_url_low()) . '">' . tx('low.rss', 'RSS') . '</a></p></div></section>';
   }
-  $h .= '<section aria-label="Recent episodes" class="ih-low-recent"><div class="ih-low-rh"><h2 class="ih-h2">Recent episodes</h2><a class="ih-link" href="' . a(home_url('/episodes/')) . '">All episodes &rarr;</a></div><ul class="ih-ep-list">';
+  $h .= '<section aria-label="' . ta('low.recent', 'Recent episodes') . '" class="ih-low-recent"><div class="ih-low-rh"><h2 class="ih-h2">' . tx('low.recent', 'Recent episodes') . '</h2><a class="ih-link" href="' . a(home_url('/episodes/')) . '">' . tx('low.all', 'All episodes') . ' &rarr;</a></div><ul class="ih-ep-list">';
   foreach (array_slice($eps, 1, 6) as $p) {
     $g = guest_of($p); $im = guest_headshot($g, 'thumbnail');
     $h .= '<li><a class="ih-ep-row" href="' . a(get_permalink($p)) . '">' . ($im ? '<img class="ih-headshot" src="' . a($im) . '" alt="" width="64" height="64">' : '<span class="ih-headshot ih-headshot-e" aria-hidden="true"></span>')
-      . '<span><span class="ih-ep-g">' . e($g ? get_the_title($g) : get_the_title($p)) . '</span><span class="ih-ep-t">' . e(episode_title_part($p)) . '</span></span><span class="ih-pa">' . e(m($p->ID, 'ih_number') ? 'Episode ' . m($p->ID, 'ih_number') : get_the_date('M j, Y', $p)) . '</span></a></li>';
+      . '<span><span class="ih-ep-g">' . e($g ? get_the_title($g) : get_the_title($p)) . '</span><span class="ih-ep-t">' . e(episode_title_part($p)) . '</span></span><span class="ih-pa">' . e(m($p->ID, 'ih_number') ? t('low.episode', 'Episode') . ' ' . m($p->ID, 'ih_number') : get_the_date('M j, Y', $p)) . '</span></a></li>';
   }
   $h .= '</ul></section>';
-  $about = get_page_by_path('about');
-  $h .= '<section aria-label="About the show" class="ih-low-about"><h2 class="ih-h2">About the show</h2><div>' . '<p class="ih-note" style="margin:0">Terry Heath talks at length with novelists, poets, playwrights, songwriters and publishers. The guests are the experts. Terry is the guide.</p>'
-     . '<p class="ih-sub"><a class="ih-link" href="' . a(pub_url('terryheath', 'podcast/guests/')) . '">Suggest a guest &rarr;</a></p></div></section>';
+  $h .= '<section aria-label="' . ta('low.about_aria', 'About the show') . '" class="ih-low-about"><h2 class="ih-h2">' . tx('low.about', 'About the show') . '</h2><div>' . '<p class="ih-note" style="margin:0">' . tx('low.about_text', 'Terry Heath talks at length with novelists, poets, playwrights, songwriters and publishers. The guests are the experts. Terry is the guide.') . '</p>'
+     . '<p class="ih-sub"><a class="ih-link" href="' . a(pub_url('terryheath', 'podcast/guests/')) . '">' . tx('low.suggest', 'Suggest a guest') . ' &rarr;</a></p></div></section>';
   return $h . signup() . '</main>';
 }
 
@@ -223,14 +223,14 @@ function view_podcast_home() {
 function view_author_home() {
   $posts = get_posts(['post_type' => 'post', 'numberposts' => 13, 'post_status' => 'publish']);
   $posts = array_values(array_filter($posts, function ($p) { return $p->post_name !== 'hello-world'; }));
-  $h = '<div class="ih-th-banner"><img src="' . a(img_url('th-Your-paragraph-text--12--4.png')) . '" alt="Woodcut-style illustration: a white rabbit with a monocle and a teapot sits at the edge of rolling fields and pines under a striped sky" width="2000" height="1125" style="aspect-ratio:1200/520;object-fit:cover;object-position:center 60%"></div><main class="ih-main ih-th">';
+  $h = '<div class="ih-th-banner"><img src="' . a(img_url('th-Your-paragraph-text--12--4.png')) . '" alt="' . ta('author.banner_alt', 'Woodcut-style illustration: a white rabbit with a monocle and a teapot sits at the edge of rolling fields and pines under a striped sky') . '" width="2000" height="1125" style="aspect-ratio:1200/520;object-fit:cover;object-position:center 60%"></div><main class="ih-main ih-th">';
   if ($posts) {
     $l = $posts[0]; $rest = array_slice($posts, 1, 5);
-    $h .= '<section class="ih-th-top" aria-label="Latest essay"><div class="ih-th-latest"><p class="ih-label">Latest essay · ' . e(get_the_date('F j, Y', $l)) . '</p><h1 class="ih-th-h1"><a href="' . a(get_permalink($l)) . '" style="color:var(--ih-ink)">' . e(get_the_title($l)) . '</a></h1>';
+    $h .= '<section class="ih-th-top" aria-label="' . ta('author.latest_aria', 'Latest essay') . '"><div class="ih-th-latest"><p class="ih-label">' . tx('author.latest', 'Latest essay') . ' · ' . e(get_the_date('F j, Y', $l)) . '</p><h1 class="ih-th-h1"><a href="' . a(get_permalink($l)) . '" style="color:var(--ih-ink)">' . e(get_the_title($l)) . '</a></h1>';
     $line = lead_line($l); if ($line !== '') { $h .= '<p class="ih-folio-line">' . e($line) . '</p>'; }
-    $h .= '<p class="ih-all"><a href="' . a(get_permalink($l)) . '">Read the essay &rarr;</a></p></div>';
+    $h .= '<p class="ih-all"><a href="' . a(get_permalink($l)) . '">' . tx('author.read', 'Read the essay') . ' &rarr;</a></p></div>';
     if ($rest) {
-      $h .= '<div class="ih-th-more" aria-label="More writing"><p class="ih-label" style="color:var(--ih-mute)">More writing</p><ul class="ih-list" style="margin-top:12px">';
+      $h .= '<div class="ih-th-more" aria-label="' . ta('author.more', 'More writing') . '"><p class="ih-label" style="color:var(--ih-mute)">' . tx('author.more', 'More writing') . '</p><ul class="ih-list" style="margin-top:12px">';
       foreach ($rest as $p) { $h .= '<li><a href="' . a(get_permalink($p)) . '"><span class="ih-pt">' . e(get_the_title($p)) . '</span><span class="ih-pa" style="display:block">' . e(get_the_date('F j, Y', $p)) . '</span></a></li>'; }
       $h .= '</ul></div>';
     }
@@ -244,17 +244,17 @@ function view_author_home() {
     $low = pub_url('lifeonwords');
     restore_current_blog();
     if ($cards) {
-      $h .= '<section class="ih-th-low" aria-label="Life on Words"><div class="ih-low-rh"><h2 class="ih-h2">From Life on Words</h2><a class="ih-link" href="' . a($low) . '">All episodes at lifeonwords.com &rarr;</a></div><div class="ih-grid ih-th-eps">';
+      $h .= '<section class="ih-th-low" aria-label="' . ta('author.low_aria', 'Life on Words') . '"><div class="ih-low-rh"><h2 class="ih-h2">' . tx('author.low', 'From Life on Words') . '</h2><a class="ih-link" href="' . a($low) . '">' . tx('author.low_all', 'All episodes at lifeonwords.com') . ' &rarr;</a></div><div class="ih-grid ih-th-eps">';
       foreach ($cards as $c) {
-        $h .= '<a class="ih-ep-card" href="' . a($c['url']) . '"><span class="ih-label" style="display:block">Life on Words</span><span class="ih-pt" style="display:block;margin-top:10px;font-size:26px">' . e($c['guest']) . '</span><span class="ih-it" style="display:block;margin-top:6px">' . e($c['title']) . '</span><span class="ih-listen-l">Listen &rarr;</span></a>';
+        $h .= '<a class="ih-ep-card" href="' . a($c['url']) . '"><span class="ih-label" style="display:block">' . tx('author.low_card', 'Life on Words') . '</span><span class="ih-pt" style="display:block;margin-top:10px;font-size:26px">' . e($c['guest']) . '</span><span class="ih-it" style="display:block;margin-top:6px">' . e($c['title']) . '</span><span class="ih-listen-l">' . tx('author.listen', 'Listen') . ' &rarr;</span></a>';
       }
       $h .= '</div></section>';
     }
   }
   $books = get_posts(['post_type' => 'ih_book', 'numberposts' => 6, 'post_status' => 'publish']);
   if ($books) {
-    $h .= '<section aria-label="Books" class="ih-th-books"><h2 class="ih-h2">Books</h2><div class="ih-grid">';
-    foreach ($books as $b) { $h .= '<div class="ih-gi"><a href="' . a(get_permalink($b)) . '">' . cover($b, 'Cover of ' . get_the_title($b)) . '</a><h3><a href="' . a(get_permalink($b)) . '">' . e(get_the_title($b)) . '</a></h3></div>'; }
+    $h .= '<section aria-label="' . ta('author.books', 'Books') . '" class="ih-th-books"><h2 class="ih-h2">' . tx('author.books', 'Books') . '</h2><div class="ih-grid">';
+    foreach ($books as $b) { $h .= '<div class="ih-gi"><a href="' . a(get_permalink($b)) . '">' . cover($b, t('strip.cover', 'Cover of {title}', ['title' => get_the_title($b)])) . '</a><h3><a href="' . a(get_permalink($b)) . '">' . e(get_the_title($b)) . '</a></h3></div>'; }
     $h .= '</div></section>';
   }
   return $h . signup() . '</main>';
@@ -264,8 +264,8 @@ function view_author_home() {
 
 function view_guest($g) {
   $img = guest_headshot($g, 'medium');
-  $h = '<main class="ih-main ih-contrib"><div class="ih-contrib-h">' . ($img ? '<img class="ih-headshot" src="' . a($img) . '" alt="Portrait of ' . a(get_the_title($g)) . '" width="160" height="160">' : '') . '<div><h1>' . e(get_the_title($g)) . '</h1>'
-     . (m($g->ID, 'ih_bio') ? '<p class="ih-bio">' . e(m($g->ID, 'ih_bio')) . '</p>' : '') . '</div></div><section><h2>Episodes</h2><ul class="ih-list">';
+  $h = '<main class="ih-main ih-contrib"><div class="ih-contrib-h">' . ($img ? '<img class="ih-headshot" src="' . a($img) . '" alt="' . ta('contrib.portrait', 'Portrait of {name}', ['name' => get_the_title($g)]) . '" width="160" height="160">' : '') . '<div><h1>' . e(get_the_title($g)) . '</h1>'
+     . (m($g->ID, 'ih_bio') ? '<p class="ih-bio">' . e(m($g->ID, 'ih_bio')) . '</p>' : '') . '</div></div><section><h2>' . tx('guest.episodes', 'Episodes') . '</h2><ul class="ih-list">';
   foreach (get_posts(['post_type' => 'ih_episode', 'numberposts' => -1, 'post_status' => 'publish', 'meta_key' => 'ih_guest_id', 'meta_value' => $g->ID]) as $p) { $h .= '<li><a href="' . a(get_permalink($p)) . '"><span class="ih-pt">' . e(get_the_title($p)) . '</span><span class="ih-pa">' . e(get_the_date('', $p)) . '</span></a></li>'; }
   return $h . '</ul></section></main>';
 }
@@ -287,13 +287,13 @@ add_action('rest_api_init', function () {
   register_rest_route('inkhorn/v1', '/newsletter-manage', ['methods' => 'POST', 'permission_callback' => '__return_true', 'callback' => function (\WP_REST_Request $r) {
     $email = sanitize_email((string) $r->get_param('email'));
     $ip = md5((string) ($_SERVER['REMOTE_ADDR'] ?? '')); $k = 'ih_mg_' . $ip; $n = (int) get_transient($k);
-    if ($n >= 6) { return new \WP_REST_Response(['ok' => false, 'message' => 'Too many requests from this connection. Please try again in an hour.'], 429); }
+    if ($n >= 6) { return new \WP_REST_Response(['ok' => false, 'message' => t('msg.toomany', 'Too many requests from this connection. Please try again in an hour.')], 429); }
     set_transient($k, $n + 1, HOUR_IN_SECONDS);
-    if (!is_email($email)) { return new \WP_REST_Response(['ok' => false, 'message' => 'Please enter a valid email address.'], 400); }
+    if (!is_email($email)) { return new \WP_REST_Response(['ok' => false, 'message' => t('msg.bademail', 'Please enter a valid email address.')], 400); }
     $d = lm('GET', '/subscribers?per_page=1&query=' . rawurlencode("subscribers.email = '" . str_replace("'", "''", $email) . "'"));
     $sub = $d['results'][0] ?? null;
-    if ($sub) { $u = add_query_arg('id', $sub['uuid'], hub_url('newsletter/')); wp_mail($email, 'Your newsletter preferences', "Hello,\n\nUse this link to choose your lists:\n\n$u\n\nIf you did not ask for it, ignore this email.\n\nInkhorn Press"); }
-    return ['ok' => true, 'message' => 'If that address is on a list, a link is on its way.']; // the same answer whether or not it is
+    if ($sub) { $u = add_query_arg('id', $sub['uuid'], hub_url('newsletter/')); wp_mail($email, t('email.prefs_subject', 'Your newsletter preferences'), t('email.prefs_body', "Hello,\n\nUse this link to choose your lists:\n\n{url}\n\nIf you did not ask for it, ignore this email.\n\nInkhorn Press", ['url' => $u])); }
+    return ['ok' => true, 'message' => t('msg.manage_sent', 'If that address is on a list, a link is on its way.')]; // the same answer whether or not it is
   }]);
 });
 

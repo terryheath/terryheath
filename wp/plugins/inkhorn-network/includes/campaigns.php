@@ -18,7 +18,7 @@ add_action('transition_post_status', function ($new, $old, $post) {
   $title = get_the_title($post);
   $label = $post->post_type === 'ih_issue' ? (get_post_meta($post->ID, 'ih_label', true) ?: $title) : $title;
   $body = $post->post_type === 'post' ? apply_filters('the_content', $post->post_content)
-    : '<h1 style="font-weight:400">' . esc_html($label) . '</h1><p>' . esc_html($post->post_excerpt ?: ($post->post_type === 'ih_issue' ? 'The new issue is online.' : '')) . '</p><p><a href="' . esc_url(get_permalink($post)) . '">' . ($post->post_type === 'ih_issue' ? 'Start reading' : 'Listen') . ' &rarr;</a></p>';
+    : '<h1 style="font-weight:400">' . esc_html($label) . '</h1><p>' . esc_html($post->post_excerpt ?: ($post->post_type === 'ih_issue' ? t('email.issue_line', 'The new issue is online.') : '')) . '</p><p><a href="' . esc_url(get_permalink($post)) . '">' . ($post->post_type === 'ih_issue' ? t('email.issue_start', 'Start reading') : t('email.listen', 'Listen')) . ' &rarr;</a></p>';
   $api = function ($m, $p, $b = null) use ($u, $tok, $user) {
     $r = wp_remote_request(rtrim($u, '/') . '/api' . $p, ['method' => $m, 'timeout' => 15, 'headers' => ['Authorization' => 'token ' . $user . ':' . $tok, 'Content-Type' => 'application/json'], 'body' => $b ? wp_json_encode($b) : null]);
     return is_wp_error($r) ? null : json_decode(wp_remote_retrieve_body($r), true)['data'] ?? null;

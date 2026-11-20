@@ -66,9 +66,9 @@ add_action('rest_api_init', function () {
         $ret = esc_url_raw((string) $r->get_param('return'));
         set_transient(token_key($t), $email . '|' . ($ret && allowed_return($ret) ? $ret : ''), 15 * MINUTE_IN_SECONDS);
         $url = add_query_arg('t', $t, home_url('/signin/verify/'));
-        wp_mail($email, 'Your Inkhorn Press sign-in link', "Hello,\n\nUse this link to sign in. It works once and expires in 15 minutes:\n\n$url\n\nIf you did not ask for it, you can ignore this email.\n\nQuestions? Write to hello@inkhorn.press or see " . home_url('/help/') . "\n\nInkhorn Press");
+        wp_mail($email, t('email.signin_subject', 'Your Inkhorn Press sign-in link'), t('email.signin_body', "Hello,\n\nUse this link to sign in. It works once and expires in 15 minutes:\n\n{url}\n\nIf you did not ask for it, you can ignore this email.\n\nQuestions? Write to hello@inkhorn.press or see {help}\n\nInkhorn Press", ['url' => $url, 'help' => home_url('/help/')]));
       }
-      return ['ok' => true, 'message' => 'Check your email. We sent a link to ' . (is_email($email) ? $email : 'that address') . '.'];
+      return ['ok' => true, 'message' => t('signup.sent', 'Check your email. We sent a link to {email}.', ['email' => is_email($email) ? $email : t('signin.that_address', 'that address')])];
     },
   ]);
   // Server-to-server: create or update a contributor account from a signed agreement.
@@ -118,7 +118,7 @@ function agreements_for($email) {
 add_action('template_redirect', function () {
   if (get_query_var('ih_view') !== 'account' || $_SERVER['REQUEST_METHOD'] !== 'POST') { return; }
   $email = session_email(); if (!$email) { wp_safe_redirect(home_url('/signin/')); exit; }
-  if (!wp_verify_nonce($_POST['_n'] ?? '', 'ih_account_' . $email)) { wp_die('Please reload the page and try again.', '', 400); }
+  if (!wp_verify_nonce($_POST['_n'] ?? '', 'ih_account_' . $email)) { wp_die(esc_html(t('msg.reload', 'Please reload the page and try again.')), '', 400); }
   $do = $_POST['do'] ?? '';
   if ($do === 'portal') {
     $r = shop('POST', '/subscription/portal', ['email' => $email, 'return_url' => home_url('/account/')]);
@@ -148,11 +148,11 @@ add_action('template_redirect', function () {
 });
 
 function view_signin() {
-  $h = '<main class="ih-main"><h1 class="ih-h1">Sign in</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center">Enter your email, and we’ll send you a sign-in link. No password needed.</p>';
-  if (!empty($_GET['expired'])) { $h .= '<p class="ih-sub" style="text-align:center">That link has expired. Enter your email for a new one.</p>'; }
+  $h = '<main class="ih-main"><h1 class="ih-h1">' . tx('signin.heading', 'Sign in') . '</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center">' . tx('signin.text', 'Enter your email, and we’ll send you a sign-in link. No password needed.') . '</p>';
+  if (!empty($_GET['expired'])) { $h .= '<p class="ih-sub" style="text-align:center">' . tx('signin.expired', 'That link has expired. Enter your email for a new one.') . '</p>'; }
   $ret = esc_url_raw((string) ($_GET['return'] ?? ''));
-  return $h . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/signin')) . '" data-ih-signup>' . ($ret ? '<input type="hidden" name="return" value="' . a($ret) . '">' : '') . '<div class="ih-row"><label class="ih-sr" for="ih-si">Email address</label>'
-    . '<input id="ih-si" type="email" name="email" required autocomplete="email" placeholder="you@example.com"><button class="ih-btn" type="submit">Email me a link</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form></main>';
+  return $h . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/signin')) . '" data-ih-signup>' . ($ret ? '<input type="hidden" name="return" value="' . a($ret) . '">' : '') . '<div class="ih-row"><label class="ih-sr" for="ih-si">' . tx('signup.email', 'Email address') . '</label>'
+    . '<input id="ih-si" type="email" name="email" required autocomplete="email" placeholder="' . ta('signup.placeholder', 'you@example.com') . '"><button class="ih-btn" type="submit">' . tx('signin.button', 'Email me a link') . '</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form></main>';
 }
 
 function view_account() {
@@ -160,33 +160,33 @@ function view_account() {
   if (!$email) { return view_signin(); }
   $n = wp_create_nonce('ih_account_' . $email);
   $msg = $_GET['msg'] ?? '';
-  $h = '<main class="ih-main ih-acct"><p class="ih-back"><a href="' . a(home_url('/signin/out/')) . '">Sign out</a></p><h1 class="ih-h1" style="text-align:left">Your account</h1><p class="ih-sub" style="text-align:left">' . e($email) . '</p>';
-  if ($msg === 'pending') { $h .= '<p class="ih-note" role="status">Saved.</p>'; }
-  if ($msg === 'withdrawn') { $h .= '<p class="ih-note" role="status">Your pending changes were withdrawn. Your public profile is unchanged.</p>'; }
-  if ($msg === 'approved') { $h .= '<p class="ih-note" role="status">Your profile changes were approved and are now public.</p>'; }
-  if ($msg === 'address') { $h .= '<p class="ih-note" role="status">Your mailing address is saved.</p>'; }
-  if ($msg === 'badaddress') { $h .= '<p class="ih-note" role="alert">That address was not saved. A U.S. address needs a name, street, city, 2-letter state and 5-digit ZIP.</p>'; }
-  if ($msg === 'noportal') { $h .= '<p class="ih-note" role="status">There is no paid subscription to manage for this address.</p>'; }
+  $h = '<main class="ih-main ih-acct"><p class="ih-back"><a href="' . a(home_url('/signin/out/')) . '">' . tx('account.signout', 'Sign out') . '</a></p><h1 class="ih-h1" style="text-align:left">' . tx('account.heading', 'Your account') . '</h1><p class="ih-sub" style="text-align:left">' . e($email) . '</p>';
+  if ($msg === 'pending') { $h .= '<p class="ih-note" role="status">' . tx('account.saved', 'Saved.') . '</p>'; }
+  if ($msg === 'withdrawn') { $h .= '<p class="ih-note" role="status">' . tx('account.withdrawn', 'Your pending changes were withdrawn. Your public profile is unchanged.') . '</p>'; }
+  if ($msg === 'approved') { $h .= '<p class="ih-note" role="status">' . tx('account.approved', 'Your profile changes were approved and are now public.') . '</p>'; }
+  if ($msg === 'address') { $h .= '<p class="ih-note" role="status">' . tx('account.address_saved', 'Your mailing address is saved.') . '</p>'; }
+  if ($msg === 'badaddress') { $h .= '<p class="ih-note" role="alert">' . tx('account.address_bad', 'That address was not saved. A U.S. address needs a name, street, city, 2-letter state and 5-digit ZIP.') . '</p>'; }
+  if ($msg === 'noportal') { $h .= '<p class="ih-note" role="status">' . tx('account.noportal', 'There is no paid subscription to manage for this address.') . '</p>'; }
 
   // Subscriptions (paid Ebook and Print plans, and the Print subscription taken in place of payment)
   $st = shop('GET', '/subscription/status?email=' . rawurlencode($email));
-  $h .= '<section><h2>Subscriptions</h2>';
+  $h .= '<section><h2>' . tx('account.subs', 'Subscriptions') . '</h2>';
   if ($st && $st['subscriptions']) {
     $h .= '<ul class="ih-list">';
     foreach ($st['subscriptions'] as $m) {
-      $what = ($m['publication'] === 'review' ? 'Inkhorn Review' : 'White Rabbit') . ' ' . ucfirst($m['kind']);
-      $how = $m['source'] === 'comp' ? 'Subscription taken in place of payment' : 'Paid subscription';
-      if (in_array($m['status'], ['past_due', 'unpaid'], true)) { $h .= '<li class="ih-alert" role="alert"><b>Payment failed for ' . e($what) . '.</b> Update your card under Manage billing so it keeps going.</li>'; }
-      $h .= '<li><span class="ih-pt">' . e($what) . '</span><span class="ih-pa">' . e($how) . ' · ' . e($m['status']) . ($m['until'] ? ' · through ' . e(substr($m['until'], 0, 10)) : '') . '</span></li>';
+      $what = ($m['publication'] === 'review' ? t('account.pub_review', 'Inkhorn Review') : t('account.pub_wr', 'White Rabbit')) . ' ' . ucfirst($m['kind']);
+      $how = $m['source'] === 'comp' ? t('account.sub_comp', 'Subscription taken in place of payment') : t('account.sub_paid', 'Paid subscription');
+      if (in_array($m['status'], ['past_due', 'unpaid'], true)) { $h .= '<li class="ih-alert" role="alert"><b>' . tx('account.pastdue_b', 'Payment failed for {what}.', ['what' => $what]) . '</b> ' . tx('account.pastdue', 'Update your card under Manage billing so it keeps going.') . '</li>'; }
+      $h .= '<li><span class="ih-pt">' . e($what) . '</span><span class="ih-pa">' . e($how) . ' · ' . e($m['status']) . ($m['until'] ? ' · ' . tx('account.through', 'through {date}', ['date' => substr($m['until'], 0, 10)]) : '') . '</span></li>';
     }
-    $h .= '</ul><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="portal"><p><button class="ih-btn" type="submit">Manage billing</button></p></form>';
-  } else { $h .= '<p class="ih-sub" style="text-align:left">You have no subscription yet.</p><p>' . btn(home_url('/shop/subscriptions/'), 'See subscriptions') . '</p>'; }
+    $h .= '</ul><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="portal"><p><button class="ih-btn" type="submit">' . tx('account.manage', 'Manage billing') . '</button></p></form>';
+  } else { $h .= '<p class="ih-sub" style="text-align:left">' . tx('account.nosub', 'You have no subscription yet.') . '</p><p>' . btn(home_url('/shop/subscriptions/'), t('account.see_subs', 'See subscriptions')) . '</p>'; }
   if ($st && (!empty($st['entitlements']['review_print']) || !empty($st['entitlements']['whiterabbit_print']))) {
     $ad = shop('GET', '/subscription/address?email=' . rawurlencode($email))['address'] ?? [];
     $f = function ($n, $l, $v, $req = true) { return '<p><label for="ih-' . $n . '">' . e($l) . '</label><br><input id="ih-' . $n . '" name="a_' . $n . '" value="' . a($v) . '"' . ($req ? ' required' : '') . ' style="width:100%;min-height:44px;padding:0 12px;font:inherit"></p>'; };
-    $h .= '<h3>Where we mail your Print copies</h3><p class="ih-sub" style="text-align:left">U.S. addresses only.</p><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="address">'
-      . $f('name', 'Name', $ad['name'] ?? '') . $f('line1', 'Street address', $ad['line1'] ?? '') . $f('line2', 'Apartment, suite (optional)', $ad['line2'] ?? '', false) . $f('city', 'City', $ad['city'] ?? '')
-      . $f('state', 'State (2 letters)', $ad['state'] ?? '') . $f('zip', 'ZIP code', $ad['zip'] ?? '') . '<p><button class="ih-btn" type="submit">Save address</button></p></form>';
+    $h .= '<h3>' . tx('account.mail_h', 'Where we mail your Print copies') . '</h3><p class="ih-sub" style="text-align:left">' . tx('account.mail_note', 'U.S. addresses only.') . '</p><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="address">'
+      . $f('name', t('account.a_name', 'Name'), $ad['name'] ?? '') . $f('line1', t('account.a_line1', 'Street address'), $ad['line1'] ?? '') . $f('line2', t('account.a_line2', 'Apartment, suite (optional)'), $ad['line2'] ?? '', false) . $f('city', t('account.a_city', 'City'), $ad['city'] ?? '')
+      . $f('state', t('account.a_state', 'State (2 letters)'), $ad['state'] ?? '') . $f('zip', t('account.a_zip', 'ZIP code'), $ad['zip'] ?? '') . '<p><button class="ih-btn" type="submit">' . tx('account.a_save', 'Save address') . '</button></p></form>';
   }
   $h .= '</section>';
 
@@ -194,33 +194,33 @@ function view_account() {
   $c = my_contributor($email);
   if ($c) {
     $pend = get_post_meta($c->ID, 'ih_pending', true);
-    $h .= '<section><h2>Profile</h2><form method="post" enctype="multipart/form-data"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="profile">';
+    $h .= '<section><h2>' . tx('account.profile', 'Profile') . '</h2><form method="post" enctype="multipart/form-data"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="profile">';
     $img = get_post_meta($c->ID, 'ih_headshot_id', true) ? wp_get_attachment_image_url((int) get_post_meta($c->ID, 'ih_headshot_id', true), 'thumbnail') : '';
-    if ($img) { $h .= '<img class="ih-headshot" src="' . a($img) . '" alt="Your current portrait" width="96" height="96">'; }
-    $h .= '<p><label for="ih-h">Portrait (JPG or PNG)</label><br><input id="ih-h" type="file" name="headshot" accept="image/jpeg,image/png"></p>'
-        . '<p><label for="ih-b">Bio</label><br><textarea id="ih-b" name="bio" rows="5" style="width:100%;font:inherit">' . e($pend['bio'] ?? get_post_meta($c->ID, 'ih_bio', true)) . '</textarea></p>'
-        . '<p><label for="ih-u">Website</label><br><input id="ih-u" type="url" name="url" value="' . a($pend['url'] ?? get_post_meta($c->ID, 'ih_url', true)) . '" style="width:100%;min-height:44px"></p>'
-        . '<p><button class="ih-btn" type="submit">Send changes for approval</button></p></form>';
-    if ($pend) { $h .= '<div class="ih-pending" role="status"><p>The editor will review your new bio. Your current bio stays up until then.</p><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="withdraw"><button class="ih-btn ih-btn-quiet" type="submit">Withdraw change</button></form></div>'; }
+    if ($img) { $h .= '<img class="ih-headshot" src="' . a($img) . '" alt="' . ta('account.current_portrait', 'Your current portrait') . '" width="96" height="96">'; }
+    $h .= '<p><label for="ih-h">' . tx('account.portrait', 'Portrait (JPG or PNG)') . '</label><br><input id="ih-h" type="file" name="headshot" accept="image/jpeg,image/png"></p>'
+        . '<p><label for="ih-b">' . tx('account.bio', 'Bio') . '</label><br><textarea id="ih-b" name="bio" rows="5" style="width:100%;font:inherit">' . e($pend['bio'] ?? get_post_meta($c->ID, 'ih_bio', true)) . '</textarea></p>'
+        . '<p><label for="ih-u">' . tx('account.website', 'Website') . '</label><br><input id="ih-u" type="url" name="url" value="' . a($pend['url'] ?? get_post_meta($c->ID, 'ih_url', true)) . '" style="width:100%;min-height:44px"></p>'
+        . '<p><button class="ih-btn" type="submit">' . tx('account.send', 'Send changes for approval') . '</button></p></form>';
+    if ($pend) { $h .= '<div class="ih-pending" role="status"><p>' . tx('account.pending', 'The editor will review your new bio. Your current bio stays up until then.') . '</p><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="withdraw"><button class="ih-btn ih-btn-quiet" type="submit">' . tx('account.withdraw', 'Withdraw change') . '</button></form></div>'; }
     $h .= '</section>';
     $work = contributor_work($c->post_name);
-    $h .= '<section><h2>Your work</h2>';
+    $h .= '<section><h2>' . tx('account.work', 'Your work') . '</h2>';
     foreach ($work as $pub => $items) { $h .= '<h3>' . e($pub) . '</h3><ul class="ih-list">'; foreach ($items as $it) { $h .= '<li><a href="' . a($it['url']) . '"><span class="ih-pt">' . e($it['title']) . '</span><span class="ih-pa">' . e($it['issue']) . '</span></a></li>'; } $h .= '</ul>'; }
-    if (!$work) { $h .= '<p class="ih-sub" style="text-align:left">Nothing published yet.</p>'; }
+    if (!$work) { $h .= '<p class="ih-sub" style="text-align:left">' . tx('account.nowork', 'Nothing published yet.') . '</p>'; }
     $h .= '</section>';
     $ag = agreements_for($email);
-    $h .= '<section><h2>Agreements</h2>';
+    $h .= '<section><h2>' . tx('account.agreements', 'Agreements') . '</h2>';
     if ($ag && !empty($ag['agreements'])) {
       $h .= '<ul class="ih-list">';
-      foreach ($ag['agreements'] as $x) { $h .= '<li><span class="ih-pt">' . e($x['title']) . '</span><span class="ih-pa">' . e($x['publication'] . ' ' . $x['issue']) . ' · ' . ($x['signed'] ? 'signed ' . e($x['signed_at']) : 'not signed yet') . ($x['pdf'] ? ' · <a href="' . a($x['pdf']) . '">PDF</a>' : '') . '</span></li>'; }
+      foreach ($ag['agreements'] as $x) { $h .= '<li><span class="ih-pt">' . e($x['title']) . '</span><span class="ih-pa">' . e($x['publication'] . ' ' . $x['issue']) . ' · ' . ($x['signed'] ? tx('account.signed', 'signed {date}', ['date' => $x['signed_at']]) : tx('account.unsigned', 'not signed yet')) . ($x['pdf'] ? ' · <a href="' . a($x['pdf']) . '">' . tx('account.pdf', 'PDF') . '</a>' : '') . '</span></li>'; }
       $h .= '</ul>';
-    } else { $h .= '<p class="ih-sub" style="text-align:left">No agreements yet.</p>'; }
-    $h .= '</section><section><h2>Payments</h2>';
+    } else { $h .= '<p class="ih-sub" style="text-align:left">' . tx('account.noagreements', 'No agreements yet.') . '</p>'; }
+    $h .= '</section><section><h2>' . tx('account.payments', 'Payments') . '</h2>';
     if ($ag && !empty($ag['payments'])) {
       $h .= '<ul class="ih-list">';
       foreach ($ag['payments'] as $x) { $h .= '<li><span class="ih-pt">' . e($x['title']) . '</span><span class="ih-pa">' . e($x['line']) . '</span></li>'; }
       $h .= '</ul>';
-    } else { $h .= '<p class="ih-sub" style="text-align:left">No payments yet.</p>'; }
+    } else { $h .= '<p class="ih-sub" style="text-align:left">' . tx('account.nopayments', 'No payments yet.') . '</p>'; }
     $h .= '</section>';
   }
   return $h . '</main>';
@@ -263,32 +263,32 @@ add_action('template_redirect', function () {
 function view_newsletter() {
   $uuid = sanitize_text_field($_GET['id'] ?? ''); $msg = $_GET['msg'] ?? '';
   $sub = $uuid ? lm_subscriber_by_uuid($uuid) : null;
-  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Newsletter</h1>';
-  if ($msg === 'saved') { $h .= '<p class="ih-note" style="text-align:center" role="status">Saved. Your choices apply to the next email.</p>'; }
-  if ($msg === 'none') { $h .= '<p class="ih-note" style="text-align:center" role="status">You are unsubscribed from every list. You can come back any time.</p>'; }
-  if ($msg === 'nope') { $h .= '<p class="ih-note" style="text-align:center" role="alert">That link did not work. Use the link in your latest email, or sign up again below.</p>'; }
+  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">' . tx('nl.heading', 'Newsletter') . '</h1>';
+  if ($msg === 'saved') { $h .= '<p class="ih-note" style="text-align:center" role="status">' . tx('nl.saved', 'Saved. Your choices apply to the next email.') . '</p>'; }
+  if ($msg === 'none') { $h .= '<p class="ih-note" style="text-align:center" role="status">' . tx('nl.none', 'You are unsubscribed from every list. You can come back any time.') . '</p>'; }
+  if ($msg === 'nope') { $h .= '<p class="ih-note" style="text-align:center" role="alert">' . tx('nl.nope', 'That link did not work. Use the link in your latest email, or sign up again below.') . '</p>'; }
   if ($msg === 'confirmnone' && $sub) {
-    return $h . '<div class="ih-confirm" role="alertdialog" aria-labelledby="ih-cn-t"><h2 id="ih-cn-t">Unsubscribe from everything?</h2><p>You will stop getting every list from Inkhorn Press, Terry Heath and Life on Words at <b>' . e($sub['email']) . '</b>. You can sign up again any time.</p>'
-      . '<form method="post" action="' . a(home_url('/newsletter/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '"><div class="ih-btns" style="justify-content:center"><button class="ih-btn" type="submit" name="do" value="none-confirmed">Yes, unsubscribe me from all</button>'
-      . '<a class="ih-btn ih-btn-quiet" href="' . a(add_query_arg('id', $uuid, home_url('/newsletter/'))) . '">Keep my subscriptions</a></div></form></div></main>';
+    return $h . '<div class="ih-confirm" role="alertdialog" aria-labelledby="ih-cn-t"><h2 id="ih-cn-t">' . tx('nl.confirm_h', 'Unsubscribe from everything?') . '</h2><p>' . th('nl.confirm_p', 'You will stop getting every list from Inkhorn Press, Terry Heath and Life on Words at <b>{email}</b>. You can sign up again any time.', ['email' => e($sub['email'])]) . '</p>'
+      . '<form method="post" action="' . a(home_url('/newsletter/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '"><div class="ih-btns" style="justify-content:center"><button class="ih-btn" type="submit" name="do" value="none-confirmed">' . tx('nl.confirm_yes', 'Yes, unsubscribe me from all') . '</button>'
+      . '<a class="ih-btn ih-btn-quiet" href="' . a(add_query_arg('id', $uuid, home_url('/newsletter/'))) . '">' . tx('nl.confirm_keep', 'Keep my subscriptions') . '</a></div></form></div></main>';
   }
-  if (!$sub) { return $h . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-manage')) . '" data-ih-signup><div class="ih-row"><label for="ih-mg" style="flex:1 0 100%;text-align:center;font:16px Karla,sans-serif">Already signed up? Enter your email, and we’ll send a link to change your lists.</label><input id="ih-mg" type="email" name="email" required autocomplete="email" placeholder="you@example.com"><button class="ih-btn" type="submit">Email me a link</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form><p class="ih-note" style="margin:0 auto;text-align:center">New here? Pick your lists below.</p>' . signup('Your lists') . '</main>'; }
+  if (!$sub) { return $h . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-manage')) . '" data-ih-signup><div class="ih-row"><label for="ih-mg" style="flex:1 0 100%;text-align:center;font:16px Karla,sans-serif">' . tx('nl.manage', 'Already signed up? Enter your email, and we’ll send a link to change your lists.') . '</label><input id="ih-mg" type="email" name="email" required autocomplete="email" placeholder="' . ta('signup.placeholder', 'you@example.com') . '"><button class="ih-btn" type="submit">' . tx('signin.button', 'Email me a link') . '</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form><p class="ih-note" style="margin:0 auto;text-align:center">' . tx('nl.new', 'New here? Pick your lists below.') . '</p>' . signup() . '</main>'; }
   $on = []; foreach (($sub['lists'] ?? []) as $l) { if (($l['subscription_status'] ?? '') !== 'unsubscribed') { foreach (($l['tags'] ?? []) as $t) { $on[$t] = true; } } }
-  $groups = ['Inkhorn Press' => ['inkhorn-review', 'white-rabbit', 'events'], 'Terry Heath' => ['writing', 'digest', 'new-books'], 'Life on Words' => ['life-on-words']];
+  $groups = [t('nl.group_press', 'Inkhorn Press') => ['inkhorn-review', 'white-rabbit', 'events'], t('nl.group_th', 'Terry Heath') => ['writing', 'digest', 'new-books'], t('nl.group_low', 'Life on Words') => ['life-on-words']];
   $h .= '<p class="ih-sub" style="text-align:center">' . e($sub['email']) . '</p><form class="ih-form" method="post" action="' . a(home_url('/newsletter/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '">';
   foreach ($groups as $g => $slugs) {
     $h .= '<fieldset><legend style="position:static;font:500 13px Karla,sans-serif;letter-spacing:.12em;color:var(--ih-accent);margin:24px 0 8px;display:block;width:100%">' . e(strtoupper($g)) . '</legend>';
-    foreach ($slugs as $s) { $h .= '<label style="display:flex;gap:10px;min-height:44px;align-items:center"><input type="checkbox" name="lists[]" value="' . a($s) . '"' . (!empty($on[$s]) ? ' checked' : '') . '> ' . e(LIST_LABELS[$s] ?? $s) . '</label>'; }
+    foreach ($slugs as $s) { $h .= '<label style="display:flex;gap:10px;min-height:44px;align-items:center"><input type="checkbox" name="lists[]" value="' . a($s) . '"' . (!empty($on[$s]) ? ' checked' : '') . '> ' . e(list_label($s)) . '</label>'; }
     $h .= '</fieldset>';
   }
-  return $h . '<div class="ih-btns" style="justify-content:center"><button class="ih-btn" type="submit" name="do" value="save">Save my choices</button><button class="ih-btn" type="submit" name="do" value="none">Unsubscribe from all</button></div></form></main>';
+  return $h . '<div class="ih-btns" style="justify-content:center"><button class="ih-btn" type="submit" name="do" value="save">' . tx('nl.save', 'Save my choices') . '</button><button class="ih-btn" type="submit" name="do" value="none">' . tx('nl.unsub_all', 'Unsubscribe from all') . '</button></div></form></main>';
 }
 
 function view_subscriptions() {
-  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Subscriptions</h1>' . (($_GET['msg'] ?? '') === 'failed' ? '<p class="ih-note" role="alert" style="text-align:center">Your payment didn’t go through, and we didn’t charge you. Try another card, or write to hello@inkhorn.press.</p>' : '') . '<div class="ih-grid" style="max-width:760px;margin:0 auto">';
-  foreach ([['review-ebook', 'Inkhorn Review Ebook', '$20 a year', 'The ebook of each quarterly issue.'], ['review-print', 'Inkhorn Review Print', '$48 a year', 'Four printed issues a year, mailed to any U.S. address, plus the ebook of each.']] as $t) {
+  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">' . tx('shop.subs_heading', 'Subscriptions') . '</h1>' . (($_GET['msg'] ?? '') === 'failed' ? '<p class="ih-note" role="alert" style="text-align:center">' . tx('msg.payment_failed', 'Your payment didn’t go through, and we didn’t charge you. Try another card, or write to hello@inkhorn.press.') . '</p>' : '') . '<div class="ih-grid" style="max-width:760px;margin:0 auto">';
+  foreach ([['review-ebook', t('shop.sub1_name', 'Inkhorn Review Ebook'), t('shop.sub1_price', '$20 a year'), t('shop.sub1_desc', 'The ebook of each quarterly issue.')], ['review-print', t('shop.sub2_name', 'Inkhorn Review Print'), t('shop.sub2_price', '$48 a year'), t('shop.sub2_desc', 'Four printed issues a year, mailed to any U.S. address, plus the ebook of each.')]] as $t) {
     $h .= '<div class="ih-gi"><h3>' . e($t[1]) . '</h3><p>' . e($t[2]) . '</p><p>' . e($t[3]) . '</p><form method="post" action="' . a(rest_url('inkhorn/v1/subscription-checkout')) . '"><input type="hidden" name="tier" value="' . a($t[0]) . '">'
-       . '<p><label><input type="checkbox" name="wr" value="ebook"> Add White Rabbit Ebook, $7 a year</label><br><label><input type="checkbox" name="wr" value="print"> Add White Rabbit Print, $14 a year</label></p><button class="ih-btn" type="submit">Subscribe</button></form></div>';
+       . '<p><label><input type="checkbox" name="wr" value="ebook"> ' . tx('shop.wr1', 'Add White Rabbit Ebook, $7 a year') . '</label><br><label><input type="checkbox" name="wr" value="print"> ' . tx('shop.wr2', 'Add White Rabbit Print, $14 a year') . '</label></p><button class="ih-btn" type="submit">' . tx('shop.subscribe', 'Subscribe') . '</button></form></div>';
   }
   return $h . '</div></main>';
 }

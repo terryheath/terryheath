@@ -5,6 +5,10 @@ function e($s) { return esc_html((string) $s); }
 function a($s) { return esc_attr((string) $s); }
 function m($id, $k) { return get_post_meta($id, $k, true); }
 
+/** The visible name of a list (Settings > Site text can change it). */
+function list_label($slug) { $d = LIST_LABELS[$slug] ?? $slug; return t('list.' . $slug, $d); }
+/** Listed here so the Site text page can show the list names (they are looked up by slug above). */
+function list_label_registry() { return [t('list.inkhorn-review', 'Inkhorn Review'), t('list.white-rabbit', 'White Rabbit'), t('list.events', 'Events'), t('list.writing', 'Writing'), t('list.digest', 'Digest'), t('list.new-books', 'New books'), t('list.life-on-words', 'Life on Words')]; }
 const LIST_LABELS = [
   'inkhorn-review' => 'Inkhorn Review', 'white-rabbit' => 'White Rabbit', 'events' => 'Events',
   'writing' => 'Writing', 'digest' => 'Digest', 'new-books' => 'New books', 'life-on-words' => 'Life on Words',
@@ -36,13 +40,13 @@ function nav_a($href, $label, $class = '') {
 }
 /** "Sign in", or "Account" when this browser has a session. Signing in from another domain of the network comes back here (see signin/adopt). */
 function account_link() {
-  if (session_email()) { return nav_a(hub_url('account/'), 'Account'); }
+  if (session_email()) { return nav_a(hub_url('account/'), t('nav.account', 'Account')); }
   $u = hub_url('signin/'); if (site_key() !== 'hub') { $u = add_query_arg('return', rawurlencode(home_url('/')), $u); }
-  return nav_a($u, 'Sign in');
+  return nav_a($u, t('nav.signin', 'Sign in'));
 }
 function welcome_band() {
   if (!site()['bar'] || is_page('start-here') || get_query_var('ih_view') === 'start-here') { return ''; }
-  return '<div class="ih-welcome" hidden data-ih-welcome><p><a href="' . a(hub_url('start-here/')) . '">New to poetry? Start here</a></p><button type="button" class="ih-welcome-x" aria-label="Dismiss this message">&times;</button></div>';
+  return '<div class="ih-welcome" hidden data-ih-welcome><p><a href="' . a(hub_url('start-here/')) . '">' . tx('welcome.text', 'New to poetry? Start here') . '</a></p><button type="button" class="ih-welcome-x" aria-label="' . ta('welcome.dismiss', 'Dismiss this message') . '">&times;</button></div>';
 }
 /** The Inkhorn Press bar is gone: only the welcome band (first visit, Inkhorn Press sites) sits above a site's own masthead. */
 function press_bar() { return welcome_band(); }
@@ -52,7 +56,7 @@ function back_link() {
   $from = sanitize_key($_GET['from']);
   $all = sites();
   if (!isset($all[$from]) || $all[$from]['kind'] !== 'publication') { return ''; }
-  return '<p class="ih-back"><a href="' . a(pub_url($from)) . '">&larr; Back to ' . e($all[$from]['name']) . '</a></p>';
+  return '<p class="ih-back"><a href="' . a(pub_url($from)) . '">&larr; ' . tx('back.to', 'Back to {name}', ['name' => $all[$from]['name']]) . '</a></p>';
 }
 
 function img_url($f) { return INKHORN_URL . '/assets/img/' . $f; }
@@ -113,24 +117,24 @@ function site_footer() {
 function signup($title = '', $all_lists = true) {
   $s = site(); $mine = $s['lists'];
   $family = ($s['kind'] === 'author') ? ['writing', 'digest', 'new-books'] : (($s['kind'] === 'podcast') ? ['life-on-words'] : ['inkhorn-review', 'white-rabbit', 'events']);
-  $title = 'Get News & Updates by Email'; // one heading on every site
+  $title = t('signup.heading', 'Get News & Updates by Email'); // one heading on every site
   $h = '<section class="ih-signup" id="newsletter" aria-label="Newsletter"><p class="ih-lead">' . e($title) . '</p>'
-     . ((($_GET['signed-up'] ?? '') === '1') ? '<p class="ih-note" role="status">Check your email. We sent a link to ' . e(rawurldecode((string) ($_COOKIE['ih_sent_to'] ?? 'your address'))) . '.</p>' : '')
-     . ((($_GET['signed-up'] ?? '') === '0') ? '<p class="ih-note" role="alert">That did not work. Check the address and the lists you chose, then try again.</p>' : '')
-     . '<p class="ih-sub">Pick your lists and change them any time. We’ll email you a link to confirm.</p>'
+     . ((($_GET['signed-up'] ?? '') === '1') ? '<p class="ih-note" role="status">' . tx('signup.sent', 'Check your email. We sent a link to {email}.', ['email' => rawurldecode((string) ($_COOKIE['ih_sent_to'] ?? 'your address'))]) . '</p>' : '')
+     . ((($_GET['signed-up'] ?? '') === '0') ? '<p class="ih-note" role="alert">' . tx('signup.failed', 'That did not work. Check the address and the lists you chose, then try again.') . '</p>' : '')
+     . '<p class="ih-sub">' . tx('signup.sub', 'Pick your lists and change them any time. We’ll email you a link to confirm.') . '</p>'
      . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-signup')) . '" data-ih-signup>';
   if (count($family) > 1) {
-    $h .= '<fieldset><legend>Lists</legend>';
+    $h .= '<fieldset><legend>' . tx('signup.lists', 'Lists') . '</legend>';
     foreach ($family as $l) {
-      $h .= '<label><input type="checkbox" name="lists[]" value="' . a($l) . '"' . (in_array($l, $mine, true) ? ' checked' : '') . '> ' . e(LIST_LABELS[$l] ?? $l) . '</label>';
+      $h .= '<label><input type="checkbox" name="lists[]" value="' . a($l) . '"' . (in_array($l, $mine, true) ? ' checked' : '') . '> ' . e(list_label($l)) . '</label>';
     }
     $h .= '</fieldset>';
   } else {
     $h .= '<input type="hidden" name="lists[]" value="' . a($family[0]) . '">';
   }
-  $h .= '<input type="hidden" name="from" value="' . a(site_key()) . '"><div class="ih-row"><label for="ih-em" class="ih-sr">Email address</label>'
-     . '<input id="ih-em" type="email" name="email" required autocomplete="email" placeholder="you@example.com">'
-     . '<button type="submit" class="ih-btn">Sign Up</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form></section>';
+  $h .= '<input type="hidden" name="from" value="' . a(site_key()) . '"><div class="ih-row"><label for="ih-em" class="ih-sr">' . tx('signup.email', 'Email address') . '</label>'
+     . '<input id="ih-em" type="email" name="email" required autocomplete="email" placeholder="' . ta('signup.placeholder', 'you@example.com') . '">'
+     . '<button type="submit" class="ih-btn">' . tx('signup.button', 'Sign Up') . '</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form></section>';
   return $h;
 }
 
@@ -191,14 +195,14 @@ function view_issue($issue) {
   $shop = shop_link(m($issue->ID, 'ih_shop_url'));
   $base = get_permalink($issue);
   $by_genre = (($_GET['view'] ?? '') === 'genre');
-  $h = '<main class="ih-main"><section class="ih-folio" aria-label="' . ($is_cur ? 'Current issue' : 'Issue') . '"><div class="ih-folio-cover">' . cover($issue, 'Cover of ' . $label) . '</div><div class="ih-folio-t">'
-     . '<p class="ih-label">' . ($is_cur ? 'The current issue' : 'Issue') . '</p><h1 class="ih-h1-xl">' . e($label) . '</h1>';
+  $h = '<main class="ih-main"><section class="ih-folio" aria-label="' . ta($is_cur ? 'issue.aria_current' : 'issue.aria', $is_cur ? 'Current issue' : 'Issue') . '"><div class="ih-folio-cover">' . cover($issue, t('issue.cover_alt', 'Cover of {label}', ['label' => $label])) . '</div><div class="ih-folio-t">'
+     . '<p class="ih-label">' . ($is_cur ? tx('issue.label_current', 'The current issue') : tx('issue.label', 'Issue')) . '</p><h1 class="ih-h1-xl">' . e($label) . '</h1>';
   $note = m($issue->ID, 'ih_note') ?: issue_line_from_shop($issue);
   if ($note) { $h .= '<p class="ih-folio-line">' . e($note) . '</p>'; }
-  $h .= '<p class="ih-folio-meta">' . count($pieces) . ' pieces' . ($names ? ' · ' . e(implode(' · ', $names)) : '') . '</p><div class="ih-btns">';
-  if ($shop) { $h .= btn($shop, 'Buy the print issue') . '<a class="ih-btn" href="' . a(hub_link('shop/subscriptions/')) . '">Subscriptions</a>'; }
-  if ($first) { $h .= '<a class="ih-btn-link" href="' . a($first) . '">Start reading &rarr;</a>'; }
-  $h .= '</div><div class="ih-sechead"><h2>In this issue</h2><div role="group" aria-label="View" class="ih-views"><a href="' . a($base) . '"' . (!$by_genre ? ' aria-current="true"' : '') . '>In order</a><a href="' . a(add_query_arg('view', 'genre', $base)) . '"' . ($by_genre ? ' aria-current="true"' : '') . '>By genre</a></div></div>';
+  $h .= '<p class="ih-folio-meta">' . tx('issue.count', '{n} pieces', ['n' => count($pieces)]) . ($names ? ' · ' . e(implode(' · ', $names)) : '') . '</p><div class="ih-btns">';
+  if ($shop) { $h .= btn($shop, t('issue.buy', 'Buy the print issue')) . '<a class="ih-btn" href="' . a(hub_link('shop/subscriptions/')) . '">' . tx('issue.subs', 'Subscriptions') . '</a>'; }
+  if ($first) { $h .= '<a class="ih-btn-link" href="' . a($first) . '">' . tx('issue.start', 'Start reading') . ' &rarr;</a>'; }
+  $h .= '</div><div class="ih-sechead"><h2>' . tx('issue.in_this', 'In this issue') . '</h2><div role="group" aria-label="' . ta('issue.view', 'View') . '" class="ih-views"><a href="' . a($base) . '"' . (!$by_genre ? ' aria-current="true"' : '') . '>' . tx('issue.in_order', 'In order') . '</a><a href="' . a(add_query_arg('view', 'genre', $base)) . '"' . ($by_genre ? ' aria-current="true"' : '') . '>' . tx('issue.by_genre', 'By genre') . '</a></div></div>';
   $row = function ($p) { $pg = piece_genre($p); return '<li><a href="' . a(get_permalink($p)) . '"><span class="ih-toc-t">' . e(get_the_title($p)) . '</span><span class="ih-toc-m">' . e(m($p->ID, 'ih_author_name') . ($pg ? ' · ' . $pg->name : '')) . '</span></a></li>'; };
   if (!$by_genre) {
     $h .= '<ol class="ih-toc">'; foreach ($pieces as $p) { $h .= $row($p); } $h .= '</ol>';
@@ -206,7 +210,7 @@ function view_issue($issue) {
     foreach (array_merge(genre_order(), ['other']) as $g) {
       if (empty($groups[$g])) { continue; }
       $term = get_term_by('slug', $g, 'ih_genre');
-      $h .= '<h3 class="ih-label ih-toc-g">' . e($term ? $term->name : 'More') . '</h3><ul class="ih-toc">'; foreach ($groups[$g] as $p) { $h .= $row($p); } $h .= '</ul>';
+      $h .= '<h3 class="ih-label ih-toc-g">' . e($term ? $term->name : t('issue.more', 'More')) . '</h3><ul class="ih-toc">'; foreach ($groups[$g] as $p) { $h .= $row($p); } $h .= '</ul>';
     }
   }
   return $h . '</div></section>' . signup() . '</main>';
@@ -224,7 +228,7 @@ function view_piece($p) {
   if (m($p->ID, 'ih_bio')) { $h .= '<p class="ih-bio">' . e(m($p->ID, 'ih_bio')) . '</p>'; }
   if (m($p->ID, 'ih_nomination')) { $h .= '<p class="ih-nom">' . e(m($p->ID, 'ih_nomination')) . '</p>'; }
   $slugs = array_filter(array_map('trim', explode(',', (string) m($p->ID, 'ih_contributors'))));
-  if ($slugs) { $h .= '<p class="ih-all"><a href="' . a(hub_link('contributors/' . $slugs[0] . '/')) . '">All work by ' . e(m($p->ID, 'ih_author_name')) . ' &rarr;</a></p>'; }
+  if ($slugs) { $h .= '<p class="ih-all"><a href="' . a(hub_link('contributors/' . $slugs[0] . '/')) . '">' . tx('piece.all', 'All work by {name}', ['name' => m($p->ID, 'ih_author_name')]) . ' &rarr;</a></p>'; }
   $h .= '</section></article>';
   if ($issue) {
     $list = issue_pieces($issue->ID); $i = null;
@@ -232,12 +236,12 @@ function view_piece($p) {
     $prev = ($i !== null && $i > 0) ? $list[$i - 1] : null;
     $next = ($i !== null && $i < count($list) - 1) ? $list[$i + 1] : null;
     $shop = shop_link(m($issue->ID, 'ih_shop_url'));
-    $h .= '<nav class="ih-pn" aria-label="Previous and next in this issue"><div>';
-    if ($prev) { $h .= '<a href="' . a(get_permalink($prev)) . '"><span class="ih-label">&larr; Previous</span><b>' . e(get_the_title($prev)) . '</b><i>' . e(m($prev->ID, 'ih_author_name')) . '</i></a>'; }
+    $h .= '<nav class="ih-pn" aria-label="' . ta('piece.pn', 'Previous and next in this issue') . '"><div>';
+    if ($prev) { $h .= '<a href="' . a(get_permalink($prev)) . '"><span class="ih-label">&larr; ' . tx('piece.prev', 'Previous') . '</span><b>' . e(get_the_title($prev)) . '</b><i>' . e(m($prev->ID, 'ih_author_name')) . '</i></a>'; }
     $h .= '</div><div class="ih-pn-r">';
-    if ($next) { $h .= '<a href="' . a(get_permalink($next)) . '"><span class="ih-label">Next &rarr;</span><b>' . e(get_the_title($next)) . '</b><i>' . e(m($next->ID, 'ih_author_name')) . '</i></a>'; }
+    if ($next) { $h .= '<a href="' . a(get_permalink($next)) . '"><span class="ih-label">' . tx('piece.next', 'Next') . ' &rarr;</span><b>' . e(get_the_title($next)) . '</b><i>' . e(m($next->ID, 'ih_author_name')) . '</i></a>'; }
     $h .= '</div></nav>';
-    if ($shop) { $h .= '<div class="ih-buyrow">' . btn($shop, 'Buy the print issue') . '<a class="ih-btn" href="' . a(hub_link('shop/subscriptions/')) . '">Subscriptions</a></div>'; }
+    if ($shop) { $h .= '<div class="ih-buyrow">' . btn($shop, t('issue.buy', 'Buy the print issue')) . '<a class="ih-btn" href="' . a(hub_link('shop/subscriptions/')) . '">' . tx('issue.subs', 'Subscriptions') . '</a></div>'; }
   }
   return $h . signup() . '</main>';
 }
@@ -265,7 +269,7 @@ function view_contributor($c) {
   if (!in_array($c->post_name, contributors_with_work(), true)) { global $wp_query; $wp_query->set_404(); status_header(404); return view_404(); }
   $h = '<main class="ih-main ih-contrib">' . back_link() . '<div class="ih-contrib-h">';
   $img = m($c->ID, 'ih_headshot_id') ? wp_get_attachment_image_url((int) m($c->ID, 'ih_headshot_id'), 'medium') : '';
-  if ($img) { $h .= '<img class="ih-headshot" src="' . a($img) . '" alt="Portrait of ' . a(get_the_title($c)) . '" width="160" height="160">'; }
+  if ($img) { $h .= '<img class="ih-headshot" src="' . a($img) . '" alt="' . ta('contrib.portrait', 'Portrait of {name}', ['name' => get_the_title($c)]) . '" width="160" height="160">'; }
   $h .= '<div><h1>' . e(get_the_title($c)) . '</h1>';
   if (m($c->ID, 'ih_bio')) { $h .= '<p class="ih-bio">' . e(m($c->ID, 'ih_bio')) . '</p>'; }
   if (m($c->ID, 'ih_url')) { $h .= '<p><a href="' . a(m($c->ID, 'ih_url')) . '" rel="me noopener">' . e(preg_replace('#^https?://(www\.)?#', '', rtrim(m($c->ID, 'ih_url'), '/'))) . '</a></p>'; }
@@ -277,14 +281,14 @@ function view_contributor($c) {
     foreach ($items as $it) { $h .= '<li><a href="' . a($it['url']) . '"><span class="ih-pt">' . e($it['title']) . '</span><span class="ih-pa">' . e(trim($it['issue'] . ($it['genre'] ? ' · ' . $it['genre'] : ''), ' ·')) . '</span></a></li>'; }
     $h .= '</ul></section>';
   }
-  if (!$work) { $h .= '<p class="ih-sub">No published work yet.</p>'; }
+  if (!$work) { $h .= '<p class="ih-sub">' . tx('contrib.none', 'No published work yet.') . '</p>'; }
   return $h . '</main>';
 }
 
 function view_contributors() {
   $q = get_posts(['post_type' => 'ih_contributor', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'title', 'order' => 'ASC']);
   $work = contributors_with_work();
-  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Contributors</h1><ul class="ih-list ih-cols">';
+  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">' . tx('contrib.heading', 'Contributors') . '</h1><ul class="ih-list ih-cols">';
   foreach ($q as $c) { if (!in_array($c->post_name, $work, true)) { continue; } $h .= '<li><a href="' . a(get_permalink($c)) . '"><span class="ih-pt">' . e(get_the_title($c)) . '</span></a></li>'; }
   return $h . '</ul></main>';
 }
@@ -297,15 +301,15 @@ function view_genre($term) {
 }
 
 function view_books() {
-  $h = '<main class="ih-main"><h1 class="ih-h1">Books</h1><div class="ih-grid">';
-  foreach (get_posts(['post_type' => 'ih_book', 'numberposts' => -1, 'post_status' => 'publish']) as $b) { $h .= '<div class="ih-gi"><a href="' . a(get_permalink($b)) . '" aria-label="' . a(get_the_title($b)) . '">' . cover($b, get_the_title($b) . ' cover') . '</a><h3><a href="' . a(get_permalink($b)) . '">' . e(get_the_title($b)) . '</a></h3></div>'; }
+  $h = '<main class="ih-main"><h1 class="ih-h1">' . tx('books.heading', 'Books') . '</h1><div class="ih-grid">';
+  foreach (get_posts(['post_type' => 'ih_book', 'numberposts' => -1, 'post_status' => 'publish']) as $b) { $h .= '<div class="ih-gi"><a href="' . a(get_permalink($b)) . '" aria-label="' . a(get_the_title($b)) . '">' . cover($b, t('books.cover', '{title} cover', ['title' => get_the_title($b)])) . '</a><h3><a href="' . a(get_permalink($b)) . '">' . e(get_the_title($b)) . '</a></h3></div>'; }
   return $h . '</div>' . signup() . '</main>';
 }
 function view_book_page($b) {
-  return '<main class="ih-main"><div class="ih-hero">' . cover($b, get_the_title($b) . ' cover') . '<div class="ih-hero-t"><h1>' . e(get_the_title($b)) . '</h1>' . ($b->post_excerpt ? '<p class="ih-note">' . e($b->post_excerpt) . '</p>' : '') . (m($b->ID, 'ih_buy_url') ? '<div class="ih-btns">' . btn(m($b->ID, 'ih_buy_url'), 'Buy this book') . '</div>' : '') . '</div></div></main>';
+  return '<main class="ih-main"><div class="ih-hero">' . cover($b, t('books.cover', '{title} cover', ['title' => get_the_title($b)])) . '<div class="ih-hero-t"><h1>' . e(get_the_title($b)) . '</h1>' . ($b->post_excerpt ? '<p class="ih-note">' . e($b->post_excerpt) . '</p>' : '') . (m($b->ID, 'ih_buy_url') ? '<div class="ih-btns">' . btn(m($b->ID, 'ih_buy_url'), t('book.buy', 'Buy this book')) . '</div>' : '') . '</div></div></main>';
 }
 function view_episodes() {
-  $h = '<main class="ih-main"><h1 class="ih-h1">Episodes</h1><ul class="ih-list">';
+  $h = '<main class="ih-main"><h1 class="ih-h1">' . tx('episodes.heading', 'Episodes') . '</h1><ul class="ih-list">';
   foreach (get_posts(['post_type' => 'ih_episode', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']) as $p) {
     $g = get_post((int) m($p->ID, 'ih_guest_id'));
     $h .= '<li><a href="' . a(get_permalink($p)) . '"><span class="ih-pt">' . e(get_the_title($p)) . '</span><span class="ih-pa">' . e(trim(($g ? get_the_title($g) . ' · ' : '') . get_the_date('', $p), ' ·')) . '</span></a></li>';
@@ -313,7 +317,7 @@ function view_episodes() {
   return $h . '</ul>' . signup() . '</main>';
 }
 function view_guests() {
-  $h = '<main class="ih-main"><h1 class="ih-h1">Guests</h1><ul class="ih-list ih-cols">';
+  $h = '<main class="ih-main"><h1 class="ih-h1">' . tx('guest.heading', 'Guests') . '</h1><ul class="ih-list ih-cols">';
   foreach (get_posts(['post_type' => 'ih_guest', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'title', 'order' => 'ASC']) as $g) { $h .= '<li><a href="' . a(get_permalink($g)) . '"><span class="ih-pt">' . e(get_the_title($g)) . '</span></a></li>'; }
   return $h . '</ul></main>';
 }
@@ -335,19 +339,19 @@ function shop_prices() {
 /** "From the shop" on the hub home: the books on sale, as in the mockup (cover, title, kind and price). */
 function shop_strip() {
   $prices = shop_prices();
-  $h = '<section aria-label="From the shop" class="ih-shop"><p class="ih-label">From the shop</p><div class="ih-shop-grid">';
+  $h = '<section aria-label="' . ta('strip.aria', 'From the shop') . '" class="ih-shop"><p class="ih-label">' . tx('strip.label', 'From the shop') . '</p><div class="ih-shop-grid">';
   foreach (shop_books(4) as $b) {
     $tid = get_post_thumbnail_id($b); $src = $tid ? wp_get_attachment_image_src($tid, 'medium') : null; $sku = m($b->ID, 'ih_sku');
-    $meta = 'Print issue' . (isset($prices[$sku]) ? ' · $' . number_format($prices[$sku] / 100, 2) : '');
-    $h .= '<a class="ih-shop-i" href="' . a(home_url('/shop/' . $b->post_name . '/')) . '">' . ($src ? '<div class="ih-cover"><img src="' . a($src[0]) . '" alt="' . a('Cover of ' . get_the_title($b)) . '" width="' . (int) $src[1] . '" height="' . (int) $src[2] . '" loading="lazy"></div>' : '<div class="ih-cover ih-cover-e" role="img" aria-label="' . a(get_the_title($b)) . '"></div>')
-       . '<span><span class="ih-pt">' . e(get_the_title($b)) . '</span><span class="ih-pa">' . e($meta) . '</span><span class="ih-pl-link">Visit the shop &rarr;</span></span></a>';
+    $meta = t('strip.kind', 'Print issue') . (isset($prices[$sku]) ? ' · $' . number_format($prices[$sku] / 100, 2) : '');
+    $h .= '<a class="ih-shop-i" href="' . a(home_url('/shop/' . $b->post_name . '/')) . '">' . ($src ? '<div class="ih-cover"><img src="' . a($src[0]) . '" alt="' . ta('strip.cover', 'Cover of {title}', ['title' => get_the_title($b)]) . '" width="' . (int) $src[1] . '" height="' . (int) $src[2] . '" loading="lazy"></div>' : '<div class="ih-cover ih-cover-e" role="img" aria-label="' . a(get_the_title($b)) . '"></div>')
+       . '<span><span class="ih-pt">' . e(get_the_title($b)) . '</span><span class="ih-pa">' . e($meta) . '</span><span class="ih-pl-link">' . tx('strip.visit', 'Visit the shop') . ' &rarr;</span></span></a>';
   }
   return $h . '</div></section>';
 }
 
 function view_hub() {
-  $h = '<main class="ih-main"><section id="publications" aria-label="Publications"><h1 class="ih-h1-xl ih-center">Our publications</h1><div class="ih-pubs">';
-  $lines = ['review' => 'A quarterly of poetry, short prose and art.', 'whiterabbit' => 'Published only on Friday the 13th.'];
+  $h = '<main class="ih-main"><section id="publications" aria-label="' . ta('hub.aria', 'Publications') . '"><h1 class="ih-h1-xl ih-center">' . tx('hub.heading', 'Our publications') . '</h1><div class="ih-pubs">';
+  $lines = ['review' => t('hub.review_line', 'A quarterly of poetry, short prose and art.'), 'whiterabbit' => t('hub.wr_line', 'Published only on Friday the 13th.')];
   $acc = ['review' => '#2E4A3F', 'whiterabbit' => '#4B2346'];
   foreach (['review' => 'Inkhorn Review', 'whiterabbit' => 'White Rabbit'] as $k => $name) {
     $sid = get_sites(['path' => '/' . $k . '/', 'number' => 1]);
@@ -362,11 +366,11 @@ function view_hub() {
       restore_current_blog();
     }
     $url = pub_url($k);
-    $h .= '<div class="ih-pub" style="--pa:' . $acc[$k] . '"><a class="ih-pub-cover" href="' . a($url) . '" aria-label="' . a($name . ($lab ? ': ' . $lab : '')) . '">' . ($img ? '<div class="ih-cover"><img src="' . a($img) . '" alt="' . a($lab ? 'Cover of ' . $name . ', ' . $lab : $name . ' artwork') . '" width="' . (int) $dim[0] . '" height="' . (int) $dim[1] . '"></div>' : '<div class="ih-cover ih-cover-e" role="img" aria-label="' . a($name) . '"></div>')
+    $h .= '<div class="ih-pub" style="--pa:' . $acc[$k] . '"><a class="ih-pub-cover" href="' . a($url) . '" aria-label="' . a($name . ($lab ? ': ' . $lab : '')) . '">' . ($img ? '<div class="ih-cover"><img src="' . a($img) . '" alt="' . ($lab ? ta('hub.cover', 'Cover of {name}, {label}', ['name' => $name, 'label' => $lab]) : ta('hub.art', '{name} artwork', ['name' => $name])) . '" width="' . (int) $dim[0] . '" height="' . (int) $dim[1] . '"></div>' : '<div class="ih-cover ih-cover-e" role="img" aria-label="' . a($name) . '"></div>')
        . '</a><div class="ih-pub-t"><h3' . ($k === 'whiterabbit' ? ' class="ih-fell"' : '') . '><a href="' . a($url) . '">' . e($name) . '</a></h3><p>' . e($lines[$k]) . '</p>' . ($lab ? '<p class="ih-pub-l"><a href="' . a($url) . '">' . e($lab) . ' &rarr;</a></p>' : '') . '</div></div>';
   }
   $h .= '</div></section>' . shop_strip()
-     . '<section aria-label="Donate" class="ih-support"><p class="ih-label">Donate</p><p class="ih-support-t">Your gift pays contributors and prints the issues.</p><p>' . btn(home_url('/donate/'), 'Donate') . '</p></section>'
+     . '<section aria-label="' . ta('hub.donate_aria', 'Donate') . '" class="ih-support"><p class="ih-label">' . tx('hub.donate_label', 'Donate') . '</p><p class="ih-support-t">' . tx('hub.donate_text', 'Your gift pays contributors and prints the issues.') . '</p><p>' . btn(home_url('/donate/'), t('hub.donate_btn', 'Donate')) . '</p></section>'
      . signup() . '</main>';
   return $h;
 }
@@ -375,42 +379,41 @@ function view_hub() {
 
 function view_episode($p) {
   $g = get_post((int) m($p->ID, 'ih_guest_id'));
-  $h = '<main class="ih-main"><article class="ih-piece"><p class="ih-eyebrow">Episode' . (m($p->ID, 'ih_number') ? ' ' . e(m($p->ID, 'ih_number')) : '') . '</p><h1>' . e(get_the_title($p)) . '</h1>';
+  $h = '<main class="ih-main"><article class="ih-piece"><p class="ih-eyebrow">' . tx('episode.eyebrow', 'Episode') . (m($p->ID, 'ih_number') ? ' ' . e(m($p->ID, 'ih_number')) : '') . '</p><h1>' . e(get_the_title($p)) . '</h1>';
   if ($g) {
     $img = m($g->ID, 'ih_headshot_id') ? wp_get_attachment_image_url((int) m($g->ID, 'ih_headshot_id'), 'medium') : '';
-    $h .= '<div class="ih-contrib-h">' . ($img ? '<img class="ih-headshot" src="' . a($img) . '" alt="Portrait of ' . a(get_the_title($g)) . '" width="160" height="160">' : '') . '<div><p class="ih-by"><a href="' . a(get_permalink($g)) . '">' . e(get_the_title($g)) . '</a></p></div></div>';
+    $h .= '<div class="ih-contrib-h">' . ($img ? '<img class="ih-headshot" src="' . a($img) . '" alt="' . ta('contrib.portrait', 'Portrait of {name}', ['name' => get_the_title($g)]) . '" width="160" height="160">' : '') . '<div><p class="ih-by"><a href="' . a(get_permalink($g)) . '">' . e(get_the_title($g)) . '</a></p></div></div>';
   }
   $h .= host_line();
   if (m($p->ID, 'ih_audio_url')) { $h .= '<audio controls preload="none" src="' . a(m($p->ID, 'ih_audio_url')) . '"></audio>'; }
-  return $h . '<div class="ih-body">' . apply_filters('the_content', $p->post_content) . '</div></article>' . related_block('Related essays', chosen_related($p)) . signup() . '</main>';
+  return $h . '<div class="ih-body">' . apply_filters('the_content', $p->post_content) . '</div></article>' . related_block(t('episode.related', 'Related essays'), chosen_related($p)) . signup() . '</main>';
 }
 
 function view_generic($p) {
   $extra = '';
   if (site_key() === 'hub' && $p && $p->post_name === 'donate') { // supporters list kept fresh by patreon-sync-wp.js
     $row = get_site_option('inkhorn_store_patreon-supporters', null); $d = $row ? json_decode($row['json'], true) : null;
-    if ($d && !empty($d['names'])) { $extra = '<h2>Thank you to our Patreon supporters</h2><p>' . e(implode(', ', $d['names'])) . (!empty($d['anonymous']) ? ' and ' . (int) $d['anonymous'] . ' anonymous supporter' . ($d['anonymous'] > 1 ? 's' : '') : '') . '.</p>'; }
+    if ($d && !empty($d['names'])) { $extra = '<h2>' . tx('generic.patreon', 'Thank you to our Patreon supporters') . '</h2><p>' . e(implode(', ', $d['names'])) . (!empty($d['anonymous']) ? ' and ' . (int) $d['anonymous'] . ' anonymous supporter' . ($d['anonymous'] > 1 ? 's' : '') : '') . '.</p>'; }
   }
-  $rel = ($p && $p->post_type === 'post' && site_key() === 'terryheath') ? related_block('Related episodes', chosen_related($p)) : '';
+  $rel = ($p && $p->post_type === 'post' && site_key() === 'terryheath') ? related_block(t('generic.related', 'Related episodes'), chosen_related($p)) : '';
   return '<main class="ih-main">' . back_link() . '<article class="ih-piece"><h1>' . e(get_the_title($p)) . '</h1><div class="ih-body">' . apply_filters('the_content', $p->post_content) . $extra . '</div></article>' . $rel . ($p && $p->post_type === 'post' ? signup() : '') . '</main>';
 }
 
 /** A publication with no issue yet (White Rabbit before No. 1): says what it is and when, and offers its newsletter. */
 function view_publication_soon() {
   $s = site(); $k = site_key();
-  $line = ['whiterabbit' => 'Published only on Friday the 13th. Issue No. 1 comes out on Friday, August 13, 2027.'][$k] ?? '';
-  $cv = get_page_by_path('cover', OBJECT, 'page'); $tid = $cv ? get_post_thumbnail_id($cv) : 0; $src = $tid ? wp_get_attachment_image_src($tid, 'large') : null;
+    $cv = get_page_by_path('cover', OBJECT, 'page'); $tid = $cv ? get_post_thumbnail_id($cv) : 0; $src = $tid ? wp_get_attachment_image_src($tid, 'large') : null;
   $h = '<main class="ih-main"><section class="ih-folio" aria-label="Issue"><div class="ih-folio-cover">' . ($src ? '<div class="ih-cover"><img src="' . a($src[0]) . '" alt="' . a($s['name'] . ' artwork') . '" width="' . (int) $src[1] . '" height="' . (int) $src[2] . '"></div>' : '<div class="ih-cover ih-cover-e" role="img" aria-label="' . a($s['name']) . '"></div>') . '</div><div class="ih-folio-t">'
-     . '<p class="ih-label">' . ($k === 'whiterabbit' ? 'Issue No. 1' : e($s['name'])) . '</p><h1 class="ih-h1-xl">' . ($k === 'whiterabbit' ? 'Friday, August 13, 2027' : e($s['name'])) . '</h1>'
-     . ($k === 'whiterabbit' ? ph('One line about the issue') : '') . '<p class="ih-folio-meta">Details coming soon.</p><div class="ih-btns">';
-  if ($k === 'whiterabbit') { $h .= btn(hub_link('events/'), 'About Weird Friday'); }
+     . '<p class="ih-label">' . ($k === 'whiterabbit' ? tx('soon.label', 'Issue No. 1') : e($s['name'])) . '</p><h1 class="ih-h1-xl">' . ($k === 'whiterabbit' ? tx('soon.title', 'Friday, August 13, 2027') : e($s['name'])) . '</h1>'
+     . ($k === 'whiterabbit' ? ph('One line about the issue') : '') . '<p class="ih-folio-meta">' . tx('soon.meta', 'Details coming soon.') . '</p><div class="ih-btns">';
+  if ($k === 'whiterabbit') { $h .= btn(hub_link('events/'), t('soon.btn', 'About Weird Friday')); }
   return $h . '</div></div></section>' . signup() . '</main>';
 }
 
 function view_404() {
   $s = site();
-  return '<main class="ih-main"><h1 class="ih-h1">That page isn’t here.</h1><p class="ih-note">It may have moved. Try the ' . ($s['kind'] === 'publication' ? 'current issue' : 'home page') . ', or search.</p>'
-    . '<div class="ih-btns">' . btn(home_url('/'), $s['kind'] === 'publication' ? 'Current issue' : 'Home') . btn(home_url('/?s='), 'Search') . '</div></main>';
+  return '<main class="ih-main"><h1 class="ih-h1">' . tx('e404.heading', 'That page isn’t here.') . '</h1><p class="ih-note">' . tx('e404.text', 'It may have moved. Try the {where}, or search.', ['where' => $s['kind'] === 'publication' ? t('e404.where_pub', 'current issue') : t('e404.where_home', 'home page')]) . '</p>'
+    . '<div class="ih-btns">' . btn(home_url('/'), $s['kind'] === 'publication' ? t('e404.btn_pub', 'Current issue') : t('e404.btn_home', 'Home')) . btn(home_url('/?s='), t('e404.btn_search', 'Search')) . '</div></main>';
 }
 
 

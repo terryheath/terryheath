@@ -16,6 +16,9 @@ add_action('wp_enqueue_scripts', function () {
   wp_add_inline_style('inkhorn', ':root{--ih-accent:' . $s['accent'] . ';--ih-tint:' . $s['tint'] . ';}');
   add_filter('body_class', function ($c) { $c[] = 'ih-' . site_key(); return $c; });
   wp_enqueue_script('inkhorn', INKHORN_URL . '/assets/inkhorn.js', [], asset_ver(), true);
+  wp_add_inline_script('inkhorn', 'window.IH_T=Object.assign(window.IH_T||{},' . wp_json_encode([
+    'js.sending' => t('js.sending', 'Sending…'), 'js.thanks' => t('js.thanks', 'Thank you.'), 'js.wrong' => t('js.wrong', 'Something went wrong.'), 'js.wrong_retry' => t('js.wrong_retry', 'Something went wrong. Please try again.'),
+  ]) . ');', 'before');
 });
 function asset_ver() { return (string) @filemtime(INKHORN_DIR . '/assets/inkhorn.css') ?: '0'; }
 

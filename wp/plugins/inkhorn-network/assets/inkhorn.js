@@ -1,13 +1,14 @@
 (function(){
+  function T(k,d){ return (window.IH_T&&window.IH_T[k])||d; }
   document.addEventListener('submit',function(ev){
     var f=ev.target; if(!f.matches||!f.matches('[data-ih-signup]')) return;
     ev.preventDefault();
     var msg=f.querySelector('.ih-msg'), btn=f.querySelector('button[type=submit]');
-    btn.disabled=true; msg.textContent='Sending…';
+    btn.disabled=true; msg.textContent=T('js.sending','Sending…');
     fetch(f.action,{method:'POST',headers:{Accept:'application/json'},body:new FormData(f)})
       .then(function(r){return r.json();})
-      .then(function(j){msg.textContent=j.message||(j.ok?'Thank you.':'Something went wrong.'); if(j.ok) f.reset();})
-      .catch(function(){msg.textContent='Something went wrong. Please try again.';})
+      .then(function(j){msg.textContent=j.message||(j.ok?T('js.thanks','Thank you.'):T('js.wrong','Something went wrong.')); if(j.ok) f.reset();})
+      .catch(function(){msg.textContent=T('js.wrong_retry','Something went wrong. Please try again.');})
       .then(function(){btn.disabled=false;});
   });
 })();
