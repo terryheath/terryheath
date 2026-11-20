@@ -169,3 +169,5 @@ input[type=radio]{accent-color:var(--ih-accent)}
 .ih-ph{border-color:var(--ih-accent);background:var(--ih-tint)}.ih-ph-tag{color:var(--ih-accent)}
 .ih-piece .ih-body a,.ih-body p a{color:var(--ih-accent)}
 .ih-hubrow{display:block}
+.ih-pub-t h3 a{display:inline-flex;align-items:center;min-height:44px}
+.ih-add-to-cart-btn:disabled,.ih-add-to-cart-btn[disabled]{opacity:1!important;color:var(--ih-mute)!important;border-color:var(--ih-mute)!important;cursor:not-allowed}
