@@ -16,7 +16,7 @@ const page = (site, slug, title, html) => put({ site, type: 'page', slug, title,
   a = a.replace(/(<h2 id="who-publishes-what">Who publishes what<\/h2>\s*)<p>[\s\S]*?<\/p>/, '$1<p>Terry Heath founded <em>Inkhorn Review</em> in 2026 and edits it. Follow the Rabbit LLC publishes the Autumn and Winter 2026 issues. Inkhorn Press publishes the Review from Spring 2027.</p>')
        .replace(/<p>Every piece is free to read online[\s\S]*?<\/p>/, '<p>Read every piece free online. Join the Inkhorn Review list, and we’ll email you one piece every Sunday.</p>')
        .replace(/(<h2 id="the-editor">The editor<\/h2>\s*)<p>[\s\S]*?<\/p>/, '$1<p>Terry Heath founded and edits Inkhorn Review and hosts <em>Life on Words with Terry Heath</em>. He teaches English at Olympic College in Bremerton, Washington, and founded the BookFolk festival. Several journals have published his poems.</p>')
-       .replace(/(<h2 id="submit">Submit<\/h2>\s*)<p>[\s\S]*?<\/p>/, '$1<p>We read all year. Submissions cost $5, refunded when you sign a contributor agreement. Free reading periods run every February, May, August and November. See the <a href="/submissions/" rel="noreferrer">submission guidelines</a>.</p>');
+       .replace(/(<h2 id="submit">Submit<\/h2>\s*)<p>[\s\S]*?<\/p>/, '$1<p>We read all year. Submissions cost $5, refunded when you sign a contributor agreement. Free reading periods run every February, May, August and November. See the <a href="https://inkhorn.press/submissions/" rel="noreferrer">submission guidelines</a>.</p>');
   await page('hub', 'about', 'About Inkhorn Press', a);
   // Submit
   await page('hub', 'submit', 'Submit your work', `<p class="ih-note">Each publication runs its own call. Choose one to open it.</p>

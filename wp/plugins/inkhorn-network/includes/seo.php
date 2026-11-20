@@ -109,3 +109,17 @@ add_filter('robots_txt', function ($out) {
 
 /** Browser titles read "Page – Site" everywhere (the en dash the site has always used). */
 add_filter('the_seo_framework_title_separator', function () { return '–'; });
+
+/* ---------- favicons: each site has its own (assets/favicons/<site>/) ---------- */
+function favicon_dir_key() { $k = site_key(); return in_array($k, ['hub', 'review', 'whiterabbit', 'terryheath', 'lifeonwords'], true) ? $k : 'hub'; }
+add_filter('site_icon_meta_tags', '__return_empty_array');
+add_action('wp_head', function () {
+  $u = INKHORN_URL . '/assets/favicons/' . favicon_dir_key() . '/';
+  echo '<link rel="icon" href="' . esc_url($u . 'favicon.ico') . '" sizes="32x32"><link rel="icon" type="image/png" sizes="32x32" href="' . esc_url($u . 'favicon-32x32.png') . '"><link rel="icon" type="image/png" sizes="16x16" href="' . esc_url($u . 'favicon-16x16.png') . '"><link rel="apple-touch-icon" sizes="180x180" href="' . esc_url($u . 'apple-touch-icon.png') . '">' . "\n";
+}, 2);
+add_action('init', function () { // browsers that ask for /favicon.ico at the root get that site's icon
+  if (strtok($_SERVER['REQUEST_URI'] ?? '', '?') !== '/favicon.ico') { return; }
+  $f = INKHORN_DIR . '/assets/favicons/' . favicon_dir_key() . '/favicon.ico';
+  if (!is_file($f)) { return; }
+  status_header(200); header('Content-Type: image/x-icon'); header('Cache-Control: public, max-age=86400'); readfile($f); exit;
+}, 0);
