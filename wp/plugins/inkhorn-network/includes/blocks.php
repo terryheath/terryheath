@@ -40,6 +40,7 @@ add_filter('render_block_core/template-part', function ($html) {
   $tok = ['{hub}' => untrailingslashit(hub_url()), '{review}' => untrailingslashit(pub_url('review')), '{whiterabbit}' => untrailingslashit(pub_url('whiterabbit')), '{terryheath}' => untrailingslashit(pub_url('terryheath')),
     '{lifeonwords}' => untrailingslashit(pub_url('lifeonwords')), '{home}' => untrailingslashit(home_url()), '{img}' => INKHORN_URL . '/assets/img'];
   $html = str_replace(array_keys($tok), array_values($tok), $html);
+  foreach ($tok as $k => $v) { if ($k !== '{img}') { $html = str_replace('http://' . trim($k, '{}'), $v, $html); } } // the menu block adds http:// in front of a token
   $req = untrailingslashit((string) strtok($_SERVER['REQUEST_URI'] ?? '/', '?'));
   return preg_replace_callback('#<a class="wp-block-navigation-item__content"\s+href="([^"]+)"#', function ($m) use ($req) {
     $u = wp_parse_url(html_entity_decode($m[1])); $same = empty($u['host']) || strcasecmp($u['host'], (string) wp_parse_url(home_url(), PHP_URL_HOST)) === 0;
