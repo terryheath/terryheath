@@ -8,6 +8,7 @@ COPY mu-plugins/ /usr/src/wordpress/wp-content/mu-plugins/
 COPY themes/ /usr/src/wordpress/wp-content/themes/
 COPY plugins/ /usr/src/wordpress/wp-content/plugins/
 COPY boot/ /usr/local/share/inkhorn-boot/
+COPY boot-after/ /usr/local/share/inkhorn-boot-after/
 COPY railway-entrypoint.sh /usr/local/bin/railway-entrypoint.sh
 RUN chmod +x /usr/local/bin/railway-entrypoint.sh
 ENTRYPOINT ["railway-entrypoint.sh"]

@@ -1,0 +1,72 @@
+<?php
+namespace Inkhorn;
+
+/**
+ * Search and sharing: structured data (JSON-LD) for pieces, essays, episodes, products and issues, and "do not index" for sign-in, account, cart and newsletter-state pages.
+ * Titles, descriptions, canonical addresses, share images and the XML sitemap come from The SEO Framework (network-active); this file adds what that plugin does not do for our content types.
+ */
+
+function seo_site_publisher() {
+  $s = site();
+  if ($s['kind'] === 'author') { return ['@type' => 'Person', 'name' => 'Terry Heath', 'url' => home_url('/')]; }
+  return ['@type' => 'Organization', 'name' => $s['name'], 'url' => home_url('/')];
+}
+function seo_image($post) {
+  $id = get_post_thumbnail_id($post);
+  if (!$id && $post->post_type === 'ih_piece') { $iss = get_post((int) get_post_meta($post->ID, 'ih_issue_id', true)); $id = $iss ? get_post_thumbnail_id($iss) : 0; }
+  return $id ? (string) wp_get_attachment_image_url($id, 'large') : '';
+}
+function seo_description($post) { $d = trim(wp_strip_all_tags((string) $post->post_excerpt)); return $d !== '' ? $d : one_line($post); }
+
+add_action('wp_head', function () {
+  if (!is_singular() && !(is_front_page() && false)) { return; }
+  $p = get_queried_object(); if (!$p || empty($p->post_type)) { return; }
+  $url = get_permalink($p); $img = seo_image($p); $out = null;
+  switch ($p->post_type) {
+    case 'ih_piece':
+      $issue = get_post((int) m($p->ID, 'ih_issue_id'));
+      $out = ['@type' => 'Article', 'headline' => get_the_title($p), 'author' => m($p->ID, 'ih_author_name') ? ['@type' => 'Person', 'name' => m($p->ID, 'ih_author_name')] : null,
+        'datePublished' => get_the_date('c', $p), 'dateModified' => get_the_modified_date('c', $p), 'publisher' => seo_site_publisher(), 'mainEntityOfPage' => $url,
+        'isPartOf' => $issue ? ['@type' => 'PublicationIssue', 'name' => m($issue->ID, 'ih_label') ?: get_the_title($issue), 'url' => get_permalink($issue)] : null, 'image' => $img ?: null, 'description' => seo_description($p) ?: null];
+      break;
+    case 'post':
+      $out = ['@type' => 'BlogPosting', 'headline' => get_the_title($p), 'author' => ['@type' => 'Person', 'name' => 'Terry Heath'], 'datePublished' => get_the_date('c', $p), 'dateModified' => get_the_modified_date('c', $p),
+        'publisher' => seo_site_publisher(), 'mainEntityOfPage' => $url, 'image' => $img ?: null, 'description' => seo_description($p) ?: null];
+      break;
+    case 'ih_episode':
+      $g = get_post((int) m($p->ID, 'ih_guest_id')); $audio = episode_audio($p);
+      $out = ['@type' => 'PodcastEpisode', 'name' => get_the_title($p), 'url' => $url, 'datePublished' => get_the_date('c', $p), 'description' => seo_description($p) ?: null,
+        'episodeNumber' => m($p->ID, 'ih_number') ? (int) m($p->ID, 'ih_number') : null,
+        'partOfSeries' => ['@type' => 'PodcastSeries', 'name' => 'Life on Words with Terry Heath', 'url' => home_url('/')],
+        'actor' => $g ? ['@type' => 'Person', 'name' => get_the_title($g)] : null, 'associatedMedia' => $audio ? ['@type' => 'AudioObject', 'contentUrl' => $audio] : null, 'image' => $img ?: null];
+      break;
+    case 'ih_book':
+      $prices = shop_prices(); $sku = m($p->ID, 'ih_sku');
+      $out = ['@type' => 'Product', 'name' => get_the_title($p), 'description' => seo_description($p) ?: null, 'image' => $img ?: null, 'sku' => $sku ?: null, 'url' => site_key() === 'hub' ? home_url('/shop/' . $p->post_name . '/') : $url,
+        'brand' => ['@type' => 'Brand', 'name' => 'Inkhorn Review'],
+        'offers' => isset($prices[$sku]) ? ['@type' => 'Offer', 'price' => number_format($prices[$sku] / 100, 2, '.', ''), 'priceCurrency' => 'USD', 'availability' => m($p->ID, 'ih_preorder') ? 'https://schema.org/PreOrder' : 'https://schema.org/InStock', 'url' => home_url('/shop/' . $p->post_name . '/')] : null];
+      break;
+    case 'ih_issue':
+      $out = ['@type' => 'PublicationIssue', 'name' => m($p->ID, 'ih_label') ?: get_the_title($p), 'url' => $url, 'image' => $img ?: null, 'description' => (string) (m($p->ID, 'ih_note') ?: issue_line_from_shop($p)) ?: null,
+        'isPartOf' => ['@type' => 'Periodical', 'name' => site()['name'], 'url' => home_url('/')]];
+      break;
+  }
+  if (!$out) { return; }
+  $out = ['@context' => 'https://schema.org'] + array_filter($out, function ($v) { return $v !== null && $v !== ''; });
+  echo '<script type="application/ld+json">' . wp_json_encode($out, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>' . "\n";
+}, 30);
+
+/** Sign-in, account, cart, order and newsletter-state pages are not for search engines. */
+function seo_private_view() {
+  $v = (string) get_query_var('ih_view');
+  return in_array($v, ['signin', 'verify', 'out', 'adopt', 'account', 'cart', 'order-complete', 'newsletter', 'nl-confirm', 'nl-confirmed', 'nl-expired'], true);
+}
+add_filter('wp_robots', function ($r) { if (seo_private_view()) { $r['noindex'] = true; $r['nofollow'] = true; unset($r['index'], $r['follow']); } return $r; });
+add_filter('the_seo_framework_robots_meta_array', function ($meta) { if (seo_private_view()) { $meta['noindex'] = 'noindex'; $meta['nofollow'] = 'nofollow'; } return $meta; });
+/** The contributor directory lists only people with published work; the sitemap does the same (a contributor page with no work is a 404). */
+add_filter('the_seo_framework_sitemap_exclude_ids', function ($ids) {
+  if (!post_type_exists('ih_contributor')) { return $ids; }
+  $work = contributors_with_work();
+  foreach (get_posts(['post_type' => 'ih_contributor', 'numberposts' => -1, 'post_status' => 'publish', 'fields' => 'all']) as $c) { if (!in_array($c->post_name, $work, true)) { $ids[] = $c->ID; } }
+  return $ids;
+});

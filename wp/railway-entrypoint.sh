@@ -91,6 +91,12 @@ HT
   done
   # ---- boot tasks: idempotent PHP files run with WP-CLI on every start (see wp/boot)
   for f in /usr/local/share/inkhorn-boot/*.php; do [ -f "$f" ] && wp eval-file "$f" --allow-root 2>&1 | sed 's/^/[inkhorn] boot: /'; done
+  # ---- plugins to keep installed (space-separated wordpress.org slugs in IH_INSTALL_PLUGINS); installed once, network-activated, then managed from the dashboard
+  for slug in ${IH_INSTALL_PLUGINS:-}; do
+    wp plugin is-installed "$slug" --allow-root || wp plugin install "$slug" --activate-network --allow-root 2>&1 | sed "s/^/[inkhorn] install $slug: /"
+    wp plugin is-active "$slug" --network --allow-root || wp plugin activate "$slug" --network --allow-root 2>&1 | sed "s/^/[inkhorn] activate $slug: /"
+  done
+  for f in /usr/local/share/inkhorn-boot-after/*.php; do [ -f "$f" ] && wp eval-file "$f" --allow-root 2>&1 | sed 's/^/[inkhorn] boot: /'; done
   # ---- one-off check that dashboard installs persist (IH_PLUGIN_TEST=install, then redeploy, then =check)
   wp eval 'require_once ABSPATH."wp-admin/includes/file.php"; echo "filesystem method: ".get_filesystem_method(WP_PLUGIN_DIR)." | plugins dir writable: ".(wp_is_writable(WP_PLUGIN_DIR)?"yes":"no")."\n";' --allow-root 2>&1 | sed 's/^/[inkhorn] fs: /'
   case "${IH_PLUGIN_TEST:-}" in
