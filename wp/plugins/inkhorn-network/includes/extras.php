@@ -80,8 +80,7 @@ function view_start_here() {
      . '<h3>Art</h3>' . ph('How art appears in the issue.') . '</section>'
      . '<section aria-label="A few poems to begin with"><h2>A few poems to begin with</h2><ol class="ih-order">';
   for ($i = 1; $i <= 3; $i++) { $h .= '<li>' . ph('Poem ' . $i . ': title, poet, and a link to the poem. One sentence on why to start here.') . '</li>'; }
-  $h .= '</ol></section><section aria-label="Muse"><h2>Write your own</h2>' . ph('One or two sentences inviting the reader to try Muse.')
-     . '<p>' . btn(pub_url('muse'), 'Go to Muse') . '</p></section>' . signup() . '</main>';
+  $h .= '</ol></section>' . signup() . '</main>';
   return $h;
 }
 

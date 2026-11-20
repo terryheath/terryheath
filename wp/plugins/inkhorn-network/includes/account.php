@@ -251,7 +251,7 @@ add_action('template_redirect', function () {
   if (get_query_var('ih_view') !== 'newsletter' || $_SERVER['REQUEST_METHOD'] !== 'POST') { return; }
   $uuid = sanitize_text_field($_POST['id'] ?? ''); $sub = lm_subscriber_by_uuid($uuid);
   if (!$sub) { wp_safe_redirect(home_url('/newsletter/?msg=nope')); exit; }
-  $map = lm_lists_by_slug(); $all = array_values($map);
+  $map = lm_lists_by_slug(); unset($map['muse']); $all = array_values($map); // Muse runs its own list at gomuse.io: saving here never touches it
   if (($_POST['do'] ?? '') === 'none') { wp_safe_redirect(add_query_arg(['id' => $uuid, 'msg' => 'confirmnone'], home_url('/newsletter/'))); exit; } // ask first
   $chosen = ($_POST['do'] ?? '') === 'none-confirmed' ? [] : array_values(array_intersect($all, array_map(function ($s) use ($map) { return $map[$s] ?? 0; }, (array) ($_POST['lists'] ?? []))));
   $drop = array_values(array_diff($all, $chosen));
@@ -274,7 +274,7 @@ function view_newsletter() {
   }
   if (!$sub) { return $h . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-manage')) . '" data-ih-signup><div class="ih-row"><label for="ih-mg" style="flex:1 0 100%;text-align:center;font:16px Karla,sans-serif">Enter your email to manage your lists</label><input id="ih-mg" type="email" name="email" required autocomplete="email" placeholder="you@example.com"><button class="ih-btn" type="submit">Email me a link</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form><p class="ih-note" style="margin:0 auto;text-align:center">Not on a list yet? Choose the ones you want.</p>' . signup('Your lists') . '</main>'; }
   $on = []; foreach (($sub['lists'] ?? []) as $l) { if (($l['subscription_status'] ?? '') !== 'unsubscribed') { foreach (($l['tags'] ?? []) as $t) { $on[$t] = true; } } }
-  $groups = ['Inkhorn Press' => ['inkhorn-review', 'white-rabbit', 'muse', 'events'], 'Terry Heath' => ['writing', 'digest', 'new-books'], 'Life on Words' => ['life-on-words']];
+  $groups = ['Inkhorn Press' => ['inkhorn-review', 'white-rabbit', 'events'], 'Terry Heath' => ['writing', 'digest', 'new-books'], 'Life on Words' => ['life-on-words']];
   $h .= '<p class="ih-sub" style="text-align:center">' . e($sub['email']) . '</p><form class="ih-form" method="post" action="' . a(home_url('/newsletter/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '">';
   foreach ($groups as $g => $slugs) {
     $h .= '<fieldset><legend style="position:static;font:500 13px Karla,sans-serif;letter-spacing:.12em;color:var(--ih-accent);margin:24px 0 8px;display:block;width:100%">' . e(strtoupper($g)) . '</legend>';

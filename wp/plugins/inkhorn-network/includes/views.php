@@ -6,7 +6,7 @@ function a($s) { return esc_attr((string) $s); }
 function m($id, $k) { return get_post_meta($id, $k, true); }
 
 const LIST_LABELS = [
-  'inkhorn-review' => 'Inkhorn Review', 'white-rabbit' => 'White Rabbit', 'muse' => 'Muse', 'events' => 'Events',
+  'inkhorn-review' => 'Inkhorn Review', 'white-rabbit' => 'White Rabbit', 'events' => 'Events',
   'writing' => 'Writing', 'digest' => 'Digest', 'new-books' => 'New books', 'life-on-words' => 'Life on Words',
 ];
 
@@ -112,7 +112,7 @@ function site_footer() {
 
 function signup($title = '', $all_lists = true) {
   $s = site(); $mine = $s['lists'];
-  $family = ($s['kind'] === 'author') ? ['writing', 'digest', 'new-books'] : (($s['kind'] === 'podcast') ? ['life-on-words'] : ['inkhorn-review', 'white-rabbit', 'muse', 'events']);
+  $family = ($s['kind'] === 'author') ? ['writing', 'digest', 'new-books'] : (($s['kind'] === 'podcast') ? ['life-on-words'] : ['inkhorn-review', 'white-rabbit', 'events']);
   $title = 'Get News & Updates by Email'; // one heading on every site
   $h = '<section class="ih-signup" id="newsletter" aria-label="Newsletter"><p class="ih-lead">' . e($title) . '</p>'
      . ((($_GET['signed-up'] ?? '') === '1') ? '<p class="ih-note" role="status">Almost done. We emailed you a link; open it to confirm your sign-up.</p>' : '')
@@ -347,9 +347,9 @@ function shop_strip() {
 
 function view_hub() {
   $h = '<main class="ih-main"><section id="publications" aria-label="Publications"><h1 class="ih-h1-xl ih-center">Our publications</h1><div class="ih-pubs">';
-  $lines = ['review' => 'A quarterly of poetry, short prose and art.', 'whiterabbit' => 'Published only on Friday the 13th.', 'muse' => 'Poems chosen by readers, for readers.'];
-  $acc = ['review' => '#2E4A3F', 'whiterabbit' => '#4B2346', 'muse' => '#3E5672'];
-  foreach (['review' => 'Inkhorn Review', 'whiterabbit' => 'White Rabbit', 'muse' => 'Muse'] as $k => $name) {
+  $lines = ['review' => 'A quarterly of poetry, short prose and art.', 'whiterabbit' => 'Published only on Friday the 13th.'];
+  $acc = ['review' => '#2E4A3F', 'whiterabbit' => '#4B2346'];
+  foreach (['review' => 'Inkhorn Review', 'whiterabbit' => 'White Rabbit'] as $k => $name) {
     $sid = get_sites(['path' => '/' . $k . '/', 'number' => 1]);
     $cur = null; $img = ''; $lab = ''; $dim = [480, 690];
     if ($sid) {
@@ -395,7 +395,7 @@ function view_generic($p) {
   return '<main class="ih-main">' . back_link() . '<article class="ih-piece"><h1>' . e(get_the_title($p)) . '</h1><div class="ih-body">' . apply_filters('the_content', $p->post_content) . $extra . '</div></article>' . $rel . ($p && $p->post_type === 'post' ? signup() : '') . '</main>';
 }
 
-/** A publication with no issue yet (White Rabbit before No. 1, Muse): says what it is and when, and offers its newsletter. */
+/** A publication with no issue yet (White Rabbit before No. 1): says what it is and when, and offers its newsletter. */
 function view_publication_soon() {
   $s = site(); $k = site_key();
   $line = ['whiterabbit' => 'Published only on Friday the 13th. Issue No. 1 comes out on Friday, August 13, 2027.'][$k] ?? '';

@@ -83,7 +83,7 @@ add_action('transition_post_status', function ($new, $old, $post) { if ($post->p
 
 /* ---------- search ---------- */
 
-function search_scope_keys() { return ['hub', 'review', 'whiterabbit', 'muse', 'terryheath', 'lifeonwords']; } // one search across the whole family
+function search_scope_keys() { return ['hub', 'review', 'whiterabbit', 'terryheath', 'lifeonwords']; } // one search across the whole family
 function result_type($p) {
   switch ($p->post_type) {
     case 'ih_piece': $g = piece_genre($p); $map = ['poetry' => 'Poem', 'fiction' => 'Story', 'nonfiction' => 'Essay', 'art' => 'Art', 'micro' => 'Micro']; return $g ? ($map[$g->slug] ?? $g->name) : 'Piece';
@@ -273,12 +273,12 @@ function view_guest($g) {
 /* ---------- Muse: the WordPress placeholder hands over to the Muse web app ---------- */
 
 add_action('template_redirect', function () {
-  if (site_key() !== 'muse' || !getenv('MUSE_APP_URL')) { return; }
-  $base = rtrim(getenv('MUSE_APP_URL'), '/');
+  if (site_key() !== 'muse') { return; }
+  $base = 'https://gomuse.io';
   $path = trim((string) wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
   $rest = preg_replace('#^muse/?#', '', $path);
   if (strpos($path, 'wp-') === 0 || strpos($path, 'wp-json') !== false) { return; }
-  wp_redirect($base . '/' . ($rest === 'about' ? '' : $rest), 301); exit; // the old placeholder About page has no counterpart: Muse's own front page
+  wp_redirect($base . '/' . ($rest === 'about' ? '' : $rest) . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : ''), 301); exit; // every /muse/ path goes to the same gomuse.io page (the old placeholder About has no counterpart: the front page)
 }, 0);
 
 /* ---------- /newsletter/: preferences link by email ---------- */
