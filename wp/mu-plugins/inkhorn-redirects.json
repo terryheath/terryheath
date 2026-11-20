@@ -163,7 +163,7 @@
       "to": "/review/"
     },
     {
-      "from": "^/review/(?!(?:issues|work|genre|about|submissions|readers|feed|page|wp-[a-z-]+|index\\.php)(?:/|$))([^/]+)/?$",
+      "from": "^/review/(?!(?:issues|work|genre|about|submissions|readers|feed|page|wp-[a-z-]+|wp-sitemap[^/]*|sitemap\\.xml|index\\.php)(?:/|$))([^/]+)/?$",
       "to": "/review/work/$1/"
     }
   ]
