@@ -68,7 +68,7 @@ add_action('rest_api_init', function () {
         $url = add_query_arg('t', $t, home_url('/signin/verify/'));
         wp_mail($email, 'Your Inkhorn Press sign-in link', "Hello,\n\nUse this link to sign in. It works once and expires in 15 minutes:\n\n$url\n\nIf you did not ask for it, you can ignore this email.\n\nQuestions? Write to hello@inkhorn.press or see " . home_url('/help/') . "\n\nInkhorn Press");
       }
-      return ['ok' => true, 'message' => 'If that address has an account, a sign-in link is on its way.'];
+      return ['ok' => true, 'message' => 'Check your email. We sent a link to ' . (is_email($email) ? $email : 'that address') . '.'];
     },
   ]);
   // Server-to-server: create or update a contributor account from a signed agreement.
@@ -148,8 +148,8 @@ add_action('template_redirect', function () {
 });
 
 function view_signin() {
-  $h = '<main class="ih-main"><h1 class="ih-h1">Sign in</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center">We email you a link. No password.</p>';
-  if (!empty($_GET['expired'])) { $h .= '<p class="ih-sub" style="text-align:center">That link has expired or was already used. Enter your email and we will send a new one.</p>'; }
+  $h = '<main class="ih-main"><h1 class="ih-h1">Sign in</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center">Enter your email, and we’ll send you a sign-in link. No password needed.</p>';
+  if (!empty($_GET['expired'])) { $h .= '<p class="ih-sub" style="text-align:center">That link has expired. Enter your email for a new one.</p>'; }
   $ret = esc_url_raw((string) ($_GET['return'] ?? ''));
   return $h . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/signin')) . '" data-ih-signup>' . ($ret ? '<input type="hidden" name="return" value="' . a($ret) . '">' : '') . '<div class="ih-row"><label class="ih-sr" for="ih-si">Email address</label>'
     . '<input id="ih-si" type="email" name="email" required autocomplete="email" placeholder="you@example.com"><button class="ih-btn" type="submit">Email me a link</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form></main>';
@@ -161,7 +161,7 @@ function view_account() {
   $n = wp_create_nonce('ih_account_' . $email);
   $msg = $_GET['msg'] ?? '';
   $h = '<main class="ih-main ih-acct"><p class="ih-back"><a href="' . a(home_url('/signin/out/')) . '">Sign out</a></p><h1 class="ih-h1" style="text-align:left">Your account</h1><p class="ih-sub" style="text-align:left">' . e($email) . '</p>';
-  if ($msg === 'pending') { $h .= '<p class="ih-note" role="status">Profile saved. Your changes are waiting for approval; nothing is public until then, and you can withdraw them below.</p>'; }
+  if ($msg === 'pending') { $h .= '<p class="ih-note" role="status">Saved.</p>'; }
   if ($msg === 'withdrawn') { $h .= '<p class="ih-note" role="status">Your pending changes were withdrawn. Your public profile is unchanged.</p>'; }
   if ($msg === 'approved') { $h .= '<p class="ih-note" role="status">Your profile changes were approved and are now public.</p>'; }
   if ($msg === 'address') { $h .= '<p class="ih-note" role="status">Your mailing address is saved.</p>'; }
@@ -201,7 +201,7 @@ function view_account() {
         . '<p><label for="ih-b">Bio</label><br><textarea id="ih-b" name="bio" rows="5" style="width:100%;font:inherit">' . e($pend['bio'] ?? get_post_meta($c->ID, 'ih_bio', true)) . '</textarea></p>'
         . '<p><label for="ih-u">Website</label><br><input id="ih-u" type="url" name="url" value="' . a($pend['url'] ?? get_post_meta($c->ID, 'ih_url', true)) . '" style="width:100%;min-height:44px"></p>'
         . '<p><button class="ih-btn" type="submit">Send changes for approval</button></p></form>';
-    if ($pend) { $h .= '<div class="ih-pending" role="status"><p><b>Waiting for approval.</b> Your bio, website and portrait changes are not public yet.</p><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="withdraw"><button class="ih-btn ih-btn-quiet" type="submit">Withdraw these changes</button></form></div>'; }
+    if ($pend) { $h .= '<div class="ih-pending" role="status"><p>The editor will review your new bio. Your current bio stays up until then.</p><form method="post"><input type="hidden" name="_n" value="' . a($n) . '"><input type="hidden" name="do" value="withdraw"><button class="ih-btn ih-btn-quiet" type="submit">Withdraw change</button></form></div>'; }
     $h .= '</section>';
     $work = contributor_work($c->post_name);
     $h .= '<section><h2>Your work</h2>';
@@ -272,7 +272,7 @@ function view_newsletter() {
       . '<form method="post" action="' . a(home_url('/newsletter/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '"><div class="ih-btns" style="justify-content:center"><button class="ih-btn" type="submit" name="do" value="none-confirmed">Yes, unsubscribe me from all</button>'
       . '<a class="ih-btn ih-btn-quiet" href="' . a(add_query_arg('id', $uuid, home_url('/newsletter/'))) . '">Keep my subscriptions</a></div></form></div></main>';
   }
-  if (!$sub) { return $h . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-manage')) . '" data-ih-signup><div class="ih-row"><label for="ih-mg" style="flex:1 0 100%;text-align:center;font:16px Karla,sans-serif">Enter your email to manage your lists</label><input id="ih-mg" type="email" name="email" required autocomplete="email" placeholder="you@example.com"><button class="ih-btn" type="submit">Email me a link</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form><p class="ih-note" style="margin:0 auto;text-align:center">Not on a list yet? Choose the ones you want.</p>' . signup('Your lists') . '</main>'; }
+  if (!$sub) { return $h . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-manage')) . '" data-ih-signup><div class="ih-row"><label for="ih-mg" style="flex:1 0 100%;text-align:center;font:16px Karla,sans-serif">Already signed up? Enter your email, and we’ll send a link to change your lists.</label><input id="ih-mg" type="email" name="email" required autocomplete="email" placeholder="you@example.com"><button class="ih-btn" type="submit">Email me a link</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form><p class="ih-note" style="margin:0 auto;text-align:center">New here? Pick your lists below.</p>' . signup('Your lists') . '</main>'; }
   $on = []; foreach (($sub['lists'] ?? []) as $l) { if (($l['subscription_status'] ?? '') !== 'unsubscribed') { foreach (($l['tags'] ?? []) as $t) { $on[$t] = true; } } }
   $groups = ['Inkhorn Press' => ['inkhorn-review', 'white-rabbit', 'events'], 'Terry Heath' => ['writing', 'digest', 'new-books'], 'Life on Words' => ['life-on-words']];
   $h .= '<p class="ih-sub" style="text-align:center">' . e($sub['email']) . '</p><form class="ih-form" method="post" action="' . a(home_url('/newsletter/')) . '"><input type="hidden" name="id" value="' . a($uuid) . '">';
@@ -285,7 +285,7 @@ function view_newsletter() {
 }
 
 function view_subscriptions() {
-  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Subscriptions</h1>' . (($_GET['msg'] ?? '') === 'failed' ? '<p class="ih-note" role="alert" style="text-align:center">The payment did not go through, and you were not charged. Try again, or use another card.</p>' : '') . '<div class="ih-grid" style="max-width:760px;margin:0 auto">';
+  $h = '<main class="ih-main">' . back_link() . '<h1 class="ih-h1">Subscriptions</h1>' . (($_GET['msg'] ?? '') === 'failed' ? '<p class="ih-note" role="alert" style="text-align:center">Your payment didn’t go through, and we didn’t charge you. Try another card, or write to hello@inkhorn.press.</p>' : '') . '<div class="ih-grid" style="max-width:760px;margin:0 auto">';
   foreach ([['review-ebook', 'Inkhorn Review Ebook', '$20 a year', 'The ebook of each quarterly issue.'], ['review-print', 'Inkhorn Review Print', '$48 a year', 'Four printed issues a year, mailed to any U.S. address, plus the ebook of each.']] as $t) {
     $h .= '<div class="ih-gi"><h3>' . e($t[1]) . '</h3><p>' . e($t[2]) . '</p><p>' . e($t[3]) . '</p><form method="post" action="' . a(rest_url('inkhorn/v1/subscription-checkout')) . '"><input type="hidden" name="tier" value="' . a($t[0]) . '">'
        . '<p><label><input type="checkbox" name="wr" value="ebook"> Add White Rabbit Ebook, $7 a year</label><br><label><input type="checkbox" name="wr" value="print"> Add White Rabbit Print, $14 a year</label></p><button class="ih-btn" type="submit">Subscribe</button></form></div>';

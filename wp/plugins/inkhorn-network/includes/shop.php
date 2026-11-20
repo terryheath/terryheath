@@ -15,7 +15,7 @@ function book_by_slug($slug) {
 
 function view_shop_page($v) {
   if ($v === 'shop') {
-    $h = '<main class="ih-main"><div class="ih-print-page"><h1 class="ih-h1">Shop</h1><p class="ih-note" style="margin:0 auto 40px;text-align:center">Print and ebook editions of <em>Inkhorn Review</em>. Print copies ship to U.S. addresses only ($4 for the first book, $1 for each additional); ebooks are emailed and ship anywhere. Sold by Inkhorn Press, a nonprofit; checkout is by Stripe. Want every issue? See <a href="' . a(home_url('/shop/subscriptions/')) . '">subscriptions</a>.</p><div class="ih-print-grid">';
+    $h = '<main class="ih-main"><div class="ih-print-page"><h1 class="ih-h1">Shop</h1><p class="ih-note" style="margin:0 auto 40px;text-align:center">Print and ebook editions of <em>Inkhorn Review</em>. We ship print within the U.S.: $4 for the first book, $1 for each after. We email ebooks anywhere. Want every issue? <a href="' . a(home_url('/shop/subscriptions/')) . '">Subscribe</a>.</p><div class="ih-print-grid">';
     foreach (shop_books(50) as $b) {
       $img = get_the_post_thumbnail_url($b, 'medium');
       $h .= '<a class="ih-print-card" href="' . a(home_url('/shop/' . $b->post_name . '/')) . '" data-sku="' . a(m($b->ID, 'ih_sku')) . '">' . ($img ? '<div class="ih-print-card-cover"><img src="' . a($img) . '" alt="' . a(get_the_title($b)) . ' cover" loading="lazy" width="480" height="690"></div>' : '')
@@ -34,7 +34,7 @@ function view_book() {
   if (!$b) { global $wp_query; $wp_query->set_404(); status_header(404); return view_404(); }
   $img = get_the_post_thumbnail_url($b, 'large');
   $data = ['sku' => m($b->ID, 'ih_sku'), 'preorder' => (bool) m($b->ID, 'ih_preorder'), 'isbn' => m($b->ID, 'ih_isbn')];
-  return '<main class="ih-main"><p class="ih-back"><a href="' . a(home_url('/shop/')) . '">&larr; All books</a></p><div class="ih-book-page"><div class="ih-book-hero">'
+  return '<main class="ih-main"><p class="ih-back"><a href="' . a(home_url('/shop/')) . '">&larr; Shop</a></p><div class="ih-book-page"><div class="ih-book-hero">'
     . ($img ? '<div class="ih-book-cover"><img src="' . a($img) . '" alt="' . a(get_the_title($b)) . ' cover" width="480" height="690"></div>' : '')
     . '<div class="ih-book-info"><div class="ih-book-eyebrow" id="ih-book-status"></div><h1 class="ih-book-title">' . e(get_the_title($b)) . '</h1>'
     . ($b->post_excerpt ? '<p class="ih-book-desc">' . e($b->post_excerpt) . '</p>' : '')

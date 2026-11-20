@@ -213,7 +213,7 @@ function view_podcast_home() {
   }
   $h .= '</ul></section>';
   $about = get_page_by_path('about');
-  $h .= '<section aria-label="About the show" class="ih-low-about"><h2 class="ih-h2">About the show</h2><div>' . ($about && trim($about->post_content) !== '' ? '<div class="ih-note" style="margin:0">' . apply_filters('the_content', $about->post_content) . '</div>' : ph('About the show'))
+  $h .= '<section aria-label="About the show" class="ih-low-about"><h2 class="ih-h2">About the show</h2><div>' . '<p class="ih-note" style="margin:0">Terry Heath talks at length with novelists, poets, playwrights, songwriters and publishers. The guests are the experts. Terry is the guide.</p>'
      . '<p class="ih-sub"><a class="ih-link" href="' . a(pub_url('terryheath', 'podcast/guests/')) . '">Suggest a guest &rarr;</a></p></div></section>';
   return $h . signup() . '</main>';
 }

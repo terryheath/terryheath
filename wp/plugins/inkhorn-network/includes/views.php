@@ -84,7 +84,7 @@ function site_header() {
       break;
     default: // lifeonwords
       $m = '<a class="ih-mast-home" href="' . a($home) . '" aria-label="Life on Words, home"><img class="ih-mast-img ih-mast-low" src="' . a(img_url('th-LOW-tag-page-1.png')) . '" alt="Life on Words" width="337" height="150"></a>'
-         . '<p class="ih-label ih-mast-line"><span class="ih-ph-inline">[Tagline]</span> · Hosted by <a class="ih-acc-link" href="' . a(pub_url('terryheath')) . '">Terry Heath</a></p>';
+         . '<p class="ih-label ih-mast-line">Conversations with writers and artists about their work and lives · Hosted by <a class="ih-acc-link" href="' . a(pub_url('terryheath')) . '">Terry Heath</a></p>';
       $left = [['Episodes', home_url('/episodes/')], ['Guests', home_url('/guests/')], ['About', home_url('/about/')]];
       $right = [['Newsletter', home_url('/#newsletter')]];
   }
@@ -115,9 +115,9 @@ function signup($title = '', $all_lists = true) {
   $family = ($s['kind'] === 'author') ? ['writing', 'digest', 'new-books'] : (($s['kind'] === 'podcast') ? ['life-on-words'] : ['inkhorn-review', 'white-rabbit', 'events']);
   $title = 'Get News & Updates by Email'; // one heading on every site
   $h = '<section class="ih-signup" id="newsletter" aria-label="Newsletter"><p class="ih-lead">' . e($title) . '</p>'
-     . ((($_GET['signed-up'] ?? '') === '1') ? '<p class="ih-note" role="status">Almost done. We emailed you a link; open it to confirm your sign-up.</p>' : '')
+     . ((($_GET['signed-up'] ?? '') === '1') ? '<p class="ih-note" role="status">Check your email. We sent a link to ' . e(rawurldecode((string) ($_COOKIE['ih_sent_to'] ?? 'your address'))) . '.</p>' : '')
      . ((($_GET['signed-up'] ?? '') === '0') ? '<p class="ih-note" role="alert">That did not work. Check the address and the lists you chose, then try again.</p>' : '')
-     . '<p class="ih-sub">Choose the lists you want; change them any time. We email a link to confirm.</p>'
+     . '<p class="ih-sub">Pick your lists and change them any time. We’ll email you a link to confirm.</p>'
      . '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-signup')) . '" data-ih-signup>';
   if (count($family) > 1) {
     $h .= '<fieldset><legend>Lists</legend>';
@@ -366,7 +366,7 @@ function view_hub() {
        . '</a><div class="ih-pub-t"><h3' . ($k === 'whiterabbit' ? ' class="ih-fell"' : '') . '><a href="' . a($url) . '">' . e($name) . '</a></h3><p>' . e($lines[$k]) . '</p>' . ($lab ? '<p class="ih-pub-l"><a href="' . a($url) . '">' . e($lab) . ' &rarr;</a></p>' : '') . '</div></div>';
   }
   $h .= '</div></section>' . shop_strip()
-     . '<section aria-label="Donate" class="ih-support"><p class="ih-label">Donate</p><p class="ih-support-t">Inkhorn Press is a nonprofit. Gifts pay contributors and print the issues.</p><p>' . btn(home_url('/donate/'), 'Donate') . '</p></section>'
+     . '<section aria-label="Donate" class="ih-support"><p class="ih-label">Donate</p><p class="ih-support-t">Your gift pays contributors and prints the issues.</p><p>' . btn(home_url('/donate/'), 'Donate') . '</p></section>'
      . signup() . '</main>';
   return $h;
 }

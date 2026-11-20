@@ -12,30 +12,30 @@ function support_email() { return in_array(site()['kind'], ['author', 'podcast']
 function faq_items() {
   return [
     'Orders' => [
-      ['Where is my order?', 'Every order is emailed to you when you pay. Print copies are packed within a few days and mailed in the U.S.; an ebook arrives by email as a private download link right after payment (for a preorder, on its release day). If nothing has come after a day, check spam, then write to us below with the email you used.'],
-      ['I can’t find my ebook download link.', 'Download links last 30 days and work five times. If yours has expired or you lost it, write to us with the email you used at checkout and we will send a new one.'],
-      ['Can I change or cancel an order?', 'Write to us as soon as you can. Print copies that have not shipped can be changed; ebooks that have been delivered cannot be cancelled.'],
+      ['Where is my order?', 'We email a confirmation when you pay. We mail print copies within a few days. Ebooks arrive by email right away, or on release day for a preorder. Nothing after a day? Check spam, then write to us with the email you used.'],
+      ['I can’t find my ebook download link.', 'Links work for 30 days and five downloads. Lost or expired? Write to us with the email you used, and we’ll send a new one.'],
+      ['Can I change or cancel an order?', 'Write to us right away. We can change a print order until it ships. We can’t cancel a delivered ebook.'],
     ],
     'Shipping' => [
-      ['Where do print copies ship?', 'Print copies ship to U.S. addresses only. Shipping is $4 for the first copy and $1 for each additional copy in the same order. Outside the U.S., choose the ebook: it is delivered by email anywhere.'],
-      ['I moved. How do I change my mailing address?', 'Sign in, open Account, and update “Where we mail your Print copies”. If you have a Print subscription, that address is used for every issue.'],
+      ['Where do print copies ship?', 'We ship print within the U.S.: $4 for the first copy, $1 for each after. Outside the U.S., buy the ebook. We email it anywhere.'],
+      ['I moved. How do I change my mailing address?', 'Sign in, open Account and update your address. We mail every subscription issue there.'],
     ],
     'Subscriptions' => [
-      ['What do the subscriptions include?', 'Inkhorn Review Ebook is $20 a year: the ebook of each quarterly issue. Inkhorn Review Print is $48 a year: four printed issues, mailed to any U.S. address, plus the ebook of each. You can add White Rabbit Ebook ($7 a year) or White Rabbit Print ($14 a year) to either one.'],
-      ['How do I update my card, change plans or cancel?', 'Sign in, open Account, and choose Manage billing. It opens a secure page where you can update your card, see receipts, and cancel. Nothing renews without an email first.'],
-      ['My payment failed.', 'Nothing was charged for a failed payment. Try again from Subscriptions or Manage billing with another card, and write to us if it keeps failing.'],
+      ['What do the subscriptions include?', 'Ebook, $20 a year: every issue as an ebook. Print, $48 a year: four printed issues mailed in the U.S., plus the ebooks. Add White Rabbit Ebook ($7) or White Rabbit Print ($14) to either.'],
+      ['How do I update my card, change plans or cancel?', 'Sign in, open Account and choose Manage billing. Update your card, see receipts, change plans or cancel there. We email you before each renewal.'],
+      ['My payment failed.', 'We didn’t charge you. Try another card from Subscriptions or Manage billing. Still failing? Write to us.'],
     ],
     'Contributor agreements and payments' => [
-      ['How do I sign my agreement?', 'You receive an email from DocuSeal with a link. It opens in your browser and takes a minute; there is nothing to print. A signed copy is emailed to you and appears under Agreements in your account.'],
-      ['When and how am I paid?', 'Paid pieces are paid on the issue’s release day: by Zelle or PayPal in the U.S., or by Wise elsewhere. Pay you have chosen to take as a Print subscription instead starts on signing. Everything you are owed or have been paid appears under Payments in your account.'],
-      ['How do I change my bio or portrait?', 'Sign in, open Account, edit your profile and send the changes. They wait for approval; nothing changes in public until then, and you can withdraw a pending change at any time.'],
+      ['How do I sign my agreement?', 'Open the link in your agreement email and sign online. It takes a minute. We email you a signed copy and keep it under Agreements in your account.'],
+      ['When and how am I paid?', 'We pay on the issue’s release day: Zelle or PayPal in the U.S., Wise elsewhere. Chose a subscription instead? It starts when you sign. See everything under Payments in your account.'],
+      ['How do I change my bio or headshot?', 'Sign in, open Account and edit your profile. The editor approves changes before they go live. Withdraw a change any time before then.'],
     ],
   ];
 }
 
 function view_help() {
   $msg = $_GET['sent'] ?? '';
-  $h = '<main class="ih-main ih-help"><h1 class="ih-h1">Help</h1><p class="ih-note" style="margin:0 auto 40px;text-align:center">Answers first. If yours isn’t here, write to us below.</p>';
+  $h = '<main class="ih-main ih-help"><h1 class="ih-h1">Help</h1><p class="ih-note" style="margin:0 auto 40px;text-align:center">Find your question below, or write to us with the form at the bottom.</p>';
   foreach (faq_items() as $group => $qs) {
     $h .= '<section aria-label="' . a($group) . '"><h2>' . e($group) . '</h2>';
     foreach ($qs as $q) { $h .= '<details class="ih-faq"><summary>' . e($q[0]) . '</summary><p>' . e($q[1]) . '</p></details>'; }
@@ -133,20 +133,21 @@ add_action('rest_api_init', function () {
   register_rest_route('inkhorn/v1', '/newsletter-resend', ['methods' => 'POST', 'permission_callback' => '__return_true', 'callback' => function (\WP_REST_Request $r) {
     $t = sanitize_text_field((string) $r->get_param('t')); $rec = $t ? get_transient(nl_long_key($t)) : null;
     if (!$rec) { return new \WP_REST_Response(['ok' => false, 'message' => 'We could not find that sign-up. Please sign up again below.'], 404); }
-    nl_start($rec['email'], $rec['lists'], $rec['from']);
-    return ['ok' => true, 'message' => 'A new link is on its way. Check your email.'];
+    $to = sanitize_email((string) $r->get_param('email')); if (!is_email($to)) { $to = $rec['email']; }
+    nl_start($to, $rec['lists'], $rec['from']);
+    return ['ok' => true, 'message' => 'Check your email. We sent a link to ' . $to . '.'];
   }]);
 });
 
 function view_nl_confirmed() {
-  return '<main class="ih-main"><h1 class="ih-h1">You’re signed up</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center" role="status">Thank you. Your address is confirmed and the next email will reach you.</p>'
+  return '<main class="ih-main"><h1 class="ih-h1">You’re signed up</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center" role="status">Thanks. Watch for our next email.</p>'
     . '<div class="ih-btns" style="justify-content:center">' . btn(hub_url('newsletter/'), 'Choose your lists') . btn(home_url('/'), 'Back to the site') . '</div></main>';
 }
 function view_nl_expired() {
-  $t = sanitize_text_field($_GET['t'] ?? '');
-  $h = '<main class="ih-main"><h1 class="ih-h1">That link has expired</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center" role="alert">' . (!empty($_GET['problem']) ? 'We could not finish your sign-up just now.' : 'Confirmation links work for two days.') . ' We can send a new one.</p>';
-  if ($t && get_transient(nl_long_key($t))) {
-    $h .= '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-resend')) . '" data-ih-signup><input type="hidden" name="t" value="' . a($t) . '"><div class="ih-btns" style="justify-content:center"><button class="ih-btn" type="submit">Send a new link</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form>';
+  $t = sanitize_text_field($_GET['t'] ?? ''); $rec = $t ? get_transient(nl_long_key($t)) : null;
+  $h = '<main class="ih-main"><h1 class="ih-h1">That link has expired</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center" role="alert">Links last two days. Enter your email for a new one.</p>';
+  if ($rec) {
+    $h .= '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-resend')) . '" data-ih-signup><input type="hidden" name="t" value="' . a($t) . '"><div class="ih-row"><label class="ih-sr" for="ih-re">Email address</label><input id="ih-re" type="email" name="email" required autocomplete="email" value="' . a($rec['email']) . '"><button class="ih-btn" type="submit">Email me a new link</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form>';
   } else { $h .= signup(); }
   return $h . '</main>';
 }
