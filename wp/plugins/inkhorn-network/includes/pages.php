@@ -159,6 +159,19 @@ function view_archive() {
   return $h . '</div></main>';
 }
 
+/** An essay's lead: its excerpt field, else its first complete sentence (never a cut-off fragment). */
+function lead_line($p) {
+  if (trim($p->post_excerpt) !== '') { return trim(preg_replace('/\s+/', ' ', wp_strip_all_tags($p->post_excerpt))); }
+  $t = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags(preg_replace('#<br\s*/?>|</p>#i', ' ', (string) $p->post_content))));
+  if (preg_match('/^(.{20,}?[.!?]["”’)]*)(?=\s+[A-Z“"‘(]|$)/us', $t, $mm)) { return $mm[1]; }
+  return '';
+}
+/** A hyphen inside a word does not break across lines in essay titles ("Publisher‑Writer"). */
+add_filter('the_title', function ($t, $id = 0) {
+  if ($id && get_post_type($id) === 'post') { return preg_replace('/(?<=\p{L})-(?=\p{L})/u', "\xE2\x80\x91", $t); }
+  return $t;
+}, 10, 2);
+
 /* ---------- Life on Words home, as in the mockup ---------- */
 
 function episodes_latest($n) { return get_posts(['post_type' => 'ih_episode', 'numberposts' => $n, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']); }
@@ -204,7 +217,7 @@ function view_author_home() {
   if ($posts) {
     $l = $posts[0]; $rest = array_slice($posts, 1, 5);
     $h .= '<section class="ih-th-top" aria-label="Latest essay"><div class="ih-th-latest"><p class="ih-label">Latest essay · ' . e(get_the_date('F j, Y', $l)) . '</p><h1 class="ih-th-h1"><a href="' . a(get_permalink($l)) . '" style="color:var(--ih-ink)">' . e(get_the_title($l)) . '</a></h1>';
-    $line = one_line($l); if ($line !== '') { $h .= '<p class="ih-folio-line">' . e($line) . '</p>'; }
+    $line = lead_line($l); if ($line !== '') { $h .= '<p class="ih-folio-line">' . e($line) . '</p>'; }
     $h .= '<p class="ih-all"><a href="' . a(get_permalink($l)) . '">Read the essay &rarr;</a></p></div>';
     if ($rest) {
       $h .= '<div class="ih-th-more" aria-label="More writing"><p class="ih-label" style="color:var(--ih-mute)">More writing</p><ul class="ih-list" style="margin-top:12px">';

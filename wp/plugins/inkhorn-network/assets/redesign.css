@@ -25,7 +25,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .ih-nav a,.ih-foot a{color:var(--ih-mute);display:inline-flex;align-items:center;min-height:44px;min-width:44px;justify-content:center;text-decoration:none}
 .ih-nav a:hover,.ih-foot a:hover{color:var(--ih-ink);text-decoration:underline;text-underline-offset:6px}
 .ih-nav a[aria-current="page"]{color:var(--ih-ink);text-decoration:underline;text-decoration-color:var(--ih-accent);text-decoration-thickness:2px;text-underline-offset:6px}
-@media(max-width:640px){.ih-nav-div{display:none}.ih-nav{gap:0}.ih-mast-name{font-size:40px}.ih-mast-rabbit{font-size:56px}.ih-mast-img{height:84px}.ih-mast-low{height:112px}}
+@media(max-width:640px){.ih-nav-div{display:none}.ih-nav{gap:0}.ih-mast-name{font-size:40px}.ih-mast-rabbit{font-size:56px}.ih-mast-img{height:84px}}
 
 /* ---- page frame and type scale ---- */
 .ih-main{max-width:1160px;margin:0 auto;padding:88px 32px 0}
@@ -171,3 +171,7 @@ body .ih-add-to-cart-btn:hover,body .ih-cart-checkout-btn:hover,body .ih-address
 .ih-hubrow{display:block}
 .ih-pub-t h3 a{display:inline-flex;align-items:center;min-height:44px}
 .ih-add-to-cart-btn:disabled,body .ih-add-to-cart-btn[disabled]{opacity:1!important;color:var(--ih-mute)!important;border-color:var(--ih-mute)!important;cursor:not-allowed}
+
+/* fixes from review: LOW logo stays 150px, welcome band is quiet */
+.ih-mast-low{height:150px!important;width:auto;max-width:100%}
+.ih-welcome{background:transparent!important;border-bottom:1px solid var(--ih-accent)}

@@ -169,6 +169,16 @@ function contributor_links($p) {
 
 /* ---------- pages ---------- */
 
+/** The issue's line is the excerpt of the product it is sold as (the shop's description field). */
+function issue_line_from_shop($issue) {
+  $path = trim((string) m($issue->ID, 'ih_shop_url'), '/'); if ($path === '') { return ''; }
+  $slug = basename($path); $line = '';
+  switch_to_blog(get_main_site_id());
+  $b = get_posts(['post_type' => 'ih_book', 'name' => $slug, 'numberposts' => 1, 'post_status' => ['publish', 'future']]);
+  if ($b) { $line = (string) $b[0]->post_excerpt; }
+  restore_current_blog();
+  return $line;
+}
 function view_issue($issue) {
   $pieces = issue_pieces($issue->ID);
   $label = m($issue->ID, 'ih_label') ?: get_the_title($issue);
@@ -183,7 +193,7 @@ function view_issue($issue) {
   $by_genre = (($_GET['view'] ?? '') === 'genre');
   $h = '<main class="ih-main"><section class="ih-folio" aria-label="' . ($is_cur ? 'Current issue' : 'Issue') . '"><div class="ih-folio-cover">' . cover($issue, 'Cover of ' . $label) . '</div><div class="ih-folio-t">'
      . '<p class="ih-label">' . ($is_cur ? 'The current issue' : 'Issue') . '</p><h1 class="ih-h1-xl">' . e($label) . '</h1>';
-  $note = m($issue->ID, 'ih_note');
+  $note = m($issue->ID, 'ih_note') ?: issue_line_from_shop($issue);
   if ($note) { $h .= '<p class="ih-folio-line">' . e($note) . '</p>'; }
   $h .= '<p class="ih-folio-meta">' . count($pieces) . ' pieces' . ($names ? ' · ' . e(implode(' · ', $names)) : '') . '</p><div class="ih-btns">';
   if ($shop) { $h .= btn($shop, 'Buy the print issue') . '<a class="ih-btn" href="' . a(hub_link('shop/subscriptions/')) . '">Subscriptions</a>'; }
@@ -337,7 +347,7 @@ function shop_strip() {
 
 function view_hub() {
   $h = '<main class="ih-main"><section id="publications" aria-label="Publications"><h1 class="ih-h1-xl ih-center">Our publications</h1><div class="ih-pubs">';
-  $lines = ['review' => 'A quarterly of poetry, short prose and art.', 'whiterabbit' => 'Published only on Friday the 13th.', 'muse' => 'A magazine for writers.'];
+  $lines = ['review' => 'A quarterly of poetry, short prose and art.', 'whiterabbit' => 'Published only on Friday the 13th.', 'muse' => 'Poems chosen by readers, for readers.'];
   $acc = ['review' => '#2E4A3F', 'whiterabbit' => '#4B2346', 'muse' => '#3E5672'];
   foreach (['review' => 'Inkhorn Review', 'whiterabbit' => 'White Rabbit', 'muse' => 'Muse'] as $k => $name) {
     $sid = get_sites(['path' => '/' . $k . '/', 'number' => 1]);
@@ -392,7 +402,7 @@ function view_publication_soon() {
   $cv = get_page_by_path('cover', OBJECT, 'page'); $tid = $cv ? get_post_thumbnail_id($cv) : 0; $src = $tid ? wp_get_attachment_image_src($tid, 'large') : null;
   $h = '<main class="ih-main"><section class="ih-folio" aria-label="Issue"><div class="ih-folio-cover">' . ($src ? '<div class="ih-cover"><img src="' . a($src[0]) . '" alt="' . a($s['name'] . ' artwork') . '" width="' . (int) $src[1] . '" height="' . (int) $src[2] . '"></div>' : '<div class="ih-cover ih-cover-e" role="img" aria-label="' . a($s['name']) . '"></div>') . '</div><div class="ih-folio-t">'
      . '<p class="ih-label">' . ($k === 'whiterabbit' ? 'Issue No. 1' : e($s['name'])) . '</p><h1 class="ih-h1-xl">' . ($k === 'whiterabbit' ? 'Friday, August 13, 2027' : e($s['name'])) . '</h1>'
-     . ($line ? '<p class="ih-folio-line">' . e($line) . '</p>' : '') . '<p class="ih-folio-meta">Details coming soon.</p><div class="ih-btns">';
+     . ($k === 'whiterabbit' ? ph('One line about the issue') : '') . '<p class="ih-folio-meta">Details coming soon.</p><div class="ih-btns">';
   if ($k === 'whiterabbit') { $h .= btn(hub_link('events/'), 'About Weird Friday'); }
   return $h . '</div></div></section>' . signup() . '</main>';
 }
