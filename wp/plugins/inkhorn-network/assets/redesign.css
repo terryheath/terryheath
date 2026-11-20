@@ -142,3 +142,30 @@ body.ih-whiterabbit .ih-h1,body.ih-whiterabbit .ih-h1-l,body.ih-whiterabbit .ih-
 .ih-low-rh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px 32px}
 .ih-head,.ih-main,.ih-foot-in,.ih-th-banner{box-sizing:content-box}
 .ih-pub-cover{aspect-ratio:5/8;display:flex;align-items:flex-end;justify-content:center}.ih-pub-cover .ih-cover{width:100%}
+
+/* ---- shop, product, cart, order: the same type, accent and outline buttons ---- */
+.ih-print-page,.ih-book-page,.ih-cart-page,.ih-order-complete-page,.ih-address-page{font-family:'EB Garamond',Georgia,serif;color:var(--ih-ink)}
+.ih-print-heading,.ih-cart-heading,.ih-order-complete-heading,.ih-address-page-title{font-size:56px;font-weight:400;line-height:1.05;color:var(--ih-ink)}
+.ih-book-title{font-size:56px;font-weight:400;line-height:1.05;color:var(--ih-ink)}
+.ih-book-eyebrow,.ih-print-card-status,.ih-book-qty-label,.ih-book-section-head{font:600 13px 'Karla',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ih-accent)}
+.ih-book-desc,.ih-print-intro,.ih-cart-note,.ih-book-print-note,.ih-book-ebook-note,.ih-order-complete-intro{font-size:20px;color:var(--ih-mute)}
+.ih-print-card-title{font-size:24px;color:var(--ih-ink)}.ih-print-card:hover .ih-print-card-title{color:var(--ih-accent)}
+.ih-print-card-prices,.ih-print-card-from,.ih-book-author,.ih-book-piece-author,.ih-cart-item-detail,.ih-cart-item-format{font-family:'Karla',sans-serif;color:var(--ih-mute)}
+.ih-book-format-option{background:var(--ih-tint);border:1px solid var(--ih-rule);font-family:'Karla',sans-serif}
+.ih-book-format-option:has(input:checked){border:1.5px solid var(--ih-accent);background:#fff}
+input[type=radio]{accent-color:var(--ih-accent)}
+.ih-qty-btn,.ih-cart-qty-btn{background:var(--ih-tint);border:1px solid var(--ih-rule);color:var(--ih-ink)}.ih-qty-btn:hover,.ih-cart-qty-btn:hover{background:var(--ih-rule)}
+.ih-qty-input{background:#fff;border:1px solid var(--ih-rule);font-family:'Karla',sans-serif}
+.ih-add-to-cart-btn,.ih-cart-checkout-btn,.ih-address-submit,.ih-order-continue{background:transparent!important;border:1.5px solid var(--ih-accent)!important;color:var(--ih-accent)!important;font:500 15px 'Karla',system-ui,sans-serif!important;letter-spacing:.02em;border-radius:0!important;min-height:46px;padding:0 24px!important;display:inline-flex;align-items:center}
+.ih-add-to-cart-btn:hover,.ih-cart-checkout-btn:hover,.ih-address-submit:hover,.ih-order-continue:hover{background:var(--ih-tint)!important}
+.ih-cart-link,.ih-add-confirm-link,.ih-book-piece-item a:hover,.ih-cart-remove:hover{color:var(--ih-accent)}
+.ih-cart-item,.ih-order-item,.ih-book-piece-item{border-color:var(--ih-rule)}
+.ih-cart-subtotal,.ih-order-total{font-family:'Karla',sans-serif}
+/* account, sign-in, help, newsletter, start here, about: pages inherit the same scale */
+.ih-acct h2,.ih-help h2,.ih-start h2{font-size:32px;font-weight:400;margin:56px 0 10px;padding-top:18px;border-top:2px solid var(--ih-accent)}
+.ih-acct .ih-h1{text-align:left}
+.ih-faq summary{font-size:22px}
+.ih-confirm{border:1px solid var(--ih-rule)}.ih-pending{background:var(--ih-tint);border-color:var(--ih-rule)}.ih-alert{border-color:#8F1D1D}
+.ih-ph{border-color:var(--ih-accent);background:var(--ih-tint)}.ih-ph-tag{color:var(--ih-accent)}
+.ih-piece .ih-body a,.ih-body p a{color:var(--ih-accent)}
+.ih-hubrow{display:block}
