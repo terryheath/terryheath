@@ -165,6 +165,10 @@ function episodes_latest($n) { return get_posts(['post_type' => 'ih_episode', 'n
 function guest_of($p) { return get_post((int) m($p->ID, 'ih_guest_id')); }
 function guest_headshot($g, $size = 'medium') { return $g ? (get_the_post_thumbnail_url($g, $size) ?: (m($g->ID, 'ih_headshot_id') ? wp_get_attachment_image_url((int) m($g->ID, 'ih_headshot_id'), $size) : '')) : ''; }
 function episode_title_part($p) { $t = get_the_title($p); $pos = strpos($t, ': '); return $pos !== false ? substr($t, $pos + 2) : $t; }
+function episode_audio($p) { $u = m($p->ID, 'ih_audio_url'); if ($u) { return $u; } return preg_match('#<audio[^>]+src="([^"]+)"#i', (string) $p->post_content, $mm) ? html_entity_decode($mm[1]) : ''; }
+function episode_len($p) { if (m($p->ID, 'ih_duration')) { return m($p->ID, 'ih_duration'); } return preg_match('#Listen to this episode\s*(?:&middot;|·|&#183;)\s*([0-9]+ min)#iu', wp_strip_all_tags((string) $p->post_content), $mm) ? $mm[1] : ''; }
+const LOW_APPLE = 'https://podcasts.apple.com/us/podcast/life-on-words/id6796221237';
+const LOW_SPOTIFY = 'https://open.spotify.com/show/033Yk3F8x8QWBLK496Wbqd';
 function feed_url_low() { return pub_url('terryheath', 'podcast/rss/'); }
 
 function view_podcast_home() {
@@ -176,14 +180,14 @@ function view_podcast_home() {
       . '<div><p class="ih-kicker">Latest episode · ' . e(get_the_date('F j, Y', $latest)) . '</p><h1 class="ih-low-h1">' . e($g ? get_the_title($g) : get_the_title($latest)) . '</h1>'
       . '<p class="ih-low-t">' . e(episode_title_part($latest)) . '</p>';
     $line = one_line($latest); if ($line !== '') { $h .= '<p class="ih-note">' . e($line) . '</p>'; }
-    $h .= '<div class="ih-btns">' . (m($latest->ID, 'ih_audio_url') ? '<button type="button" class="ih-btn ih-play" data-ih-audio="' . a(m($latest->ID, 'ih_audio_url')) . '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg> Play episode</button>' : '')
+    $h .= '<div class="ih-btns">' . (episode_audio($latest) ? '<button type="button" class="ih-btn ih-play" data-ih-audio="' . a(episode_audio($latest)) . '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg> Play episode</button>' : '')
       . '<a class="ih-link" href="' . a(get_permalink($latest)) . '">Episode notes &rarr;</a></div>'
-      . '<p class="ih-listen">Listen on <a href="' . a(feed_url_low()) . '">RSS</a></p></div></section>';
+      . '<p class="ih-listen">Listen on <a href="' . a(LOW_APPLE) . '">Apple Podcasts</a> · <a href="' . a(LOW_SPOTIFY) . '">Spotify</a> · <a href="' . a(feed_url_low()) . '">RSS</a></p></div></section>';
   }
   $h .= '<section aria-label="Recent episodes" class="ih-low-recent"><div class="ih-low-rh"><h2 class="ih-h2" style="text-align:left">Recent episodes</h2><a class="ih-link" href="' . a(home_url('/episodes/')) . '">All episodes &rarr;</a></div><ul class="ih-list">';
   foreach (array_slice($eps, 1, 6) as $p) {
     $g = guest_of($p);
-    $h .= '<li><a class="ih-row-link" href="' . a(get_permalink($p)) . '"><span><span class="ih-pt" style="display:inline">' . e($g ? get_the_title($g) : get_the_title($p)) . '</span><span class="ih-it"> — ' . e(episode_title_part($p)) . '</span></span><span class="ih-pa">' . e(get_the_date('M j, Y', $p) . (m($p->ID, 'ih_duration') ? ' · ' . m($p->ID, 'ih_duration') : '')) . '</span></a></li>';
+    $h .= '<li><a class="ih-row-link" href="' . a(get_permalink($p)) . '"><span><span class="ih-pt" style="display:inline">' . e($g ? get_the_title($g) : get_the_title($p)) . '</span><span class="ih-it"> — ' . e(episode_title_part($p)) . '</span></span><span class="ih-pa">' . e(get_the_date('M j, Y', $p) . (episode_len($p) ? ' · ' . episode_len($p) : '')) . '</span></a></li>';
   }
   $h .= '</ul></section>';
   $about = get_page_by_path('about');
