@@ -51,7 +51,7 @@ async function saveTracker(api, tracker) {
 // --- dates ---------------------------------------------------------------------------------------
 const SEASON_MONTH = { spring: 3, summer: 6, autumn: 9, winter: 12 };
 // Release date of an issue slug like winter-2026: the 1st of Mar/Jun/Sep/Dec of that year (issues go live at 12:00 UTC, very early morning Pacific).
-// Non-seasonal issues (White Rabbit numbers, Muse issues) live in data/publication-issues.json.
+// Non-seasonal issues (White Rabbit numbers) live in data/publication-issues.json.
 const SPECIAL = (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'publication-issues.json'), 'utf8')); } catch (e) { return {}; } })();
 const special = (issue) => (issue && !String(issue).startsWith('_') && SPECIAL[issue]) || null;
 function releaseDate(issue) {
@@ -64,7 +64,7 @@ const ymd = (o) => `${o.y}-${String(o.m).padStart(2, '0')}-${String(o.d).padStar
 function addDays(dateStr, n) { const d = new Date(dateStr + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 const todayPacific = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
 const pretty = (dateStr) => new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-// Which publication an accepted piece is for: Inkhorn Review unless the issue is registered as White Rabbit or Muse.
+// Which publication an accepted piece is for: Inkhorn Review unless the issue is registered as White Rabbit.
 const publicationOf = (issue) => (special(issue) || {}).publication || 'Inkhorn Review';
 // The Issue field on the agreement ("Autumn 2026", "No. 1").
 const issueLabel = (issue) => { const sp = special(issue); if (sp) return sp.label; const [s, y] = issue.split('-'); return `${s[0].toUpperCase()}${s.slice(1)} ${y}`; };
@@ -215,9 +215,8 @@ async function applyPulls(pulled, { commit = true, upload = true } = {}) {
 }
 
 // Pay for one work: $25 poem / micro / flash / prose up to 1,000 words; $40 prose over 1,000 words and printed art; online-only is unpaid.
-// Rates per publication. CLAUDE.md has no White Rabbit rates, so White Rabbit uses the Review rates (2026-11-17). Muse pays nothing (policy 2026-11-11).
+// Rates per publication. CLAUDE.md has no White Rabbit rates, so White Rabbit uses the Review rates (2026-11-17). Muse is a Follow the Rabbit LLC publication with no contributor agreements (2026-11-20).
 function payFor(spec, publication = 'Inkhorn Review') {
-  if (publication === 'Muse') return 0;
   const [kind, extra] = spec.trim().toLowerCase().split(':');
   const online = extra === 'online' || /:online$/.test(spec.toLowerCase()) || spec.toLowerCase().includes('online');
   if (online) return 0;

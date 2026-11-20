@@ -8,7 +8,7 @@ const path = require('path');
 const out = path.join(__dirname, '..', 'agreements');
 const W = 612, H = 792;
 // Two sets. LLC (no suffix): Follow the Rabbit LLC wording for the Autumn and Winter 2026 Review issues (podcast right kept).
-// Inkhorn Press ('-ip' suffix): one agreement for every Inkhorn Press publication (Inkhorn Review from Spring 2027, White Rabbit, Muse);
+// Inkhorn Press ('-ip' suffix): one agreement for every Inkhorn Press publication (Inkhorn Review from Spring 2027, White Rabbit);
 // the publication comes from the read-only "Publication" field, the podcast right is gone.
 // Usage: node scripts/build-agreement-pdfs.cjs   (builds both sets)
 const PUB = 'Follow the Rabbit LLC';
