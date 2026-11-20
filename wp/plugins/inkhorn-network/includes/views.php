@@ -31,7 +31,7 @@ function btn($href, $label, $extra = '') {
 function nav_a($href, $label, $class = '') {
   $u = wp_parse_url($href); $req = (string) strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
   $same_host = empty($u['host']) || strcasecmp($u['host'], (string) ($_SERVER['HTTP_HOST'] ?? '')) === 0 || strcasecmp($u['host'], (string) wp_parse_url(home_url(), PHP_URL_HOST)) === 0;
-  $cur = $same_host && untrailingslashit($u['path'] ?? '/') === untrailingslashit($req) && empty($u['fragment']);
+  $cur = $same_host && untrailingslashit($u['path'] ?? '/') === untrailingslashit($req) && empty($u['fragment']) && !isset($u['query']);
   return '<a' . ($class ? ' class="' . a($class) . '"' : '') . ' href="' . a($href) . '"' . ($cur ? ' aria-current="page"' : '') . '>' . e($label) . '</a>';
 }
 /** "Sign in", or "Account" when this browser has a session. Signing in from another domain of the network comes back here (see signin/adopt). */
