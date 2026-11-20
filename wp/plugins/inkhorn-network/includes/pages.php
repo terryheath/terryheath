@@ -14,7 +14,7 @@ function site_name_of($key) { $s = sites(); return $s[$key]['name'] ?? $key; }
 
 /* ---------- browser titles: "Shop – Inkhorn Press" ---------- */
 
-add_filter('pre_get_document_title', function ($t) {
+function view_title($t = '') {
   $site = site()['name']; $v = get_query_var('ih_view');
   $names = ['shop' => t('title.shop', 'Shop'), 'cart' => t('title.cart', 'Cart'), 'order-complete' => t('title.order_complete', 'Order complete'), 'subscriptions' => t('title.subscriptions', 'Subscriptions'), 'newsletter' => t('title.newsletter', 'Newsletter'), 'nl-confirmed' => t('title.newsletter', 'Newsletter'),
     'nl-expired' => t('title.newsletter', 'Newsletter'), 'signin' => t('title.signin', 'Sign in'), 'account' => session_email() ? t('title.account', 'Account') : t('title.signin', 'Sign in'), 'help' => t('title.help', 'Help'), 'start-here' => t('title.start', 'Start here')];
@@ -32,7 +32,13 @@ add_filter('pre_get_document_title', function ($t) {
   if (is_tax('ih_genre')) { return single_term_title('', false) . $sep . $site; }
   if (is_singular()) { return get_the_title() . $sep . $site; }
   return $site;
-}, PHP_INT_MAX);
+}
+add_filter('pre_get_document_title', __NAMESPACE__ . '\\view_title', PHP_INT_MAX);
+/** The SEO plugin writes the browser title itself: for the views it cannot know (sign-in, shop, help, newsletter and so on) and the directory pages, ours is used and its own branding is not added. */
+function view_title_is_ours() { return (bool) get_query_var('ih_view') || is_404() || is_search() || is_post_type_archive() || is_tax('ih_genre'); }
+add_filter('the_seo_framework_title_from_generation', function ($t) { return view_title_is_ours() ? view_title($t) : $t; }, 20);
+add_filter('the_seo_framework_use_title_branding', function ($use) { return view_title_is_ours() ? false : $use; }, 20);
+
 
 /* ---------- products: one list for the hub strip and /shop/ ---------- */
 
