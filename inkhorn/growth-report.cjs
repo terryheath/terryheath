@@ -12,11 +12,16 @@
  * "Set from the first 3 months": the first three reports are the baseline; the fourth report onward is measured against their average,
  * which is stored once as `targets` (Terry can change it by editing the store value).
  *
- * Env: WP_URL, INKHORN_IMPORT_TOKEN, STORE_MODE=wp, LISTMONK_*, STRIPE_SECRET_KEY, UMAMI_URL, UMAMI_USER, UMAMI_PASSWORD, UMAMI_IDS (json), SMTP_*, NOTICE_EMAIL.
+ * Env: WP_URL, INKHORN_IMPORT_TOKEN, LISTMONK_*, STRIPE_SECRET_KEY, UMAMI_URL, UMAMI_USER, UMAMI_PASSWORD, UMAMI_IDS (json), SMTP_*, NOTICE_EMAIL.
  *   node inkhorn/growth-report.cjs [--month 2026-11] [--dry] [--no-mail]
  */
-process.env.STORE_MODE = process.env.STORE_MODE || 'wp';
-const STORE = require('./store.cjs');
+// The report history always lives in the WordPress store (never changes the process-wide STORE_MODE the hub uses for its other stores).
+const WPB = () => (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '') + '/wp-json/inkhorn/v1/store/';
+const WPH = () => ({ 'Content-Type': 'application/json', 'X-Import-Token': process.env.INKHORN_IMPORT_TOKEN || '' });
+const STORE = {
+  async load(key) { const r = await fetch(WPB() + key, { headers: WPH() }); if (!r.ok) throw new Error(`store ${key}: ${r.status}`); return r.json(); },
+  async save(key, value, version) { const r = await fetch(WPB() + key, { method: 'POST', headers: WPH(), body: JSON.stringify({ value, version: version || undefined }) }); if (!r.ok) throw new Error(`store ${key} save: ${r.status}`); return (await r.json()).version; },
+};
 const LM = require('./listmonk.cjs');
 const KEY = 'growth-snapshots';
 const LISTS_MONTHLY = 0.025, DONATIONS_YEARLY = 0.15, BASELINE_MONTHS = 3;

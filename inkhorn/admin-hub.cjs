@@ -93,7 +93,7 @@ const LINKS = [
     ['DocuSeal', 'https://sign.terryheath.com/sign_in', 'Templates, every sent and signed agreement, the API token.'],
     ['Life on Words guests', '/podcast', 'Guest agreements, bookings and reminders for the podcast; add a guest and send the invitation.'],
     ['Growth report', '/growth', 'Each month against its target: email lists, donations, subscriptions, sales and visits.'],
-    ['Umami analytics', 'https://umami-production-237a03f7.up.railway.app/', 'Visits and pages for every site (self-hosted, no cookies). Sign in as admin; the password is the Railway variable UMAMI_PASSWORD on agreements-accept.'],
+    ['Umami analytics', 'https://umami-production-237a03f7.up.railway.app/', 'Visits and pages for every site (self-hosted, no cookies). Sign in as admin; the password is the Railway variable UMAMI_PASSWORD on growth-report.'],
     ['Payouts', '/payouts', 'Signed or not, pay and subscription choices, bios to Apply or Ignore, print mailing lists (CSV).'],
     ['Contributor confirm page', 'https://agreements.inkhornreview.com/accept', 'What the Duosuma acceptance letter links to; sends the agreement when a contributor confirms. Public.'],
   ]],
