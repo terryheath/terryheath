@@ -20,10 +20,10 @@ add_filter('post_type_archive_link', function ($link, $pt) { return is_review_bl
 if (site_key() === 'review') {
   add_filter('query_vars', function ($v) { $v[] = 'ih_review'; return $v; });
   add_action('init', function () {
-    // 'top' rules are tried last-added first: the general one goes in first so the specific ones win
-    add_rewrite_rule('^review/([^/]+)/?$', 'index.php?ih_review=$matches[1]', 'top');
+    // 'top' rules are tried in the order they are added: the specific ones go first
     add_rewrite_rule('^review/issues/?$', 'index.php?post_type=ih_issue', 'top');
     add_rewrite_rule('^review/founder-letter/?$', 'index.php?ih_view=founder-letter', 'top');
+    add_rewrite_rule('^review/([^/]+)/?$', 'index.php?ih_review=$matches[1]', 'top');
     add_rewrite_rule('^(poetry|fiction|nonfiction|art|micro)/?$', 'index.php?ih_genre=$matches[1]', 'top');
     add_rewrite_rule('^founder-letter/?$', 'index.php?ih_view=founder-letter', 'top');
   }, 20);
