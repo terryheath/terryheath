@@ -199,7 +199,7 @@ add_filter('the_title', function ($t, $id = 0) {
 function episodes_latest($n) { return get_posts(['post_type' => 'ih_episode', 'numberposts' => $n, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']); }
 function guest_of($p) { return post_or_null(m($p->ID, 'ih_guest_id')); }
 function guest_headshot($g, $size = 'medium') { return $g ? (get_the_post_thumbnail_url($g, $size) ?: (m($g->ID, 'ih_headshot_id') ? wp_get_attachment_image_url((int) m($g->ID, 'ih_headshot_id'), $size) : '')) : ''; }
-function episode_title_part($p) { $t = get_the_title($p); $pos = strpos($t, ': '); return $pos !== false ? substr($t, $pos + 2) : $t; }
+function episode_title_part($p) { $t = get_the_title($p); $g = guest_of($p); $pre = $g ? get_the_title($g) . ': ' : ''; return ($pre !== '' && stripos($t, $pre) === 0) ? substr($t, strlen($pre)) : $t; } // the title after "Guest: "; a title that does not start with the guest's name is shown whole
 function episode_audio($p) { $u = m($p->ID, 'ih_audio_url'); if ($u) { return $u; } return preg_match('#<audio[^>]+src="([^"]+)"#i', (string) $p->post_content, $mm) ? html_entity_decode($mm[1]) : ''; }
 function episode_len($p) { if (m($p->ID, 'ih_duration')) { return m($p->ID, 'ih_duration'); } return preg_match('#Listen to this episode\s*(?:&middot;|·|&#183;)\s*([0-9]+ min)#iu', wp_strip_all_tags((string) $p->post_content), $mm) ? $mm[1] : ''; }
 const LOW_APPLE = 'https://podcasts.apple.com/us/podcast/life-on-words/id6796221237';
