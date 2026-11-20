@@ -12,7 +12,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .ih-head{max-width:1120px;margin:0 auto;padding:72px 32px 24px;text-align:center}
 .ih-title{font-size:44px;font-weight:400;letter-spacing:.01em;color:var(--ih-accent)}.ih-title a{color:var(--ih-accent)!important}
 .ih-head nav{margin-top:20px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px 28px;font:14px 'Karla',system-ui,sans-serif}
-.ih-head nav a{color:var(--ih-mute)}.ih-head nav a:first-child{color:var(--ih-ink)}
+.ih-head nav a{color:var(--ih-mute)}.ih-head nav a:first-child{color:var(--ih-mute)}
 .ih-main{max-width:1160px;margin:0 auto;padding:72px 36px 120px}
 .ih-back{margin:0 0 32px;font:14px 'Karla',sans-serif}.ih-back a{color:var(--ih-accent)}
 .ih-btn{display:inline-flex;align-items:center;min-height:44px;padding:0 22px;border:1px solid var(--ih-accent);background:transparent;color:var(--ih-accent);font:14px 'Karla',system-ui,sans-serif;border-radius:0;cursor:pointer}
@@ -129,3 +129,6 @@ summary,.ih-body summary{min-height:44px;display:flex;align-items:center;cursor:
 .ih-shop-h a,.ih-all a,.ih-back a{display:inline-flex;align-items:center;min-height:44px}
 .ih-body li>a{display:inline-flex;align-items:center;min-height:44px}
 .ih-body a[href*="bookshop.org"]{display:inline-flex;align-items:center;min-height:44px}
+input[type=file]{min-height:44px;padding:10px 0;font:15px 'Karla',sans-serif}
+.ih-acct input,.ih-acct textarea{min-height:44px;font:16px 'Karla',sans-serif;border:1px solid #DCD7CC;background:#fff;padding:8px 12px}
+.ih-acct label,.ih-acct .ih-sub{font:14px 'Karla',sans-serif}
