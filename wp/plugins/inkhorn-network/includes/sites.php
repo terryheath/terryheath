@@ -4,17 +4,17 @@ namespace Inkhorn;
 /** The network's sites: look, name, signup lists, outside links. */
 function sites() {
   return [
-    'hub' => ['name' => 'Inkhorn Press', 'short' => 'Inkhorn Press', 'accent' => '#4F5B66', 'tint' => '#EDEFF1', 'bar' => true, 'kind' => 'hub',
+    'hub' => ['name' => 'Inkhorn Press', 'short' => 'Inkhorn Press', 'accent' => '#0A2454', 'tint' => '#E9EDF5', 'bar' => true, 'kind' => 'hub',
       'lists' => ['inkhorn-review', 'white-rabbit', 'muse', 'events']],
-    'review' => ['name' => 'Inkhorn Review', 'short' => 'the Review', 'accent' => '#5E7268', 'tint' => '#EEF1EE', 'bar' => true, 'kind' => 'publication',
+    'review' => ['name' => 'Inkhorn Review', 'short' => 'the Review', 'accent' => '#2E4A3F', 'tint' => '#E9EEEB', 'bar' => true, 'kind' => 'publication',
       'submit' => 'https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p', 'lists' => ['inkhorn-review']],
-    'whiterabbit' => ['name' => 'White Rabbit', 'short' => 'White Rabbit', 'accent' => '#7A6478', 'tint' => '#F1EDF0', 'bar' => true, 'kind' => 'publication',
+    'whiterabbit' => ['name' => 'White Rabbit', 'short' => 'White Rabbit', 'accent' => '#4B2346', 'tint' => '#F0E9EF', 'bar' => true, 'kind' => 'publication',
       'submit' => '', 'lists' => ['white-rabbit']],
     'muse' => ['name' => 'Muse', 'short' => 'Muse', 'accent' => '#5D6F86', 'tint' => '#EEF1F5', 'bar' => true, 'kind' => 'publication',
       'submit' => 'https://gomuse.io', 'lists' => ['muse']],
-    'terryheath' => ['name' => 'Terry Heath', 'short' => 'Terry Heath', 'accent' => '#7A664B', 'tint' => '#F3EFE8', 'bar' => false, 'kind' => 'author',
+    'terryheath' => ['name' => 'Terry Heath', 'short' => 'Terry Heath', 'accent' => '#6B1E22', 'tint' => '#F4EAEA', 'bar' => false, 'kind' => 'author',
       'lists' => ['writing', 'digest', 'new-books']],
-    'lifeonwords' => ['name' => 'Life on Words', 'short' => 'Life on Words', 'accent' => '#4E6E6E', 'tint' => '#EDF2F2', 'bar' => false, 'kind' => 'podcast',
+    'lifeonwords' => ['name' => 'Life on Words', 'short' => 'Life on Words', 'accent' => '#A8361A', 'tint' => '#F7ECE8', 'bar' => false, 'kind' => 'podcast',
       'lists' => ['life-on-words']],
   ];
 }

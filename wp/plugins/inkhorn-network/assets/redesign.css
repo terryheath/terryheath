@@ -1,0 +1,142 @@
+/* The redesign (2026-11-20): each site has its own masthead and nav; one type scale; one accent per site. Loaded after inkhorn.css and shop.css. */
+:root{--ih-ink:#1E1D1A;--ih-mute:#5F5C55;--ih-rule:#E4DFD5;--ih-bg:#FBFAF7}
+body{background:var(--ih-bg);color:var(--ih-ink);font-family:'EB Garamond',Georgia,serif;font-size:20px;line-height:1.6}
+a{color:var(--ih-accent)}a:hover{color:var(--ih-ink);text-decoration:underline;text-underline-offset:4px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--ih-accent);outline-offset:3px}
+.ih-label{margin:0;font:600 13px/1.4 'Karla',system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ih-accent)}
+.ih-label a{color:var(--ih-accent)}
+
+/* ---- masthead and nav ---- */
+.ih-head{max-width:1160px;margin:0 auto;padding:56px 32px 0;text-align:center}
+.ih-mast-home{display:inline-block;color:var(--ih-ink)}.ih-mast-home:hover{text-decoration:none;color:var(--ih-ink)}
+.ih-mast-stack{display:inline-flex;flex-direction:column;align-items:center;gap:14px}
+.ih-mast-stack img{height:auto;max-width:100%}
+.ih-mast-name{font-size:52px;line-height:1;font-weight:400}
+.ih-mast-img{display:block;height:112px;width:auto;max-width:100%;margin:0 auto}
+.ih-mast-low{height:150px;mix-blend-mode:multiply}
+.ih-mast-rabbit{font:400 76px/1 'IM Fell English',Georgia,serif;color:var(--ih-ink)}
+.ih-mast-sc{margin:10px 0 0;font:400 20px/1.3 'IM Fell English SC',Georgia,serif;letter-spacing:.06em;color:var(--ih-accent)}
+.ih-mast-line{margin:14px 0 0;font-size:14px;color:var(--ih-mute)}.ih-mast-line.ih-mast-acc{color:var(--ih-accent)}
+.ih-acc-link{color:var(--ih-accent);text-decoration:underline;text-underline-offset:3px}
+.ih-publine{margin:14px 0 0;font:13px/1.4 'Karla',system-ui,sans-serif;letter-spacing:.08em;color:var(--ih-mute)}.ih-publine a{color:var(--ih-mute);text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;min-height:44px}
+.ih-ph-inline{border-bottom:1px dashed var(--ih-accent)}
+.ih-nav{margin-top:32px;padding:16px 0;border-top:1px solid var(--ih-rule);border-bottom:1px solid var(--ih-rule);display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 48px;font:15px 'Karla',system-ui,sans-serif}
+.ih-nav-g{display:flex;flex-wrap:wrap;justify-content:center;gap:0 28px}.ih-nav-div{width:1px;height:18px;background:var(--ih-rule)}
+.ih-nav a,.ih-foot a{color:var(--ih-mute);display:inline-flex;align-items:center;min-height:44px;min-width:44px;justify-content:center;text-decoration:none}
+.ih-nav a:hover,.ih-foot a:hover{color:var(--ih-ink);text-decoration:underline;text-underline-offset:6px}
+.ih-nav a[aria-current="page"]{color:var(--ih-ink);text-decoration:underline;text-decoration-color:var(--ih-accent);text-decoration-thickness:2px;text-underline-offset:6px}
+@media(max-width:640px){.ih-nav-div{display:none}.ih-nav{gap:0}.ih-mast-name{font-size:40px}.ih-mast-rabbit{font-size:56px}.ih-mast-img{height:84px}.ih-mast-low{height:112px}}
+
+/* ---- page frame and type scale ---- */
+.ih-main{max-width:1160px;margin:0 auto;padding:88px 32px 0}
+.ih-h1{margin:0 0 40px;font-size:56px;font-weight:400;line-height:1.05;text-align:center}
+.ih-h1-l{margin:20px 0 0;font-size:60px;font-weight:400;line-height:1.05}
+.ih-h1-xl{margin:16px 0 0;font-size:72px;font-weight:400;line-height:1.02;letter-spacing:-.01em}
+.ih-center{text-align:center}
+.ih-h2,.ih-contents h2{margin:0;font-size:44px;font-weight:400;line-height:1.1;text-align:left}
+.ih-gi h3,.ih-pub h3{font-size:32px;font-weight:400;line-height:1.15}
+.ih-note{font-size:24px;line-height:1.45;color:var(--ih-mute)}
+body.ih-rabbit .ih-h1,body.ih-rabbit .ih-h1-l,body.ih-rabbit .ih-h1-xl,body.ih-rabbit .ih-h2,body.ih-rabbit .ih-toc-t,body.ih-rabbit .ih-pub h3.ih-fell{font-family:'IM Fell English',Georgia,serif}
+.ih-btns{margin-top:30px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.ih-btn{display:inline-flex;align-items:center;min-height:46px;padding:0 24px;border:1.5px solid var(--ih-accent);color:var(--ih-accent);background:transparent;font:500 15px 'Karla',system-ui,sans-serif;letter-spacing:.02em;border-radius:0;text-decoration:none}
+.ih-btn:hover{background:var(--ih-tint);color:var(--ih-accent);text-decoration:none}
+.ih-btn-quiet{border-color:var(--ih-accent);color:var(--ih-accent)}
+.ih-btn-link,.ih-link{font:500 15px 'Karla',system-ui,sans-serif;color:var(--ih-accent);display:inline-flex;align-items:center;min-height:44px;margin-left:8px}
+.ih-link{margin-left:0}
+
+/* ---- covers: real proportions, never cropped ---- */
+.ih-cover{aspect-ratio:auto;width:100%;background:none;border-radius:0;overflow:visible;box-shadow:0 2px 6px rgba(30,29,26,.10),0 24px 48px rgba(30,29,26,.16)}
+.ih-cover img{display:block;width:100%;height:auto;object-fit:contain}
+.ih-cover-e{aspect-ratio:5/8;background:var(--ih-tint)}
+
+/* ---- the Folio issue page ---- */
+.ih-folio{display:flex;flex-wrap:wrap;gap:72px;align-items:flex-start}
+.ih-folio-cover{flex:1 1 340px;max-width:420px;position:sticky;top:32px}
+.ih-folio-t{flex:999 1 460px;min-width:0}
+.ih-folio-line{margin:22px 0 0;font-size:24px;line-height:1.45;font-style:italic;color:var(--ih-mute)}
+.ih-folio-meta{margin:20px 0 0;font:14px 'Karla',system-ui,sans-serif;letter-spacing:.04em;color:var(--ih-mute)}
+.ih-sechead{margin-top:80px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px 32px;padding-bottom:14px;border-bottom:2px solid var(--ih-accent)}
+.ih-sechead h2{margin:0;font-size:40px;font-weight:400;line-height:1.1}
+.ih-views{display:flex;gap:24px;font:15px 'Karla',system-ui,sans-serif}.ih-views a{color:var(--ih-mute);display:inline-flex;align-items:center;min-height:44px}
+.ih-views a[aria-current="true"]{color:var(--ih-ink);text-decoration:underline;text-decoration-color:var(--ih-accent);text-decoration-thickness:2px;text-underline-offset:6px}
+.ih-toc{list-style:none;margin:0;padding:0}
+.ih-toc a{display:flex;flex-wrap:wrap;gap:4px 24px;align-items:baseline;justify-content:space-between;padding:15px 0;border-top:1px solid var(--ih-rule);color:var(--ih-ink);min-height:44px}
+.ih-toc a:hover{text-decoration:none;background:var(--ih-tint)}
+.ih-toc-t{font-size:22px;line-height:1.3}.ih-toc-m{font:14px 'Karla',system-ui,sans-serif;letter-spacing:.02em;color:var(--ih-mute)}
+.ih-toc-g{margin:40px 0 8px}
+@media(max-width:900px){.ih-folio{gap:40px}.ih-folio-cover{position:static;max-width:340px}.ih-h1-xl{font-size:52px}}
+
+/* ---- pieces ---- */
+.ih-piece{max-width:620px;margin:0 auto}
+.ih-piece-h{text-align:center}
+.ih-by{margin:20px 0 0;font:600 14px 'Karla',system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ih-ink)}.ih-by a{color:var(--ih-ink)}
+.ih-body{margin:72px auto 0;font-size:21px;line-height:1.65}
+.ih-poem{width:fit-content;max-width:100%}
+.ih-dots{margin:40px 0 0;text-align:center;color:var(--ih-accent);font-size:22px;letter-spacing:.5em}
+.ih-aboutp{margin-top:48px;padding-top:32px;border-top:1px solid var(--ih-rule)}
+.ih-bio{font-size:18px;line-height:1.6;color:var(--ih-mute)}.ih-nom{font-size:18px;font-style:italic;color:var(--ih-accent);margin:14px 0 0}
+.ih-all{margin:18px 0 0;font:500 15px 'Karla',system-ui,sans-serif}.ih-all a{color:var(--ih-accent)}
+.ih-pn{max-width:900px;margin:96px auto 0;padding:32px 0;border-top:2px solid var(--ih-accent);border-bottom:1px solid var(--ih-rule);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:24px;align-items:start}
+.ih-pn a{display:block;color:var(--ih-ink);padding:0}.ih-pn a:hover{text-decoration:none}.ih-pn .ih-label{color:var(--ih-mute)}
+.ih-pn b{display:block;margin-top:8px;font:400 24px/1.25 'EB Garamond',Georgia,serif}.ih-pn i{display:block;font:14px 'Karla',sans-serif;font-style:normal;color:var(--ih-mute)}
+.ih-pn-r{text-align:right}.ih-buyrow{margin:40px auto 0;display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+
+/* ---- sections: the same accent rule above each ---- */
+.ih-signup,.ih-shop,.ih-support,.ih-related,.ih-low-recent,.ih-low-about,.ih-th-low,.ih-th-books{margin-top:128px;padding-top:48px;border-top:2px solid var(--ih-accent)}
+.ih-signup{max-width:640px;margin-left:auto;margin-right:auto}
+.ih-lead{font-size:32px;font-weight:500;line-height:1.2;margin:0}
+.ih-sub{font:15px 'Karla',system-ui,sans-serif;color:var(--ih-mute)}
+.ih-form input[type=email],.ih-form input[type=search],.ih-contact input,.ih-contact select,.ih-contact textarea,.ih-acct input,.ih-acct textarea{min-height:46px;border:1px solid #CFC8BA;background:#fff;font:15px 'Karla',sans-serif}
+.ih-form{font-family:'Karla',sans-serif}
+.ih-form label{font-size:15px}
+.ih-foot{margin-top:120px;border-top:1px solid var(--ih-rule);font:14px 'Karla',system-ui,sans-serif;color:var(--ih-mute)}
+.ih-foot-in{max-width:1160px;margin:0 auto;padding:32px;display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-between;align-items:baseline}
+.ih-foot-in>span a{color:var(--ih-mute);text-decoration:underline;text-underline-offset:3px;display:inline}
+.ih-foot nav div{display:flex;flex-wrap:wrap;gap:0 24px}
+
+/* ---- hub: publications, shop, donate ---- */
+.ih-pubs{margin-top:64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:64px}
+.ih-pub-cover{display:block;max-width:280px;margin:0 auto}
+.ih-pub-t{margin-top:28px;padding-top:16px;border-top:2px solid var(--pa)}
+.ih-pub-t h3{margin:0}.ih-pub-t h3 a{color:var(--ih-ink)}.ih-pub-t p{margin:8px 0 0;font-size:19px;line-height:1.5;color:var(--ih-mute)}
+.ih-pub-t .ih-pub-l{margin-top:14px;font:500 15px 'Karla',sans-serif}.ih-pub-t .ih-pub-l a{color:var(--pa)}
+.ih-fell{font-family:'IM Fell English',Georgia,serif}
+.ih-shop-grid{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:32px 64px}
+.ih-shop-i{display:grid;grid-template-columns:120px 1fr;gap:24px;align-items:center;color:var(--ih-ink)}.ih-shop-i:hover{text-decoration:none}
+.ih-shop-i .ih-pt{font-size:24px;line-height:1.25}.ih-shop-i .ih-pa{margin-top:6px;font:15px 'Karla',sans-serif}.ih-pl-link{display:block;margin-top:14px;font:500 15px 'Karla',sans-serif;color:var(--ih-accent)}
+.ih-support-t{margin:20px 0 0;font-size:24px;line-height:1.4}
+.ih-shop,.ih-support{text-align:left}
+@media(min-width:900px){.ih-hubrow{display:grid}}
+
+/* ---- lists, grids, search, contributors ---- */
+.ih-list a,.ih-groups a{border-bottom:0;border-top:1px solid var(--ih-rule);padding:14px 0;display:block;color:var(--ih-ink)}
+.ih-list a:hover{text-decoration:none;background:var(--ih-tint)}
+.ih-pt{font-size:22px;line-height:1.3}.ih-pa{font:14px 'Karla',sans-serif;color:var(--ih-mute)}
+.ih-results a{border-top:1px solid var(--ih-rule)}.ih-results li:last-child{border-bottom:1px solid var(--ih-rule)}
+.ih-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.ih-archive{grid-template-columns:repeat(auto-fill,minmax(200px,220px));justify-content:center}
+.ih-contrib h1{font-size:56px;font-weight:400;line-height:1.05}
+.ih-eyebrow{font:600 13px 'Karla',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ih-accent)}
+.ih-headshot{border-radius:50%;object-fit:cover}
+.ih-help h2,.ih-start h2{font-size:32px;margin:48px 0 8px}
+
+/* ---- Life on Words and terryheath.com ---- */
+.ih-low-latest{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:56px;align-items:center}
+.ih-low-latest .ih-headshot-l{width:100%;max-width:360px;height:auto;aspect-ratio:1;justify-self:center;flex:none}
+.ih-low-h1{font-size:64px}.ih-th-h1{font-size:56px}.ih-low-recent .ih-low-rh{padding-bottom:12px;border-bottom:2px solid var(--ih-accent);margin-bottom:0}
+.ih-low-recent,.ih-low-about,.ih-th-low{border-top:0;padding-top:0}
+.ih-th-banner{max-width:1160px;margin:48px auto 0;padding:0 32px}.ih-th-banner img{display:block;width:100%;height:auto}
+.ih-th-low .ih-ep-card{padding-top:18px;border-top:2px solid var(--ih-accent);text-align:left}
+.ih-th-low .ih-ep-card .ih-headshot{margin:0 0 12px}
+.ih-th-latest{max-width:none;text-align:left}.ih-th-more{max-width:none;margin-top:0}
+.ih-th-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px 72px;align-items:start}
+
+/* ---- the welcome band stays above the masthead on Inkhorn Press sites ---- */
+.ih-welcome{background:var(--ih-tint)}
+@media(max-width:640px){.ih-main{padding:56px 20px 0}.ih-h1{font-size:40px}.ih-h1-l{font-size:40px}.ih-h1-xl{font-size:44px}.ih-sechead h2{font-size:32px}.ih-low-h1,.ih-th-h1{font-size:40px}.ih-foot-in{padding:24px 20px}.ih-head{padding:40px 20px 0}}
+.ih-ep-list{list-style:none;margin:0;padding:0}
+.ih-ep-row{display:grid;grid-template-columns:64px 1fr auto;gap:20px;align-items:center;padding:16px 0;border-bottom:1px solid var(--ih-rule);color:var(--ih-ink);min-height:44px}.ih-ep-row:hover{text-decoration:none;background:var(--ih-tint)}
+.ih-ep-row .ih-headshot{width:64px;height:64px}.ih-ep-g{display:block;font-size:23px;line-height:1.25}.ih-ep-t{display:block;font-size:18px;font-style:italic;color:var(--ih-mute)}
+.ih-low-about{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:32px 72px;align-items:start;text-align:left;max-width:none}
+.ih-low-about .ih-note{font-size:21px;line-height:1.6}
+.ih-low-rh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px 32px}

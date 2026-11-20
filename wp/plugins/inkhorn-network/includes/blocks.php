@@ -9,10 +9,12 @@ add_action('init', function () {
 
 /** Fonts, one stylesheet, the site's accent as CSS variables. */
 add_action('wp_enqueue_scripts', function () {
-  wp_enqueue_style('inkhorn-fonts', 'https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Karla:wght@400;500&display=swap', [], null);
+  wp_enqueue_style('inkhorn-fonts', 'https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Karla:wght@400;500;600&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap', [], null);
   wp_enqueue_style('inkhorn', INKHORN_URL . '/assets/inkhorn.css', ['inkhorn-fonts'], asset_ver());
   $s = site();
+  wp_enqueue_style('inkhorn-redesign', INKHORN_URL . '/assets/redesign.css', ['inkhorn'], (string) @filemtime(INKHORN_DIR . '/assets/redesign.css'));
   wp_add_inline_style('inkhorn', ':root{--ih-accent:' . $s['accent'] . ';--ih-tint:' . $s['tint'] . ';}');
+  add_filter('body_class', function ($c) { $c[] = 'ih-' . site_key(); return $c; });
   wp_enqueue_script('inkhorn', INKHORN_URL . '/assets/inkhorn.js', [], asset_ver(), true);
 });
 function asset_ver() { return (string) @filemtime(INKHORN_DIR . '/assets/inkhorn.css') ?: '0'; }
