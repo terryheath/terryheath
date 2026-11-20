@@ -139,7 +139,7 @@ Switch-over is by environment variable or by pointing the Railway cron at the ne
 
 ## 2026-11-20: Muse moves to Follow the Rabbit LLC
 
-- Muse web app lives only at https://gomuse.io. Every inkhorn.press/muse/… path 301s to the same gomuse.io path (WordPress `muse` site, template_redirect in pages.php); **do not route inkhorn.press/muse to the app at cutover** (the earlier edge-route step for web-inkhorn is cancelled; the `web-inkhorn` Railway service is now unused).
+- Muse web app lives only at https://gomuse.io. Every inkhorn.press/muse/… path 301s to the same gomuse.io path (WordPress `muse` site, template_redirect in pages.php); **do not route inkhorn.press/muse to the app at cutover** (the earlier edge-route step for web-inkhorn is cancelled; the `web-inkhorn` Railway service was deleted on request 2026-11-20; it held no volume).
 - Muse footer (apps/web/server.js): "Muse is published by Follow the Rabbit LLC." on every page.
 - Muse removed from Inkhorn Press: hub publications row, Submit page (page content updated through the import endpoint; `scripts/wp-remove-muse.cjs`), Start here, sign-up lists (all forms), preferences page grouping (saving or "Unsubscribe from all" never touches the Muse list), White Rabbit About text, search scope. The Muse listmonk list and its subscribers are untouched.
 - Email: Muse sends its own mail from `Muse <muse@gomuse.io>` through SES (gomuse.io is a verified SES identity) and has its own sign-up (consent at sign-in).
