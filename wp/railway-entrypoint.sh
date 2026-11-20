@@ -96,6 +96,8 @@ HT
     wp plugin is-installed "$slug" --allow-root || wp plugin install "$slug" --activate-network --allow-root 2>&1 | sed "s/^/[inkhorn] install $slug: /"
     wp plugin is-active "$slug" --network --allow-root || wp plugin activate "$slug" --network --allow-root 2>&1 | sed "s/^/[inkhorn] activate $slug: /"
   done
+  # new plugins add rewrite rules (sitemaps): flush them for every site
+  for url in $(wp site list --allow-root --field=url); do wp rewrite flush --url="$url" --allow-root >/dev/null 2>&1 || true; done
   for f in /usr/local/share/inkhorn-boot-after/*.php; do [ -f "$f" ] && wp eval-file "$f" --allow-root 2>&1 | sed 's/^/[inkhorn] boot: /'; done
   # ---- one-off check that dashboard installs persist (IH_PLUGIN_TEST=install, then redeploy, then =check)
   wp eval 'require_once ABSPATH."wp-admin/includes/file.php"; echo "filesystem method: ".get_filesystem_method(WP_PLUGIN_DIR)." | plugins dir writable: ".(wp_is_writable(WP_PLUGIN_DIR)?"yes":"no")."\n";' --allow-root 2>&1 | sed 's/^/[inkhorn] fs: /'
