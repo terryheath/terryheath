@@ -117,3 +117,5 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ih-accent);width:18px;
 .ih-alert{padding:12px 14px;border:1px solid #B5543A;background:#FBF1EE;font:15px 'Karla',sans-serif}
 .ih-pending{margin-top:16px;padding:14px 16px;border:1px solid var(--ih-rule);background:var(--ih-tint);font:15px 'Karla',sans-serif}.ih-pending p{margin:0 0 10px}
 .ih-confirm{max-width:520px;margin:32px auto 0;padding:28px;border:1px solid var(--ih-rule);text-align:center}.ih-confirm h2{margin:0 0 8px;font-size:26px;font-weight:400}
+.ih-host{margin:-24px 0 24px;font:15px 'Karla',sans-serif;color:var(--ih-mute)}.ih-host a{color:var(--ih-accent);text-decoration:underline;text-underline-offset:3px}
+.ih-related{max-width:34rem;margin:72px auto 0}.ih-related h2{font-size:26px;font-weight:400}

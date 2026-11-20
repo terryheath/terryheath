@@ -344,7 +344,7 @@ function shop_strip() {
   foreach (get_posts(['post_type' => 'ih_book', 'numberposts' => 4, 'post_status' => ['publish', 'future'], 'orderby' => 'date', 'order' => 'DESC']) as $b) {
     $img = get_the_post_thumbnail_url($b, 'medium'); $sku = m($b->ID, 'ih_sku');
     $meta = 'Print issue' . (isset($prices[$sku]) ? ' · $' . number_format($prices[$sku] / 100, 2) : '');
-    $h .= '<a class="ih-gi" href="' . a(home_url('/shop/' . $b->post_name . '/')) . '">' . ($img ? '<div class="ih-cover"><img src="' . a($img) . '" alt="" width="480" height="690" loading="lazy"></div>' : '<div class="ih-cover ih-cover-e"></div>')
+    $h .= '<a class="ih-gi" href="' . a(home_url('/shop/' . $b->post_name . '/')) . '">' . ($img ? '<div class="ih-cover"><img src="' . a($img) . '" alt="' . a('Cover of ' . get_the_title($b)) . '" width="480" height="690" loading="lazy"></div>' : '<div class="ih-cover ih-cover-e" role="img" aria-label="' . a(get_the_title($b)) . '"></div>')
        . '<span class="ih-pt">' . e(get_the_title($b)) . '</span><span class="ih-pa">' . e($meta) . '</span></a>';
   }
   return $h . '</div></section>';
@@ -360,10 +360,11 @@ function view_hub() {
       switch_to_blog($sid[0]->blog_id);
       $cur = current_issue();
       if ($cur) { $img = get_the_post_thumbnail_url($cur, 'large'); $lab = m($cur->ID, 'ih_label') ?: get_the_title($cur); }
+      if (!$img && ($cv = get_page_by_path('cover', OBJECT, 'page'))) { $img = get_the_post_thumbnail_url($cv, 'large'); } // art we already have, until the first issue has a cover
       restore_current_blog();
     }
     $url = pub_url($k);
-    $h .= '<div class="ih-gi"><a href="' . a($url) . '" aria-label="' . a($name . ($lab ? ': ' . $lab : '')) . '">' . ($img ? '<div class="ih-cover"><img src="' . a($img) . '" alt="" width="480" height="690"></div>' : '<div class="ih-cover ih-cover-e"></div>')
+    $h .= '<div class="ih-gi"><a href="' . a($url) . '" aria-label="' . a($name . ($lab ? ': ' . $lab : '')) . '">' . ($img ? '<div class="ih-cover"><img src="' . a($img) . '" alt="' . a($lab ? 'Cover of ' . $name . ', ' . $lab : $name . ' artwork') . '" width="480" height="690"></div>' : '<div class="ih-cover ih-cover-e" role="img" aria-label="' . a($name) . '"></div>')
        . '</a><h3><a href="' . a($url) . '">' . e($name) . '</a></h3><p>' . e($lines[$k]) . '</p>' . ($lab ? '<p><a href="' . a($url) . '">' . e($lab) . ' &rarr;</a></p>' : '') . '</div>';
   }
   $h .= '</div></section>' . shop_strip()
@@ -399,8 +400,9 @@ function view_episode($p) {
     $img = m($g->ID, 'ih_headshot_id') ? wp_get_attachment_image_url((int) m($g->ID, 'ih_headshot_id'), 'medium') : '';
     $h .= '<div class="ih-contrib-h">' . ($img ? '<img class="ih-headshot" src="' . a($img) . '" alt="Portrait of ' . a(get_the_title($g)) . '" width="160" height="160">' : '') . '<div><p class="ih-by"><a href="' . a(get_permalink($g)) . '">' . e(get_the_title($g)) . '</a></p></div></div>';
   }
+  $h .= host_line();
   if (m($p->ID, 'ih_audio_url')) { $h .= '<audio controls preload="none" src="' . a(m($p->ID, 'ih_audio_url')) . '"></audio>'; }
-  return $h . '<div class="ih-body">' . apply_filters('the_content', $p->post_content) . '</div></article>' . signup() . '</main>';
+  return $h . '<div class="ih-body">' . apply_filters('the_content', $p->post_content) . '</div></article>' . related_block('Related essays', related_from($p, 'terryheath', ['post'], 3)) . related_block('More episodes', related_from($p, 'lifeonwords', ['ih_episode'], 3)) . signup() . '</main>';
 }
 
 function view_generic($p) {
@@ -409,7 +411,8 @@ function view_generic($p) {
     $row = get_site_option('inkhorn_store_patreon-supporters', null); $d = $row ? json_decode($row['json'], true) : null;
     if ($d && !empty($d['names'])) { $extra = '<h2>Thank you to our Patreon supporters</h2><p>' . e(implode(', ', $d['names'])) . (!empty($d['anonymous']) ? ' and ' . (int) $d['anonymous'] . ' anonymous supporter' . ($d['anonymous'] > 1 ? 's' : '') : '') . '.</p>'; }
   }
-  return '<main class="ih-main">' . back_link() . '<article class="ih-piece"><h1>' . e(get_the_title($p)) . '</h1><div class="ih-body">' . apply_filters('the_content', $p->post_content) . $extra . '</div></article></main>';
+  $rel = ($p && $p->post_type === 'post' && site_key() === 'terryheath') ? related_block('Related episodes of Life on Words', related_from($p, 'lifeonwords', ['ih_episode'], 3)) : '';
+  return '<main class="ih-main">' . back_link() . '<article class="ih-piece"><h1>' . e(get_the_title($p)) . '</h1><div class="ih-body">' . apply_filters('the_content', $p->post_content) . $extra . '</div></article>' . $rel . ($p && $p->post_type === 'post' ? signup() : '') . '</main>';
 }
 
 /** A publication with no issue yet (White Rabbit before No. 1, Muse): says what it is and when, and offers its newsletter. */

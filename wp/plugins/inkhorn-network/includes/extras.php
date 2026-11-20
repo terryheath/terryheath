@@ -152,3 +152,37 @@ function view_nl_expired() {
   } else { $h .= signup(); }
   return $h . '</main>';
 }
+
+/* ---------- terryheath.com and lifeonwords.com: host line, related essays and episodes ---------- */
+
+function site_blog_id($key) { $s = get_sites(['path' => $key === 'hub' ? '/' : '/' . $key . '/', 'number' => 1]); return $s ? (int) $s[0]->blog_id : 0; }
+function words($s) {
+  static $stop = ['the','and','for','that','this','with','from','what','have','your','about','into','their','there','they','were','been','who','how','why','not','but','are','was','you','his','her','its','one','all','can','out','our','has','had','than','then','when','which','will','would','more','some','just'];
+  preg_match_all('/[a-z]{4,}/', strtolower(wp_strip_all_tags((string) $s)), $m);
+  return array_values(array_diff(array_unique($m[0]), $stop));
+}
+/** The items of $types on site $key that read most like $post (shared words in title, excerpt and opening), newest first on ties. */
+function related_from($post, $key, array $types, $n = 3) {
+  $bid = site_blog_id($key); if (!$bid) { return []; }
+  $mine = words($post->post_title . ' ' . $post->post_excerpt . ' ' . mb_substr(wp_strip_all_tags($post->post_content), 0, 1500));
+  $out = []; $here = get_current_blog_id();
+  switch_to_blog($bid);
+  foreach (get_posts(['post_type' => $types, 'numberposts' => 60, 'post_status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']) as $q) {
+    if ($bid === $here && $q->ID === $post->ID) { continue; }
+    $score = count(array_intersect($mine, words($q->post_title . ' ' . $q->post_excerpt . ' ' . mb_substr(wp_strip_all_tags($q->post_content), 0, 1500))));
+    $guest = $q->post_type === 'ih_episode' ? get_post((int) get_post_meta($q->ID, 'ih_guest_id', true)) : null;
+    $out[] = ['score' => $score, 'title' => get_the_title($q), 'url' => get_permalink($q), 'meta' => $q->post_type === 'ih_episode' ? ($guest ? get_the_title($guest) : 'Episode') : get_the_date('', $q)];
+  }
+  restore_current_blog();
+  usort($out, function ($x, $y) { return $y['score'] <=> $x['score']; });
+  return array_slice($out, 0, $n);
+}
+function related_block($heading, array $items) {
+  if (!$items) { return ''; }
+  $h = '<section class="ih-related" aria-label="' . a($heading) . '"><h2>' . e($heading) . '</h2><ul class="ih-list">';
+  foreach ($items as $it) { $h .= '<li><a href="' . a($it['url']) . '"><span class="ih-pt">' . e($it['title']) . '</span><span class="ih-pa">' . e($it['meta']) . '</span></a></li>'; }
+  return $h . '</ul></section>';
+}
+function host_line() {
+  return '<p class="ih-host">Hosted by <a href="' . a(pub_url('terryheath', 'about/')) . '">Terry Heath</a></p>';
+}
