@@ -258,7 +258,7 @@ add_action('template_redirect', function () {
   $path = trim((string) wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
   $rest = preg_replace('#^muse/?#', '', $path);
   if (strpos($path, 'wp-') === 0 || strpos($path, 'wp-json') !== false) { return; }
-  wp_redirect($base . '/' . $rest, 301); exit;
+  wp_redirect($base . '/' . ($rest === 'about' ? '' : $rest), 301); exit; // the old placeholder About page has no counterpart: Muse's own front page
 }, 0);
 
 /* ---------- /newsletter/: preferences link by email ---------- */
