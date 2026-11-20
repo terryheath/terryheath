@@ -56,6 +56,13 @@ function import_item(\WP_REST_Request $r) {
       if (!$tp || empty($d['slug'])) { return new \WP_Error('none', 'not found', ['status' => 404]); }
       wp_trash_post($tp[0]->ID); return ['trashed' => $tp[0]->ID];
     }
+    if (($d['action'] ?? '') === 'set_transcript') { // replaces the Transcript block of one episode with the given HTML (the rest of the episode is untouched)
+      $ep = get_posts(['name' => sanitize_title($d['slug'] ?? ''), 'post_type' => 'ih_episode', 'post_status' => 'any', 'numberposts' => 1]);
+      if (!$ep || empty($d['html'])) { return new \WP_Error('none', 'not found', ['status' => 404]); }
+      $c = $ep[0]->post_content; $new = preg_replace('#<details class="lw-transcript">.*?</details>#s', str_replace('$', '\\$', $d['html']), $c, 1, $n);
+      if (!$n) { return new \WP_Error('no_block', 'no transcript block', ['status' => 400]); }
+      kses_remove_filters(); wp_update_post(['ID' => $ep[0]->ID, 'post_content' => $new]); kses_init_filters(); return ['updated' => $ep[0]->ID];
+    }
     if (($d['action'] ?? '') === 'rewrite_books') { // "Books mentioned" on every episode: titles and authors as given in the map; bare ISBN lines dropped; a set listed once
       $map = (array) ($d['map'] ?? []); $changed = [];
       foreach (get_posts(['post_type' => 'ih_episode', 'numberposts' => -1, 'post_status' => 'any']) as $ep) {
