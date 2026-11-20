@@ -126,3 +126,5 @@ input[type=checkbox],input[type=radio]{accent-color:var(--ih-accent);width:18px;
 .ih-by a,.ih-host a{display:inline-flex;align-items:center;min-height:44px}
 .ih-note a,.ih-body p a,.ih-body li a,.ih-faq p a,.ih-sub a,.ih-confirm a,.ih-foot-in>span a,.ih-cart-empty a,.ih-start p a,.ih-help p a,.ih-contact+p a{text-decoration:underline;text-underline-offset:3px}
 summary,.ih-body summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
+.ih-shop-h a,.ih-all a,.ih-back a{display:inline-flex;align-items:center;min-height:44px}
+.ih-body li>a{display:inline-flex;align-items:center;min-height:44px}
