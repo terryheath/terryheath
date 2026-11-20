@@ -8,7 +8,9 @@ add_action('init', function () {
   // only the main (hub) domain's paths: other mapped domains have their own redirects
   static $rules = null;
   if ($rules === null) { $j = json_decode((string) @file_get_contents(__DIR__ . '/inkhorn-redirects.json'), true); $rules = $j['rules'] ?? []; }
+  $final = strpos((string) getenv('WP_DOMAIN'), 'inkhorn.press') !== false && strpos((string) getenv('WP_DOMAIN'), 'railway') === false; // rules marked final apply only on the live hub domain
   foreach ($rules as $r) {
+    if (!empty($r['final']) && !$final) { continue; }
     if (preg_match('#' . str_replace('#', '\#', $r['from']) . '#', $path, $m)) {
       $to = preg_replace_callback('/\$(\d)/', function ($x) use ($m) { return $m[(int) $x[1]] ?? ''; }, $r['to']);
       // a rule whose target is the request itself is a no-op

@@ -1,170 +1,99 @@
 {
-  "_note": "Ordered 301 rules for old inkhorn.press (and inkhornreview.com) paths. First match wins. 'from' is a regex on the path (no query); the query string is kept. Tested by inkhorn/scripts/test-wp-redirects.cjs.",
-  "rules": [
-    {
-      "from": "^/support/?$",
-      "to": "/donate/"
-    },
-    {
-      "from": "^/preferences/?$",
-      "to": "/newsletter/"
-    },
-    {
-      "from": "^/subscribe/?$",
-      "to": "/shop/subscriptions/"
-    },
-    {
-      "from": "^/submit/review/?$",
-      "to": "https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p"
-    },
-    {
-      "from": "^/submit/white-rabbit/?$",
-      "to": "/whiterabbit/"
-    },
-    {
-      "from": "^/submit/muse/?$",
-      "to": "https://gomuse.io"
-    },
-    {
-      "from": "^/submissions/?$",
-      "to": "/review/submissions/"
-    },
-    {
-      "from": "^/readers/?$",
-      "to": "/review/readers/"
-    },
-    {
-      "from": "^/print/?$",
-      "to": "/shop/"
-    },
-    {
-      "from": "^/books/?$",
-      "to": "/shop/"
-    },
-    {
-      "from": "^/(?:shop/)?print-edition/?$",
-      "to": "/shop/subscriptions/"
-    },
-    {
-      "from": "^/(?:shop/)?address/?$",
-      "to": "/account/"
-    },
-    {
-      "from": "^/(cart|order-complete)/?$",
-      "to": "/shop/$1/"
-    },
-    {
-      "from": "^/patreon-supporters/?$",
-      "to": "/donate/"
-    },
-    {
-      "from": "^/(tag/podcast|podcast|life-on-words)(/.*)?$",
-      "to": "https://lifeonwords.com/"
-    },
-    {
-      "from": "^/rss/?$",
-      "to": "/review/feed/"
-    },
-    {
-      "from": "^/review/rss/?$",
-      "to": "/review/feed/"
-    },
-    {
-      "from": "^/(archive)/?$",
-      "to": "/review/issues/"
-    },
-    {
-      "from": "^/(tag/letter|colophon|founder-letter|review/founder-letter)/?$",
-      "to": "/review/about/"
-    },
-    {
-      "from": "^/founder-letter/([^/]+)/?$",
-      "to": "/review/work/$1/"
-    },
-    {
-      "from": "^/(september-2026)/?$",
-      "to": "/review/issues/autumn-2026/"
-    },
-    {
-      "from": "^/september-2026/([^/]+)/?$",
-      "to": "/review/work/$1/"
-    },
-    {
-      "from": "^/micro/([^/]+)/?$",
-      "to": "/review/work/$1/"
-    },
-    {
-      "from": "^/white-rabbit(/.*)?$",
-      "to": "/whiterabbit/"
-    },
-    {
-      "from": "^/review/((?:autumn|winter|spring|summer)-20[0-9][0-9])/?$",
-      "to": "/review/issues/$1/"
-    },
-    {
-      "from": "^/((?:autumn|winter|spring|summer)-20[0-9][0-9])/?$",
-      "to": "/review/issues/$1/"
-    },
-    {
-      "from": "^/tag/((?:autumn|winter|spring|summer)-20[0-9][0-9])/?$",
-      "to": "/review/issues/$1/"
-    },
-    {
-      "from": "^/((?:autumn|winter|spring|summer)-20[0-9][0-9])/(?:poetry|fiction|nonfiction|all)/?$",
-      "to": "/review/issues/$1/"
-    },
-    {
-      "from": "^/(?:autumn|winter|spring|summer)-20[0-9][0-9]/([^/]+)/?$",
-      "to": "/review/work/$1/"
-    },
-    {
-      "from": "^/(?:tag/)?(poetry|fiction|nonfiction|art|micro)/?$",
-      "to": "/review/genre/$1/"
-    },
-    {
-      "from": "^/(poetry|fiction|nonfiction|art|micro)/([^/]+)/?$",
-      "to": "/review/work/$2/"
-    },
-    {
-      "from": "^/by/(poetry|fiction|nonfiction|art|micro)/?$",
-      "to": "/review/genre/$1/"
-    },
-    {
-      "from": "^/by/((?:autumn|winter|spring|summer)-20[0-9][0-9])/?$",
-      "to": "/review/issues/$1/"
-    },
-    {
-      "from": "^/by/inkhorn-[0-9]+/?$",
-      "to": "/review/issues/autumn-2026/"
-    },
-    {
-      "from": "^/by/letter/?$",
-      "to": "/review/about/"
-    },
-    {
-      "from": "^/by/(podcast|life-on-words|digest)/?$",
-      "to": "https://lifeonwords.com/"
-    },
-    {
-      "_topics": true,
-      "from": "^/(?:by|tag)/(news|grief|guilt|animals|fathers|mothers|aging|the-body|solitude|class|memory|watching|childhood|marriage|catastrophe|freedom|sexuality|alan-katz|susan-wiggs|ben-rockwood|christina-braver|kirby-larson|sheila-roberts|elena-taylor|family|religion|patrons|maureen-mcquerry|allie-millington|aleks-merilo|william-garvey|sanya-hundal-bery|sam-agar|xingyu-zhao|low-1|low-2|low-3|low-4|low-5|low-6|low-7|low-8|low-9|low-10|s-t-joshi|low-11|withdrawn)/?$",
-      "to": "/review/"
-    },
-    {
-      "from": "^/(?:by|tag)/([^/]+)/?$",
-      "to": "/contributors/$1/"
-    },
-    {
-      "from": "^/author/[^/]+/?$",
-      "to": "/review/"
-    },
-    {
-      "from": "^/digest(/.*)?$",
-      "to": "/review/"
-    },
-    {
-      "from": "^/review/(?!(?:issues|work|genre|about|submissions|readers|feed|page|wp-[a-z-]+|wp-sitemap[^/]*|sitemap\\.xml|index\\.php)(?:/|$))([^/]+)/?$",
-      "to": "/review/work/$1/"
-    }
-  ]
+ "_note": "Redirects for old inkhorn.press (Ghost) addresses. Rebuilt 2026-11-20 for the layout where every site has its own domain: only addresses that changed AND that something links to or that ever had real content. Rules marked final apply only once inkhorn.press is the live host (WP_DOMAIN=inkhorn.press); the others apply now. Before: 41 rules; after: 21.",
+ "rules": [
+  {
+   "from": "^/support/?$",
+   "to": "/donate/"
+  },
+  {
+   "from": "^/preferences/?$",
+   "to": "/newsletter/"
+  },
+  {
+   "from": "^/subscribe/?$",
+   "to": "/shop/subscriptions/"
+  },
+  {
+   "from": "^/(?:shop/)?print-edition/?$",
+   "to": "/shop/subscriptions/"
+  },
+  {
+   "from": "^/(?:shop/)?address/?$",
+   "to": "/account/"
+  },
+  {
+   "from": "^/(cart|order-complete)/?$",
+   "to": "/shop/$1/"
+  },
+  {
+   "from": "^/(?:print|books)/?$",
+   "to": "/shop/"
+  },
+  {
+   "from": "^/patreon-supporters/?$",
+   "to": "/donate/"
+  },
+  {
+   "from": "^/submit/review/?$",
+   "to": "https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p"
+  },
+  {
+   "from": "^/submit/muse/?$",
+   "to": "https://gomuse.io"
+  },
+  {
+   "from": "^/by/([^/]+)/?$",
+   "to": "/contributors/$1/"
+  },
+  {
+   "from": "^/submit/white-rabbit/?$",
+   "to": "https://whiterabbitreview.com/",
+   "final": true
+  },
+  {
+   "from": "^/white-rabbit(/.*)?$",
+   "to": "https://whiterabbitreview.com/",
+   "final": true
+  },
+  {
+   "from": "^/(?:tag/podcast|podcast|life-on-words)(/.*)?$",
+   "to": "https://lifeonwords.com/",
+   "final": true
+  },
+  {
+   "from": "^/by/(?:podcast|life-on-words|digest)/?$",
+   "to": "https://lifeonwords.com/",
+   "final": true
+  },
+  {
+   "from": "^/review(/.*)?$",
+   "to": "https://inkhornreview.com/review$1",
+   "final": true
+  },
+  {
+   "from": "^/(poetry|fiction|nonfiction|art|micro)(/.*)?$",
+   "to": "https://inkhornreview.com/$1$2",
+   "final": true
+  },
+  {
+   "from": "^/(submissions|readers)/?$",
+   "to": "https://inkhornreview.com/$1/",
+   "final": true
+  },
+  {
+   "from": "^/rss/?$",
+   "to": "https://inkhornreview.com/review/feed/",
+   "final": true
+  },
+  {
+   "from": "^/founder-letter(/.*)?$",
+   "to": "https://inkhornreview.com/review/founder-letter/",
+   "final": true
+  },
+  {
+   "from": "^/september-2026(/.*)?$",
+   "to": "https://inkhornreview.com/review/autumn-2026/",
+   "final": true
+  }
+ ]
 }

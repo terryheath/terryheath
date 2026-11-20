@@ -26,6 +26,8 @@ function site_key() {
   $host = (string) wp_parse_url(home_url(), PHP_URL_HOST);
   if (strpos($host, 'terryheath.com') !== false) { return $key = 'terryheath'; }
   if (strpos($host, 'lifeonwords.com') !== false) { return $key = 'lifeonwords'; }
+  if (strpos($host, 'inkhornreview.com') !== false) { return $key = 'review'; }
+  if (strpos($host, 'whiterabbitreview.com') !== false) { return $key = 'whiterabbit'; }
   $path = trim((string) wp_parse_url(home_url(), PHP_URL_PATH), '/');
   $all = sites();
   return $key = isset($all[$path]) ? $path : 'hub';
