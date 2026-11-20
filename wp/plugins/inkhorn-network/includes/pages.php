@@ -32,7 +32,7 @@ add_filter('pre_get_document_title', function ($t) {
   if (is_tax('ih_genre')) { return single_term_title('', false) . $sep . $site; }
   if (is_singular()) { return get_the_title() . $sep . $site; }
   return $site;
-}, 99);
+}, PHP_INT_MAX);
 
 /* ---------- products: one list for the hub strip and /shop/ ---------- */
 
