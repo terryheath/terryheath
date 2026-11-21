@@ -26,6 +26,6 @@ add_action('transition_post_status', function ($new, $old, $post) {
   $lists = $api('GET', '/lists?per_page=all');
   $ids = []; foreach (($lists['results'] ?? []) as $l) { if (array_intersect($s['lists'], $l['tags'] ?? [])) { $ids[] = $l['id']; } }
   $tpls = $api('GET', '/templates'); $tid = 0; foreach ((array) $tpls as $t) { if (($t['name'] ?? '') === $brand) { $tid = $t['id']; } }
-  $c = $api('POST', '/campaigns', ['name' => ($post->post_type === 'ih_issue' ? 'Issue: ' : '') . $title . ' (draft from ' . $s['name'] . ')', 'subject' => $label, 'lists' => $ids, 'type' => 'regular', 'content_type' => 'html', 'body' => $body, 'template_id' => $tid, 'messenger' => 'email']);
+  $c = $api('POST', '/campaigns', ['name' => ($post->post_type === 'ih_issue' ? 'Issue: ' : '') . $title . ' (draft from ' . $s['name'] . ')', 'subject' => $label, 'lists' => $ids, 'type' => 'regular', 'content_type' => 'html', 'body' => $body, 'template_id' => $tid, 'from_email' => mail_from_for_site(), 'messenger' => 'email']);
   if (!empty($c['id'])) { update_post_meta($post->ID, 'ih_campaign_id', (int) $c['id']); }
 }, 10, 3);

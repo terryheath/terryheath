@@ -14,7 +14,10 @@ const BRAND_TEMPLATE = { review: 'Inkhorn: Inkhorn Review', whiterabbit: 'Inkhor
 async function listBySlug(slug) { const l = (await api('GET', '/lists?per_page=all')).results.find((x) => (x.tags || []).includes(slug)); if (!l) throw new Error('no listmonk list ' + slug); return l; }
 async function templateId(brand) { const t = (await api('GET', '/templates')).find((x) => x.name === BRAND_TEMPLATE[brand]); if (!t) throw new Error('no template for ' + brand); return t.id; }
 /** Creates a campaign as a draft. Terry (or a script with mode 'send') starts it. */
+// Each list sends from its own site's domain.
+const FROM_BY_LIST = { 'inkhorn-review': 'Inkhorn Review <hello@inkhornreview.com>', 'white-rabbit': 'White Rabbit <hello@whiterabbitreview.com>', events: 'Inkhorn Press <hello@inkhorn.press>', writing: 'Terry Heath <hello@terryheath.com>', digest: 'Terry Heath <hello@terryheath.com>', 'new-books': 'Terry Heath <hello@terryheath.com>', 'life-on-words': 'Life on Words <hello@lifeonwords.com>' };
 async function draftCampaign({ name, subject, listSlugs, brand, html, fromEmail, sendAt }) {
+  fromEmail = fromEmail || FROM_BY_LIST[listSlugs[0]];
   const lists = await Promise.all(listSlugs.map(listBySlug));
   return api('POST', '/campaigns', { name, subject, lists: lists.map((l) => l.id), type: 'regular', content_type: 'html', body: html, template_id: await templateId(brand), from_email: fromEmail || undefined, messenger: 'email', headers: [], send_at: sendAt || null });
 }

@@ -48,3 +48,9 @@ function pub_url($key, $path = '') {
   if (!$s) { return hub_url($key); }
   return get_site_url($s[0]->blog_id, '/' . ltrim($path, '/'));
 }
+
+/** Each site sends its own mail from its own domain (SES identities for all five). */
+function mail_from_for_site() {
+  $m = ['hub' => 'Inkhorn Press <hello@inkhorn.press>', 'review' => 'Inkhorn Review <hello@inkhornreview.com>', 'whiterabbit' => 'White Rabbit <hello@whiterabbitreview.com>', 'terryheath' => 'Terry Heath <hello@terryheath.com>', 'lifeonwords' => 'Life on Words <hello@lifeonwords.com>'];
+  return $m[site_key()] ?? $m['hub'];
+}
