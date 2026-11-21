@@ -43,6 +43,7 @@ RewriteBase /
 RewriteCond %{HTTP_HOST} ^(www\.)?inkhorn\.press$ [NC]
 RewriteRule ^(review|whiterabbit|terryheath|lifeonwords)(/|$) - [R=404,L]
 RewriteCond %{HTTP_HOST} ^(www\.)?terryheath\.com$ [NC]
+RewriteCond %{REQUEST_URI} !^/podcast/guests/?$
 RewriteRule ^(podcast|lifeonwords)(/|$) - [R=404,L]
 RewriteCond %{HTTP_HOST} ^(www\.)?lifeonwords\.com$ [NC]
 RewriteRule ^podcast(/|$) - [R=404,L]

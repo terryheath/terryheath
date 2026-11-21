@@ -39,6 +39,14 @@
     "inkhorn.press"
    ],
    "final": true
+  },
+  {
+   "from": "^/podcast/guests/?$",
+   "to": "https://lifeonwords.com/guest-guide/",
+   "hosts": [
+    "terryheath.com"
+   ],
+   "final": true
   }
  ]
 }
