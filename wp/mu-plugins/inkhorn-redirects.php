@@ -11,6 +11,9 @@ add_action('init', function () {
   $final = strpos((string) getenv('WP_DOMAIN'), 'inkhorn.press') !== false && strpos((string) getenv('WP_DOMAIN'), 'railway') === false; // rules marked final apply only on the live hub domain
   foreach ($rules as $r) {
     if (!empty($r['final']) && !$final) { continue; }
+    $rh = strtolower(preg_replace('/^www\./', '', (string) ($_SERVER['HTTP_HOST'] ?? ''))); $ok = false;
+    foreach ((array) ($r['hosts'] ?? ['inkhorn.press']) as $h) { if ($rh === $h || ($h === 'inkhorn.press' && strpos($rh, 'railway.app') !== false)) { $ok = true; } }
+    if (!$ok) { continue; } // a rule for one site's old addresses must not fire on another site's domain
     if (preg_match('#' . str_replace('#', '\#', $r['from']) . '#', $path, $m)) {
       $to = preg_replace_callback('/\$(\d)/', function ($x) use ($m) { return $m[(int) $x[1]] ?? ''; }, $r['to']);
       // a rule whose target is the request itself is a no-op

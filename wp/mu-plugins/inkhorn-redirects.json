@@ -1,98 +1,185 @@
 {
- "_note": "Redirects for old inkhorn.press (Ghost) addresses. Rebuilt 2026-11-20 for the layout where every site has its own domain: only addresses that changed AND that something links to or that ever had real content. Rules marked final apply only once inkhorn.press is the live host (WP_DOMAIN=inkhorn.press); the others apply now. Before: 41 rules; after: 21.",
+ "_note": "Redirects for old inkhorn.press (Ghost) addresses. Rebuilt 2026-11-20 for the layout where every site has its own domain: only addresses that changed AND that something links to or that ever had real content. Rules marked final apply only once inkhorn.press is the live host (WP_DOMAIN=inkhorn.press); the others apply now. Before: 41 rules; after: 21. Each rule applies only on its hosts (default: the press hub, inkhorn.press and the temporary address); rules marked final only once the sites are on their own domains.",
  "rules": [
   {
    "from": "^/support/?$",
-   "to": "/donate/"
+   "to": "/donate/",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/preferences/?$",
-   "to": "/newsletter/"
+   "to": "/newsletter/",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/subscribe/?$",
-   "to": "/shop/subscriptions/"
+   "to": "/shop/subscriptions/",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/(?:shop/)?print-edition/?$",
-   "to": "/shop/subscriptions/"
+   "to": "/shop/subscriptions/",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/(?:shop/)?address/?$",
-   "to": "/account/"
+   "to": "/account/",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/(cart|order-complete)/?$",
-   "to": "/shop/$1/"
+   "to": "/shop/$1/",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/(?:print|books)/?$",
-   "to": "/shop/"
+   "to": "/shop/",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/patreon-supporters/?$",
-   "to": "/donate/"
+   "to": "/donate/",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/submit/review/?$",
-   "to": "https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p"
+   "to": "https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/submit/muse/?$",
-   "to": "https://gomuse.io"
+   "to": "https://gomuse.io",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/by/([^/]+)/?$",
-   "to": "/contributors/$1/"
+   "to": "/contributors/$1/",
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/submit/white-rabbit/?$",
    "to": "https://whiterabbitreview.com/",
-   "final": true
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/white-rabbit(/.*)?$",
    "to": "https://whiterabbitreview.com/",
-   "final": true
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/(?:tag/podcast|podcast|life-on-words)(/.*)?$",
    "to": "https://lifeonwords.com/",
-   "final": true
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/by/(?:podcast|life-on-words|digest)/?$",
    "to": "https://lifeonwords.com/",
-   "final": true
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/review(/.*)?$",
    "to": "https://inkhornreview.com/review$1",
-   "final": true
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/(poetry|fiction|nonfiction|art|micro)(/.*)?$",
    "to": "https://inkhornreview.com/$1$2",
-   "final": true
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/(submissions|readers)/?$",
    "to": "https://inkhornreview.com/$1/",
-   "final": true
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/rss/?$",
    "to": "https://inkhornreview.com/review/feed/",
-   "final": true
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/founder-letter(/.*)?$",
    "to": "https://inkhornreview.com/review/founder-letter/",
-   "final": true
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
   },
   {
    "from": "^/september-2026(/.*)?$",
    "to": "https://inkhornreview.com/review/autumn-2026/",
+   "final": true,
+   "hosts": [
+    "inkhorn.press"
+   ]
+  },
+  {
+   "from": "^/podcast/(?!rss/?$|guests/?$)([^/]+)/?$",
+   "to": "https://lifeonwords.com/episodes/$1/",
+   "hosts": [
+    "terryheath.com"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/podcast/?$",
+   "to": "https://lifeonwords.com/",
+   "hosts": [
+    "terryheath.com"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/(submit|events|shop|donate|support|bookfolk|weird-friday|contributors)(/.*)?$",
+   "to": "https://inkhorn.press/$1$2",
+   "hosts": [
+    "inkhornreview.com"
+   ],
    "final": true
   }
  ]
