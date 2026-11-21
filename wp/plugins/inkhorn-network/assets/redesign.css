@@ -232,3 +232,4 @@ body .ih-add-to-cart-btn:hover,body .ih-cart-checkout-btn:hover,body .ih-address
 .ih-lifeonwords .lw-pill { min-height: 44px; }
 .ih-lifeonwords .lw-sg-opt { color: #595959; }
 .ih-lifeonwords .lw-btn { background: #b3331a; min-height: 44px; }
+.ih-lifeonwords .lw-sg-row input[type=text], .ih-lifeonwords .lw-sg-row input[type=email], .ih-lifeonwords .lw-sg-hp input { min-height: 44px; min-width: 44px; box-sizing: border-box; }
