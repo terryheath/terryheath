@@ -9,7 +9,7 @@ namespace Inkhorn;
 function svc_env($k, $d = '') { $v = getenv($k); return $v ? rtrim($v, '/') : $d; }
 function services_list() {
   $hub = 'https://admin.terryheath.com';
-  $lm = svc_env('LISTMONK_URL', 'https://lists.shelves.page'); $um = svc_env('UMAMI_URL', 'https://umami-production-237a03f7.up.railway.app'); $shop = svc_env('SHOP_SERVICE_URL', 'https://inkhorn-shop-service-production.up.railway.app');
+  $lm = svc_env('LISTMONK_URL', 'https://lists.inkhorn.press'); $um = svc_env('UMAMI_URL', 'https://stats.inkhorn.press'); $shop = svc_env('SHOP_SERVICE_URL', 'https://shop.inkhorn.press');
   return [
     'Email and analytics' => [
       ['listmonk', $lm . '/admin', 'Lists, subscribers, campaigns and email templates (the newsletter, sign-up confirmations and the issue announcement).', 'link'],
@@ -85,7 +85,7 @@ function howto_page() {
 <tr><td>Header, footer, menus, the home pages and the issue layout, and their fixed wording</td><td>Each site’s dashboard &rarr; <b>Appearance &rarr; Editor</b>. Open <i>Patterns &rarr; Template parts</i> and pick <code>header-&lt;site&gt;</code>, <code>footer-&lt;site&gt;</code> or <code>home-&lt;site&gt;</code>; <i>Templates</i> has Front page, Issue and Page. Menu links use tokens that follow the domain: <code>{hub}</code> <code>{review}</code> <code>{whiterabbit}</code> <code>{terryheath}</code> <code>{lifeonwords}</code> <code>{home}</code>; images use <code>{img}</code>. Keep them in links you add for other pages of the network.</td></tr>
 <tr><td>Every other sentence, label, button and message (sign-up, sign-in, newsletter, account, search, 404, confirmations, errors, browser titles, emails we send)</td><td>Each site’s dashboard &rarr; <b>Settings &rarr; Site text</b>. Find a sentence with the search box, change it, Save. Clear a box to return to the original. <code>{name}</code> marks a value the site fills in.</td></tr>
 <tr><td>Shop: product pages, subscription and shop wording</td><td>Press hub dashboard &rarr; <b>Shop</b>. Product name, description and cover are edited on the product. <b>Prices are in Stripe</b> (Product catalog), not WordPress.</td></tr>
-<tr><td>Newsletter and sign-up emails (design and wrapper)</td><td><a href="' . esc_url(svc_env('LISTMONK_URL', 'https://lists.shelves.page') . '/admin/campaigns/templates') . '" target="_blank" rel="noopener">listmonk &rarr; Campaigns &rarr; Templates</a>. Lists and subscribers: listmonk &rarr; Lists. The confirmation and sign-in emails themselves are under Site text &rarr; Emails we send.</td></tr>
+<tr><td>Newsletter and sign-up emails (design and wrapper)</td><td><a href="' . esc_url(svc_env('LISTMONK_URL', 'https://lists.inkhorn.press') . '/admin/campaigns/templates') . '" target="_blank" rel="noopener">listmonk &rarr; Campaigns &rarr; Templates</a>. Lists and subscribers: listmonk &rarr; Lists. The confirmation and sign-in emails themselves are under Site text &rarr; Emails we send.</td></tr>
 <tr><td>Agreements (what contributors and guests sign)</td><td><a href="https://sign.terryheath.com/sign_in" target="_blank" rel="noopener">DocuSeal</a> &rarr; Templates for names, fields and who signs. The agreement wording is in the PDFs, which are built by a script (see below).</td></tr>
 <tr><td>Search and sharing: page titles, descriptions, share images</td><td>Each page’s editor has an SEO box (The SEO Framework); site-wide defaults under <b>SEO</b> in each site’s dashboard.</td></tr>
 </tbody></table>

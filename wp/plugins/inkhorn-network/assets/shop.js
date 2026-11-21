@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  var SHOP_SERVICE_URL = 'https://inkhorn-shop-service-production.up.railway.app';
+  var SHOP_SERVICE_URL = 'https://shop.inkhorn.press';
   var CART_KEY = 'ih-cart';
   // wording comes from Settings > Site text (window.IH_T), with these as the fallback
   function T(key, fallback, vars) {
