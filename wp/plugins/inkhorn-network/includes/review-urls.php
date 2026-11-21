@@ -41,6 +41,7 @@ if (site_key() === 'review') {
     if ($base !== '' && strpos($p, $base . '/') === 0) { $p = substr($p, strlen($base) + 1); }
     if (preg_match('#^(work|issues)/([^/]+)$#', $p, $m)) { wp_safe_redirect(home_url('/review/' . $m[2] . '/'), 301); exit; }
     if ($p === 'issues') { wp_safe_redirect(home_url('/review/issues/'), 301); exit; }
+    if ($p === '') { wp_safe_redirect(home_url('/'), 301); exit; } // /review/ alone: the old Ghost collection page
     if ($p === 'rss') { wp_safe_redirect(home_url('/feed/'), 301); exit; } // the old Ghost feed address
   }, 0);
 }

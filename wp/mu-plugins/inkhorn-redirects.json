@@ -88,6 +88,15 @@
    ]
   },
   {
+   "from": "^/(?:review/|podcast/|life-on-words/)(aleks-merilo-kicked-out-of-his-own-play|allie-millington-i-tried-again-four-hundred-times|maureen-mcquerry-the-girl-who-asked-questions|elena-taylor-allowed-in-the-room|sheila-roberts-no-problem-no-story|kirby-larson-the-girl-who-wanted-to-be-dorothy|alan-katz-forty-years-of-getting-paid-to-be-funny|christina-braver-real-sex-real-stories|ben-rockwood-the-publisher-who-rejected-the-question|susan-wiggs-60-plus-novels-and-what-they-cost)/?$",
+   "to": "https://lifeonwords.com/episodes/$1/",
+   "final": true,
+   "hosts": [
+    "inkhorn.press",
+    "inkhornreview.com"
+   ]
+  },
+  {
    "from": "^/(?:tag/podcast|podcast|life-on-words)(/.*)?$",
    "to": "https://lifeonwords.com/",
    "final": true,
