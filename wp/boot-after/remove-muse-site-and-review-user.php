@@ -21,6 +21,7 @@ foreach (get_sites(['number' => 100]) as $s) {
 require_once ABSPATH . 'wp-admin/includes/user.php';
 require_once ABSPATH . 'wp-admin/includes/ms.php';
 $u = get_user_by('login', 'review');
+if ($u) { echo '[inkhorn] user review: id ' . $u->ID . ', super admin ' . (is_super_admin($u->ID) ? 'yes' : 'no') . ', posts ' . count_user_posts($u->ID, 'any') . ', sites ' . count(get_blogs_of_user($u->ID, true)) . "\n"; }
 if ($u && (int) $u->ID !== 1 && !is_super_admin($u->ID) && count_user_posts($u->ID, 'any') === 0 && !get_blogs_of_user($u->ID)) {
   wpmu_delete_user($u->ID); echo "[inkhorn] user review (id {$u->ID}) deleted\n";
 }
