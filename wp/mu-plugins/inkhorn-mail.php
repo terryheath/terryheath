@@ -16,3 +16,5 @@ add_action('phpmailer_init', function ($m) {
 // each site sends from its own domain; MAIL_FROM_ADDRESS / MAIL_FROM_NAME override for every site
 add_filter('wp_mail_from', function () { if (getenv('MAIL_FROM_ADDRESS')) { return getenv('MAIL_FROM_ADDRESS'); } return function_exists('Inkhorn\\mail_from_for_site') && preg_match('/<([^>]+)>/', \Inkhorn\mail_from_for_site(), $m) ? $m[1] : 'hello@inkhorn.press'; });
 add_filter('wp_mail_from_name', function () { if (getenv('MAIL_FROM_NAME')) { return getenv('MAIL_FROM_NAME'); } return function_exists('Inkhorn\\mail_from_for_site') && preg_match('/^([^<]+)</', \Inkhorn\mail_from_for_site(), $m) ? trim($m[1]) : 'Inkhorn Press'; });
+// log why a message did not send (goes to the service log)
+add_action('wp_mail_failed', function ($err) { error_log('[inkhorn] mail failed: ' . $err->get_error_message()); });
