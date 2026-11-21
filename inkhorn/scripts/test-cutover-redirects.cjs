@@ -10,7 +10,8 @@ const posts = B('posts.json').filter((p) => p.status === 'published'), pages = B
 const urls = new Set();
 const H = 'https://inkhorn.press';
 for (const u of ['/', '/review/', '/review/issues/', '/review/autumn-2026/', '/review/founder-letter/', '/poetry/', '/fiction/', '/nonfiction/', '/art/', '/micro/', '/submit/', '/events/', '/support/', '/shop/', '/shop/cart/', '/about/', '/privacy/', '/terms/', '/submissions/', '/readers/', '/rss/', '/bookfolk/', '/weird-friday/', '/white-rabbit/', '/white-rabbit/no-1/', '/by/letter/', '/sitemap.xml', '/robots.txt']) urls.add(H + u);
-for (const p of posts) urls.add(H + '/review/' + p.slug + '/');
+const skip = /^(inkhorn-review-week-of|how-now-brown-cow|pigment|metal-storm|the-incredible-shrinking)/; // never public on Ghost (digest emails, email-only pieces)
+for (const p of posts) if (!skip.test(p.slug)) urls.add(H + '/review/' + p.slug + '/');
 for (const p of pages) if (p.status === 'published') urls.add(H + '/' + p.slug + '/');
 for (const t of tags) if (t.visibility === 'public') urls.add(H + '/by/' + t.slug + '/');
 for (const u of ['https://inkhornreview.com/', 'https://inkhornreview.com/review/autumn-2026/', 'https://inkhornreview.com/about/', 'https://inkhornreview.com/submissions/', 'https://inkhornreview.com/shop/', 'https://inkhornreview.com/submit/',

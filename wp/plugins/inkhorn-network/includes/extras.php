@@ -93,8 +93,8 @@ function nl_long_key($t) { return 'ih_nlx_' . substr(hash('sha256', $t), 0, 32);
 function nl_start($email, array $lists, $from = '') {
   $t = wp_generate_password(40, false);
   $rec = ['email' => $email, 'lists' => $lists, 'from' => $from];
-  set_transient(nl_key($t), $rec, 2 * DAY_IN_SECONDS);
-  set_transient(nl_long_key($t), $rec, 14 * DAY_IN_SECONDS);
+  set_site_transient(nl_key($t), $rec, 2 * DAY_IN_SECONDS);
+  set_site_transient(nl_long_key($t), $rec, 14 * DAY_IN_SECONDS);
   $url = add_query_arg('t', $t, hub_url('newsletter/confirm/'));
   $names = implode(', ', array_map(function ($l) { return list_label($l); }, $lists));
   $mail = site()['kind'] === 'author' || site()['kind'] === 'podcast' ? 'Terry Heath' : 'Inkhorn Press';
@@ -104,7 +104,7 @@ function nl_start($email, array $lists, $from = '') {
 add_action('template_redirect', function () {
   $v = get_query_var('ih_view');
   if ($v === 'nl-confirm') {
-    $t = sanitize_text_field($_GET['t'] ?? ''); $rec = $t ? get_transient(nl_key($t)) : null;
+    $t = sanitize_text_field($_GET['t'] ?? ''); $rec = $t ? get_site_transient(nl_key($t)) : null;
     if (!$rec) { wp_safe_redirect(add_query_arg('t', $t, home_url('/newsletter/expired/'))); exit; }
     $map = lm_lists_by_slug(); $ids = [];
     foreach ($rec['lists'] as $s) { if (!empty($map[$s])) { $ids[] = $map[$s]; } }
@@ -115,7 +115,7 @@ add_action('template_redirect', function () {
       $ok = $sid && $ids && lm('PUT', '/subscribers/lists', ['ids' => [(int) $sid], 'action' => 'add', 'target_list_ids' => $ids, 'status' => 'confirmed']);
     }
     if (!$ok) { wp_safe_redirect(home_url('/newsletter/expired/?t=' . rawurlencode($t) . '&problem=1')); exit; }
-    delete_transient(nl_key($t)); delete_transient(nl_long_key($t));
+    delete_site_transient(nl_key($t)); delete_site_transient(nl_long_key($t));
     wp_safe_redirect(home_url('/newsletter/confirmed/')); exit;
   }
   if ($v === 'adopt') { // sign-in hand-off: a two-minute signed token sets this domain's session cookie
@@ -131,7 +131,7 @@ add_action('template_redirect', function () {
 
 add_action('rest_api_init', function () {
   register_rest_route('inkhorn/v1', '/newsletter-resend', ['methods' => 'POST', 'permission_callback' => '__return_true', 'callback' => function (\WP_REST_Request $r) {
-    $t = sanitize_text_field((string) $r->get_param('t')); $rec = $t ? get_transient(nl_long_key($t)) : null;
+    $t = sanitize_text_field((string) $r->get_param('t')); $rec = $t ? get_site_transient(nl_long_key($t)) : null;
     if (!$rec) { return new \WP_REST_Response(['ok' => false, 'message' => t('msg.nl_notfound', 'We could not find that sign-up. Please sign up again below.')], 404); }
     $to = sanitize_email((string) $r->get_param('email')); if (!is_email($to)) { $to = $rec['email']; }
     nl_start($to, $rec['lists'], $rec['from']);
@@ -144,7 +144,7 @@ function view_nl_confirmed() {
     . '<div class="ih-btns" style="justify-content:center">' . btn(hub_url('newsletter/'), t('nl.choose', 'Change your lists')) . btn(home_url('/'), t('nl.back', 'Back to the site')) . '</div></main>';
 }
 function view_nl_expired() {
-  $t = sanitize_text_field($_GET['t'] ?? ''); $rec = $t ? get_transient(nl_long_key($t)) : null;
+  $t = sanitize_text_field($_GET['t'] ?? ''); $rec = $t ? get_site_transient(nl_long_key($t)) : null;
   $h = '<main class="ih-main"><h1 class="ih-h1">' . tx('nl.expired_h', 'That link has expired') . '</h1><p class="ih-note" style="margin:0 auto 24px;text-align:center" role="alert">' . tx('nl.expired', 'Links last two days. Enter your email for a new one.') . '</p>';
   if ($rec) {
     $h .= '<form class="ih-form" method="post" action="' . a(rest_url('inkhorn/v1/newsletter-resend')) . '" data-ih-signup><input type="hidden" name="t" value="' . a($t) . '"><div class="ih-row"><label class="ih-sr" for="ih-re">' . tx('signup.email', 'Email address') . '</label><input id="ih-re" type="email" name="email" required autocomplete="email" value="' . a($rec['email']) . '"><button class="ih-btn" type="submit">' . tx('nl.resend', 'Email me a new link') . '</button></div><p class="ih-msg" role="status" aria-live="polite"></p></form>';

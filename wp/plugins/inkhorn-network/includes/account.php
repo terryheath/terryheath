@@ -39,9 +39,9 @@ add_filter('query_vars', function ($v) { $v[] = 'ih_view'; $v[] = 'ih_book_slug'
 add_action('template_redirect', function () {
   $v = get_query_var('ih_view'); if (!$v) { return; }
   if ($v === 'verify') {
-    $t = sanitize_text_field($_GET['t'] ?? ''); $rec = $t ? get_transient(token_key($t)) : ''; list($email, $ret) = array_pad(explode('|', (string) $rec, 2), 2, '');
+    $t = sanitize_text_field($_GET['t'] ?? ''); $rec = $t ? get_site_transient(token_key($t)) : ''; list($email, $ret) = array_pad(explode('|', (string) $rec, 2), 2, '');
     if ($email) {
-      delete_transient(token_key($t));
+      delete_site_transient(token_key($t));
       $exp = time() + 30 * DAY_IN_SECONDS;
       setcookie(COOKIE, sign_email($email, $exp), ['expires' => $exp, 'path' => '/', 'secure' => true, 'httponly' => true, 'samesite' => 'Lax']);
       if ($ret && strcasecmp((string) wp_parse_url($ret, PHP_URL_HOST), (string) wp_parse_url(home_url(), PHP_URL_HOST)) !== 0) { // came from another domain of the network: hand the session over
@@ -64,7 +64,7 @@ add_action('rest_api_init', function () {
       if (is_email($email)) {
         $t = wp_generate_password(40, false);
         $ret = esc_url_raw((string) $r->get_param('return'));
-        set_transient(token_key($t), $email . '|' . ($ret && allowed_return($ret) ? $ret : ''), 15 * MINUTE_IN_SECONDS);
+        set_site_transient(token_key($t), $email . '|' . ($ret && allowed_return($ret) ? $ret : ''), 15 * MINUTE_IN_SECONDS);
         $url = add_query_arg('t', $t, home_url('/signin/verify/'));
         wp_mail($email, t('email.signin_subject', 'Your Inkhorn Press sign-in link'), t('email.signin_body', "Hello,\n\nUse this link to sign in. It works once and expires in 15 minutes:\n\n{url}\n\nIf you did not ask for it, you can ignore this email.\n\nQuestions? Write to hello@inkhorn.press or see {help}\n\nInkhorn Press", ['url' => $url, 'help' => home_url('/help/')]));
       }
