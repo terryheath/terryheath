@@ -66,7 +66,8 @@ function pub_url($key, $path = '') {
 /** Each site sends its own mail from its own domain (SES identities for all five). */
 function mail_from_for_site() {
   $m = ['hub' => 'Inkhorn Press <hello@inkhorn.press>', 'review' => 'Inkhorn Review <hello@inkhornreview.com>', 'whiterabbit' => 'White Rabbit <hello@whiterabbitreview.com>', 'terryheath' => 'Terry Heath <hello@terryheath.com>', 'lifeonwords' => 'Life on Words <hello@lifeonwords.com>'];
-  // White Rabbit sends from its own domain once SES has verified it (IH_SES_WR=1 on the wordpress service); until then its mail goes from the press address
-  if (site_key() === 'whiterabbit' && getenv('IH_SES_WR') !== '1') { return $m['hub']; }
+  // A site sends from its own domain only when its domain is listed in IH_MAIL_OWN (space-separated site keys on the wordpress service): the SES identity must be verified and the mail user's IAM policy must allow it. Others send from the press address.
+  $own = preg_split('/\s+/', trim((string) (getenv('IH_MAIL_OWN') !== false && getenv('IH_MAIL_OWN') !== '' ? getenv('IH_MAIL_OWN') : 'hub terryheath')));
+  if (!in_array(site_key(), $own, true)) { return $m['hub']; }
   return $m[site_key()] ?? $m['hub'];
 }
