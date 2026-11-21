@@ -161,22 +161,6 @@
    ]
   },
   {
-   "from": "^/podcast/guests/?$",
-   "to": "/guest-guide/",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/content/images/2026/11/life-on-words-share-1080\\.png$",
-   "to": "/wp-content/uploads/sites/5/2026/11/life-on-words-share-1080.png",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
    "from": "^/tag/podcast/?$",
    "to": "https://lifeonwords.com/",
    "hosts": [
@@ -219,6 +203,14 @@
   {
    "from": "^/sitemap-(?:pages|posts|tags|authors)\\.xml$",
    "to": "/sitemap.xml",
+   "hosts": [
+    "terryheath.com"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/podcast/rss/?$",
+   "to": "https://lifeonwords.com/podcast/rss/",
    "hosts": [
     "terryheath.com"
    ],

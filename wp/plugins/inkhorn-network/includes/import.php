@@ -100,7 +100,7 @@ function import_item(\WP_REST_Request $r) {
       if (preg_match_all('#<img[^>]+src="([^"]+(?:/content/images/|covers\.openlibrary\.org/|books\.google\.com/)[^"]*)"#i', $body, $mm)) { // copy remote images into this site's media library
         foreach (array_unique($mm[1]) as $src) { $att = media_sideload_image($src, $found[0]->ID, null, 'src'); if (!is_wp_error($att)) { $body = str_replace($src, $att, $body); } }
       }
-      kses_remove_filters(); wp_update_post(['ID' => $found[0]->ID, 'post_content' => $body]); kses_init_filters(); return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID)];
+      kses_remove_filters(); wp_update_post(['ID' => $found[0]->ID, 'post_content' => wp_slash($body)]); kses_init_filters(); // slashed, or the save would strip every backslash (regular expressions in scripts) return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID)];
     }
     if ($found && !empty($d['skip_if_exists'])) { return ['id' => $found[0]->ID, 'url' => get_permalink($found[0]->ID), 'existed' => true]; }
     if ($found) { $arr['ID'] = $found[0]->ID; }
