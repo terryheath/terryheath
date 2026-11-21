@@ -40,4 +40,4 @@ foreach ($pairs as $p) {
   $out = trim(ob_get_clean());
   echo '[inkhorn] replace ' . $p[0] . ' -> ' . $p[1] . ($out ? ': ' . $out : '') . "\n";
 }
-foreach (get_sites(['number' => 100]) as $s) { switch_to_blog($s->blog_id); flush_rewrite_rules(false); restore_current_blog(); }
+// rewrite rules are flushed per site by the entrypoint (each site needs its own process: its rules depend on its host)
