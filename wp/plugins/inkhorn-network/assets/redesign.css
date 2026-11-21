@@ -224,3 +224,6 @@ body .ih-add-to-cart-btn:hover,body .ih-cart-checkout-btn:hover,body .ih-address
 @media(max-width:640px){.ih-mast-lowfig img{height:170px!important}.ih-mast-stack .ih-mast-bunny img{height:110px}}
 
 .ih-low-latest-noimg{grid-template-columns:1fr!important}
+/* episode page: air between the title and the guest's headshot */
+.ih-piece > h1 + .ih-contrib-h{margin-top:40px}
+@media(max-width:640px){.ih-piece > h1 + .ih-contrib-h{margin-top:28px}}
