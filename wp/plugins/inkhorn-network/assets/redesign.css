@@ -227,3 +227,7 @@ body .ih-add-to-cart-btn:hover,body .ih-cart-checkout-btn:hover,body .ih-address
 /* episode page: air between the title and the guest's headshot */
 .ih-piece > h1 + .ih-contrib-h{margin-top:40px}
 @media(max-width:640px){.ih-piece > h1 + .ih-contrib-h{margin-top:28px}}
+
+/* guest guide on Life on Words (audit 2026-11-21): platform links are at least 40px tall; the white-on-orange button meets 4.5:1 contrast */
+.ih-lifeonwords .lw-pill { min-height: 40px; }
+.ih-lifeonwords .lw-btn { background: #b3331a; min-height: 44px; }
