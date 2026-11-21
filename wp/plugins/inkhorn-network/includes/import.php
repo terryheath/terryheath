@@ -17,14 +17,7 @@ add_action('rest_api_init', function () {
   ]);
 });
 
-function site_id_for($key) {
-  $all = get_sites(['number' => 50]);
-  foreach ($all as $s) {
-    $path = trim($s->path, '/');
-    if (($key === 'hub' && $path === '') || $path === $key) { return (int) $s->blog_id; }
-  }
-  return 0;
-}
+function site_id_for($key) { return (int) site_blog_id($key); } // by domain (every site is on its own root domain)
 
 function import_item(\WP_REST_Request $r) {
   $d = $r->get_json_params();
