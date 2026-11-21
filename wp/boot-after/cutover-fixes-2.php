@@ -16,7 +16,7 @@ if ($b = ih_fix_site('inkhorn.press')) {
   foreach (['weird-friday', 'bookfolk'] as $slug) {
     $p = get_page_by_path($slug, OBJECT, 'page');
     if ($p && strpos($p->post_content, 'Details coming soon.') !== false) {
-      kses_remove_filters(); wp_update_post(['ID' => $p->ID, 'post_content' => str_replace('Details coming soon.', 'Details to come.', $p->post_content)]); kses_init_filters();
+      kses_remove_filters(); wp_update_post(['ID' => $p->ID, 'post_content' => wp_slash(str_replace('Details coming soon.', 'Details to come.', $p->post_content))]); kses_init_filters();
       echo "[inkhorn] fixes: $slug text updated\n";
     }
   }
@@ -33,14 +33,15 @@ if ($b = ih_fix_site('terryheath.com')) {
   $gg = get_page_by_path('guest-guide', OBJECT, 'page');
   if ($gg) {
     $c = $gg->post_content; $o = $c;
-    $c = str_replace('/^image/(jpeg|png|webp)$/', '/^image\\/(jpeg|png|webp)$/', $c);
+    $c = preg_replace('#/\^image[\\\\/]*\(jpeg\|png\|webp\)\$/#', '/^image\\\\/(jpeg|png|webp)$/', $c, -1, $cnt);
+    if (!$cnt && ($i = strpos($c, 'jpeg|png|webp')) !== false) { echo '[inkhorn] fixes: guest guide type test already reads: ' . json_encode(substr($c, max(0, $i - 20), 50)) . "\n"; }
     $old = 'https://terryheath.com/content/images/2026/11/life-on-words-share-1080.png';
     if (strpos($c, $old) !== false) {
       require_once ABSPATH . 'wp-admin/includes/media.php'; require_once ABSPATH . 'wp-admin/includes/file.php'; require_once ABSPATH . 'wp-admin/includes/image.php';
       $new = media_sideload_image('https://smoky-hyena.pikapod.net/content/images/2026/11/life-on-words-share-1080.png', $gg->ID, null, 'src');
       if (!is_wp_error($new)) { $c = str_replace($old, $new, $c); echo "[inkhorn] fixes: share graphic now $new\n"; } else { echo '[inkhorn] fixes: share graphic failed: ' . $new->get_error_message() . "\n"; }
     }
-    if ($c !== $o) { kses_remove_filters(); wp_update_post(['ID' => $gg->ID, 'post_content' => $c]); kses_init_filters(); echo "[inkhorn] fixes: guest guide updated\n"; }
+    if ($c !== $o) { kses_remove_filters(); wp_update_post(['ID' => $gg->ID, 'post_content' => wp_slash($c)]); kses_init_filters(); echo "[inkhorn] fixes: guest guide updated\n"; }
   }
   restore_current_blog();
 }

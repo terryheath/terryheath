@@ -10,6 +10,8 @@ add_action('phpmailer_init', function ($m) {
   $m->Username = getenv('SMTP_USERNAME');
   $m->Password = getenv('SMTP_PASSWORD');
   $m->SMTPSecure = 'tls';
+  // whiterabbitreview.com has no inbox of its own yet: replies to its mail go to Terry's address (the other four domains receive mail at hello@ and forward to him)
+  if (function_exists('Inkhorn\\site_key') && \Inkhorn\site_key() === 'whiterabbit' && !$m->getReplyToAddresses()) { $m->addReplyTo('hello@terryheath.com', 'Terry Heath'); }
 });
 // each site sends from its own domain; MAIL_FROM_ADDRESS / MAIL_FROM_NAME override for every site
 add_filter('wp_mail_from', function () { if (getenv('MAIL_FROM_ADDRESS')) { return getenv('MAIL_FROM_ADDRESS'); } return function_exists('Inkhorn\\mail_from_for_site') && preg_match('/<([^>]+)>/', \Inkhorn\mail_from_for_site(), $m) ? $m[1] : 'hello@inkhorn.press'; });
