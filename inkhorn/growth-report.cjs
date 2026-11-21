@@ -25,7 +25,7 @@ const STORE = {
 const LM = require('./listmonk.cjs');
 const KEY = 'growth-snapshots';
 const LISTS_MONTHLY = 0.025, DONATIONS_YEARLY = 0.15, BASELINE_MONTHS = 3;
-const SITES = ['hub', 'review', 'whiterabbit', 'muse', 'terryheath', 'lifeonwords'];
+const SITES = ['hub', 'review', 'whiterabbit', 'terryheath', 'lifeonwords'];
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const usd = (c) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pct = (a, b) => (b ? `${a >= b ? '+' : ''}${(((a - b) / b) * 100).toFixed(1)}%` : 'n/a');

@@ -47,6 +47,22 @@
     "terryheath.com"
    ],
    "final": true
+  },
+  {
+   "from": "^/muse/about/?$",
+   "to": "https://gomuse.io/",
+   "hosts": [
+    "inkhorn.press"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/muse(/.*)?$",
+   "to": "https://gomuse.io$1",
+   "hosts": [
+    "inkhorn.press"
+   ],
+   "final": true
   }
  ]
 }

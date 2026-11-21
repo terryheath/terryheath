@@ -14,7 +14,7 @@ add_action('transition_post_status', function ($new, $old, $post) {
   $u = getenv('LISTMONK_URL'); $tok = getenv('LISTMONK_API_TOKEN'); $user = getenv('LISTMONK_API_USER') ?: 'automation';
   if (!$u || !$tok) { return; }
   $s = site(); $key = site_key();
-  $brand = ['review' => 'Inkhorn: Inkhorn Review', 'whiterabbit' => 'Inkhorn: White Rabbit', 'muse' => 'Inkhorn: Muse', 'terryheath' => 'Inkhorn: Terry Heath', 'lifeonwords' => 'Inkhorn: Life on Words', 'hub' => 'Inkhorn: Inkhorn Press'][$key] ?? 'Inkhorn: Inkhorn Press';
+  $brand = ['review' => 'Inkhorn: Inkhorn Review', 'whiterabbit' => 'Inkhorn: White Rabbit', 'terryheath' => 'Inkhorn: Terry Heath', 'lifeonwords' => 'Inkhorn: Life on Words', 'hub' => 'Inkhorn: Inkhorn Press'][$key] ?? 'Inkhorn: Inkhorn Press';
   $title = get_the_title($post);
   $label = $post->post_type === 'ih_issue' ? (get_post_meta($post->ID, 'ih_label', true) ?: $title) : $title;
   $body = $post->post_type === 'post' ? apply_filters('the_content', $post->post_content)

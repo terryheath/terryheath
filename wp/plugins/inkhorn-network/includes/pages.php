@@ -295,17 +295,6 @@ function view_guest($g) {
   return $h . '</ul></section></main>';
 }
 
-/* ---------- Muse: the WordPress placeholder hands over to the Muse web app ---------- */
-
-add_action('template_redirect', function () {
-  if (site_key() !== 'muse') { return; }
-  $base = 'https://gomuse.io';
-  $path = trim((string) wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
-  $rest = preg_replace('#^muse/?#', '', $path);
-  if (strpos($path, 'wp-') === 0 || strpos($path, 'wp-json') !== false) { return; }
-  wp_redirect($base . '/' . ($rest === 'about' ? '' : $rest) . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : ''), 301); exit; // every /muse/ path goes to the same gomuse.io page (the old placeholder About has no counterpart: the front page)
-}, 0);
-
 /* ---------- /newsletter/: preferences link by email ---------- */
 
 add_action('rest_api_init', function () {

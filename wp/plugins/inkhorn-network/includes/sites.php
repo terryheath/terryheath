@@ -10,8 +10,6 @@ function sites() {
       'submit' => 'https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p', 'lists' => ['inkhorn-review']],
     'whiterabbit' => ['name' => 'White Rabbit', 'short' => 'White Rabbit', 'accent' => '#4B2346', 'tint' => '#F0E9EF', 'bar' => true, 'kind' => 'publication',
       'submit' => '', 'lists' => ['white-rabbit']],
-    // Muse is a Follow the Rabbit LLC publication at gomuse.io. This WordPress site exists only to 301 old /muse/ addresses there; it is in no nav, list, search or footer.
-    'muse' => ['name' => 'Muse', 'short' => 'Muse', 'accent' => '#5D6F86', 'tint' => '#EEF1F5', 'bar' => false, 'kind' => 'publication', 'submit' => 'https://gomuse.io', 'lists' => []],
     'terryheath' => ['name' => 'Terry Heath', 'short' => 'Terry Heath', 'accent' => '#6B1E22', 'tint' => '#F4EAEA', 'bar' => false, 'kind' => 'author',
       'lists' => ['writing', 'digest', 'new-books']],
     'lifeonwords' => ['name' => 'Life on Words', 'short' => 'Life on Words', 'accent' => '#A8361A', 'tint' => '#F7ECE8', 'bar' => false, 'kind' => 'podcast',
@@ -41,14 +39,13 @@ function hub_url($path = '') {
   restore_current_blog();
   return $u;
 }
-/** Blog id of a site of the network by its key. Every site is on its own domain (path /), except muse, which lives at the hub's /muse/. */
+/** Blog id of a site of the network by its key. Every site is on its own domain (path /), */
 function site_blog_id($key) {
   static $cache = [];
   if (isset($cache[$key])) { return $cache[$key]; }
   $domains = ['review' => 'inkhornreview.com', 'whiterabbit' => 'whiterabbitreview.com', 'terryheath' => 'terryheath.com', 'lifeonwords' => 'lifeonwords.com'];
   $id = 0;
   if ($key === 'hub') { $id = (int) get_main_site_id(); }
-  elseif ($key === 'muse') { $r = get_sites(['path' => '/muse/', 'number' => 1]); $id = $r ? (int) $r[0]->blog_id : 0; }
   else {
     if (isset($domains[$key])) { $r = get_sites(['domain' => $domains[$key], 'number' => 1]); if ($r) { $id = (int) $r[0]->blog_id; } }
     if (!$id) { $r = get_sites(['path' => '/' . $key . '/', 'number' => 1]); $id = $r ? (int) $r[0]->blog_id : 0; } // the temporary folder layout
@@ -57,7 +54,6 @@ function site_blog_id($key) {
 }
 /** Address of a sibling publication. */
 function pub_url($key, $path = '') {
-  if ($key === 'muse') { return 'https://gomuse.io/' . ltrim($path, '/'); }
   $b = site_blog_id($key);
   if (!$b) { return hub_url($key); }
   return get_site_url($b, '/' . ltrim($path, '/'));

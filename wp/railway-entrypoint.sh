@@ -39,7 +39,7 @@ if (file_exists('/var/www/html/wp-content/uploads/.multisite')) {
 RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteBase /
-# folder paths that a root domain replaced answer with a plain 404 (the Muse folder, /muse/, stays)
+# folder paths that a root domain replaced answer with a plain 404 (/muse/* is redirected to gomuse.io by the redirect rule, not by a site)
 RewriteCond %{HTTP_HOST} ^(www\.)?inkhorn\.press$ [NC]
 RewriteRule ^(review|whiterabbit|terryheath|lifeonwords)(/|$) - [R=404,L]
 RewriteCond %{HTTP_HOST} ^(www\.)?terryheath\.com$ [NC]
@@ -73,7 +73,7 @@ HT
   fi
   # the network's sites (idempotent): press hub is site 1; the rest are subdirectory sites; terryheath and lifeonwords get mapped domains at cutover
   if [ -f /var/www/html/wp-content/uploads/.multisite ]; then
-    for spec in "review:Inkhorn Review" "whiterabbit:White Rabbit" "muse:Muse" "terryheath:Terry Heath" "lifeonwords:Life on Words"; do
+    for spec in "review:Inkhorn Review" "whiterabbit:White Rabbit" "terryheath:Terry Heath" "lifeonwords:Life on Words"; do
       slug="${spec%%:*}"; title="${spec#*:}"
       # a site mapped to its own domain (IH_MAP_DOMAINS) lives at / on that domain: it is never recreated at a folder path
       mapped=$(printf '%s\n' ${IH_MAP_DOMAINS:-} | sed -n "s/^${slug}=//p")

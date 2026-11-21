@@ -3,7 +3,7 @@
  * Boot task: give each site its own domain and rewrite the old temporary address everywhere. Off until IH_MAP_DOMAINS is set, e.g.
  *   IH_MAP_DOMAINS="hub=inkhorn.press review=inkhornreview.com whiterabbit=whiterabbitreview.com terryheath=terryheath.com lifeonwords=lifeonwords.com"
  *   IH_OLD_HOST=wordpress-production-754b3e08.up.railway.app      (the temporary address being retired)
- * Every site lives on its own root domain; inkhorn.press is the press hub only (the muse site stays at inkhorn.press/muse and redirects to gomuse.io).
+ * Every site lives on its own root domain; inkhorn.press is the press hub only (inkhorn.press/muse/* is one redirect rule to gomuse.io; there is no muse site).
  * Idempotent: a site already on its domain is left alone, and the search-replace finds nothing the second time.
  */
 $spec = trim((string) getenv('IH_MAP_DOMAINS')); $old = trim((string) getenv('IH_OLD_HOST'));
@@ -38,7 +38,6 @@ foreach ($map as $key => $domain) {
   switch_to_blog($s->blog_id); update_option('siteurl', 'https://' . $domain); update_option('home', 'https://' . $domain); restore_current_blog();
   echo "[inkhorn] map: $key -> $domain\n";
 }
-if (!empty($before['muse']) && $hub) { $m = $before['muse']; if ($m->domain !== $hub) { update_blog_details($m->blog_id, ['domain' => $hub]); switch_to_blog($m->blog_id); update_option('siteurl', 'https://' . $hub . '/muse'); update_option('home', 'https://' . $hub . '/muse'); restore_current_blog(); echo "[inkhorn] map: muse -> $hub/muse\n"; } }
 // 3. the old temporary address inside content, metadata and options of every site
 foreach ($pairs as $p) {
   ob_start();
