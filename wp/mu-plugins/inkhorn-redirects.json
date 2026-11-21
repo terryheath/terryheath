@@ -193,6 +193,38 @@
    "final": true
   },
   {
+   "from": "^/(?:podcast/guests|guest-guide)/?$",
+   "to": "https://lifeonwords.com/guest-guide/",
+   "hosts": [
+    "terryheath.com"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/content/images/2026/11/life-on-words-share-1080\\.png$",
+   "to": "https://lifeonwords.com/wp-content/uploads/sites/6/2026/11/life-on-words-share-1080.png",
+   "hosts": [
+    "terryheath.com"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/tag/podcast/?$",
+   "to": "https://lifeonwords.com/",
+   "hosts": [
+    "terryheath.com"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/sitemap-(?:pages|posts|tags|authors)\\.xml$",
+   "to": "/sitemap.xml",
+   "hosts": [
+    "terryheath.com"
+   ],
+   "final": true
+  },
+  {
    "from": "^/podcast/(?!rss/?$|guests/?$)([^/]+)/?$",
    "to": "https://lifeonwords.com/episodes/$1/",
    "hosts": [

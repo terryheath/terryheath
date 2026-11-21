@@ -57,7 +57,7 @@ const __dirname = path.dirname(__filename);
 const FEED_URL = process.env.FEED_URL
   || 'https://api.riverside.com/hosting/V48At7Hk.rss';
 const SHOP_ID = process.env.BOOKSHOP_ID;
-const SITE_URL = (process.env.SITE_URL || 'https://terryheath.com').replace(/\/+$/, '');
+const SITE_URL = (process.env.SITE_URL || 'https://lifeonwords.com').replace(/\/+$/, '');
 const PODCAST_PATH = process.env.PODCAST_PATH ?? '/podcast';
 const ISBNDB_KEY = process.env.ISBNDB_KEY;
 const HUB_URL = (process.env.HUB_URL || 'https://admin.terryheath.com').replace(/\/+$/, '');

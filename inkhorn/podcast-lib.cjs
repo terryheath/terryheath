@@ -99,7 +99,7 @@ const fill = (t, v) => t.replace(/\{(\w+)\}/g, (m, k) => (v[k] !== undefined ? v
 function varsFor(g) {
   const b = g.booking;
   const tz = (b && b.tz) || PACIFIC;
-  const v = { first: firstName(g.name), note: g.note ? `${g.note.trim()}\n\n` : '', studio_url: STUDIO, agreement_url: g.agreement ? g.agreement.url : '', book_url: `${HUB}/podcast/book?token=${g.token}`, booking_url: `${HUB}/podcast/book?token=${g.token}`, guide_url: `https://terryheath.com/podcast/guests/?g=${g.token}`, old_when: g.old_when || '' };
+  const v = { first: firstName(g.name), note: g.note ? `${g.note.trim()}\n\n` : '', studio_url: STUDIO, agreement_url: g.agreement ? g.agreement.url : '', book_url: `${HUB}/podcast/book?token=${g.token}`, booking_url: `${HUB}/podcast/book?token=${g.token}`, guide_url: `https://lifeonwords.com/guest-guide/?g=${g.token}`, old_when: g.old_when || '' };
   if (b && b.start) v.when = when(new Date(b.start), tz);
   if (b && b.status === 'booked' && !String(b.uid).startsWith('imported-')) { v.reschedule_url = `https://cal.com/reschedule/${b.uid}`; v.cancel_url = `https://cal.com/booking/${b.uid}?cancel=true`; }
   v.change_lines = v.reschedule_url ? `Need to change it? Reschedule: ${v.reschedule_url}\nCan't make it? Cancel: ${v.cancel_url}` : "Need to change it, or can't make it? Just reply to this email.";
@@ -359,7 +359,7 @@ async function cancelUnsigned(g) {
 }
 
 async function feedTitles() {
-  try { const r = await fetch('https://terryheath.com/podcast/rss/', { signal: AbortSignal.timeout(15000) }); const x = await r.text(); return [...x.matchAll(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)].map((m) => m[1]); } catch { return []; }
+  try { const r = await fetch('https://lifeonwords.com/podcast/rss/', { signal: AbortSignal.timeout(15000) }); const x = await r.text(); return [...x.matchAll(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)].map((m) => m[1]); } catch { return []; }
 }
 async function runHourly({ dry = false, now = new Date() } = {}) {
   const store = await load();

@@ -2,7 +2,7 @@
 //   public (no password):  /podcast/book?token=...        the gate to the hidden Cal.com event (signed agreement required)
 //                          /podcast/webhook/<secret>      Cal.com webhook (PODCAST_WEBHOOK_SECRET env var is the <secret>)
 //                          /podcast/headshot?g=<token>    guest headshot: GET {has}, POST the raw image (jpg/png/webp, 10 MB); called from the guest guide at
-//                                                         terryheath.com/podcast/guests/ (CORS for that origin only); files live on the hub's /data volume
+//                                                         lifeonwords.com/guest-guide/ (CORS for that origin only); files live on the hub's /data volume
 //   server to server:      /podcast/api/headshot?name=<guest name>   Authorization: Bearer HUB_API_SECRET (env var, shared with the podcast-import service):
 //                                                         the headshot bytes + X-Photo-Credit (URL-encoded), or 404/409 JSON; riverside-to-ghost.js uses it
 //   behind the hub login:  /podcast/headshot-file?id=<guest id>[&download=1]   the saved headshot (thumbnail, download, Remove headshot, photo credit on the guest's row)
@@ -27,7 +27,7 @@ const readBody = (req) => new Promise((res, rej) => { let b = ''; req.on('data',
 let HEADSHOT_DIR = '/data/headshots'; // the hub volume (hub-files-volume): the ONLY place guest headshots live
 const _setHeadshotDir = (d) => { HEADSHOT_DIR = d; }; // tests only
 const HEADSHOT_MAX = 10 * 1024 * 1024;
-const GUIDE_ORIGIN = 'https://terryheath.com';
+const GUIDE_ORIGIN = 'https://lifeonwords.com';
 const sniff = (b) => (b.length > 12 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff ? 'jpg' : b.length > 8 && b.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) ? 'png' : b.length > 12 && b.slice(0, 4).toString() === 'RIFF' && b.slice(8, 12).toString() === 'WEBP' ? 'webp' : null);
 const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 const cors = (req) => (req.headers.origin === GUIDE_ORIGIN ? { 'Access-Control-Allow-Origin': GUIDE_ORIGIN, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600', Vary: 'Origin' } : { Vary: 'Origin' });
@@ -266,7 +266,7 @@ async function adminPage(msg, show = '') {
   const sg = await loadSuggestions();
   const open = sg.list.filter((s) => !s.dismissed).sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const sgLine = (s) => `<tr><td><strong>${esc(s.who)}</strong><br><span class="small">suggested ${esc(String(s.at).slice(0, 10))}${s.from_name ? ` by ${esc(s.from_name)}` : ''}${s.from_email ? ` &lt;${esc(s.from_email)}&gt;` : ''}</span>${s.why ? `<br>${esc(s.why)}` : ''}${s.how ? `<br><span class="small"><strong>Way in:</strong> ${esc(s.how)}</span>` : ''}</td><td><form method="post" action="/podcast/act"><input type="hidden" name="id" value="${esc(s.id)}"><button name="do" value="dismiss_suggestion">Done with this</button></form></td></tr>`;
-  const sgBox = `<h2>Suggested guests (${open.length})</h2><p class="small">From the "who else should I talk to?" form on the <a href="${GUIDE_ORIGIN}/podcast/guests/">guest guide</a>. Nobody here has been contacted and nothing is sent from this list — add a guest above when you want one. "Done with this" just hides the row.</p>${open.length ? UI.table(`<tr><th>Suggestion</th><th></th></tr>${open.map(sgLine).join('')}`) : '<p class="small">Nothing suggested yet.</p>'}`;
+  const sgBox = `<h2>Suggested guests (${open.length})</h2><p class="small">From the "who else should I talk to?" form on the <a href="${GUIDE_ORIGIN}/guest-guide/">guest guide</a>. Nobody here has been contacted and nothing is sent from this list — add a guest above when you want one. "Done with this" just hides the row.</p>${open.length ? UI.table(`<tr><th>Suggestion</th><th></th></tr>${open.map(sgLine).join('')}`) : '<p class="small">Nothing suggested yet.</p>'}`;
   return page('Life on Words guests', `${UPLOAD_JS}<h1>Life on Words guests</h1>${msg ? `<p class="note" role="status">${esc(msg)}</p>` : ''}${warn}${missBox}${sgBox}
     <h2>Add guest</h2><form method="post" action="/podcast/add"><input name="name" aria-label="Guest name" placeholder="Name" required size="22"> <input name="email" type="email" aria-label="Guest email address" placeholder="Email" required size="28"><br><textarea name="note" aria-label="Optional personal note" rows="2" cols="70" placeholder="Optional personal note, placed after the greeting and before the first line of the invitation (for example: Thanks for reaching out)"></textarea><br><label><input type="checkbox" name="accepted" value="1"> Add guest who already said yes (sends only the agreement, not the full invitation)</label><br><button>Add guest and send the email</button></form>
     ${batch}${byName}<h2>Guests (${store.guests.filter((g) => !g.pending_send).length})</h2>
