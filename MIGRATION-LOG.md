@@ -178,3 +178,13 @@ Switch-over is by environment variable or by pointing the Railway cron at the ne
 ## 2026-11-20 18:04 PST (02:04 UTC): CUTOVER GO. Ghost freeze starts. No edits on either Ghost from here.
 
 - Cloudflare account B reached (Keychain `cloudflare-ftr-cleanup-b`); inventory updated in CLAUDE.md (B = weirdfriday.org and whiterabbitreview.com only).
+
+## Cutover progress, 2026-11-20 (afternoon)
+
+- **Search Console:** Domain properties verified and sitemaps submitted for inkhornreview.com, lifeonwords.com, terryheath.com (TXT added in Cloudflare account A) and whiterabbitreview.com (TXT in account B); inkhorn.press already had its sitemap. Duosuma, Chill Subs and Duotrope pages opened in Chrome for the URL updates.
+- **Stripe:** webhook we_1UM9Y7CItY7iMaUPKMAfeE0N now points to https://shop.inkhorn.press/webhook. Checkout, donation and subscription checkout each reached a Stripe payment page (nothing paid). The Ghost webhook (inkhorn.press/members/webhooks/stripe/) is untouched until Ghost is shut down.
+- **Umami:** website domains set to inkhornreview.com, whiterabbitreview.com, gomuse.io (hub, terryheath, lifeonwords were already right).
+- **DNS/SES:** SPF and DMARC added for whiterabbitreview.com (zone B).
+- **Redirects:** old Ghost tag addresses (/by/<slug>/) now resolve to the contributor, the guest or the Review home; /rss/ goes to the Review feed; podcast episode slugs under /review/, /podcast/ and /life-on-words/ on inkhorn.press and inkhornreview.com go to lifeonwords.com/episodes/<slug>/; /review/ alone goes to the Review home. Test: inkhorn/scripts/test-cutover-redirects.cjs (196 old addresses).
+- **railway.app in page source:** one leftover (og:image on inkhorn.press pages); IH_REPLACE_URLS now rewrites it.
+- **Waiting:** lifeonwords.com certificate still issuing on Railway; PikaPods and AWS sign-in pages open for Terry's password (DocuSeal move and SES identities).
