@@ -14,15 +14,14 @@ function services_list() {
     'Email and analytics' => [
       ['listmonk', $lm . '/admin', 'Lists, subscribers, campaigns and email templates (the newsletter, sign-up confirmations and the issue announcement).', 'link'],
       ['Umami', $um . '/', 'Visits and pages for every site; self-hosted, no cookies.', 'link'],
-      ['Growth report', $hub . '/growth', 'Each month against its target: email lists, donations, subscriptions, sales and visits.', 'link'],
+      ['Growth report', network_admin_url('admin.php?page=ih-hub-growth'), 'Each month against its target: email lists, donations, subscriptions, sales and visits.', 'link'],
     ],
     'Agreements and payments' => [
       ['DocuSeal', 'https://sign.terryheath.com/sign_in', 'Agreement templates, every sent and signed agreement, the API token.', 'link'],
-      ['Profile changes', $hub . '/profiles', 'Contributor headshot, bio and website changes waiting for approval.', 'link'],
-      ['Payouts', $hub . '/payouts', 'Signed or not, pay and subscription choices, bios to apply or ignore, print mailing lists.', 'link'],
-      ['Life on Words guests', $hub . '/podcast', 'Guest agreements, bookings and reminders; add a guest and send the invitation.', 'link'],
+      ['Profile changes', network_admin_url('admin.php?page=ih-hub-profiles'), 'Contributor headshot, bio and website changes waiting for approval.', 'link'],
+      ['Payouts', network_admin_url('admin.php?page=ih-hub-payouts'), 'Signed or not, pay and subscription choices, bios to apply or ignore, print mailing lists.', 'link'],
+      ['Life on Words guests', network_admin_url('admin.php?page=ih-hub-podcast'), 'Guest agreements, bookings and reminders; add a guest and send the invitation.', 'link'],
       ['Contributor confirm page', 'https://agreements.inkhornreview.com/accept', 'What the Duosuma acceptance letter links to. Public.', 'link'],
-      ['Admin hub', $hub . '/', 'The agreements and payouts hub these links came from.', 'link'],
     ],
     'Shop and money' => [
       ['Stripe: Inkhorn Press (nonprofit)', 'https://dashboard.stripe.com/', 'Shop checkout, donations, Duosuma fees, subscriptions. Prices live here. Switch to the Inkhorn Press account in the dashboard menu.', 'link'],

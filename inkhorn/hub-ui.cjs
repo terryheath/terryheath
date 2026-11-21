@@ -4,6 +4,9 @@
 //   - tables sit in a .tw box that scrolls inside itself, and on a phone (<= 700px) tables marked class="cards" stack into one card per row
 //     (each td carries data-label, shown as its caption), so no hub page is ever wider than the screen
 //   - links and buttons are at least 40px tall
+const { AsyncLocalStorage } = require('async_hooks');
+// Engine mode (2026-11-21): WordPress Network Admin asks this service for a screen and gets the screen's HTML without the page shell or sign-in; see admin-hub.cjs.
+const ctx = new AsyncLocalStorage();
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const CSS = `*{box-sizing:border-box}body{margin:0;font:16px/1.5 Georgia,serif;color:#222;background:#fff;overflow-wrap:anywhere}main{max-width:72rem;margin:0 auto;padding:1rem 1rem 4rem}
@@ -29,7 +32,9 @@ const nav = (here, { csrf = '' } = {}) => {
 };
 
 // here: 'home' | 'payouts' | 'podcast' | '' (signed-out pages show no nav)
-const page = (title, body, { here = '', extraHead = '', extraBody = '' } = {}) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}${here ? ' · Admin' : ''}</title>
+const fragmentPage = (body, { extraHead = '', extraBody = '' } = {}) => `<style>.ihhub{${CSS}}</style>${extraHead}<div class="ihhub"><div id="content">${body}</div>${extraBody}</div>`;
+const page = (title, body, opts = {}) => (ctx.getStore() && ctx.getStore().fragment ? fragmentPage(body, opts) : fullPage(title, body, opts));
+const fullPage = (title, body, { here = '', extraHead = '', extraBody = '' } = {}) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}${here ? ' · Admin' : ''}</title>
 <style>${CSS}</style>${extraHead}</head><body><a class="skip" href="#content">Skip to content</a><main>${here ? nav(here) : ''}<div id="content" tabindex="-1">${body}</div></main>${extraBody}</body></html>`;
 
 // Wrap a table so it scrolls inside its own box; `cards` also stacks it on a phone.
@@ -40,4 +45,4 @@ const table = (html, { cards = true, id = '', label = '' } = {}) => {
   return `<div class="tw"><table aria-label="${esc(name)}"${cards ? ' class="cards"' : ''}${id ? ` id="${esc(id)}"` : ''}>${html}</table></div>`;
 };
 
-module.exports = { esc, CSS, nav, page, table };
+module.exports = { esc, CSS, nav, page, table, ctx };

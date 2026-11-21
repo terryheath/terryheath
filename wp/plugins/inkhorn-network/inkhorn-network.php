@@ -21,6 +21,7 @@ require_once __DIR__ . '/includes/subscribe.php';
 require_once __DIR__ . '/includes/import.php';
 require_once __DIR__ . '/includes/account.php';
 require_once __DIR__ . '/includes/extras.php';
+require_once __DIR__ . '/includes/hub-admin.php';
 require_once __DIR__ . '/includes/pages.php';
 require_once __DIR__ . '/includes/listen.php';
 require_once __DIR__ . '/includes/shop.php';

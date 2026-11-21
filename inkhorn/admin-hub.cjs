@@ -181,15 +181,33 @@ const redirect = (res, to) => { res.writeHead(303, { Location: to, 'Cache-Contro
 const nf = (res, signed = false) => send(res, 404, shell('Not found', '<h1>Not found</h1><p>There is nothing at this address. Use the menu above, or go to <a href="/">the admin home</a>.</p>', signed ? 'x' : ''));
 // Paths that exist behind the sign-in; anything else is a plain 404 even when signed out (so a typo never looks like a session problem).
 const KNOWN = (path) => path === '/' || path === '/payouts' || path === '/payouts.csv' || path === '/payouts/bio' || path === '/payouts/refund' || path === '/profiles' || path === '/profiles/decide' || path === '/growth' || path === '/podcast' || path.startsWith('/podcast/');
-const sameSite = (req) => { const o = req.headers.origin; if (o) { try { return new URL(o).host === req.headers.host; } catch { return false; } } return req.headers['sec-fetch-site'] === 'same-origin'; };
+const sameSite = (req) => { if (req.isEngine) return true; const o = req.headers.origin; if (o) { try { return new URL(o).host === req.headers.host; } catch { return false; } } return req.headers['sec-fetch-site'] === 'same-origin'; };
 const resets = new Map(); // one-time reset links already used (token -> true), memory only; links also expire after 30 minutes
 
-async function handle(req, res, ip) {
+// ---- engine mode (2026-11-21): the WordPress Network Admin screens call this service with a signed header -------------------------
+// X-Engine-Auth: <unix seconds>.<hex HMAC-SHA256(ENGINE_SECRET, seconds|METHOD|path+query)>, valid for 2 minutes. A valid header counts as signed in
+// (the person was already signed in to WordPress as a super admin) and screens come back as HTML fragments (hub-ui.cjs). Without the header, once
+// HUB_RETIRED=1 is set, every private path redirects to its Network Admin screen; the sign-in and password code below is no longer reachable.
+const ENGINE = () => process.env.ENGINE_SECRET || '';
+function engineOk(req) {
+  const h = String(req.headers['x-engine-auth'] || ''); const [ts, sig] = h.split('.');
+  if (!ENGINE() || !ts || !sig || Math.abs(Date.now() / 1000 - Number(ts)) > 120) return false;
+  const want = crypto.createHmac('sha256', ENGINE()).update(`${ts}|${req.method}|${req.url}`).digest('hex');
+  return eq(sig, want);
+}
+const WP_SCREEN = (path, search) => 'https://inkhorn.press/wp-admin/network/admin.php?page=' + (path.startsWith('/payouts') ? 'ih-hub-payouts' : path.startsWith('/profiles') ? 'ih-hub-profiles' : path.startsWith('/growth') ? 'ih-hub-growth' : path.startsWith('/podcast') ? 'ih-hub-podcast' : 'ih-services') + (path === '/' || path === '/login' || path === '/logout' ? '' : '&p=' + encodeURIComponent(path + (search ? '?' + search : '')));
+function handle(req, res, ip) {
+  const engine = engineOk(req);
+  req.isEngine = engine;
+  return UI.ctx.run({ fragment: engine }, () => handleInner(req, res, ip, engine));
+}
+async function handleInner(req, res, ip, engine) {
   const [path, ...qs] = req.url.split('?');
   const query = new URLSearchParams(qs.join('?'));
   if (path === '/health') return send(res, 200, 'ok');
   if (path.startsWith('/podcast/book') || path.startsWith('/podcast/webhook/') || path === '/podcast/headshot' || path === '/podcast/api/headshot' || path === '/podcast/suggest') { if (await PR.publicRoute(req, res, path, query)) return; } // public: the booking gate, the Cal.com webhook, the guest headshot upload and the "who else should I talk to?" form
-  const auth = await loadAuth();
+  if (!engine && process.env.HUB_RETIRED === '1') { res.writeHead(302, { Location: WP_SCREEN(path, qs.join('?')), 'Cache-Control': 'no-store' }); return res.end(); }
+  const auth = engine ? { engine: true } : await loadAuth();
 
   if (path === '/setup') {
     if (auth) return nf(res);
@@ -241,7 +259,7 @@ async function handle(req, res, ip) {
   }
 
   if (!auth) return nf(res); // not set up yet: nothing to see (visit /setup?token=... once)
-  if (!signedIn(req)) return KNOWN(path) && req.method === 'GET' ? send(res, 401, loginPage('', safeNext(req.url))) : KNOWN(path) ? send(res, 401, loginPage('Your session ended. Sign in and try again.')) : nf(res);
+  if (!engine && !signedIn(req)) return KNOWN(path) && req.method === 'GET' ? send(res, 401, loginPage('', safeNext(req.url))) : KNOWN(path) ? send(res, 401, loginPage('Your session ended. Sign in and try again.')) : nf(res);
 
   if (path === '/podcast' || path.startsWith('/podcast/')) { if (await PR.adminRoute(req, res, path, query)) return; }
   if (path === '/growth') return send(res, 200, shell('Growth report', await G.html(), 'x'));
