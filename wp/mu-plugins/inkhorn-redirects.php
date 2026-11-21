@@ -1,7 +1,7 @@
 <?php
 /* Plugin Name: Inkhorn redirects (old inkhorn.press and inkhornreview.com paths -> the new network) */
 add_action('init', function () {
-  if (is_admin() || (defined('REST_REQUEST') && REST_REQUEST) || wp_doing_cron()) { return; }
+  if ((defined('WP_CLI') && WP_CLI) || is_admin() || (defined('REST_REQUEST') && REST_REQUEST) || wp_doing_cron()) { return; }
   $uri = $_SERVER['REQUEST_URI'] ?? '/';
   $path = (string) wp_parse_url($uri, PHP_URL_PATH);
   $qs = (string) wp_parse_url($uri, PHP_URL_QUERY);

@@ -10,9 +10,11 @@ $hub = get_site(get_main_site_id()); $hubDomain = $hub ? $hub->domain : '';
 foreach (get_sites(['number' => 100]) as $s) {
   if ($s->domain !== $hubDomain || trim($s->path, '/') !== 'muse') { continue; }
   switch_to_blog($s->blog_id);
-  $posts = (int) wp_count_posts('post')->publish + (int) wp_count_posts('post')->draft; $pages = (int) wp_count_posts('page')->publish + (int) wp_count_posts('page')->draft;
+  $mine = 0; foreach (['ih_issue', 'ih_piece', 'ih_episode', 'ih_guest', 'ih_book', 'ih_contributor'] as $t) { $mine += (int) (post_type_exists($t) ? wp_count_posts($t)->publish + wp_count_posts($t)->draft : 0); }
+  $titles = []; foreach (get_posts(['post_type' => ['post', 'page'], 'post_status' => 'any', 'numberposts' => 50]) as $p) { $titles[] = $p->post_type . ':' . $p->post_title . ' (' . $p->post_status . ')'; }
   restore_current_blog();
-  if ($posts > 1 || $pages > 3) { echo "[inkhorn] muse site has content ($posts/$pages): left alone\n"; continue; }
+  echo "[inkhorn] muse site holds: " . implode('; ', $titles) . "\n";
+  if ($mine > 0) { echo "[inkhorn] muse site holds publication content ($mine): left alone\n"; continue; }
   wpmu_delete_blog($s->blog_id, true);
   echo "[inkhorn] muse site (blog {$s->blog_id}) removed\n";
 }
