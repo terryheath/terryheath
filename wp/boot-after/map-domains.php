@@ -27,7 +27,12 @@ if ($oldUrl && $hub) { $pairs[] = [$oldUrl . '/muse', 'https://' . $hub . '/muse
 // 2. each site: domain, path, siteurl, home
 foreach ($map as $key => $domain) {
   $s = $before[$key] ?? null; if (!$s) { continue; }
-  if ($s->domain === $domain && $s->path === '/') { echo "[inkhorn] map: $key already on $domain\n"; continue; }
+  if ($s->domain === $domain && $s->path === '/') {
+    switch_to_blog($s->blog_id);
+    foreach (['siteurl', 'home'] as $opt) { if (get_option($opt) !== 'https://' . $domain) { echo "[inkhorn] map: $key $opt " . get_option($opt) . " -> https://$domain\n"; update_option($opt, 'https://' . $domain); } }
+    restore_current_blog();
+    echo "[inkhorn] map: $key already on $domain\n"; continue;
+  }
   update_blog_details($s->blog_id, ['domain' => $domain, 'path' => '/']);
   switch_to_blog($s->blog_id); update_option('siteurl', 'https://' . $domain); update_option('home', 'https://' . $domain); restore_current_blog();
   echo "[inkhorn] map: $key -> $domain\n";
