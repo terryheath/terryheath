@@ -359,7 +359,7 @@ async function cancelUnsigned(g) {
 }
 
 async function feedTitles() {
-  try { const r = await fetch('https://lifeonwords.com/podcast/rss/', { signal: AbortSignal.timeout(15000) }); const x = await r.text(); return [...x.matchAll(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)].map((m) => m[1]); } catch { return []; }
+  try { const r = await fetch('https://lifeonwords.com/feed/', { signal: AbortSignal.timeout(15000) }); const x = await r.text(); return [...x.matchAll(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)].map((m) => m[1]); } catch { return []; }
 }
 async function runHourly({ dry = false, now = new Date() } = {}) {
   const store = await load();

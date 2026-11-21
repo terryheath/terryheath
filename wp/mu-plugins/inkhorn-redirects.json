@@ -210,9 +210,17 @@
   },
   {
    "from": "^/podcast/rss/?$",
-   "to": "https://lifeonwords.com/podcast/rss/",
+   "to": "https://lifeonwords.com/feed/",
    "hosts": [
     "terryheath.com"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/podcast/rss/?$",
+   "to": "/feed/",
+   "hosts": [
+    "lifeonwords.com"
    ],
    "final": true
   },

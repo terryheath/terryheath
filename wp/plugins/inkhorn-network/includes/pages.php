@@ -210,7 +210,7 @@ function episode_audio($p) { $u = m($p->ID, 'ih_audio_url'); if ($u) { return $u
 function episode_len($p) { if (m($p->ID, 'ih_duration')) { return m($p->ID, 'ih_duration'); } return preg_match('#Listen to this episode\s*(?:&middot;|·|&#183;)\s*([0-9]+ min)#iu', wp_strip_all_tags((string) $p->post_content), $mm) ? $mm[1] : ''; }
 const LOW_APPLE = 'https://podcasts.apple.com/us/podcast/life-on-words/id6796221237';
 const LOW_SPOTIFY = 'https://open.spotify.com/show/033Yk3F8x8QWBLK496Wbqd';
-function feed_url_low() { return pub_url('terryheath', 'podcast/rss/'); }
+function feed_url_low() { return pub_url('lifeonwords', 'feed/'); }
 
 function section_low_latest() {
   $eps = episodes_latest(1); $latest = $eps ? $eps[0] : null; $h = '';
