@@ -88,7 +88,7 @@
    ]
   },
   {
-   "from": "^/(?:review/|podcast/|life-on-words/)(aleks-merilo-kicked-out-of-his-own-play|allie-millington-i-tried-again-four-hundred-times|maureen-mcquerry-the-girl-who-asked-questions|elena-taylor-allowed-in-the-room|sheila-roberts-no-problem-no-story|kirby-larson-the-girl-who-wanted-to-be-dorothy|alan-katz-forty-years-of-getting-paid-to-be-funny|christina-braver-real-sex-real-stories|ben-rockwood-the-publisher-who-rejected-the-question|susan-wiggs-60-plus-novels-and-what-they-cost)/?$",
+   "from": "^/(?:life-on-words/)?(aleks-merilo-kicked-out-of-his-own-play|allie-millington-i-tried-again-four-hundred-times|maureen-mcquerry-the-girl-who-asked-questions|elena-taylor-allowed-in-the-room|sheila-roberts-no-problem-no-story|kirby-larson-the-girl-who-wanted-to-be-dorothy|alan-katz-forty-years-of-getting-paid-to-be-funny|christina-braver-real-sex-real-stories|ben-rockwood-the-publisher-who-rejected-the-question|susan-wiggs-60-plus-novels-and-what-they-cost)/?$",
    "to": "https://lifeonwords.com/episodes/$1/",
    "final": true,
    "hosts": [
@@ -107,14 +107,6 @@
   {
    "from": "^/by/(?:podcast|life-on-words|digest)/?$",
    "to": "https://lifeonwords.com/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/review(/.*)?$",
-   "to": "https://inkhornreview.com/review$1",
    "final": true,
    "hosts": [
     "inkhorn.press"
@@ -159,86 +151,6 @@
    "hosts": [
     "inkhorn.press"
    ]
-  },
-  {
-   "from": "^/tag/podcast/?$",
-   "to": "https://lifeonwords.com/",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/sitemap-(?:pages|posts|tags|authors)\\.xml$",
-   "to": "/sitemap.xml",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/(?:podcast/guests|guest-guide)/?$",
-   "to": "https://lifeonwords.com/guest-guide/",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/content/images/2026/11/life-on-words-share-1080\\.png$",
-   "to": "https://lifeonwords.com/wp-content/uploads/sites/6/2026/11/life-on-words-share-1080.png",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/tag/podcast/?$",
-   "to": "https://lifeonwords.com/",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/sitemap-(?:pages|posts|tags|authors)\\.xml$",
-   "to": "/sitemap.xml",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/podcast/rss/?$",
-   "to": "https://lifeonwords.com/feed/",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/podcast/rss/?$",
-   "to": "/feed/",
-   "hosts": [
-    "lifeonwords.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/podcast/(?!rss/?$|guests/?$)([^/]+)/?$",
-   "to": "https://lifeonwords.com/episodes/$1/",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
-  },
-  {
-   "from": "^/podcast/?$",
-   "to": "https://lifeonwords.com/",
-   "hosts": [
-    "terryheath.com"
-   ],
-   "final": true
   },
   {
    "from": "^/(submit|events|shop|donate|support|bookfolk|weird-friday|contributors)(/.*)?$",

@@ -67,6 +67,9 @@ HT
   if [ -f /var/www/html/wp-content/uploads/.multisite ]; then
     for spec in "review:Inkhorn Review" "whiterabbit:White Rabbit" "muse:Muse" "terryheath:Terry Heath" "lifeonwords:Life on Words"; do
       slug="${spec%%:*}"; title="${spec#*:}"
+      # a site mapped to its own domain (IH_MAP_DOMAINS) lives at / on that domain: it is never recreated at a folder path
+      mapped=$(printf '%s\n' ${IH_MAP_DOMAINS:-} | sed -n "s/^${slug}=//p")
+      if [ -n "$mapped" ] && wp site list --allow-root --field=domain 2>/dev/null | grep -qx "$mapped"; then continue; fi
       wp site list --allow-root --field=path 2>/dev/null | grep -qx "/${slug}/" || wp site create --allow-root --slug="$slug" --title="$title" --email="${WP_ADMIN_EMAIL:-hello@inkhorn.press}" || true
     done
     wp plugin activate inkhorn-network --network --allow-root || true
