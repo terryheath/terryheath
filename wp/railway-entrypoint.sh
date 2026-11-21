@@ -14,6 +14,8 @@ export WORDPRESS_CONFIG_EXTRA="
 if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') { \$_SERVER['HTTPS'] = 'on'; }
 define('WP_ALLOW_MULTISITE', true);
 define('FS_METHOD', 'direct');
+define('WP_MEMORY_LIMIT', '256M');
+define('WP_MAX_MEMORY_LIMIT', '512M');
 define('WP_AUTO_UPDATE_CORE', 'minor');
 define('WP_DEFAULT_THEME', 'inkhorn');
 if (file_exists('/var/www/html/wp-content/uploads/.multisite')) {
