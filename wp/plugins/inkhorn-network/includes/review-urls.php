@@ -35,15 +35,7 @@ if (site_key() === 'review') {
     $type = $issue ? 'ih_issue' : 'ih_piece';
     return [$type => $slug, 'post_type' => $type, 'name' => $slug];
   });
-  // addresses this setup used for a day (/work/<slug>/, /issues/) keep working
-  add_action('template_redirect', function () {
-    $p = trim((string) wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/'); $base = trim((string) wp_parse_url(home_url(), PHP_URL_PATH), '/');
-    if ($base !== '' && strpos($p, $base . '/') === 0) { $p = substr($p, strlen($base) + 1); }
-    if (preg_match('#^(work|issues)/([^/]+)$#', $p, $m)) { wp_safe_redirect(home_url('/review/' . $m[2] . '/'), 301); exit; }
-    if ($p === 'issues') { wp_safe_redirect(home_url('/review/issues/'), 301); exit; }
-    if ($p === 'review') { wp_safe_redirect(home_url('/'), 301); exit; } // /review/ alone: the old Ghost collection page
-    if ($p === 'rss') { wp_safe_redirect(home_url('/feed/'), 301); exit; } // the old Ghost feed address
-  }, 0);
+
 }
 
 /** The founder's letters (a page of the Review: /review/founder-letter/). */

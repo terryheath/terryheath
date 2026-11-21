@@ -1,170 +1,42 @@
 {
- "_note": "Redirects for old inkhorn.press (Ghost) addresses. Rebuilt 2026-11-20 for the layout where every site has its own domain: only addresses that changed AND that something links to or that ever had real content. Rules marked final apply only once inkhorn.press is the live host (WP_DOMAIN=inkhorn.press); the others apply now. Before: 41 rules; after: 21. Each rule applies only on its hosts (default: the press hub, inkhorn.press and the temporary address); rules marked final only once the sites are on their own domains.",
  "rules": [
   {
-   "from": "^/support/?$",
-   "to": "/donate/",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/preferences/?$",
-   "to": "/newsletter/",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/subscribe/?$",
-   "to": "/shop/subscriptions/",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/(?:shop/)?print-edition/?$",
-   "to": "/shop/subscriptions/",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/(?:shop/)?address/?$",
-   "to": "/account/",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/(cart|order-complete)/?$",
-   "to": "/shop/$1/",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/(?:print|books)/?$",
-   "to": "/shop/",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/patreon-supporters/?$",
-   "to": "/donate/",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/submit/review/?$",
-   "to": "https://duotrope.com/duosuma/submit/inkhorn-review-iGX4p",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/submit/muse/?$",
-   "to": "https://gomuse.io",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/submit/white-rabbit/?$",
-   "to": "https://whiterabbitreview.com/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/white-rabbit(/.*)?$",
-   "to": "https://whiterabbitreview.com/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/(?:life-on-words/)?(aleks-merilo-kicked-out-of-his-own-play|allie-millington-i-tried-again-four-hundred-times|maureen-mcquerry-the-girl-who-asked-questions|elena-taylor-allowed-in-the-room|sheila-roberts-no-problem-no-story|kirby-larson-the-girl-who-wanted-to-be-dorothy|alan-katz-forty-years-of-getting-paid-to-be-funny|christina-braver-real-sex-real-stories|ben-rockwood-the-publisher-who-rejected-the-question|susan-wiggs-60-plus-novels-and-what-they-cost)/?$",
-   "to": "https://lifeonwords.com/episodes/$1/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press",
-    "inkhornreview.com"
-   ]
-  },
-  {
-   "from": "^/(?:tag/podcast|podcast|life-on-words)(/.*)?$",
-   "to": "https://lifeonwords.com/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/by/(?:podcast|life-on-words|digest)/?$",
-   "to": "https://lifeonwords.com/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/(poetry|fiction|nonfiction|art|micro)(/.*)?$",
+   "from": "^/(poetry|fiction|nonfiction|art|micro|colophon|founder-letter|autumn-2026)(/.*)?$",
    "to": "https://inkhornreview.com/$1$2",
-   "final": true,
    "hosts": [
     "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/(submissions|readers)/?$",
-   "to": "https://inkhornreview.com/$1/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/rss/?$",
-   "to": "https://inkhornreview.com/feed/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/founder-letter(/.*)?$",
-   "to": "https://inkhornreview.com/review/founder-letter/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/september-2026(/.*)?$",
-   "to": "https://inkhornreview.com/review/autumn-2026/",
-   "final": true,
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
-   "from": "^/(submit|events|shop|donate|support|bookfolk|weird-friday|contributors)(/.*)?$",
-   "to": "https://inkhorn.press/$1$2",
-   "hosts": [
-    "inkhornreview.com"
    ],
    "final": true
   },
   {
-   "from": "^/(?:podcast/|life-on-words/)?([a-z0-9-]{20,})/?$",
-   "to": "/episodes/$1/",
+   "from": "^/tag/autumn-2026/?$",
+   "to": "https://inkhornreview.com/review/autumn-2026/",
    "hosts": [
-    "lifeonwords.com"
+    "inkhorn.press"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/submissions/?$",
+   "to": "https://inkhornreview.com/submissions/",
+   "hosts": [
+    "inkhorn.press"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/(?:podcast/|life-on-words/)?(s-t-joshi-h-p-lovecraft-a-gateway-to-an-intellectual-life|aleks-merilo-kicked-out-of-his-own-play|allie-millington-i-tried-again-four-hundred-times|maureen-mcquerry-the-girl-who-asked-questions|elena-taylor-allowed-in-the-room|sheila-roberts-no-problem-no-story|kirby-larson-the-girl-who-wanted-to-be-dorothy|alan-katz-forty-years-of-getting-paid-to-be-funny|christina-braver-real-sex-real-stories|ben-rockwood-the-publisher-who-rejected-the-question|susan-wiggs-60-plus-novels-and-what-they-cost)/?$",
+   "to": "https://lifeonwords.com/episodes/$1/",
+   "hosts": [
+    "inkhorn.press"
+   ],
+   "final": true
+  },
+  {
+   "from": "^/(?:tag/podcast|podcast|life-on-words)/?$",
+   "to": "https://lifeonwords.com/",
+   "hosts": [
+    "inkhorn.press"
    ],
    "final": true
   }
