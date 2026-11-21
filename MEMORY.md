@@ -1,0 +1,2 @@
+- [No secrets in commands](feedback_no_secrets_in_commands.md) — never print or pass a token/password on a command line; Keychain or 600 file only
+- [Pre-push checks](feedback_prepush_checks.md) — php -l + duplicate function check before every WordPress push (hook installed)
