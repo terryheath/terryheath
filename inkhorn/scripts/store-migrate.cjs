@@ -7,7 +7,7 @@ process.env.INKHORN_IMPORT_TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync(
 const S = require('../store.cjs');
 (async () => {
   const api = L.ghost();
-  for (const key of ['agreements-tracker', 'podcast-guests', 'podcast-headshots', 'admin-hub-auth']) {
+  for (const key of ['agreements-tracker', 'podcast-guests', 'podcast-headshots', 'podcast-suggestions', 'admin-hub-auth']) {
     const r = await api.pages.browse({ filter: `slug:${key}`, limit: 1, fields: 'id,codeinjection_head' });
     if (!r.length) { console.log(key, ': no Ghost page, skipped'); continue; }
     const v = JSON.parse(r[0].codeinjection_head || 'null');

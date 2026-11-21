@@ -2,13 +2,13 @@
 namespace Inkhorn;
 
 /**
- * Small private JSON stores for the server-side tools (replace the private draft Ghost pages): agreements-tracker, podcast-guests, podcast-headshots, admin-hub-auth.
+ * Small private JSON stores for the server-side tools (replace the private draft Ghost pages): agreements-tracker, podcast-guests, podcast-headshots, podcast-suggestions, admin-hub-auth.
  * GET  /inkhorn/v1/store/<key>            -> { value, version }
  * POST /inkhorn/v1/store/<key> { value, version? } -> { version }; 409 if `version` is given and no longer current. Same server token as the importer.
  */
 add_action('rest_api_init', function () {
   $perm = function (\WP_REST_Request $r) { $t = getenv('INKHORN_IMPORT_TOKEN'); return $t && hash_equals($t, (string) $r->get_header('x-import-token')); };
-  $ok = ['agreements-tracker', 'podcast-guests', 'podcast-headshots', 'admin-hub-auth', 'scheduler-alerts', 'patreon-supporters', 'growth-snapshots'];
+  $ok = ['agreements-tracker', 'podcast-guests', 'podcast-headshots', 'podcast-suggestions', 'admin-hub-auth', 'scheduler-alerts', 'patreon-supporters', 'growth-snapshots'];
   register_rest_route('inkhorn/v1', '/store/(?P<key>[a-z-]+)', [
     ['methods' => 'GET', 'permission_callback' => $perm, 'callback' => function (\WP_REST_Request $r) use ($ok) {
       if (!in_array($r['key'], $ok, true)) { return new \WP_Error('bad', 'unknown store', ['status' => 404]); }
