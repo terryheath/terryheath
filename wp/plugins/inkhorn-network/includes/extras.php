@@ -160,7 +160,6 @@ function view_nl_expired() {
 
 /* ---------- terryheath.com and lifeonwords.com: host line, related essays and episodes ---------- */
 
-function site_blog_id($key) { $s = get_sites(['path' => $key === 'hub' ? '/' : '/' . $key . '/', 'number' => 1]); return $s ? (int) $s[0]->blog_id : 0; }
 function related_block($heading, array $items) {
   if (!$items) { return ''; }
   $h = '<section class="ih-related" aria-label="' . a($heading) . '"><h2>' . e($heading) . '</h2><ul class="ih-list">';

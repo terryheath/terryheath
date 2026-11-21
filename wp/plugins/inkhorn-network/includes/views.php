@@ -369,7 +369,7 @@ function section_pubs() {
   $lines = ['review' => t('hub.review_line', 'A quarterly of poetry, short prose and art.'), 'whiterabbit' => t('hub.wr_line', 'Appears every Friday the 13th.')];
   $acc = ['review' => '#2E4A3F', 'whiterabbit' => '#4B2346'];
   foreach (['review' => 'Inkhorn Review', 'whiterabbit' => 'White Rabbit'] as $k => $name) {
-    $sid = get_sites(['path' => '/' . $k . '/', 'number' => 1]);
+    $sid = site_blog_id($k) ? [(object) ['blog_id' => site_blog_id($k)]] : [];
     $cur = null; $img = ''; $lab = ''; $dim = [480, 690];
     if ($sid) {
       switch_to_blog($sid[0]->blog_id);

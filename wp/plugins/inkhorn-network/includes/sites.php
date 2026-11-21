@@ -41,12 +41,26 @@ function hub_url($path = '') {
   restore_current_blog();
   return $u;
 }
+/** Blog id of a site of the network by its key. Every site is on its own domain (path /), except muse, which lives at the hub's /muse/. */
+function site_blog_id($key) {
+  static $cache = [];
+  if (isset($cache[$key])) { return $cache[$key]; }
+  $domains = ['review' => 'inkhornreview.com', 'whiterabbit' => 'whiterabbitreview.com', 'terryheath' => 'terryheath.com', 'lifeonwords' => 'lifeonwords.com'];
+  $id = 0;
+  if ($key === 'hub') { $id = (int) get_main_site_id(); }
+  elseif ($key === 'muse') { $r = get_sites(['path' => '/muse/', 'number' => 1]); $id = $r ? (int) $r[0]->blog_id : 0; }
+  else {
+    if (isset($domains[$key])) { $r = get_sites(['domain' => $domains[$key], 'number' => 1]); if ($r) { $id = (int) $r[0]->blog_id; } }
+    if (!$id) { $r = get_sites(['path' => '/' . $key . '/', 'number' => 1]); $id = $r ? (int) $r[0]->blog_id : 0; } // the temporary folder layout
+  }
+  return $cache[$key] = $id;
+}
 /** Address of a sibling publication. */
 function pub_url($key, $path = '') {
   if ($key === 'muse') { return 'https://gomuse.io/' . ltrim($path, '/'); }
-  $s = get_sites(['path' => $key === 'hub' ? '/' : '/' . $key . '/', 'number' => 1]);
-  if (!$s) { return hub_url($key); }
-  return get_site_url($s[0]->blog_id, '/' . ltrim($path, '/'));
+  $b = site_blog_id($key);
+  if (!$b) { return hub_url($key); }
+  return get_site_url($b, '/' . ltrim($path, '/'));
 }
 
 /** Each site sends its own mail from its own domain (SES identities for all five). */

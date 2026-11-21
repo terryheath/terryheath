@@ -15,8 +15,7 @@ add_action('template_redirect', function () {
   if (get_query_var('ih_feed') !== 'podcast') { return; }
   $cdata = function ($s) { return '<![CDATA[' . str_replace(']]>', ']]]]><![CDATA[>', (string) $s) . ']]>'; };
   // episodes live on the lifeonwords site
-  $ls = get_sites(['path' => '/lifeonwords/', 'number' => 1]);
-  if (!$ls) { $ls = get_sites(['domain' => 'lifeonwords.com', 'number' => 1]); }
+  $lb = site_blog_id('lifeonwords'); $ls = $lb ? [(object) ['blog_id' => $lb]] : [];
   $home = home_url('/');
   $self = home_url('/podcast/rss/');
   header('Content-Type: application/rss+xml; charset=UTF-8');
