@@ -8,7 +8,7 @@
 const { execSync } = require('child_process');
 const L = require('../agreements-lib.cjs');
 const DRY = process.argv.includes('--dry');
-const SHOP = (process.env.SHOP_SERVICE_URL || 'https://inkhorn-shop-service-production.up.railway.app').replace(/\/$/, '');
+const SHOP = (process.env.SHOP_SERVICE_URL || 'https://shop.inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.MEMBER_API_TOKEN || execSync('security find-generic-password -s inkhorn-member-api-token -w').toString().trim();
 (async () => {
   const out = [];

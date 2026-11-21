@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Publishes the newest Life on Words episode on the new site from the podcast host's feed (audio, notes, timestamps, transcript). Not added to Ghost. Idempotent. */
 const { execSync } = require('child_process');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 const FEED = 'https://api.riverside.com/hosting/V48At7Hk.rss';
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

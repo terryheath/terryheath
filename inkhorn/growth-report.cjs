@@ -16,7 +16,7 @@
  *   node inkhorn/growth-report.cjs [--month 2026-11] [--dry] [--no-mail]
  */
 // The report history always lives in the WordPress store (never changes the process-wide STORE_MODE the hub uses for its other stores).
-const WPB = () => (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '') + '/wp-json/inkhorn/v1/store/';
+const WPB = () => (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '') + '/wp-json/inkhorn/v1/store/';
 const WPH = () => ({ 'Content-Type': 'application/json', 'X-Import-Token': process.env.INKHORN_IMPORT_TOKEN || '' });
 const STORE = {
   async load(key) { const r = await fetch(WPB() + key, { headers: WPH() }); if (!r.ok) throw new Error(`store ${key}: ${r.status}`); return r.json(); },

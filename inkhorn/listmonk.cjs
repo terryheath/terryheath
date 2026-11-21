@@ -2,7 +2,7 @@
 // listmonk client (replaces Ghost newsletters). Env: LISTMONK_URL, LISTMONK_API_USER, LISTMONK_API_TOKEN (Keychain listmonk-api-token for local runs).
 const { execSync } = require('child_process');
 const kc = (s) => { try { return execSync(`security find-generic-password -s ${s} -w`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { return ''; } };
-const URL_ = () => (process.env.LISTMONK_URL || 'https://listmonk-production-b3fcccbe.up.railway.app').replace(/\/$/, '');
+const URL_ = () => (process.env.LISTMONK_URL || 'https://lists.inkhorn.press').replace(/\/$/, '');
 const auth = () => `token ${process.env.LISTMONK_API_USER || 'automation'}:${process.env.LISTMONK_API_TOKEN || kc('listmonk-api-token')}`;
 async function api(method, path, body) {
   const r = await fetch(URL_() + '/api' + path, { method, headers: { Authorization: auth(), 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });

@@ -5,7 +5,7 @@
  * Follows redirects (max 5), keeps queries, reports failures.
  */
 const fs = require('fs'), path = require('path');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const OLD = (process.env.OLD || 'https://inkhorn.press').replace(/\/$/, '');
 (async () => {
   const urls = new Set(['/', '/review/', '/review/issues/', '/review/autumn-2026/', '/review/winter-2026/', '/poetry/', '/fiction/', '/nonfiction/', '/art/', '/micro/', '/white-rabbit/', '/white-rabbit/no-1/',

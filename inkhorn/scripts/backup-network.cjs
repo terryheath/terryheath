@@ -8,7 +8,7 @@
 const fs = require('fs'), path = require('path');
 const { execSync } = require('child_process');
 const LM = require('../listmonk.cjs');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 const date = process.argv[2] || new Date().toISOString().slice(0, 10);
 const out = path.join(process.env.BACKUP_DIR || path.join(require('os').homedir(), 'inkhorn-backups'), date + '-network'); // outside the repo: subscriber and contributor emails fs.mkdirSync(out, { recursive: true });

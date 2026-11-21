@@ -85,16 +85,16 @@ const SUBDOMAINS = [
 const LINKS = [
   ['Inkhorn', [
     ['Profile changes', '/profiles', 'Contributor headshot, bio and website changes waiting for your approval (nothing goes live until you approve).'],
-    ['Ghost Admin', 'https://inkhorn.press/ghost/', 'Write, schedule and edit posts and pages, members, newsletters, tiers, themes.'],
+    ['Ghost Admin', 'https://accelerated-basilisk.pikapod.net/ghost/', 'Write, schedule and edit posts and pages, members, newsletters, tiers, themes.'],
     ['The live site', 'https://inkhorn.press/', 'What readers see.'],
     ['The Submissions page (guidelines and rights)', 'https://inkhorn.press/submissions/', 'Guidelines, free reading periods, pay (edited in Ghost Admin).'],
-    ['The agreements tracker (Ghost page)', 'https://inkhorn.press/ghost/#/pages/6af4f4a0a7098200015eb89e', 'The raw record of every contributor agreement; the payouts page reads it. Edit only if you must.'],
+    ['The agreements tracker (Ghost page)', 'https://accelerated-basilisk.pikapod.net/ghost/#/pages/6af4f4a0a7098200015eb89e', 'The raw record of every contributor agreement; the payouts page reads it. Edit only if you must.'],
   ]],
   ['Agreements', [
     ['DocuSeal', 'https://sign.terryheath.com/sign_in', 'Templates, every sent and signed agreement, the API token.'],
     ['Life on Words guests', '/podcast', 'Guest agreements, bookings and reminders for the podcast; add a guest and send the invitation.'],
     ['Growth report', '/growth', 'Each month against its target: email lists, donations, subscriptions, sales and visits.'],
-    ['Umami analytics', 'https://umami-production-237a03f7.up.railway.app/', 'Visits and pages for every site (self-hosted, no cookies). Sign in as admin; the password is the Railway variable UMAMI_PASSWORD on growth-report.'],
+    ['Umami analytics', 'https://stats.inkhorn.press/', 'Visits and pages for every site (self-hosted, no cookies). Sign in as admin; the password is the Railway variable UMAMI_PASSWORD on growth-report.'],
     ['Payouts', '/payouts', 'Signed or not, pay and subscription choices, bios to Apply or Ignore, print mailing lists (CSV).'],
     ['Contributor confirm page', 'https://agreements.inkhornreview.com/accept', 'What the Duosuma acceptance letter links to; sends the agreement when a contributor confirms. Public.'],
   ]],
@@ -124,24 +124,22 @@ const LINKS = [
   ]],
 ];
 
-// Temporary addresses (Railway) while the sites are reviewed; each goes away or is replaced at cutover. Updated 2026-11-20.
-const WPT = 'https://wordpress-production-754b3e08.up.railway.app';
-const TEMP_SITES = [
-  ['Press hub front page', WPT + '/', 'inkhorn.press at cutover'],
-  ['Inkhorn Review', WPT + '/review/', 'inkhornreview.com at cutover'],
-  ['White Rabbit', WPT + '/whiterabbit/', 'whiterabbitreview.com at cutover'],
-  ['terryheath.com', WPT + '/terryheath/', 'terryheath.com at cutover'],
-  ['Life on Words', WPT + '/lifeonwords/', 'lifeonwords.com at cutover'],
-  ['WordPress dashboard (press hub)', WPT + '/wp-admin/', 'Sign in as terry. Each site also has /<site>/wp-admin/.'],
-  ['WordPress network admin', WPT + '/wp-admin/network/', 'Plugins, themes, sites, Services menu, How to change things.'],
-  ['listmonk', 'https://listmonk-production-b3fcccbe.up.railway.app/admin', 'Lists, subscribers, campaigns, email templates.'],
-  ['DocuSeal (Railway copy)', 'https://docuseal-production-43dca1b9.up.railway.app/', 'The copy on Railway. The live one stays at sign.terryheath.com (PikaPods) until cutover.'],
-  ['Umami', 'https://umami-production-237a03f7.up.railway.app/', 'Analytics for every site.'],
-  ['Shop service', 'https://inkhorn-shop-service-production.up.railway.app/admin', 'Checkout, ebook downloads, subscriptions. /admin needs the shop admin password.'],
-  ['Address service', 'https://address-service-production.up.railway.app/', 'Print-subscription mailing addresses.'],
-  ['og-webhook', 'https://og-webhook-production.up.railway.app/', 'Share-image webhook for Ghost (retired at cutover).'],
+// Final addresses of every site and service (the cutover on 2026-11-20 replaced the temporary Railway addresses).
+const FINAL_SITES = [
+  ['Press hub (inkhorn.press)', 'https://inkhorn.press/', 'Press home, shop, donate, events, help, account.'],
+  ['Inkhorn Review', 'https://inkhornreview.com/', 'The quarterly: issues, pieces, contributors.'],
+  ['White Rabbit', 'https://whiterabbitreview.com/', 'Appears every Friday the 13th.'],
+  ['terryheath.com', 'https://terryheath.com/', 'Terry Heath, his writing.'],
+  ['Life on Words', 'https://lifeonwords.com/', 'The podcast, episodes and transcripts.'],
+  ['WordPress dashboard (press hub)', 'https://inkhorn.press/wp-admin/', 'Each site also has its own /wp-admin/ on its own domain.'],
+  ['WordPress network admin', 'https://inkhorn.press/wp-admin/network/', 'Plugins, themes, sites, Services menu, How to change things.'],
+  ['listmonk', 'https://lists.inkhorn.press/admin', 'Lists, subscribers, campaigns, email templates.'],
+  ['DocuSeal', 'https://sign.terryheath.com/', 'Contributor and guest agreements.'],
+  ['Umami', 'https://stats.inkhorn.press/', 'Analytics for every site.'],
+  ['Shop service', 'https://shop.inkhorn.press/admin', 'Checkout, ebook downloads, subscriptions. /admin needs the shop admin password.'],
+  ['Address service', 'https://address.inkhorn.press/', 'Print-subscription mailing addresses.'],
 ];
-const TEMP = `<h2>Temporary sites</h2><p class="why">Every address the new setup answers on before cutover.</p><ul>${TEMP_SITES.map(([n, u, w]) => `<li><a href="${esc(u)}">${esc(n)}</a><br><span class="why">${esc(u)} · ${esc(w)}</span></li>`).join('')}</ul>`;
+const TEMP = `<h2>Sites and services</h2><p class="why">Every site and service at its final address.</p><ul>${FINAL_SITES.map(([n, u, w]) => `<li><a href="${esc(u)}">${esc(n)}</a><br><span class="why">${esc(w)}</span></li>`).join('')}</ul>`;
 
 async function homeHtml() {
   let status = '<p class="warn">Status unavailable right now.</p>';

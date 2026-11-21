@@ -7,7 +7,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 const DRY = process.argv.includes('--dry');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 async function put(o) {
   if (DRY) { console.log('would import', o.site, o.type, o.slug); return; }

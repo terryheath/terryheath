@@ -2,7 +2,7 @@
 /** Terry's second copy update (2026-11-20): stored page text, pieces (missing poems, issue labels, founder letters), Terry's contributor page, "Books mentioned" on every episode. Idempotent. */
 const { execSync } = require('child_process');
 const fs = require('fs'), path = require('path');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 async function put(o) {
   const r = await fetch(WP + '/wp-json/inkhorn/v1/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Import-Token': TOKEN }, body: JSON.stringify(o) });

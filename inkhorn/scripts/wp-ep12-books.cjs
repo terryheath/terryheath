@@ -3,7 +3,7 @@
  *  (ISBNs from the BOOKS: line of the notes, metadata from Google Books then Open Library, Bookshop.org links, covers copied to the media library),
  *  in the format Terry set for every episode (title case, a colon before the subtitle, First Last, a set listed once). Idempotent. */
 const { execSync } = require('child_process');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 const SHOP_ID = '94291';
 const SLUG = 'draconianly-picky-agent-adria-goetz-on-the-other-side-of-the-query';

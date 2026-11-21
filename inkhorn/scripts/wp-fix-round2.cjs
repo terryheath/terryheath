@@ -5,7 +5,7 @@
  * copy is still to come. No site copy is written here.
  */
 const { execSync } = require('child_process');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 const put = async (o) => { const r = await fetch(WP + '/wp-json/inkhorn/v1/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Import-Token': TOKEN }, body: JSON.stringify(o) }); const t = await r.text(); if (!r.ok) throw new Error(o.slug + ' ' + r.status + ' ' + t.slice(0, 120)); return JSON.parse(t); };
 const get = async (u) => (await fetch(WP + u)).json();

@@ -7,7 +7,7 @@
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 const APPLY = process.argv.includes('--apply');
 const UA = { headers: { 'User-Agent': 'Mozilla/5.0' } };

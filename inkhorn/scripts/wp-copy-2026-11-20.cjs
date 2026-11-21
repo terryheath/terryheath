@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Terry's supplied wording (2026-11-20) for the stored pages, guest bios and Terry's contributor bio. Idempotent. */
 const { execSync } = require('child_process');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 const q = (s) => s.replace(/'/g, '’'); // typographic apostrophes
 async function put(o) {
@@ -18,7 +18,7 @@ async function live(site, slug) { const j = await (await fetch(`${WP}${site === 
     .replace(/<p>Your <a[^>]*>donations<\/a> help[\s\S]*?<\/p>/, '<p>Your <a href="/donate/">donations</a> cover production and help us pay contributors more.</p>');
   await page('hub', 'about', 'About Inkhorn Press', a);
   // Donate
-  const g = 'https://inkhorn-shop-service-production.up.railway.app/donate/checkout?amount=';
+  const g = 'https://shop.inkhorn.press/donate/checkout?amount=';
   await page('hub', 'donate', 'Donate', `<p class="ih-note">Your gift pays contributors and keeps every journal free online. Inkhorn Press is a 501(c)(3) nonprofit.</p>
 <p>Give once</p>
 <p>${[10, 25, 50, 100].map((n) => `<a class="ih-btn" href="${g}${n}">$${n}</a>`).join(' ')}</p>

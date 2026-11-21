@@ -6,8 +6,8 @@
  */
 const { execSync } = require('child_process');
 const kc = (s) => execSync(`security find-generic-password -s ${s} -w`).toString().trim();
-const LM = (process.env.LISTMONK_URL || 'https://listmonk-production-b3fcccbe.up.railway.app').replace(/\/$/, '');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const LM = (process.env.LISTMONK_URL || 'https://lists.inkhorn.press').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 
 const LISTS = [
   ['inkhorn-review', 'Inkhorn Review'], ['white-rabbit', 'White Rabbit'], ['muse', 'Muse'], ['events', 'Events'],

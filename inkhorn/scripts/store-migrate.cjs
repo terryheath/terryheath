@@ -2,7 +2,7 @@
 /** Copies the four private Ghost-page stores into the WordPress network stores (run once before setting STORE_MODE=wp). Idempotent; needs WP_URL, INKHORN_IMPORT_TOKEN. */
 const { execSync } = require('child_process');
 const L = require('../agreements-lib.cjs');
-process.env.WP_URL = process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app';
+process.env.WP_URL = process.env.WP_URL || 'https://inkhorn.press';
 process.env.INKHORN_IMPORT_TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 const S = require('../store.cjs');
 (async () => {

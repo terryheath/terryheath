@@ -7,7 +7,7 @@
 const { execSync } = require('child_process');
 const GhostAdminAPI = require('@tryghost/admin-api');
 const DRY = process.argv.includes('--dry');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const kc = (s) => execSync(`security find-generic-password -s ${s} -w`).toString().trim();
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || kc('inkhorn-wp-import-token');
 const slugify = (s) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

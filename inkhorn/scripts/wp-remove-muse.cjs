@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Muse moved to Follow the Rabbit LLC (2026-11-20): take Muse out of the Inkhorn Press Submit page and the White Rabbit About page. Idempotent. */
 const { execSync } = require('child_process');
-const WP = (process.env.WP_URL || 'https://wordpress-production-754b3e08.up.railway.app').replace(/\/$/, '');
+const WP = (process.env.WP_URL || 'https://inkhorn.press').replace(/\/$/, '');
 const TOKEN = process.env.INKHORN_IMPORT_TOKEN || execSync('security find-generic-password -s inkhorn-wp-import-token -w').toString().trim();
 async function put(o) {
   const r = await fetch(WP + '/wp-json/inkhorn/v1/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Import-Token': TOKEN }, body: JSON.stringify(o) });
