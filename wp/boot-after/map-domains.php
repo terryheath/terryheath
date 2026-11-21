@@ -14,6 +14,7 @@ foreach (preg_split('/\s+/', $spec) as $pair) { if (strpos($pair, '=') !== false
 $hub = $map['hub'] ?? '';
 $before = [];
 foreach (get_sites(['number' => 100]) as $s) { $before[trim($s->path, '/') ?: 'hub'] = $s; }
+foreach ($map as $k => $d) { if (!isset($before[$k]) || $before[$k]->domain !== $d) { foreach (get_sites(['number' => 100]) as $s) { if ($s->domain === $d && ($k !== 'hub' || $s->path === '/')) { $before[$k] = $s; } } } } // sites already on their own domain all have path /
 // 1. the network itself and the hub
 if ($hub) {
   $wpdb->update($wpdb->site, ['domain' => $hub], ['id' => 1]);
