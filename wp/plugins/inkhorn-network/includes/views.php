@@ -427,7 +427,7 @@ function section_soon() {
     $cv = get_page_by_path('cover', OBJECT, 'page'); $tid = $cv ? get_post_thumbnail_id($cv) : 0; $src = $tid ? wp_get_attachment_image_src($tid, 'large') : null;
   $h = '<section class="ih-folio" aria-label="Issue"><div class="ih-folio-cover">' . ($src ? '<div class="ih-cover"><img src="' . a($src[0]) . '" alt="' . a($s['name'] . ' artwork') . '" width="' . (int) $src[1] . '" height="' . (int) $src[2] . '"></div>' : '<div class="ih-cover ih-cover-e" role="img" aria-label="' . a($s['name']) . '"></div>') . '</div><div class="ih-folio-t">'
      . '<p class="ih-label">' . ($k === 'whiterabbit' ? tx('soon.label', 'Issue No. 1') : e($s['name'])) . '</p><h1 class="ih-h1-xl">' . ($k === 'whiterabbit' ? tx('soon.title', 'Friday, August 13, 2027') : e($s['name'])) . '</h1>'
-     . ($k === 'whiterabbit' ? ph('One line about the issue') : '') . '<p class="ih-folio-meta">' . tx('soon.meta', 'Details to come.') . '</p><div class="ih-btns">';
+     . ($k === 'whiterabbit' ? ph(t('soon.issue_line', 'One line about the issue'), 'soon.issue_line') : '') . '<p class="ih-folio-meta">' . tx('soon.meta', 'Details to come.') . '</p><div class="ih-btns">';
   if ($k === 'whiterabbit') { $h .= btn(hub_link('events/'), t('soon.btn', 'About Weird Friday')); }
   return $h . '</div></div></section>';
 }

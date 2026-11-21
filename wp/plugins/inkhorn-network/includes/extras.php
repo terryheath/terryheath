@@ -69,17 +69,23 @@ add_action('rest_api_init', function () {
 
 /* ---------- Start here (body text is marked placeholders for Terry to write) ---------- */
 
-function ph($label) { return '<p class="ih-ph"><span class="ih-ph-tag">' . tx('start.placeholder', 'PLACEHOLDER') . '</span> ' . e($label) . '</p>'; }
+/** A placeholder line stays marked until its text is written (Site text page, key given): then it prints as ordinary text. */
+function ph($label, $key = null) {
+  if ($key) { $o = text_overrides(); if (isset($o[$key]) && trim((string) $o[$key]) !== '') { return '<p>' . wp_kses($label, ['a' => ['href' => [], 'rel' => []], 'em' => [], 'i' => [], 'strong' => [], 'b' => []]) . '</p>'; } }
+  return '<p class="ih-ph"><span class="ih-ph-tag">' . tx('start.placeholder', 'PLACEHOLDER') . '</span> ' . e($label) . '</p>';
+}
 
 function view_start_here() {
   $h = '<main class="ih-main ih-start"><h1 class="ih-h1">' . tx('start.heading', 'Start here') . '</h1>'
-     . '<section aria-label="' . ta('start.s1', 'Welcome') . '"><h2>' . tx('start.h_new', 'New to poetry?') . '</h2>' . ph(t('start.p_welcome', 'Two or three sentences of welcome for a reader who thinks poetry is not for them.')) . '</section>'
+     . '<section aria-label="' . ta('start.s1', 'Welcome') . '"><h2>' . tx('start.h_new', 'New to poetry?') . '</h2>' . ph(t('start.p_welcome', 'Two or three sentences of welcome for a reader who thinks poetry is not for them.'), 'start.p_welcome') . '</section>'
      . '<section aria-label="' . ta('start.s2', 'The forms we read') . '"><h2>' . tx('start.h_forms', 'The forms the Review focuses on') . '</h2>'
-     . '<h3>' . tx('start.h_poetry', 'Poetry') . '</h3>' . ph(t('start.p_poetry', 'What a reader can expect from a poem in the Review, in a few lines.'))
-     . '<h3>' . tx('start.h_prose', 'Short prose') . '</h3>' . ph(t('start.p_prose', 'What short prose means here, and how long a piece runs.'))
-     . '<h3>' . tx('start.h_art', 'Art') . '</h3>' . ph(t('start.p_art', 'How art appears in the issue.')) . '</section>'
+     . '<h3>' . tx('start.h_poetry', 'Poetry') . '</h3>' . ph(t('start.p_poetry', 'What a reader can expect from a poem in the Review, in a few lines.'), 'start.p_poetry')
+     . '<h3>' . tx('start.h_prose', 'Short prose') . '</h3>' . ph(t('start.p_prose', 'What short prose means here, and how long a piece runs.'), 'start.p_prose')
+     . '<h3>' . tx('start.h_art', 'Art') . '</h3>' . ph(t('start.p_art', 'How art appears in the issue.'), 'start.p_art') . '</section>'
      . '<section aria-label="' . ta('start.s3', 'A few poems to begin with') . '"><h2>' . tx('start.h_poems', 'A few poems to begin with') . '</h2><ol class="ih-order">';
-  for ($i = 1; $i <= 3; $i++) { $h .= '<li>' . ph(t('start.p_poem', 'Poem {n}: title, poet, and a link to the poem. One sentence on why to start here.', ['n' => $i])) . '</li>'; }
+  $h .= '<li>' . ph(t('start.poem_1', 'Poem 1: title, poet, and a link to the poem. One sentence on why to start here.'), 'start.poem_1') . '</li>'
+     . '<li>' . ph(t('start.poem_2', 'Poem 2: title, poet, and a link to the poem. One sentence on why to start here.'), 'start.poem_2') . '</li>'
+     . '<li>' . ph(t('start.poem_3', 'Poem 3: title, poet, and a link to the poem. One sentence on why to start here.'), 'start.poem_3') . '</li>';
   $h .= '</ol></section>' . signup() . '</main>';
   return $h;
 }
