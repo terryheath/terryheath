@@ -174,3 +174,7 @@ Switch-over is by environment variable or by pointing the Railway cron at the ne
 - **Blocked on Terry:** Cloudflare account `c153c3d5a893fb0e1361e594880f6c96` (whiterabbitreview.com, weirdfriday.org) belongs to the `hello@terryheath.com` login; the saved token belongs to `terryheath@yahoo.com` and cannot see it. Needs a token created while signed in as hello@terryheath.com (DNS edit, Workers edit, Registrar read) saved to Keychain `cloudflare-ftr-cleanup-b`. Blocks: whiterabbitreview.com (Railway domain, DNS, SES), the weirdfriday.org forward, the account B inventory.
 - **Ghost freeze NOT started yet.** Read-only check (`inkhorn/scripts/ghost-changes.cjs`): since the first import only `the-dog-had-been-dead-for-years` changed on the inkhorn.press Ghost (already filled on WordPress), plus three internal draft pages; no changes found for terryheath.com beyond Adria's episode (published from the feed, not Ghost).
 - **Not started:** sections 3 to 10 (DocuSeal move, DNS and domain mapping, redirects test, email, services and crons, Search Console, verification, shutdown list).
+
+## 2026-11-20 18:04 PST (02:04 UTC): CUTOVER GO. Ghost freeze starts. No edits on either Ghost from here.
+
+- Cloudflare account B reached (Keychain `cloudflare-ftr-cleanup-b`); inventory updated in CLAUDE.md (B = weirdfriday.org and whiterabbitreview.com only).

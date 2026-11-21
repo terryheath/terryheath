@@ -234,7 +234,7 @@ Trigger manually via Railway (podcast-import service → Run now), or run `river
 
 ## Domain inventory (2026-11-20)
 
-Two Cloudflare accounts. **A** = `62c3c49152820690bee8bc174a6c9428` "Follow the Rabbit LLC" (login `terryheath@yahoo.com`; API token in Keychain `cloudflare-ftr-cleanup`). **B** = `c153c3d5a893fb0e1361e594880f6c96` (login `hello@terryheath.com`; the token above cannot reach it; list below is what Terry stated, not read from the API; list every domain in B once a token from that login exists).
+Two Cloudflare accounts. **A** = `62c3c49152820690bee8bc174a6c9428` "Follow the Rabbit LLC" (login `terryheath@yahoo.com`; API token in Keychain `cloudflare-ftr-cleanup`). **B** = `c153c3d5a893fb0e1361e594880f6c96` (login `hello@terryheath.com`, Google sign-in; token in Keychain `cloudflare-ftr-cleanup-b`: DNS edit, Workers Scripts and Routes edit, Registrar read; read from the API 2026-11-20: B holds exactly two zones/registrations, `weirdfriday.org` and `whiterabbitreview.com`). The browser's default Cloudflare login is `terryheath@yahoo.com` (account A); use "hello@terryheath.com" on the Cloudflare sign-in page to reach B.
 
 | Domain | Account | Role | Registrar auto-renew / expires |
 |---|---|---|---|
@@ -252,8 +252,8 @@ Two Cloudflare accounts. **A** = `62c3c49152820690bee8bc174a6c9428` "Follow the 
 | artsfolk.com, vendcat.com | A | remnants, auto-renew off | off, 2027-08-02 / 2027-08-17 |
 | bookwish.io, whiterabbitbookco.com (and zones bookwish.net, dampconcrete.com) | A | remnants held for AWS cleanup | off, 2027-06-26 / 2027-05-15 |
 | whiterabbitgo.com, whiterabbitpresents.com, whiterabbitartistry.com, kitsapreads.org, lumarahouse.org, lumenhousearts.org, washingtonreads.org | A | remnants, lapse at expiry | off, 2027-05-18 to 2027-07-10 |
-| **whiterabbitreview.com** | B | White Rabbit (mapped domain; DNS, Railway domain, SES identity at cutover prep) | in B |
-| **weirdfriday.org** | B | forwards to weirdfriday.com, path kept | in B |
+| **whiterabbitreview.com** | B | White Rabbit (mapped domain; DNS, Railway domain, SES identity at cutover prep) | on, 2027-11-20 |
+| **weirdfriday.org** | B | forwards to weirdfriday.com, path kept | on, 2027-11-13 |
 
 **Cleanup status (2026-10-11):** AWS remnants, GitHub mirrors (`bookwish-*`, `dampconcrete-*`, private and archived under `terryheath`), the Terry-Heath org, Supabase, SendGrid API objects, Ghost extras, Firebase/Sanity/gcloud bookwish.io logins, `.env.local` and local config are done. Cloudflare: auto-renew is off for every remnant domain registered there; 7 remnant zones were deleted and the zones of Cloudflare-registered domains (`artsfolk.com`, `bookfolk.org`, `kitsapreads.org`, `lumarahouse.org`, `lumenhousearts.org`, `vendcat.com`, `washingtonreads.org`, `whiterabbitartistry.com`, `whiterabbitgo.com`, `whiterabbitpresents.com`) cannot be deleted and simply lapse at expiry. Held until the AWS root email reads `hello@terryheath.com`, then deleted: Cloudflare zones `bookwish.io`, `bookwish.net`, `dampconcrete.com`, `whiterabbitbookco.com` (its Google-hosted mail keeps `terry@whiterabbitbookco.com` working until then). Apps Script `sys-*` Google projects are left alone on purpose.
 
