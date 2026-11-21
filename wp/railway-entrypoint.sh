@@ -39,6 +39,13 @@ if (file_exists('/var/www/html/wp-content/uploads/.multisite')) {
 RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteBase /
+# folder paths that a root domain replaced answer with a plain 404 (the Muse folder, /muse/, stays)
+RewriteCond %{HTTP_HOST} ^(www\.)?inkhorn\.press$ [NC]
+RewriteRule ^(review|whiterabbit|terryheath|lifeonwords)(/|$) - [R=404,L]
+RewriteCond %{HTTP_HOST} ^(www\.)?terryheath\.com$ [NC]
+RewriteRule ^(podcast|lifeonwords)(/|$) - [R=404,L]
+RewriteCond %{HTTP_HOST} ^(www\.)?lifeonwords\.com$ [NC]
+RewriteRule ^podcast(/|$) - [R=404,L]
 RewriteRule ^index\.php$ - [L]
 RewriteRule ^([_0-9a-zA-Z-]+/)?wp-admin$ $1wp-admin/ [R=301,L]
 RewriteCond %{REQUEST_FILENAME} -f [OR]
