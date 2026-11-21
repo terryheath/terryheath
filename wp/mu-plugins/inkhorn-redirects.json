@@ -181,6 +181,14 @@
     "inkhornreview.com"
    ],
    "final": true
+  },
+  {
+   "from": "^/(?:podcast/|life-on-words/)?([a-z0-9-]{20,})/?$",
+   "to": "/episodes/$1/",
+   "hosts": [
+    "lifeonwords.com"
+   ],
+   "final": true
   }
  ]
 }
