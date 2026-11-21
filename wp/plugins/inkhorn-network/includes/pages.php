@@ -67,6 +67,12 @@ add_action('template_redirect', function () { // old /books/<slug>/ and /home/ o
   if ($p === 'books') { wp_safe_redirect(home_url('/shop/'), 301); exit; }
   if ($p === 'contributors/terry-heath') { wp_safe_redirect(home_url('/about/#the-editor'), 301); exit; } // Terry is the editor, not a contributor
   if ($p === 'home') { wp_safe_redirect(home_url('/'), 301); exit; }
+  if (preg_match('#^by/([^/]+)$#', $p, $mm)) { // old Ghost tag pages: a contributor with work, a podcast guest, or the Review's front page
+    $slug = sanitize_title($mm[1]); $to = '';
+    if (in_array($slug, contributors_with_work(), true)) { $to = home_url('/contributors/' . $slug . '/'); }
+    else { $lb = site_blog_id('lifeonwords'); if ($lb) { switch_to_blog($lb); $g = get_page_by_path($slug, OBJECT, 'ih_guest'); if ($g) { $to = get_permalink($g); } restore_current_blog(); } }
+    wp_redirect($to ?: pub_url('review'), 301); exit;
+  }
 }, 1);
 
 /* ---------- contributors: the directory lists only people with published work ---------- */

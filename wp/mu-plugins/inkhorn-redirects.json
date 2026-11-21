@@ -72,13 +72,6 @@
    ]
   },
   {
-   "from": "^/by/([^/]+)/?$",
-   "to": "/contributors/$1/",
-   "hosts": [
-    "inkhorn.press"
-   ]
-  },
-  {
    "from": "^/submit/white-rabbit/?$",
    "to": "https://whiterabbitreview.com/",
    "final": true,
@@ -136,7 +129,7 @@
   },
   {
    "from": "^/rss/?$",
-   "to": "https://inkhornreview.com/review/feed/",
+   "to": "https://inkhornreview.com/feed/",
    "final": true,
    "hosts": [
     "inkhorn.press"
